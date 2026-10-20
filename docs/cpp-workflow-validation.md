@@ -132,8 +132,8 @@
 在 2026-10-20 的本机与 WSL Ubuntu 上执行：
 
 - `npm test`：24 个测试通过（provider 门禁 9 个、checker 静态/CLI/live 分支 15 个）。测试只用临时目录和 fixtures，不依赖本机 C++ 工具链。
-- `npm run check`：`tsc --noEmit` 无错误，结构检查输出「结构检查通过」；`bash -n` 覆盖随包脚本。
-- `npm run pack:check`：`npm pack --dry-run` 成功，包内 69 个文件，包含 `lib/`、两个技能、模板、docs、locale、patch、icon 与两个 README；包大小 79.4 kB，解包 214.9 kB。
+- `npm run check`：先构建 `lib/`，结构检查输出「结构检查通过」，再跑同一组 24 个样例测试；`bash -n` 覆盖随包脚本。
+- `npm run pack:check`：`npm pack --dry-run` 成功，包内 69 个文件，包含 `lib/`、两个技能、模板、docs、locale、patch、icon 与两个 README；包大小 79.7 kB，解包 215.7 kB。
 - WSL Ubuntu（clang 21.1.8、cmake 4.2.3、ninja 1.13.2）真实编译并运行 `single`、`multi`、`static-library`、`shared-library` 四个模板：configure、构建、编译数据库软链接、换行检查、clang-format、clang-tidy、CTest `app_smoke`、`app` 全部通过，输出 `Hello, C++20!`；编译数据库里的标准是 `-std=c++20`（不是 `gnu++20`）。
 - 同一 WSL 内独立验证 `std::format` 探针：`clang++ -std=c++20` 编译并输出 `hello, cpp`。
 - 把 `assets/config/.clang-format` 与 `.clang-tidy` 放进四个模板后再跑：`misc-include-cleaner` 先报 `multi` 的 `greeting.cpp` 没有直接包含 `<string>`/`<string_view>`，补上后四个模板的格式、静态检查、CTest、运行全部通过。这条真实失败证明「模板能用」和「模板配自己的配置也能用」是两件事。

@@ -121,11 +121,11 @@ See `docs/cpp-workflow-layout.md` for layering and copy rules, and `docs/cpp-wor
 npm install
 npm run build      # tsc → lib/
 npm test           # provider + checker, no local C++ toolchain
-npm run check      # tsc --noEmit + structure/links/shell/template/package checks
+npm run check      # build + structure/links/shell/template/package + the same sample tests
 npm run pack:check # npm pack --dry-run
 ```
 
-Tests use temporary directories for `.git` and project markers, and never write to a real repository. Template compilation is not simulated by Node tests; it belongs to the declared build host's acceptance run.
+`npm run check` is the full self-check from the plan: build `lib/`, verify skill links and package metadata, then run the provider and checker sample tests in `tests/`. Tests use temporary directories for `.git` and project markers, and never write to a real repository. Template compilation is not simulated by Node tests; it belongs to the declared build host's acceptance run.
 
 ## Design baseline
 
@@ -142,6 +142,7 @@ Documented deviations: exceptions only at contract violations/program boundaries
 - No MSVC/clang-cl, C-only, debugger, ASan, vcpkg/Conan, or Debug/Release axis.
 - No tool installation, dependency download, PATH edits, or `~/.bashrc` changes.
 - No tool registration and no environment probing inside `apply()`; checks happen only when the checker is invoked.
+- No LSP client or code-navigation service; the package only guarantees a `compile_commands.json` for the current build, and navigation stays with an existing clangd/LSP plugin.
 - No PowerShell entry for Windows native builds; that is a documented v1 gap, not an implicit fallback.
 
 ## License

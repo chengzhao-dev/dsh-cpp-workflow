@@ -36,7 +36,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && node --test tests/*.test.mjs",
-    "check": "tsc --noEmit -p tsconfig.json && node scripts/checking-skill-links.mjs",
+    "check": "npm run build && node scripts/checking-skill-links.mjs && node --test tests/*.test.mjs",
     "pack:check": "npm pack --dry-run"
   },
   "keywords": [

@@ -114,8 +114,8 @@ build/
 ```bash
 npm run build      # tsc → lib/
 npm test           # provider + checker，不依赖本机 C++ 工具链
-npm run check      # tsc --noEmit + 结构/链接/shell/模板/包元数据检查
+npm run check      # build + 结构/链接/shell/模板/包元数据 + 同一组样例测试
 npm run pack:check # npm pack --dry-run
 ```
 
-结构检查覆盖：技能文件是否存在、步骤编号与 H1、frontmatter 名称与 C++20、禁止词汇（知识库 id、`.agents/`、项目专属类名）、反引号相对路径、`bash -n`、项目模板三轴为空、`package.json` / patch / locale / icon。它不编译 C++ 模板；模板编译属于目标 build host 的验收。
+结构检查覆盖：技能文件是否存在、步骤编号与 H1、frontmatter 名称与 C++20、禁止词汇（知识库 id、`.agents/`、项目专属类名）、反引号相对路径、`bash -n`、项目模板三轴为空、`package.json` / patch / locale / icon；随后运行 `tests/` 的 provider 门禁与 checker 样例。它不编译 C++ 模板；模板编译属于目标 build host 的验收。

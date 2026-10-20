@@ -126,11 +126,11 @@ dsh-cpp-workflow/
 npm install
 npm run build      # tsc → lib/
 npm test           # provider + checker，不依赖本机 C++ 工具链
-npm run check      # tsc --noEmit + 结构/链接/shell/模板/包元数据
+npm run check      # build + 结构/链接/shell/模板/包元数据 + 同一组样例测试
 npm run pack:check # npm pack --dry-run
 ```
 
-测试用临时目录模拟 `.git` 和项目技能标记，不写入真实仓库；checker 测试用 fixtures 和 CLI 子进程。模板编译不在 Node 测试里伪装，必须在声明的 build host 上按项目入口命令验收。
+`npm run check` 是计划里的完整自检：先编译 `lib/`，再核对技能链接与包元数据，最后跑 `tests/` 里的 provider 与 checker 样例。测试用临时目录模拟 `.git` 和项目技能标记，不写入真实仓库；checker 测试用 fixtures 和 CLI 子进程。模板编译不在 Node 测试里伪装，必须在声明的 build host 上按项目入口命令验收。
 
 ## 设计基线
 
@@ -147,6 +147,7 @@ npm run pack:check # npm pack --dry-run
 - 不提供 MSVC/clang-cl、C-only、调试器、ASan、vcpkg/Conan、Debug/Release 轴。
 - 不安装工具、不下载依赖、不编辑 PATH、不写 `~/.bashrc`。
 - 不注册工具，不在 `apply()` 里探测环境；环境检查只在用户/技能调用 checker 时发生。
+- 不做 LSP 客户端或代码导航服务；只保证当前构建写出 `compile_commands.json`，导航交给已有的 clangd/LSP 插件。
 - Windows 原生构建没有 PowerShell 入口；这是 v1 的已知缺口，不是隐式回退。
 
 ## 许可
