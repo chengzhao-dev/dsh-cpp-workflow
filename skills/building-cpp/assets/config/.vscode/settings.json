@@ -1,0 +1,34 @@
+{
+  // 编译器驱动用绝对路径；GCC 模式改成 /usr/bin/g++。
+  // 只允许这一个驱动，不用 * 通配。
+  "clangd.arguments": [
+    "--query-driver=/usr/bin/clang++",
+    "--header-insertion=never",
+    "--background-index"
+  ],
+  "cmake.buildDirectory": "${workspaceFolder}/build/clang",
+  "cmake.generator": "Ninja",
+  "cmake.configureOnOpen": false,
+  // 格式化统一交给 clangd，避免 cpptools 与 clang-format 两套结果。
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "editor.formatOnSave": true,
+  "[cpp]": {
+    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+  },
+  "[c]": {
+    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+  },
+  "files.associations": {
+    "*.h": "cpp"
+  },
+  "files.encoding": "utf8",
+  "files.eol": "\n",
+  "files.exclude": {
+    "**/build": true,
+    "**/.cache": true
+  },
+  "search.exclude": {
+    "**/build": true,
+    "**/.cache": true
+  }
+}

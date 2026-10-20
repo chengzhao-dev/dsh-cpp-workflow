@@ -1,0 +1,64 @@
+{
+  "name": "dsh-cpp-workflow",
+  "version": "0.1.0",
+  "description": "C++20 工程流程技能包：七步源码与构建约定、环境组合校验、clang 工具链模板 · C++20 workflow skills for DeepSeek Harness",
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "lib",
+    "skills",
+    "cordis.patch.yml",
+    "locale",
+    "icon.svg",
+    "README.md",
+    "README.en.md",
+    "LICENSE",
+    "templates",
+    "docs",
+    "scripts"
+  ],
+  "engines": {
+    "node": ">=22",
+    "dsh": ">=0.2.0-rc.1 <0.3.0-0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "icon": "./icon.svg",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "check": "tsc --noEmit -p tsconfig.json && node scripts/checking-skill-links.mjs",
+    "pack:check": "npm pack --dry-run"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "dsh-plugin",
+    "cpp",
+    "c++",
+    "cplusplus",
+    "cmake",
+    "ninja",
+    "clang",
+    "gcc",
+    "skills"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/dsh-skill": ">=0.2.0-rc.1 <0.3.0-0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/dsh-skill": ">=0.2.0-rc.1 <0.3.0-0",
+    "@types/node": "^22.20.5",
+    "typescript": "^5.9.3"
+  }
+}

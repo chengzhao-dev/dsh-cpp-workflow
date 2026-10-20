@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "C++ 工程流程",
+    "description": "按七步流程编写 C++20 源码、用 CMake 与 Ninja 构建，并在项目声明的环境组合里核对 clang 工具链。"
+  }
+}

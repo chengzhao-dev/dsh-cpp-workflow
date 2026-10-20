@@ -1,0 +1,17 @@
+# 指向当前编译器目录；GCC 模式改成 build/gcc，不要两套并存。
+CompileFlags:
+  CompilationDatabase: build/clang
+  Add:
+    - -std=c++20
+    - -Wall
+    - -Wextra
+Diagnostics:
+  ClangTidy:
+    Add:
+      - bugprone-*
+      - modernize-*
+      - performance-*
+      - readability-*
+  Suppress:
+    # 项目头由编译数据库提供；解析噪声不掩盖真实诊断。
+    - pp_file_not_found

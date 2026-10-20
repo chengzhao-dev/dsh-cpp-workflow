@@ -1,0 +1,13 @@
+# dsh-cpp-workflow bundle patch.
+#
+# Additive only: insert one host row. No official row is edited, disabled or
+# replaced. The row loads this package's `main` entry, which registers the
+# packaged developing-cpp and building-cpp skills through `ctx.skills`.
+#
+# Install from Git or npm, for example:
+#
+#   dsh plugin --profile web add github:<owner>/dsh-cpp-workflow
+#
+- insert:
+    - id: cpp-workflow
+      name: dsh-cpp-workflow

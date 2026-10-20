@@ -1,0 +1,5 @@
+add_library(greeting STATIC src/greeting.cpp)
+target_include_directories(greeting PUBLIC include)
+target_compile_features(greeting PUBLIC cxx_std_20)
+set_target_properties(greeting PROPERTIES CXX_EXTENSIONS OFF)
+target_compile_options(greeting PRIVATE -Wall -Wextra -Werror -Wold-style-cast -Wshadow)

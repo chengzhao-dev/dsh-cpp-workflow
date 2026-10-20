@@ -1,0 +1,90 @@
+#===--------------------------------------------------------------------------------------------===#
+# 与 .clang-format 同一套命名；关闭项及理由集中写在 Checks 上方。
+#===--------------------------------------------------------------------------------------------===#
+
+InheritParentConfig: false
+
+# 关闭项：
+# - bugprone-easily-swappable-parameters：相邻同型参数的顺序错误靠接口设计和 review，不靠命名噪声。
+# - modernize-use-trailing-return-type：Google 风格不要求尾置返回类型。
+# - portability-avoid-pragma-once：项目已把 #pragma once 写进偏差表。
+# - readability-identifier-length：短循环变量和坐标名（i、x）是领域习惯。
+# - readability-magic-numbers 与 cppcoreguidelines-avoid-magic-numbers：坐标、尺寸和测试数据常直接写字面量。
+Checks: >
+  -*,
+  bugprone-*,
+  cppcoreguidelines-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  clang-analyzer-core.*,
+  google-build-using-namespace,
+  google-explicit-constructor,
+  google-global-names-in-headers,
+  google-readability-casting,
+  -bugprone-easily-swappable-parameters,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -modernize-use-trailing-return-type,
+  -portability-avoid-pragma-once,
+  -readability-identifier-length,
+  -readability-magic-numbers
+
+WarningsAsErrors: '*'
+HeaderFilterRegex: '.*'
+FormatStyle: file
+UseColor: true
+
+CheckOptions:
+  # 类型与函数 PascalCase；变量 snake_case；私有成员尾随 _；常量 k 前缀。
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumConstantPrefix
+    value: 'k'
+  - key: readability-identifier-naming.FunctionCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypeAliasCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypedefCase
+    value: CamelCase
+  - key: readability-identifier-naming.TemplateParameterCase
+    value: CamelCase
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.FieldCase
+    value: lower_case
+  - key: readability-identifier-naming.PrivateMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.PrivateMemberSuffix
+    value: '_'
+  - key: readability-identifier-naming.ConstexprVariableCase
+    value: CamelCase
+  - key: readability-identifier-naming.ConstexprVariablePrefix
+    value: 'k'
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.GlobalConstantPrefix
+    value: 'k'
+  - key: readability-identifier-naming.LocalConstantCase
+    value: lower_case
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE
+  # 函数长度：Google 建议短函数，超过 40 行提示。
+  - key: readability-function-size.LineThreshold
+    value: 40
+  - key: readability-function-size.StatementThreshold
+    value: 50
+  # 空容器/默认构造成员不加 {}；与 NSDMI 规则配套。
+  - key: readability-redundant-member-init.IgnoreBaseInCopyConstructors
+    value: true

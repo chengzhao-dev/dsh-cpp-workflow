@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "C++ Workflow",
+    "description": "A seven-step workflow for C++20 sources, CMake and Ninja builds, and clang tooling checked against the environment declared by the project."
+  }
+}

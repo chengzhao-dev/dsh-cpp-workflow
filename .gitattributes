@@ -1,2 +1,7 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Auto detect text files and keep every checkout LF-only. The plugin ships
+# C++ sources and a shell gate that reject CRLF, so a Windows checkout must
+# not rewrite line endings.
+* text=auto eol=lf
+
+# Keep shell scripts explicit for readers and for older Git versions.
+*.sh text eol=lf
