@@ -2,16 +2,18 @@
 
 **English** | [简体中文](README.md)
 
-C++20 workflow skills for [DeepSeek Harness](https://deepseek-harness.github.io/deepseek-harness/). Work moves through seven steps: behavior → boundary → declaration → implementation → build → tooling → checks. Source rules follow the Google C++ Style Guide with documented deviations; builds use CMake + Ninja; message composition uses `std::format`.
+C++20 workflow skills for [DeepSeek Harness](https://deepseek-harness.github.io/deepseek-harness/). Work moves through seven steps: behavior → boundary → declaration → implementation → build → tooling → checks. Source rules follow the Google C++ Style Guide with documented deviations; builds use CMake + Ninja; message composition uses `std::format`. Two peripheral skills cover C++ tutorial authoring and Python↔C++ collaboration, with C++ kept as the core.
 
-The plugin registers skills only. It does not register tools, scan projects, install toolchains, or rewrite project files. Project facts live in the target repository at `.agents/skills/cpp-workflow-project/`; generic rules stay in the plugin.
+The plugin registers skills only. It does not register tools, install toolchains, or rewrite project files; discovery performs one bounded read-only check. Project facts live in the target repository at `.agents/skills/cpp-workflow-project/`; generic rules stay in the plugin.
 
 ## What it provides
 
 | Skill | Steps | Owns | Does not own |
 | --- | --- | --- | --- |
-| `developing-cpp` | 1–4 | observable behavior, library/app boundary, headers and declarations, naming, exceptions, source comments, `.cpp` implementation | CMake, `.clang-*`, build scripts, docs, Python |
-| `building-cpp` | 5–7 | CMake targets, Ninja, compile database, clang-format/tidy/clangd, environment-axis checks, build script | source semantics, naming, exception bodies |
+| `developing-cpp` | 1–4 | observable behavior, library/app boundary, headers and declarations, naming, exceptions, source comments, `.cpp` implementation, types/numerics, STL, performance, domain modeling | CMake, `.clang-*`, build scripts, tutorial prose, Python orchestration |
+| `building-cpp` | 5–7 | CMake targets, Ninja, compile database, clang-format/tidy/clangd, environment-axis checks, build script, linking and runtime libraries | source semantics, naming, exception bodies |
+| `teaching-cpp` | 4 tutorial steps | reader task, concept order, examples, exercises, terminology, example validation | a second set of source rules; source and build route back to the first two skills |
+| `python-cpp-interop` | collaboration boundary | subprocesses, versioned JSON-lines protocol, timeouts and stderr, local HTTP, ctypes/pybind11 trade-offs | C++ rule semantics; Python only orchestrates, validates and displays |
 
 Skills are discovered from `skills/<name>/SKILL.md`. Step files, references, examples and assets are resolved relative to each skill directory.
 
@@ -27,12 +29,14 @@ Requires DSH 0.2.x and Node.js 22+. The published package ships compiled `lib/`;
 
 ## Workspace gate
 
-`apply()` only registers a skill provider; it never scans, probes or writes files. `list({ cwd })` returns the two skills only when:
+`apply()` only registers a skill provider; it never writes files or installs a toolchain. `list({ cwd })` returns the four skills only when:
 
 - a nearest git root can be found by walking up from `cwd`;
-- `.agents/skills/cpp-workflow-project/SKILL.md` exists between `cwd` and that git root.
+- either `.agents/skills/cpp-workflow-project/SKILL.md` exists on the path from `cwd` up to and including the git root (explicit opt-in), or the checkout contains both a `CMakeLists.txt` and a C++ source/header file (`.cpp`, `.cc`, `.cxx`, `.hpp`, `.hh`, `.hxx`, `.ixx`, `.cppm`, …).
 
-No `cwd`, no git checkout, or a marker above the git root yields an empty list. The gate affects discovery only; `get()` still serves already-loaded candidates. Project `.agents/skills` has rank 200 and the plugin has rank 550, so a project skill with the same name wins. Do not embed `developing-cpp` or `building-cpp` in a project; it would shadow the plugin and fork the generic rules.
+No `cwd`, no git checkout, CMake without C++ sources, a C++ sample without CMake, or evidence above the git root yields an empty list. The scan is bounded to depth 6 and 1500 directory entries, skips `.git`, `build`, `node_modules`, `vendor`, `third_party`, `_book`, `docs`, `examples`, `samples` and similar generated/dependency/example trees, and stops as soon as both halves are found. `get()` serves already-loaded candidates without a `cwd`; when a `cwd` is supplied it re-runs the same gate, so switching to a non-C++ directory cannot expand the body.
+
+The gate affects discovery only. Project `.agents/skills` has rank 200 and the plugin has rank 550, so a project skill with the same name wins. Do not embed any of the plugin's four skills in a project; it would shadow the plugin and fork the generic rules.
 
 ## The seven steps
 
@@ -47,6 +51,28 @@ No `cwd`, no git checkout, or a marker above the git root yields an empty list. 
 | 7 | Checks | live environment, project entry command, CTest, run | `skills/building-cpp/steps/07-check.md` |
 
 If a later step finds an earlier one incomplete, return to the broken step instead of patching the current layer. Step 5 runs the static environment check; step 7 runs `--live` before the project entry command to verify the build host, PATH roles, versions and a real `std::format` probe.
+
+## Tutorials and Python collaboration
+
+`teaching-cpp` targets books and courses without replacing source or build rules:
+
+| Step | Output |
+| --- | --- |
+| 1 | the reader's observable task |
+| 2 | prerequisites and explanation order |
+| 3 | a minimal complete example with one variation point |
+| 4 | real compile, run and measured output |
+
+The example baseline is `-std=c++20 -Wall -Wextra`; complete examples have `int main()`, snippets start with `// 片段`, output is measured, and version-sensitive features state the minimum standard. `references/` covers teaching method, chapter order, example validation, tutorial code style and terminology.
+
+`python-cpp-interop` keeps Python peripheral:
+
+- Prefer `subprocess` plus a versioned JSON-lines protocol; each snapshot has `version` and a strictly increasing `sequence`, stdout carries only snapshots, prompts and logs go to stderr.
+- Long sessions need explicit commands, timeouts and a close path; do not parse "please choose" prompts to synchronize state.
+- A local web adapter binds `127.0.0.1` only, caps the body size, and guards one session with one lock.
+- `ctypes` / `pybind11` are last resorts; first explain why the process boundary is insufficient.
+
+Runnable skeletons are `skills/python-cpp-interop/assets/replay.py` and `web_bridge.py`; both are domain-neutral and depend only on the protocol.
 
 ## Project skill
 
@@ -104,7 +130,7 @@ Copy only missing files; never overwrite existing `CMakeLists.txt`, `.clang-*`, 
 dsh-cpp-workflow/
 ├── src/index.ts              # provider and gate
 ├── lib/index.js              # tsc output, shipped
-├── skills/                   # two skills and assets
+├── skills/                   # four skills and assets
 ├── templates/                # project-skill template
 ├── docs/                     # references, layout, validation
 ├── scripts/                  # structural self-check

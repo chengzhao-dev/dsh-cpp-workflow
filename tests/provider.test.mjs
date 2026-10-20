@@ -33,10 +33,17 @@ async function addProjectSkill(root, content = '---\nname: cpp-workflow-project\
   await writeFile(file, content, 'utf8')
 }
 
-async function makeRepo({ git = true, projectSkill = true } = {}) {
+async function addCppProject(root) {
+  await writeFile(path.join(root, 'CMakeLists.txt'), 'cmake_minimum_required(VERSION 3.28)\nproject(demo LANGUAGES CXX)\n', 'utf8')
+  await mkdir(path.join(root, 'src'), { recursive: true })
+  await writeFile(path.join(root, 'src', 'main.cpp'), 'int main() { return 0; }\n', 'utf8')
+}
+
+async function makeRepo({ git = true, projectSkill = true, cpp = false } = {}) {
   const root = await makeTemp()
   if (git) await mkdir(path.join(root, '.git'))
   if (projectSkill) await addProjectSkill(root)
+  if (cpp) await addCppProject(root)
   return root
 }
 
@@ -60,6 +67,68 @@ test('a git checkout without the project skill is not a workspace', async () => 
   await rm(root, { recursive: true, force: true })
 })
 
+test('CMake plus C++ source opts in without a project skill', async () => {
+  const root = await makeRepo({ projectSkill: false, cpp: true })
+  const provider = makeProvider()
+  const candidates = await provider.list({ cwd: root })
+  assert.deepEqual(candidates.map((candidate) => candidate.name), ['building-cpp', 'developing-cpp', 'python-cpp-interop', 'teaching-cpp'])
+  await rm(root, { recursive: true, force: true })
+})
+
+test('CMake alone or C++ source alone is not a C++ project', async () => {
+  const cmakeOnly = await makeRepo({ projectSkill: false })
+  await writeFile(path.join(cmakeOnly, 'CMakeLists.txt'), 'project(demo LANGUAGES CXX)\n', 'utf8')
+  const sourceOnly = await makeRepo({ projectSkill: false })
+  await writeFile(path.join(sourceOnly, 'main.cpp'), 'int main() { return 0; }\n', 'utf8')
+  const provider = makeProvider()
+  assert.deepEqual(await provider.list({ cwd: cmakeOnly }), [])
+  assert.deepEqual(await provider.list({ cwd: sourceOnly }), [])
+  await rm(cmakeOnly, { recursive: true, force: true })
+  await rm(sourceOnly, { recursive: true, force: true })
+})
+
+test('C++ evidence in a nested subproject counts', async () => {
+  const root = await makeRepo({ projectSkill: false })
+  const nested = path.join(root, 'games', 'ttt')
+  await mkdir(nested, { recursive: true })
+  await addCppProject(nested)
+  const provider = makeProvider()
+  assert.equal((await provider.list({ cwd: root })).length, 4)
+  await rm(root, { recursive: true, force: true })
+})
+
+test('generated build output is not C++ evidence', async () => {
+  const root = await makeRepo({ projectSkill: false })
+  await writeFile(path.join(root, 'CMakeLists.txt'), 'project(demo LANGUAGES CXX)\n', 'utf8')
+  await mkdir(path.join(root, 'build'), { recursive: true })
+  await writeFile(path.join(root, 'build', 'main.cpp'), 'int main() { return 0; }\n', 'utf8')
+  const provider = makeProvider()
+  assert.deepEqual(await provider.list({ cwd: root }), [])
+  await rm(root, { recursive: true, force: true })
+})
+
+test('example-only C++ sources do not opt a documentation repository in', async () => {
+  const root = await makeRepo({ projectSkill: false })
+  await writeFile(path.join(root, 'CMakeLists.txt'), 'project(demo LANGUAGES CXX)\n', 'utf8')
+  await mkdir(path.join(root, 'examples'), { recursive: true })
+  await writeFile(path.join(root, 'examples', 'main.cpp'), 'int main() { return 0; }\n', 'utf8')
+  const provider = makeProvider()
+  assert.deepEqual(await provider.list({ cwd: root }), [])
+  await rm(root, { recursive: true, force: true })
+})
+
+test('C++ evidence above the git root does not opt in', async () => {
+  const parent = await makeTemp()
+  await addCppProject(parent)
+  const root = path.join(parent, 'repo')
+  await mkdir(root)
+  await mkdir(path.join(root, '.git'))
+  await writeFile(path.join(root, 'notes.md'), '# notes\n', 'utf8')
+  const provider = makeProvider()
+  assert.deepEqual(await provider.list({ cwd: root }), [])
+  await rm(parent, { recursive: true, force: true })
+})
+
 test('a project skill above the git root does not opt in', async () => {
   const parent = await makeTemp()
   await addProjectSkill(parent)
@@ -71,12 +140,12 @@ test('a project skill above the git root does not opt in', async () => {
   await rm(parent, { recursive: true, force: true })
 })
 
-test('the project skill opts in both skills with rank 550', async () => {
+test('the project skill opts in all four skills with rank 550', async () => {
   const root = await makeRepo()
   const provider = makeProvider()
   const candidates = await provider.list({ cwd: root })
 
-  assert.deepEqual(candidates.map((candidate) => candidate.name), ['building-cpp', 'developing-cpp'])
+  assert.deepEqual(candidates.map((candidate) => candidate.name), ['building-cpp', 'developing-cpp', 'python-cpp-interop', 'teaching-cpp'])
   for (const candidate of candidates) {
     assert.equal(candidate.rank, 550)
     assert.equal(candidate.provider, 'dsh-cpp-workflow')
@@ -99,8 +168,20 @@ test('the gate works from a deep cwd inside the checkout', async () => {
   await mkdir(nested, { recursive: true })
   const provider = makeProvider()
   const candidates = await provider.list({ cwd: nested })
-  assert.equal(candidates.length, 2)
+  assert.equal(candidates.length, 4)
   await rm(root, { recursive: true, force: true })
+})
+
+test('get() rejects a candidate when the supplied cwd is not a C++ workspace', async () => {
+  const cppRoot = await makeRepo({ projectSkill: false, cpp: true })
+  const other = await makeRepo({ projectSkill: false })
+  const provider = makeProvider()
+  const [candidate] = await provider.list({ cwd: cppRoot })
+  assert.ok(candidate)
+  assert.equal(await provider.get(candidate, { cwd: other }), undefined)
+  assert.ok(await provider.get(candidate, { cwd: cppRoot }))
+  await rm(cppRoot, { recursive: true, force: true })
+  await rm(other, { recursive: true, force: true })
 })
 
 test('an unrelated file with the same directory name does not count', async () => {

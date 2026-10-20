@@ -5,3 +5,7 @@ coverage/
 
 # Local build output produced while exercising the templates.
 build/
+
+# Python bytecode produced by local asset checks.
+__pycache__/
+*.pyc

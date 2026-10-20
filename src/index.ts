@@ -1,35 +1,40 @@
 // dsh-cpp-workflow bundle entry.
 //
-// Registers the two packaged skills as one bundle-scoped skill provider. The
+// Registers the four packaged skills as one bundle-scoped skill provider. The
 // provider is read-only and scans only `skills/<name>/SKILL.md`; each skill
 // directory becomes the resourceBase so relative steps, references, examples
 // and assets resolve from the installed package.
 //
-// The provider scopes itself to C++ workflow workspaces: `list()` returns
-// nothing unless the session cwd sits inside a git checkout whose ancestors
-// contain `.agents/skills/cpp-workflow-project/SKILL.md`. A normal repository
-// therefore never sees these two names merely because it contains C++ files.
+// The provider scopes itself to real C++ workflow workspaces: `list()` returns
+// nothing unless the session cwd sits inside a git checkout that either carries
+// the explicit `.agents/skills/cpp-workflow-project/SKILL.md` marker or contains
+// both a CMake build file and C++ source. A Markdown-only repository, a docs
+// folder, or a C++ sample outside the checkout therefore never sees these names.
 //
 // Rank 550 is lower priority than project/user skills (project `.agents/skills`
 // 200, user `.agents/skills` 500) and higher priority than the bundled root
 // (600), so a project can override either skill by name without editing the
 // package. The project skill itself (cpp-workflow-project, rank 200) is a
 // separate name and does not collide.
-import { access, readdir, readFile } from 'node:fs/promises'
+import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { isCppWorkflowWorkspace } from './workspace.js'
 
 export const name = 'dsh-cpp-workflow'
 export const inject = ['skills']
 
 const PROVIDER = 'dsh-cpp-workflow'
 const RANK = 550
-const PROJECT_SKILL = path.join('.agents', 'skills', 'cpp-workflow-project', 'SKILL.md')
-const KNOWN_SKILLS = new Set(['developing-cpp', 'building-cpp'])
+const KNOWN_SKILLS = new Set([
+  'building-cpp',
+  'developing-cpp',
+  'python-cpp-interop',
+  'teaching-cpp',
+])
 const SKILL_NAME_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const PACKAGE_ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
 const SKILLS_ROOT = path.join(PACKAGE_ROOT, 'skills')
-const MAX_ASCENT = 64
 
 interface SkillCandidate {
   name: string
@@ -60,51 +65,6 @@ interface DshContext {
   skills: {
     registerProvider: (factory: () => SkillProvider) => unknown
   }
-}
-
-async function exists(target: string): Promise<boolean> {
-  try {
-    await access(target)
-    return true
-  } catch {
-    return false
-  }
-}
-
-// Walk from the session cwd to the enclosing git root. Only an ancestor that
-// is inside that checkout may opt in: a project skill above the git root, or
-// an unrelated checkout reached through `..`, is not evidence.
-async function hasProjectSkill(cwd: string | undefined): Promise<boolean> {
-  if (typeof cwd !== 'string' || cwd.trim() === '') return false
-  let start: string
-  try {
-    start = path.resolve(cwd)
-  } catch {
-    return false
-  }
-
-  let gitRoot: string | undefined
-  let cursor = start
-  for (let depth = 0; depth < MAX_ASCENT; depth += 1) {
-    if (await exists(path.join(cursor, '.git'))) {
-      gitRoot = cursor
-      break
-    }
-    const parent = path.dirname(cursor)
-    if (parent === cursor) break
-    cursor = parent
-  }
-  if (!gitRoot) return false
-
-  cursor = start
-  for (let depth = 0; depth < MAX_ASCENT; depth += 1) {
-    if (await exists(path.join(cursor, PROJECT_SKILL))) return true
-    if (cursor === gitRoot) return false
-    const parent = path.dirname(cursor)
-    if (parent === cursor) return false
-    cursor = parent
-  }
-  return false
 }
 
 /** Minimal YAML frontmatter reader for the keys SKILL.md actually uses. */
@@ -197,7 +157,7 @@ async function readCandidate(skillDir: string): Promise<SkillCandidate | undefin
 
 async function listSkills(options: ListOptions = {}): Promise<SkillCandidate[]> {
   if (options.signal?.aborted) return []
-  if (!(await hasProjectSkill(options.cwd))) return []
+  if (!(await isCppWorkflowWorkspace(options.cwd))) return []
   if (options.signal?.aborted) return []
   let entries
   try {
@@ -219,6 +179,10 @@ async function listSkills(options: ListOptions = {}): Promise<SkillCandidate[]> 
 async function getSkill(candidate: SkillCandidate | undefined, options: ListOptions = {}) {
   if (options.signal?.aborted) return undefined
   if (!candidate || candidate.provider !== PROVIDER) return undefined
+  // A candidate can outlive a directory change in the same session. Re-check
+  // only when the caller supplies a cwd; a plain `get()` keeps working for
+  // candidates that were already discovered in this workspace.
+  if (options.cwd !== undefined && !(await isCppWorkflowWorkspace(options.cwd))) return undefined
   if (!KNOWN_SKILLS.has(candidate.name)) return undefined
   const skillDir = candidate.locator
   if (typeof skillDir !== 'string') return undefined

@@ -23,8 +23,10 @@ metadata:
 | 改动 | 打开 |
 | --- | --- |
 | `CMakeLists.txt`、target、生成器、编译数据库、输出目录 | 05 定构建 |
+| 链接失败、静态库/动态库、RPATH、`file` / `ldd` | 05 定构建，并读 `references/linking.md` |
 | `.clang-format` / `.clang-tidy` / `.clangd` / `.vscode`、格式化与静态检查命令 | 06 定工具配置 |
 | 跑入口命令、核对环境、分诊失败 | 07 通过检查 |
+| Python 驱动、JSON 行协议、本地 HTTP | 转到 `python-cpp-interop` |
 | 函数体、类型、命名、异常、源码注释 | 只开 `developing-cpp`，不要在这里改源码语义 |
 | 换编译器或换平台 | 先改项目 `environment.json`，再走 05 → 06 → 07；不要只改构建脚本 |
 

@@ -60,8 +60,21 @@ target_compile_options(greeting PRIVATE -Wall -Wextra -Werror -Wold-style-cast -
 - `target_compile_features(<target> PUBLIC cxx_std_20)`：标准是 target 属性，不是全局开关。
 - `target_link_libraries(<target> PRIVATE|PUBLIC <lib>)`：实现依赖用 `PRIVATE`，接口依赖用 `PUBLIC`。
 - 不要 `file(GLOB ...)`；显式列源文件，新增文件时改 CMake，构建系统才知道。
+- 教学用的小工程可以在讲解「为什么新增文件要重新配置」时演示 `file(GLOB CONFIGURE_DEPENDS ...)`；它只用于教学过渡，生产工程和本插件的模板仍显式列源文件。`CONFIGURE_DEPENDS` 依赖构建系统每次检查目录，跨生成器行为也不完全一致，不能当成工程规则。
 - 不把 `main()` 编进库；程序只做装配和 I/O。
 - 头文件不参与编译时，不需要 `target_sources` 列出；需要 IDE 展示时再列。
+- 组件多起来时，一个组件一个 `CMakeLists.txt`：库放 `<component>/include` 与 `<component>/src`，程序放 `apps/include` 与 `apps/src`；`apps/include` 只给程序内部用，不要被库 `PUBLIC` 导出。
+- 测试 target 等出现第二个消费者时再加，不要为单个 `main()` 提前引入测试框架；测试只链接库的公共接口。
+
+## 工程名
+
+`project()` 的名字用 PascalCase，目录名用 kebab-case：
+
+```cmake
+project(TaskList VERSION 0.1.0 LANGUAGES CXX)
+```
+
+目录 `task-list/` 对应 `project(TaskList ...)`。派生规则是「按 `-` 切分、每段首字母大写、其余保留」，不要直接照抄目录名，也不要把 `{{PROJECT_NAME}}` 留在模板里。库 target 用组件名的小写形式（`task_list` 或 `tasks`），程序 target 固定 `app`。
 
 ## 编译数据库
 
@@ -99,6 +112,14 @@ endif()
 - 只对需要直接运行构建产物的程序设置；安装规则另算。
 - 不要用全局 `LD_LIBRARY_PATH` 包装所有命令；脚本只在测试/运行共享库时设置。
 - `$ORIGIN` 在 CMake 字符串里要转义成 `\$ORIGIN` 吗？在双引号里 `$ORIGIN` 会被 CMake 当变量；写成 `"$ORIGIN/../lib"` 在 CMake 中 `$ORIGIN` 不是 `${...}`，不会被展开，保持字面量。若遇到展开问题，用 `"\$ORIGIN/../lib"`。
+
+## 标准库与编译器一致
+
+- 一个构建树只用一个 C++ 标准库实现。Clang 可以配 libstdc++（Linux 默认）或 libc++，但 `clang++`、`clang-tidy`、`clangd` 和链接进同一个程序的库必须一致。
+- `-stdlib=libc++` 是编译和链接都要的选项，不要只加在编译选项上；也不要全局 `add_compile_options`，按 target 传，或由工具链文件统一设置。
+- 混用 libstdc++ 与 libc++ 的典型症状是链接期大量未定义符号、`std::string` ABI 不匹配，或运行期崩溃；先查 `clang++ -v` 与 `ldd`，不要靠加 `-lstdc++` 掩盖。
+- 项目想固定 libc++ 时，在 `environment.json` 或工具链文件里写清，不要只写在某个人的脚本里；换机器后必须能复现同一组合。
+- 本插件默认使用目标平台默认标准库；只有项目明确要求 libc++ 时才切换，并保证整套工具一致。
 
 ## 警告与静态检查
 

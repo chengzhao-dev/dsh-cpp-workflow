@@ -107,7 +107,9 @@ main() {
 
   header "静态检查"
   if [[ ${#tidy_sources[@]} -gt 0 ]]; then
-    clang-tidy -p "${BUILD_DIR}" --header-filter='.*' \
+    clang-tidy -p "${BUILD_DIR}" \
+      --header-filter='^(include|src|apps|tests|greeting)/' \
+      --exclude-header-filter='(^|/)build/_deps/' \
       --warnings-as-errors='*' "${tidy_sources[@]}"
   else
     err "没有找到 C++ 源文件，跳过 clang-tidy"

@@ -18,15 +18,20 @@ clang-format --dry-run --Werror --fallback-style=Google src/*.cpp include/*.h te
 ## clang-tidy
 
 ```bash
-clang-tidy -p build/clang --header-filter='.*' --warnings-as-errors='*' \
-  src/*.cpp tests/*.cpp
+clang-tidy -p build/clang \
+  --header-filter='^(src|include|apps|tests)/' \
+  --exclude-header-filter='(^|/)build/_deps/' \
+  --warnings-as-errors='*' \
+  src/*.cpp apps/*.cpp tests/*.cpp
 ```
 
 - `-p` 指向当前编译器的构建目录，读取 `compile_commands.json`。
-- `--header-filter='.*'` 让项目头参与诊断；系统头默认被排除，不要加 `--system-headers`。
+- `--header-filter` 控制哪些头文件的诊断被显示，不改变 clang-tidy 实际解析哪些头；模板实例化可能让一条根因产生多条警告，警告条数不等于缺陷条数。按根因修，不要按条数修。
+- `--header-filter` 用项目头目录的白名单，不要用 `.*` 把系统头和第三方头一并纳入；`--exclude-header-filter` 排除 `build/_deps/` 下的依赖头。
+- 系统头默认被排除，不要加 `--system-headers`。
 - 只扫描项目源文件；不要把 `build/` 或第三方源码传给 clang-tidy。
 - `--warnings-as-errors='*'` 把警告当失败；修代码，不要新增 `NOLINT`。确需抑制时写 `// NOLINT(检查名): 理由`，理由必须具体。
-- 配置在工程根 `.clang-tidy`；关闭项逐条写理由，不整族关闭。
+- 配置在工程根 `.clang-tidy`；关闭项逐条写理由，不整族关闭。`cppcoreguidelines-pro-bounds-constant-array-index` 不能整族关闭；优先把下标换成 `at()` 或带边界检查的辅助函数，并补负向越界测试。
 - 没有编译数据库时先回到第 5 步生成；不要用 `--` 手工拼编译参数绕过。
 - `clang-tidy` 的诊断可能指向头文件；修头文件里的声明或实现，不要只改调用点。
 
@@ -104,6 +109,20 @@ Diagnostics:
 - 不把 `compile_commands.json` 提交进仓库；它是构建产物。
 - 切换编译器时同时改 `.clangd`、`settings.json` 和构建目录；三处不一致会让诊断指向旧代码。
 
+## 门禁分级
+
+`--warnings-as-errors='*'` 是默认门禁。若项目必须把一组诊断先设为观察项，按检查名逐条写进项目脚本，不按 `*` 整族降级：
+
+| 级别 | 典型检查 | 处理 |
+| --- | --- | --- |
+| 失败 | `bugprone-*`、`readability-math-missing-parentheses`、`readability-identifier-naming`、项目声明的致命集 | 修代码；不允许用 NOLINT 掩盖 |
+| 失败 | 编译诊断、链接诊断、格式检查 | 直接失败 |
+| 观察 | 迁移期暂时无法修完的 `modernize-*` | 在项目技能里列清单、写负责人和退出条件；不默认全仓关闭 |
+
+- 致命集宁可小、可解释，也不要把所有检查一刀切。
+- 观察项不是免死金牌：新代码不应新增观察项，已有项只能减少。
+- 关闭某条检查时，在 `.clang-tidy` 里写一行理由，并在项目技能里记录退出条件。
+
 ## 版本与一致性
 
 - `clang-format` / `clang-tidy` ≥ 16；clang 模式下与 `clang++`、`clangd` 同主版本。
@@ -117,6 +136,6 @@ Diagnostics:
 | `clang-tidy` 报找不到编译数据库 | 没 configure 或路径错 | 回到 05 生成 `build/<compiler>/compile_commands.json` |
 | clangd 报找不到系统头 | 编译数据库里的编译器是相对路径 | 用绝对路径重新 configure，或配 `--query-driver` |
 | 格式化结果与 CI 不同 | 版本不同或配置不是工程根那份 | 统一版本，确认 `.clang-format` 在工程根 |
-| tidy 报系统头 | 加了 `--system-headers` 或 header-filter 过宽 | 去掉 `--system-headers`，用 `--header-filter='.*'` |
+| tidy 报系统头 | 加了 `--system-headers` 或 header-filter 过宽 | 去掉 `--system-headers`，用项目头目录白名单 |
 | 大量 `readability-*` | 代码风格未统一 | 回到 `developing-cpp` 的 03/04 修声明与实现，不要批量 NOLINT |
 | clangd 与 tidy 诊断不一致 | 两者读的数据库/版本不同 | 统一 `CompilationDatabase` 与工具版本 |

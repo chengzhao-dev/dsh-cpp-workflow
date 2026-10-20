@@ -150,3 +150,83 @@ void RemoveTask();
 ```
 
 横幅是跳转锚点，不是装饰；一组函数一个横幅，单函数不加。
+
+## 枚举行尾注释
+
+**差**：
+
+```cpp
+enum class Status : std::uint8_t {
+  kInProgress,  // 进行中
+  kDraw,        // 平局
+  kXWins,       // X 获胜
+  kOWins        // O 获胜
+};
+```
+
+问题：四个成员都写等于没写，且把名字重复了一遍。
+
+**好**：
+
+```cpp
+enum class Status : std::uint8_t {
+  kInProgress,  ///< 对局继续，尚未判定结果
+  kDraw,        ///< 平局
+  kXWins,       ///< X 获胜
+  kOWins        ///< O 获胜
+};
+```
+
+若只有部分成员需要解释，同一枚举内要写就写全，或全不写；不要半套。语义结果写在最前，判定条件放冒号后。
+
+## 声明注释的完整契约
+
+**差**：
+
+```cpp
+/// 放置棋子。
+/// @param row 行
+/// @param col 列
+void Place(int row, int col, Mark mark);
+```
+
+**好**：
+
+```cpp
+/// 在 (row, col) 放置当前玩家的棋子。
+///
+/// @param row 行下标，必须在 [0, rows) 内
+/// @param col 列下标，必须在 [0, cols) 内
+/// @param mark 要放置的棋子，不能是 kEmpty
+/// @throws std::out_of_range 坐标越界
+/// @throws std::invalid_argument mark 为 kEmpty，或该位置已有棋子
+void Place(std::int32_t row, std::int32_t col, Mark mark);
+```
+
+只写调用者无法从签名推出来的内容：范围、所有权、失败方式。`@brief` 不写，第一行就是摘要。
+
+## 相邻注释
+
+**差**：
+
+```cpp
+// 这里先检查边界
+// 然后检查占用
+// 最后写入
+if (!InRange(row, col)) return false;
+if (cells_[Index(row, col)] != Mark::kEmpty) return false;
+cells_[Index(row, col)] = mark;
+return true;
+```
+
+**好**：
+
+```cpp
+// 先检查再写入：失败时不留下半完成状态。
+if (!InRange(row, col)) return false;
+if (cells_[Index(row, col)] != Mark::kEmpty) return false;
+cells_[Index(row, col)] = mark;
+return true;
+```
+
+一段连续的实现注释只讲一个判断或一个取舍；不是逐行字幕。

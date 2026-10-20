@@ -26,12 +26,18 @@
 | --- | --- | --- | --- |
 | 查询 | `Get` | `GetCurrentOrder()` | 只读、不改变状态；返回成员时按 `const` 引用 |
 | 判断 | `Is` / `Has` / `Can` | `IsInRange()`, `HasStock()` | 返回 `bool`，不抛异常 |
+| 查找 | `Find` | `FindItem()` | 找不到是正常结果，返回 `optional` 或迭代器，不抛 |
+| 计数 | `Count` | `CountEmptySlots()` | 返回数量，不修改状态 |
 | 尝试 | `Try` | `TryReserve()` | 可能失败但不抛异常，返回结果类型 |
 | 确定性动作 | 领域动词 | `PlaceItem()`, `Reset()` | 前置条件满足时一定成功；违反合同才抛 |
 | 计算 | 动词开头 | `ScoreOrder()` | 从输入算出结果，不修改外部状态 |
 | 映射 | `<来源>To<目标>` | `OrderToReceipt()` | 名字必须含两端角色 |
 | 读写 | `Read` / `Write` | `ReadInventory()`, `WriteInventory()` | 涉及 I/O 时用；不要在库核心用 |
 | 访问器 | `Get` + PascalCase | `GetHistory()` | 不用成员名直接当函数名 |
+
+- 返回 `bool` 的 lambda 也用 `is_` / `has_` / `can_` 命名：`auto is_empty = [](const Order& order) { ... };`。
+- `Find` 不把“没找到”当异常；`Get` 在前置条件不满足时可以抛 `std::out_of_range`。两者不要互换。
+- 查询返回多个值时用 `struct`，不要用三个 `GetXxx()` 加输出参数。
 
 - 禁止裸 `To()` / `Of()`：调用点看不出方向。
 - 禁止 `Set` + 成员名的伪访问器；需要修改时用领域动作（`PlaceItem` 而不是 `SetItem`）。

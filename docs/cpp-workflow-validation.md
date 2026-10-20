@@ -1,6 +1,17 @@
 # 流程与约定校验
 
-这份文档记录本插件为什么采用现在的七步顺序、哪些结论来自官方文档、哪些来自对 `D:\Github\cpp-board-games` 的逐文件审计，以及哪些地方是有意偏离 Google C++ Style Guide 的。它是设计记录，不是给技能运行时的规则；技能正文在 `skills/`。
+这份文档记录本插件为什么采用现在的七步顺序、哪些结论来自官方文档、哪些来自对 `D:\Github\cpp-board-games` 与 `D:\Github\cpp-notes` 的逐文件审计，以及哪些地方是有意偏离 Google C++ Style Guide 的。它是设计记录，不是给技能运行时的规则；技能正文在 `skills/`。
+
+## 2026-10-20 内容合并记录
+
+本轮把两个来源仓库中的通用 C++ 材料合并进插件，并在来源仓库删除已迁走的重复副本：
+
+- `cpp-notes` 的 `.agents/skills/writing-cpp/references/cpp/`、`code-style.md`、`cmake-teaching.md`、`engineering.md`、`cpp.md`、`primitive-types-and-numeric-safety.md` 等条文，合并为 `developing-cpp/references/{language,types,standard-library,performance,project-design,comments,naming,google-cpp-style}.md`；教程写作方法独立成 `teaching-cpp`。
+- `cpp-board-games` 的 `cpp-teaching` 约定与 `designing-game` 的 P0 合并为 `developing-cpp/references/project-design.md` 和必要的风格条文；其 Python 编排经验独立成 `python-cpp-interop`，并带可运行骨架。
+- 链接与运行库、静态检查边界、CMake 教学与工程差异、注释与术语细条，分别补进 `building-cpp/references/{linking,cmake,static-analysis}.md` 与 `developing-cpp/references/{comments,naming,glossary,declaration-order,exceptions}.md`。
+- 两个来源仓库的 `content/**`、`code/**`、`games/**`、Quarto 工具链和已发布章节属于书的产品，不迁走；只删除被合并后不再承担权威职责的重复规则与配置副本。
+
+冲突取舍：来源材料同时出现 80 列与 100 列，插件保持 **100 列**；教材允许小工程用 `file(GLOB CONFIGURE_DEPENDS)`，工程构建仍要求显式源文件；来源用 `build/` 和 `-stdlib=libc++`，插件仍用 `build/<compiler>` 和 target 属性，不全局写 `-stdlib`。这些差异不是遗漏，而是刻意拒绝来源里的环境硬编码。
 
 ## 结论摘要
 
@@ -81,7 +92,7 @@
 | 用 `cpplint.py` | clang-format + clang-tidy | 自动修复和编译数据库集成更好；不额外维护 Python 工具 |
 | 项目头按源根相对路径包含 | 从组件 `PUBLIC include/` 裸文件名包含 | 组件边界清晰，禁止 `"ns/..."` 和尖括号项目头 |
 | 不规定枚举底层类型 | 封闭状态枚举用 `enum class Name : std::uint8_t` | 状态码数量有限，固定底层类型便于序列化和 ABI 稳定；坐标不用 |
-| `int` 表示尺寸/坐标 | 保留 `int`，但越界检查同时查负数和上界 | Google 允许 `int`；项目把「负数也非法」写成显式合同 |
+| `int` 表示尺寸/坐标 | 领域坐标用 `std::int32_t`，容器下标用 `std::size_t`，状态枚举底层用 `std::uint8_t` | 协议和布局要有可预测宽度；负坐标不能交给无符号类型 |
 | C++20，不用 C++23 | 相同；输出用 `std::cout << std::format(...)` | C++20 没有 `std::print`；不引入 C++23 |
 | 不用 `using namespace`、不在 `std` 里声明 | 相同 | 保持 |
 | 尽量用返回值，少用输出参数 | 相同 | 保持 |
@@ -117,13 +128,13 @@
 - 一个仓库只有一份 `environment.json`；不按 target 或子目录切换编译器。
 - 生成器固定 Ninja；编译器每 configure 只选一个；构建目录固定 `build/<compiler>`。
 - 不提供 MSVC/clang-cl、C-only、调试器、ASan、vcpkg/Conan、Debug/Release 轴；这些是 v1 的非目标。
-- 不修改 `cpp-board-games`；本轮只把它当规则来源和审计对象。
+- `cpp-notes` 与 `cpp-board-games` 在本轮只做「先合并、后删除重复副本」：书稿、可运行示例和发布工具链保留；不提交两个来源仓库里原有的未完成重构。
 
 ## 架构参考
 
 - DSH 技能子系统文档：`https://deepseek-harness.github.io/deepseek-harness/en/reference/subsystems/skills`。`SkillProvider` 是 `{ name, list(options), get(candidate, options) }`，通过 `ctx.skills.registerProvider` 注册；项目级发现 rank 200，bundled rank 600。本插件用 rank 550，位于两者之间：项目技能同名时 rank 200 胜出。
 - 发布文档：`https://deepseek-harness.github.io/deepseek-harness/develop/basic/publish`。bundle 用 `dsh.bundle.patch` 组合，`engines.dsh` 是硬范围；本包只插入一行 `id: cpp-workflow`，不替换官方行。
-- 参考包 `D:\Github\dsh-quarto-book`：同样的 `src/index.ts` → `lib/index.js`、`skills/<name>/SKILL.md`、locale、icon、bundle patch、工作区门禁；本插件复用这套包形，但把门禁从 `_quarto.yml` 换成项目技能标记。
+- 参考包 `D:\Github\dsh-quarto-book`：同样的 `src/index.ts` → `lib/index.js`、`skills/<name>/SKILL.md`、locale、icon、bundle patch、工作区门禁；本插件复用这套包形，但门禁改成「项目技能标记或 git 根内 CMake + C++ 源文件」。
 - 下载量快照：`https://www.dsh.so/data/npm-downloads.json`（2026-10-18 生成，窗口 2026-10-11..18，前 100 名）。前 100 没有 C++ 专用插件；`dsh-embedded-workbench@0.9.4` 是最接近的 C/C++ 参考，采用一个 bundle 加多个技能和 references 的形态。因此本插件不发明新的运行时协议，只按 DSH bundle + skill provider 的官方形状实现。
 - `@dsh-lsp-packs/dsh-lsp-cpp` 在 npm registry 返回 404，无法作为依赖或设计依据；`dsh-code-navigator@0.1.0` 存在，但它的编译数据库实现细节本轮没有确认，所以只作为生态观察，不进入实现。`dsh-embedded-workbench` 的 C++ 内容和多技能布局已检查，作为结构参考。
 
@@ -131,9 +142,9 @@
 
 在 2026-10-20 的本机与 WSL Ubuntu 上执行：
 
-- `npm test`：24 个测试通过（provider 门禁 9 个、checker 静态/CLI/live 分支 15 个）。测试只用临时目录和 fixtures，不依赖本机 C++ 工具链。
-- `npm run check`：先构建 `lib/`，结构检查输出「结构检查通过」，再跑同一组 24 个样例测试；`bash -n` 覆盖随包脚本。
-- `npm run pack:check`：`npm pack --dry-run` 成功，包内 69 个文件，包含 `lib/`、两个技能、模板、docs、locale、patch、icon 与两个 README；包大小 79.7 kB，解包 215.7 kB。
+- `npm test`：33 个测试通过（provider 门禁 16 个、checker 静态/CLI/live 分支 15 个、Python 资产 2 个）。测试只用临时目录和 fixtures，不依赖本机 C++ 工具链。
+- `npm run check`：先构建 `lib/`，结构检查输出「结构检查通过」，再跑同一组 33 个测试；`bash -n` 覆盖随包脚本。
+- `npm run pack:check`：`npm pack --dry-run` 成功，包内文件包含 `lib/`、四个技能、模板、docs、locale、patch、icon 与两个 README；具体包大小以最终一次输出为准。
 - WSL Ubuntu（clang 21.1.8、cmake 4.2.3、ninja 1.13.2）真实编译并运行 `single`、`multi`、`static-library`、`shared-library` 四个模板：configure、构建、编译数据库软链接、换行检查、clang-format、clang-tidy、CTest `app_smoke`、`app` 全部通过，输出 `Hello, C++20!`；编译数据库里的标准是 `-std=c++20`（不是 `gnu++20`）。
 - 同一 WSL 内独立验证 `std::format` 探针：`clang++ -std=c++20` 编译并输出 `hello, cpp`。
 - 把 `assets/config/.clang-format` 与 `.clang-tidy` 放进四个模板后再跑：`misc-include-cleaner` 先报 `multi` 的 `greeting.cpp` 没有直接包含 `<string>`/`<string_view>`，补上后四个模板的格式、静态检查、CTest、运行全部通过。这条真实失败证明「模板能用」和「模板配自己的配置也能用」是两件事。

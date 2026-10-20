@@ -2,18 +2,20 @@
 
 [English](README.en.md) | **简体中文**
 
-为 [DeepSeek Harness](https://deepseek-harness.github.io/deepseek-harness/) 提供一套 C++20 工程技能：按「定行为 → 定边界 → 定声明 → 定实现 → 定构建 → 定工具配置 → 通过检查」推进，源码规则以 Google C++ Style Guide 为基线，构建统一用 CMake + Ninja，输出组合优先用 `std::format`。
+为 [DeepSeek Harness](https://deepseek-harness.github.io/deepseek-harness/) 提供一套 C++20 工程技能：按「定行为 → 定边界 → 定声明 → 定实现 → 定构建 → 定工具配置 → 通过检查」推进，源码规则以 Google C++ Style Guide 为基线，构建统一用 CMake + Ninja，输出组合优先用 `std::format`。另配 C++ 教程写作与 Python↔C++ 协作两个外围技能，C++ 始终是核心。
 
-插件只注册技能，不注册工具，不扫描项目，不安装工具链，也不改写工程文件。项目级事实放在目标仓库的 `.agents/skills/cpp-workflow-project/`，通用规则留在插件里。
+插件只注册技能，不注册工具，不安装工具链，也不改写工程文件；发现技能时只做一次有界的只读检查。项目级事实放在目标仓库的 `.agents/skills/cpp-workflow-project/`，通用规则留在插件里。
 
 ## 提供什么
 
 | 技能 | 覆盖 | 负责 | 不负责 |
 | --- | --- | --- | --- |
-| `developing-cpp` | 第 1–4 步 | 可观察行为、库与程序边界、头文件与声明、命名、异常、源码注释、`.cpp` 实现 | CMake、`.clang-*`、构建脚本、文档、Python |
-| `building-cpp` | 第 5–7 步 | CMake target、Ninja、编译数据库、clang-format/tidy/clangd、环境三轴校验、构建脚本 | 源码语义、命名、异常正文 |
+| `developing-cpp` | 第 1–4 步 | 可观察行为、库与程序边界、头文件与声明、命名、异常、源码注释、`.cpp` 实现、类型/数值、STL、性能、领域建模 | CMake、`.clang-*`、构建脚本、教材正文、Python 编排 |
+| `building-cpp` | 第 5–7 步 | CMake target、Ninja、编译数据库、clang-format/tidy/clangd、环境三轴校验、构建脚本、链接与运行库 | 源码语义、命名、异常正文 |
+| `teaching-cpp` | 教程四步 | 读者任务、概念顺序、示例、练习、术语、示例验证 | 另立一套源码规则；源码和构建分别回前两个技能 |
+| `python-cpp-interop` | 协作边界 | 子进程、带版本的 JSON 行协议、超时与 stderr、本地 HTTP、ctypes/pybind11 取舍 | C++ 规则语义；Python 只做编排、验证和展示 |
 
-两个技能从包内 `skills/<name>/SKILL.md` 发现，按需加载。步骤文件、references、examples 和 assets 都以技能目录为基准解析相对路径。
+四个技能从包内 `skills/<name>/SKILL.md` 发现，按需加载。步骤文件、references、examples 和 assets 都以技能目录为基准解析相对路径。
 
 ## 安装
 
@@ -27,13 +29,15 @@ dsh plugin --profile web add npm:dsh-cpp-workflow@0.1.0
 
 ## 工作区门禁
 
-`apply()` 只注册技能 provider，不扫描、不探测、不写文件。provider 的 `list({ cwd })` 决定这次会话能不能看见两个技能：
+`apply()` 只注册技能 provider，不写文件、不装工具链。provider 的 `list({ cwd })` 决定这次会话能不能看见四个技能：
 
 - 从 `cwd` 向上找到最近的 git 根；
-- 在 `cwd` 到 git 根之间，必须存在 `.agents/skills/cpp-workflow-project/SKILL.md`；
-- 没有 `cwd`、不在 git checkout、标记在 git 根之上，都返回空列表。
+- 满足下面任一条：`cwd` 到 git 根沿途的某一层存在 `.agents/skills/cpp-workflow-project/SKILL.md`（显式选用），或 git 根内同时存在 `CMakeLists.txt` 与 C++ 源文件/头文件（`.cpp`、`.cc`、`.cxx`、`.hpp`、`.hh`、`.hxx`、`.ixx`、`.cppm` 等）；
+- 没有 `cwd`、不在 git checkout、只有 CMake 没有 C++ 源文件、只有 C++ 示例没有 CMake、标记或工程在 git 根之上，都返回空列表。
 
-门禁只影响技能发现，不影响 `get()` 对已加载 candidate 的正文读取。项目 `.agents/skills` 的 rank 是 200，插件是 550：同名技能由项目层胜出。**不要把 `developing-cpp` 或 `building-cpp` 嵌进项目**，否则项目里那份会覆盖插件正文，通用规则就会分叉。
+扫描只用于这次候选发现，限制深度 6 层、最多 1500 个目录项，并跳过 `.git`、`build`、`node_modules`、`vendor`、`third_party`、`_book`、`docs`、`examples`、`samples` 等生成、依赖或示例目录；命中 `CMakeLists.txt` 与 C++ 源文件后立即停止。`get()` 在不带 `cwd` 时只读已加载 candidate；带 `cwd` 时重新过同一道门禁，避免同一会话切到非 C++ 目录后仍能展开正文。
+
+门禁只影响技能发现，不影响项目层同名技能的覆盖。项目 `.agents/skills` 的 rank 是 200，插件是 550：同名技能由项目层胜出。**不要把插件的四个技能嵌进项目**，否则项目里那份会覆盖插件正文，通用规则就会分叉。
 
 ## 七步流程
 
@@ -48,6 +52,28 @@ dsh plugin --profile web add npm:dsh-cpp-workflow@0.1.0
 | 7 | 通过检查 | 环境 live、入口命令、CTest、运行 | `skills/building-cpp/steps/07-check.md` |
 
 后一步发现前一步不完整时，退回被打破的那一步重走，不在当前层打补丁。第 5 步先做环境**静态**校验；第 7 步跑入口命令前再做 `--live`，检查真实 build host、PATH 角色、版本和 `std::format` 探针。
+
+## 教程与 Python 协作
+
+`teaching-cpp` 面向教材和课程，不替代源码与构建规则：
+
+| 步 | 产出 |
+| --- | --- |
+| 1 | 读者的可观察任务 |
+| 2 | 前置概念与讲解顺序 |
+| 3 | 最小完整示例与一个变化点 |
+| 4 | 真实编译、运行、测量输出 |
+
+示例基线是 `-std=c++20 -Wall -Wextra`；完整示例有 `int main()`，片段以 `// 片段` 开头；输出必须实测，版本特性标注最低标准。`references/` 里有讲解方法、章节顺序、示例验证、教学代码风格和术语口径。
+
+`python-cpp-interop` 把 Python 限定在外围：
+
+- 首选 `subprocess` + 带版本的 JSON 行协议；每条快照有 `version`、严格递增的 `sequence`，stdout 只放快照，提示和日志走 stderr。
+- 长会话要有显式命令、超时、关闭路径；不让 Python 解析「请选择」这类提示来同步状态。
+- 本地 Web 只绑定 `127.0.0.1`，请求体有上限，一个会话一个锁。
+- `ctypes` / `pybind11` 是最后手段，先说明进程边界为什么不够。
+
+可运行骨架在 `skills/python-cpp-interop/assets/replay.py` 与 `web_bridge.py`；两者都不依赖项目专属名称，只依赖协议。
 
 ## 项目级约定
 
@@ -109,7 +135,7 @@ node skills/building-cpp/scripts/checking-environment.mjs --project <repo> --jso
 dsh-cpp-workflow/
 ├── src/index.ts              # provider 与门禁
 ├── lib/index.js              # tsc 产物，随包发布
-├── skills/                   # 两个技能与 assets
+├── skills/                   # 四个技能与 assets
 ├── templates/                # 项目技能模板
 ├── docs/                     # 创建参考、结构、校验记录
 ├── scripts/                  # 结构自检

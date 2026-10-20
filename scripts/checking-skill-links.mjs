@@ -52,6 +52,11 @@ const expected = {
     'references/comments.md',
     'references/layout.md',
     'references/glossary.md',
+    'references/types.md',
+    'references/language.md',
+    'references/standard-library.md',
+    'references/performance.md',
+    'references/project-design.md',
     'examples/structure.md',
     'examples/naming.md',
     'examples/comments.md',
@@ -66,6 +71,7 @@ const expected = {
     'references/cmake.md',
     'references/static-analysis.md',
     'references/build-script.md',
+    'references/linking.md',
     'examples/environment.md',
     'examples/cmake.md',
     'examples/tooling.md',
@@ -83,6 +89,23 @@ const expected = {
     'assets/templates/projects/multi/CMakeLists.txt',
     'assets/templates/projects/static-library/CMakeLists.txt',
     'assets/templates/projects/shared-library/CMakeLists.txt',
+  ],
+  'python-cpp-interop': [
+    'SKILL.md',
+    'references/protocol.md',
+    'references/process-boundary.md',
+    'references/web-adapter.md',
+    'references/bindings.md',
+    'assets/replay.py',
+    'assets/web_bridge.py',
+  ],
+  'teaching-cpp': [
+    'SKILL.md',
+    'references/teaching-method.md',
+    'references/chapter-order.md',
+    'references/example-validation.md',
+    'references/code-style.md',
+    'references/terminology.md',
   ],
 }
 
@@ -114,6 +137,8 @@ for (const file of [
 const skills = [
   ['developing-cpp', ['1', '2', '3', '4']],
   ['building-cpp', ['5', '6', '7']],
+  ['python-cpp-interop', []],
+  ['teaching-cpp', []],
 ]
 for (const [skill, numbers] of skills) {
   const skillFile = `skills/${skill}/SKILL.md`

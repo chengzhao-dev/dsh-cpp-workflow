@@ -23,7 +23,7 @@
 5. **build**：`cmake --build "$BUILD_DIR"`。
 6. **编译数据库链接**：先 `rm -f build/compile_commands.json`，再 `ln -s "${COMPILER}/compile_commands.json" build/compile_commands.json`；不用 `ln -n`，它在 BSD/macOS 上不可移植。
 7. **format**：收集项目源码，`clang-format --dry-run --Werror --fallback-style=Google`；没有源文件时跳过。
-8. **tidy**：`clang-tidy -p "$BUILD_DIR" --header-filter='.*' --warnings-as-errors='*'` 扫描项目源文件。
+8. **tidy**：`clang-tidy -p "$BUILD_DIR" --header-filter='^(include|src|apps|tests|greeting)/' --exclude-header-filter='(^|/)build/_deps/' --warnings-as-errors='*'` 扫描项目源文件。
 9. **test**：`ctest --test-dir "$BUILD_DIR" --output-on-failure`；没有测试时 CTest 成功。
 10. **run**：`(cd "$BUILD_DIR/bin" && "./$APP_NAME")`；共享库需要时只在这一步设置 `LD_LIBRARY_PATH`。
 

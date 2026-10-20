@@ -36,7 +36,7 @@ DSH 的技能发现按 rank 决定同名优先级，**数值越小优先级越�
 - 头文件保护用 `#define`，明确不用 `#pragma once`。
 - 列宽 80；提供 `cpplint.py`。
 
-偏差表在 `skills/developing-cpp/references/google-cpp-style.md`，理由在 `docs/cpp-workflow-validation.md`。书面偏离集中在八类：异常、`#pragma once`、100 列、`Get` 访问器、`.h/.cpp` 扩展、用 clang-format/tidy 代替 cpplint、项目头裸文件名、封闭状态枚举的底层类型。其余是编译器/工具链选择，不是风格偏离。
+偏差表在 `skills/developing-cpp/references/google-cpp-style.md`，理由在 `docs/cpp-workflow-validation.md`。书面偏离集中在九类：异常、`#pragma once`、100 列、`Get` 访问器、`.h/.cpp` 扩展、用 clang-format/tidy 代替 cpplint、项目头裸文件名、封闭状态枚举的底层类型、领域坐标/容器下标的定宽整型。其余是编译器/工具链选择，不是风格偏离。
 
 ## std::format 与 CMake
 
@@ -47,9 +47,9 @@ DSH 的技能发现按 rank 决定同名优先级，**数值越小优先级越�
 - `CMAKE_EXPORT_COMPILE_COMMANDS` 只对 Makefile/Ninja 生效；本项目固定 Ninja。
 - clangd 系统头：`https://clangd.llvm.org/guides/system-headers`。`--query-driver` 是 clangd 命令行参数，不是 `.clangd` 键；本插件把它放在 `.vscode/settings.json` 的 `clangd.arguments`，`.clangd` 只写 `CompilationDatabase`。
 
-## cpp-board-games 审计来源
+## cpp-board-games 与 cpp-notes 审计来源
 
-逐文件读过：
+逐文件读过 `cpp-board-games`：
 
 - `.agents/skills/cpp-teaching/developing-cpp/SKILL.md`
 - 同目录 `references/{cpp-spine,build-and-run,google-cpp-style}.md`、`references/stages/tictactoe.md`
@@ -58,13 +58,22 @@ DSH 的技能发现按 rank 决定同名优先级，**数值越小优先级越�
 - `assets/templates/projects/{common,single,multi,static-library,shared-library}/**`
 - `.agents/context/conventions/cpp-teaching/cpp/**`、`naming/cpp-identifiers.md`、`build/**`
 - `.agents/knowledge/cpp-teaching/cases/**`、`.agents/context/glossary/cpp-terms.md`
+- `games/tictactoe/{CMakeLists.txt,apps,tests,tictactoe,running-build.sh,python/**}`
 
-采用它的 Google 命名/声明/注释/异常分层，改写掉 WSL+Clang+libc++ 的硬编码、全局 CMake 设置、游戏/知识库耦合和 `run.ps1` 编排。没有修改该仓库。
+逐文件读过 `cpp-notes`：
+
+- `.agents/skills/writing-cpp/{SKILL.md,references/cpp/**,references/tasks/**}`、`scripts/{scaffold_chapter,verify_examples}.py`、`templates/**`
+- `.agents/context/conventions/{comments,cpp-style,declaration-order,exceptions,list-initialization,static-analysis}.md`
+- `.agents/context/glossary/cpp-terms.md`
+- `.agents/knowledge/cpp-teaching/{cases,design,path,stl,toolchain,types}/**`
+- `code/**` 与 `content/**` 的章节引用关系
+
+采用它的 Google 命名/声明/注释/异常分层、数值与类型规则、链接阶段、教程方法和 Python 协议骨架；改写掉 WSL+Clang+libc++ 的硬编码、全局 CMake 设置、游戏/知识库耦合、80 列与 100 列的冲突、以及把提示文本当协议同步点的脆弱做法。两个来源仓库只删除已迁走的重复规则/配置，不提交它们原有的未完成重构。
 
 ## 设计选择与理由
 
-- **两个技能、一个 bundle**：`developing-cpp`（1–4 步）和 `building-cpp`（5–7 步）共用七步顺序，但加载边界清楚。源码任务不会把 CMake 规则带进来，构建任务也不会改源码语义。
-- **rank 550 + 项目技能门禁**：通用技能不应出现在每个 C++ 仓库；只有存在 `.agents/skills/cpp-workflow-project/SKILL.md` 的 git checkout 才返回候选。项目技能放工程事实，通用规则留插件，避免复制分叉。
+- **四个技能、一个 bundle**：`developing-cpp`（1–4 步）、`building-cpp`（5–7 步）共用主流程；`teaching-cpp` 负责教材写作，`python-cpp-interop` 负责 Python 外围。源码任务不会把 CMake 或教材规则带进来，Python 也不会反向定义 C++ 语义。
+- **rank 550 + C++ 工作区门禁**：通用技能不应出现在每个仓库；只有 `cwd` 到 git 根沿途有项目技能标记，或 git 根内同时有 CMake 与 C++ 源文件时才返回候选。纯 Markdown 仓库、只有 CMake 或只有 C++ 示例的目录都不触发。项目技能放工程事实，通用规则留插件，避免复制分叉。
 - **不注册工具**：v1 只提供技能。构建和检查通过项目入口命令完成，插件不在宿主会话里启动编译器或写项目文件。
 - **环境三轴**：`host` / `build_host` / `compiler` 是三个独立事实，不能压成一个「WSL + Clang」默认值。检查器只读，不安装、不修改 PATH。
 - **`build/<compiler>`**：两套数据库不互相覆盖；根 `build/compile_commands.json` 软链接给默认读取 `build/` 的编辑器用。

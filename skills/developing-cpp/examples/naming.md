@@ -91,6 +91,65 @@ namespace string_utils {  // 一组自由函数
 
 避免 `Manager`、`Helper`、`Util`；名字要能回答「它负责什么」。一组无状态函数用命名空间，不要造类。
 
+## 查找与读取
+
+**差**：
+
+```cpp
+[[nodiscard]] Task GetTask(std::string_view name) const;  // 可能找不到时返回什么？
+[[nodiscard]] bool FindTask(std::string_view name) const; // 返回 bool 却叫 Find
+```
+
+**好**：
+
+```cpp
+[[nodiscard]] const Task& GetTask(std::string_view name) const;  // 找不到抛 out_of_range
+[[nodiscard]] const Task* FindTask(std::string_view name) const; // 找不到返回 nullptr
+[[nodiscard]] bool HasTask(std::string_view name) const;         // 只回答存在性
+```
+
+`Get` 表示结果一定存在（或按合同失败），`Find` 表示可能找不到，`Has` / `Contains` 只回答是否存在。不要用 `Find` 返回 `bool`。
+
+## 谓词与 Lambda
+
+**差**：
+
+```cpp
+bool valid(int value);
+auto check = [](const Task& task) { return task.done; };
+```
+
+**好**：
+
+```cpp
+[[nodiscard]] bool IsValid(int value);
+auto is_done = [](const Task& task) { return task.done; };
+auto has_owner = [](const Task& task) { return !task.owner.empty(); };
+```
+
+返回 `bool` 的自由函数用 `Is` / `Has` / `Can` / `Should` 开头；Lambda 用 snake_case 的 `is_` / `has_` / `can_`，读起来像条件。
+
+## 多返回值
+
+**差**：
+
+```cpp
+bool Parse(std::string_view text, int* out_value);   // 出参 + 返回 bool
+```
+
+**好**：
+
+```cpp
+struct ParseResult {
+  bool ok{false};
+  int value{0};
+};
+
+[[nodiscard]] ParseResult TryParse(std::string_view text);
+```
+
+需要同时表达成功与结果时，用带字段的结构体或 `std::optional`，不要用输出参数加布尔返回。
+
 ## 改名检查
 
 - 搜全部调用点：声明、定义、测试、注释、文档。
