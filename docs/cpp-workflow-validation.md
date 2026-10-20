@@ -10,6 +10,7 @@
 - `cpp-board-games` 的 `cpp-teaching` 约定与 `designing-game` 的 P0 合并为 `developing-cpp/references/project-design.md` 和必要的风格条文；其 Python 编排经验独立成 `python-cpp-interop`，并带可运行骨架。
 - 链接与运行库、静态检查边界、CMake 教学与工程差异、注释与术语细条，分别补进 `building-cpp/references/{linking,cmake,static-analysis}.md` 与 `developing-cpp/references/{comments,naming,glossary,declaration-order,exceptions}.md`。
 - 两个来源仓库的 `content/**`、`code/**`、`games/**`、Quarto 工具链和已发布章节属于书的产品，不迁走；只删除被合并后不再承担权威职责的重复规则与配置副本。
+- 清理后，`cpp-notes` 的 `writing-cpp` 只保留任务矩阵、校验/脚手架脚本和章节模板；`cpp-board-games` 的 `cpp-workflow-project` 只保留项目事实、入口脚本和阶段表。两个书稿仍需保留可独立构建的 `code/**`、`games/**` 与最小脚手架配置，否则正文链接、读者复现和 CI 会断；这些保留项不再承载通用规则，通用规则以本插件为准。
 
 冲突取舍：来源材料同时出现 80 列与 100 列，插件保持 **100 列**；教材允许小工程用 `file(GLOB CONFIGURE_DEPENDS)`，工程构建仍要求显式源文件；来源用 `build/` 和 `-stdlib=libc++`，插件仍用 `build/<compiler>` 和 target 属性，不全局写 `-stdlib`。这些差异不是遗漏，而是刻意拒绝来源里的环境硬编码。
 
