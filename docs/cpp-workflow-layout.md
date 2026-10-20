@@ -40,7 +40,7 @@ dsh-cpp-workflow/
 │   └── python-cpp-interop/       # Python 外围编排
 │       ├── SKILL.md
 │       ├── references/           # 协议、进程边界、本地 HTTP、绑定取舍
-│       └── assets/               # replay.py、web_bridge.py
+│       └── assets/               # replay.py、web_bridge.py、snapshot_demo.cpp
 ├── templates/cpp-workflow-project/   # 复制到目标仓库的项目技能
 ├── docs/                         # 创建参考、结构、校验记录
 ├── scripts/checking-skill-links.mjs
@@ -105,12 +105,13 @@ dsh-cpp-workflow/
 
 ## Python 协作资产
 
-`skills/python-cpp-interop/assets/` 提供两个不绑定领域的骨架：
+`skills/python-cpp-interop/assets/` 提供三个不绑定领域的骨架：
 
 - `replay.py`：按版本读 JSON 行快照，校验 `version`、`sequence`、9 个格、玩家与状态；用 `subprocess.run` 一次输入移动序列，stdout 只保留以 `{` 开头的行。
 - `web_bridge.py`：线程化本地 HTTP 适配器，只绑定 `127.0.0.1`，限制请求体，单个会话加锁，后台线程抽取 stdout/stderr，显式关闭子进程。
+- `snapshot_demo.cpp`：最小 C++20 协议端，只输出快照，不打印人类提示；配合 `assets/README.md` 的编译与重放命令验证两个 Python 脚本。
 
-两者都假设 C++ 程序先输出人类可读提示，再输出一行紧凑 JSON；提示在 stdout 还是 stderr 由项目协议决定，但视图层不能靠解析「请选择」类提示同步状态。优先让 C++ 提供 `--protocol` 之类的显式模式，把提示和日志移到 stderr。
+三者的约定是 stdout 每行一个 JSON 对象，日志和错误说明走 stderr；视图层不能靠解析「请选择」类提示同步状态。优先让 C++ 提供 `--protocol` 之类的显式模式，把提示和日志移到 stderr。
 
 ## 构建目录与工具
 

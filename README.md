@@ -73,7 +73,7 @@ dsh plugin --profile web add npm:dsh-cpp-workflow@0.1.0
 - 本地 Web 只绑定 `127.0.0.1`，请求体有上限，一个会话一个锁。
 - `ctypes` / `pybind11` 是最后手段，先说明进程边界为什么不够。
 
-可运行骨架在 `skills/python-cpp-interop/assets/replay.py` 与 `web_bridge.py`；两者都不依赖项目专属名称，只依赖协议。
+可运行骨架在 `skills/python-cpp-interop/assets/`：`replay.py`、`web_bridge.py`，以及最小 C++ 协议端 `snapshot_demo.cpp`；三者都不依赖项目专属名称，只依赖协议。
 
 ## 项目级约定
 

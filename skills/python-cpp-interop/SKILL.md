@@ -40,6 +40,7 @@ C++ 程序拥有领域规则和状态；Python 只做编排、验证、展示和
 | ctypes / pybind11 / C ABI / 异常映射 | `references/bindings.md` |
 | 回放脚本骨架 | `assets/replay.py` |
 | 本地 HTTP 骨架 | `assets/web_bridge.py` |
+| 最小 C++ 协议端与手工验证 | `assets/snapshot_demo.cpp`、`assets/README.md` |
 
 ## 硬规则
 

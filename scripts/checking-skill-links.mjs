@@ -98,6 +98,8 @@ const expected = {
     'references/bindings.md',
     'assets/replay.py',
     'assets/web_bridge.py',
+    'assets/snapshot_demo.cpp',
+    'assets/README.md',
   ],
   'teaching-cpp': [
     'SKILL.md',
