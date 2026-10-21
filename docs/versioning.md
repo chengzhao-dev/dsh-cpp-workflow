@@ -31,16 +31,21 @@
 
 ## 首次发布引导
 
-npm 上还没有这个包时，`npm trust github` 会返回 404：trusted publishing 只能登记到已经存在的包。先在本机做一次首发引导：
+npm 上还没有这个包时，`npm trust github` 会返回 404：trusted publishing 只能登记到已经存在的包。先用暂存发布创建包记录，不要在本机直接发布 0.1.0：
 
 ```bash
-npm publish --access public --no-provenance
+npm stage publish --access public
+npm stage list
 ```
 
-`publishConfig.provenance` 在没有 OIDC 的本机发布会报 `EUSAGE`，所以引导时必须显式关闭 provenance。完成 2FA 后，再执行：
+`npm stage publish` 不需要 2FA，会创建一个不可安装的 `0.0.0-stage` 占位包，并把当前版本放进暂存区。如果 `npm stage list` 里出现 0.1.0，先用 `npm stage reject <stage-id>` 拒绝它；同一个版本不能同时存在暂存记录和正式发布。列表为空时，只留下占位包，0.1.0 仍然可发。
+
+然后登记 trusted publisher：
 
 ```bash
 npm trust github @chengzhao-dev/dsh-cpp-workflow --repository chengzhao-dev/dsh-cpp-workflow --file publish.yml --allow-publish
 ```
 
-引导已经发布了 0.1.0；再推 `v0.1.0` 标签时，`publish.yml` 会因为版本已存在而失败。这次失败不算 0.1.0 发布失败：0.1.0 以本机引导的结果为准，后续版本只走标签和 trusted publishing。不要为了重跑 0.1.0 改版本号或重复发同号。
+`npm trust` 和 `npm stage reject` 需要 2FA。登记完成后，推送 `v0.1.0` 标签，由 `publish.yml` 发布带 provenance 的 0.1.0。
+
+如果暂存发布也不可用，才使用本机引导：`npm publish --access public --no-provenance`。本机没有 OIDC，`publishConfig.provenance` 会让普通 `npm publish` 报 `EUSAGE`，所以必须显式关闭。这样发布的 0.1.0 没有 provenance，版本已经消耗，不能再推同号标签重发。
