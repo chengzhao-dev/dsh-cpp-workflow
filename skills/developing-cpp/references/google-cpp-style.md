@@ -1,4 +1,4 @@
-# Google C++ 风格：本项目采用的版本
+# Google C++ 风格：本技能采用的版本
 
 以 [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html) 为基线，按 C++20 工程的需要做了少量书面偏离。偏离必须写在这里，不能只存在于某个人的习惯里。
 
@@ -23,23 +23,23 @@
 
 | 种类 | 规则 | 例子 |
 | --- | --- | --- |
-| 类型、类、结构、枚举、别名 | PascalCase | `Inventory`, `OrderResult`, `ItemState` |
-| 函数、成员函数 | PascalCase | `IsInRange`, `GetCurrentOrder` |
-| 变量、参数、局部变量 | snake_case | `slot_rows`, `current_order` |
-| 类数据成员 | snake_case + 尾随 `_` | `slots_`, `orders_` |
-| 常量、枚举子 | `k` + PascalCase | `kSlotRows`, `Order::kDraft` |
-| 命名空间 | snake_case | `inventory`, `warehouse` |
+| 类型、类、结构、枚举、别名 | PascalCase | `TaskTable`, `OrderResult`, `TaskState` |
+| 函数、成员函数 | PascalCase | `Contains`, `GetCurrentOrder` |
+| 变量、参数、局部变量 | snake_case | `task_count`, `current_order` |
+| 类数据成员 | snake_case + 尾随 `_` | `tasks_`, `orders_` |
+| 常量、枚举子 | `k` + PascalCase | `kTaskCount`, `Order::kDraft` |
+| 命名空间 | snake_case | `taskflow`, `warehouse` |
 | 宏 | 尽量不用；必须用时全大写并带项目前缀 | `CPP_WORKFLOW_ASSERT` |
 
-- 一个 API 不混用两套命名。对外函数用 PascalCase，成员变量用 snake_case，不要出现 `get_player` 与 `GetPlayer` 并存。
+- 一个 API 不混用两套命名。对外函数用 PascalCase，成员变量用 snake_case，不要出现 `get_task` 与 `GetTask` 并存。
 - 查询用 `Get` + PascalCase：`GetCurrentOrder()`、`GetHistory()`；不要用成员名直接当访问器（`current_order()`）。
-- 谓词用 `Is` / `Has`：`IsInRange()`、`HasStock()`。返回 `bool` 但语义不是判断的函数，换成领域动词。
-- 尝试用 `Try`：`TryReserve()` 返回结果类型；确定性动作直接用领域动词：`PlaceItem()`、`Reset()`。
-- 映射函数的名字要含来源与目标角色：`OrderToReceipt()`、`InventoryToString()`；禁止裸 `To()` / `Of()`。
-- 计算函数用动词开头：`ScoreOrder()`、`CollectEmptySlots()`。
+- 谓词用 `Is` / `Has`：`Contains()`、`HasStock()`。返回 `bool` 但语义不是判断的函数，换成领域动词。
+- 尝试用 `Try`：`TryReserve()` 返回结果类型；确定性动作直接用领域动词：`CompleteTask()`、`Reset()`。
+- 映射函数的名字要含来源与目标角色：`OrderToReceipt()`、`TaskTableToString()`；禁止裸 `To()` / `Of()`。
+- 计算函数用动词开头：`ScoreOrder()`、`CollectPendingTasks()`。
 - `current_` 前缀只在有多个候选、且「当前」确实可能混淆时使用；只有一个当前对象时不要加。
 - 避免 `Manager`、`Helper`、`Util` 这类不说明职责的后缀；名字要能回答「它负责什么」。
-- 测试名用 PascalCase 描述行为，例如 `RejectsOutOfRangeSlot`；测试文件用 snake_case。
+- 测试名用 PascalCase 描述行为，例如 `RejectsOutOfRangeTask`；测试文件用 snake_case。
 
 ## 类型与声明
 
@@ -65,8 +65,8 @@
 
 ## 表达式与整数
 
-- 比较不写 Yoda 形式：`x == 0`、`item == ItemState::kEmpty`；不要写 `0 == x`、`nullptr == p`。
-- 半开区间写成两个「变量在左」的比较：`row >= 0 && row < kSlotRows`；不要写 `0 <= row`。
+- 比较不写 Yoda 形式：`x == 0`、`task == TaskState::kPending`；不要写 `0 == x`、`nullptr == p`。
+- 半开区间写成两个「变量在左」的比较：`id >= 0 && id < kTaskCount`；不要写 `0 <= id`。
 - 混合优先级算术加显式括号，消除 `readability-math-missing-parentheses`。
 - 业务编号、尺寸用 `std::int32_t`；容器长度和索引用 `std::size_t`。越界由边界检查函数统一判断，负值和上界都算非法。
 - 封闭状态码可以用 `enum class Name : std::uint8_t`，只为缩小存储；普通枚举用默认底层类型。枚举值总是带作用域：`OrderResult::kSuccess`。
@@ -76,11 +76,11 @@
 
 ## 异常
 
-Google 原文说「我们不使用 C++ 异常」。本项目按用户要求做书面偏离：**可以在合适的地方使用异常**，但只用于合同违反和程序边界，不用异常表达可预期的业务失败。完整规则见 `references/exceptions.md`。
+Google 原文说「我们不使用 C++ 异常」。本技能按使用方要求做书面偏离：**可以在合适的地方使用异常**，但只用于合同违反和程序边界，不用异常表达可预期的业务失败。完整规则见 `references/exceptions.md`。
 
 ## 输出与格式化
 
-- 组合消息以 `std::format` 为主：`std::format("订单 {} 入库 ({}, {})", order, row, col)`。
+- 组合消息以 `std::format` 为主：`std::format("任务 {} 进入状态 {}", task, state)`。
 - C++20 没有 `std::print`；格式化结果写到 `std::cout` / `std::cerr` / `std::ostringstream`。
 - 简单字面量输出可以直接用 `std::cout << "..."`；需要拼接变量、对齐、数值格式时用 `std::format`。
 - 列宽上限 100（`ColumnLimit: 100`），由 `clang-format` 执行；不要手工调换行。

@@ -51,7 +51,7 @@ auto total = 0.0;                  // auto 只能用 =，不能用 {}
 
 ## 表达式与比较
 
-- 比较写成“变量在左、常量在右”：`if (row < kRows)`，不写 Yoda 条件 `if (kRows > row)`。编译器会在漏写 `=` 时给出警告，可读性也更好。
+- 比较写成“变量在左、常量在右”：`if (id < kTaskCount)`，不写 Yoda 条件 `if (kTaskCount > id)`。编译器会在漏写 `=` 时给出警告，可读性也更好。
 - 混合优先级的算术表达式加括号：`(a + b) * c`，不依赖读者记忆优先级。`readability-math-missing-parentheses` 会检查。
 - 区间用半开区间 `[low, high)`；判空用 `empty()`，不要用 `size() == 0`。
 - 逻辑表达式按语义分组，一组一个括号；不要把多个否定串成一行。

@@ -5,31 +5,31 @@
 ## 类声明
 
 ```cpp
-class Inventory {
+class TaskTable {
  public:
   // 1. 类型与别名
-  using Slots = std::array<ItemState, kSlotCount>;
+  using Tasks = std::array<TaskState, 16>;
 
   // 2. 静态常量
-  static constexpr int kSlotCount = kSlotRows * kSlotCols;
+  static constexpr int kTaskCount = 16;
 
   // 3. 工厂
-  static Inventory CreateEmpty();
+  static TaskTable CreateEmpty();
 
   // 4. 构造、赋值、析构
-  Inventory();
-  Inventory(const Inventory&) = default;
-  Inventory& operator=(const Inventory&) = default;
-  ~Inventory();
+  TaskTable();
+  TaskTable(const TaskTable&) = default;
+  TaskTable& operator=(const TaskTable&) = default;
+  ~TaskTable();
 
   // 5. 其他成员函数
-  [[nodiscard]] bool IsInRange(int row, int col) const;
-  [[nodiscard]] ItemState GetItem(int row, int col) const;
-  void PlaceItem(int row, int col, ItemState state);
+  [[nodiscard]] bool Contains(int id) const;
+  [[nodiscard]] TaskState GetTaskState(int id) const;
+  void SetTaskState(int id, TaskState state);
 
   // 6. 数据成员
  private:
-  Slots slots_{};
+  Tasks tasks_{};
   bool is_open_ = false;
 };
 ```
@@ -37,7 +37,7 @@ class Inventory {
 - `struct` 的数据成员放最前；有 invariant 时改用 `class`。
 - `public:` 在前，`private:` 在后；`private:` 前空一行，数据成员之间不空行。
 - 静态常量用 `static constexpr`；跨文件共享的常量放命名空间并 `inline constexpr`。
-- 工厂放在构造函数之前；返回 `Inventory` 的工厂用 `Create` 开头，名字说明创建的是什么状态。
+- 工厂放在构造函数之前；返回 `TaskTable` 的工厂用 `Create` 开头，名字说明创建的是什么状态。
 - 用户声明的特殊成员函数集中放第 4 组；`= default` 也写出来，读者才知道是故意默认。
 - 不要把数据成员插在函数之间；数据成员永远在最后一组。
 
@@ -50,29 +50,28 @@ class Inventory {
 #include <cstdint>
 #include <string>
 
-namespace inventory {
+namespace taskflow {
 
-inline constexpr int kSlotRows = 3;
-inline constexpr int kSlotCols = 3;
+inline constexpr int kTaskCount = 16;
 
-enum class ItemState : std::uint8_t { kEmpty, kStored, kReserved };
+enum class TaskState : std::uint8_t { kPending, kActive, kDone };
 
-struct Position {
-  int row = 0;
-  int col = 0;
+struct TaskRecord {
+  int id = 0;
+  TaskState state = TaskState::kPending;
 };
 
-[[nodiscard]] bool IsInRange(Position position);
-[[nodiscard]] std::string ItemStateToString(ItemState state);
+[[nodiscard]] bool Contains(int id);
+[[nodiscard]] std::string TaskStateToString(TaskState state);
 
-class Inventory {
+class TaskTable {
  public:
   // 类内仍按上面的六组顺序
  private:
-  std::array<ItemState, kSlotRows * kSlotCols> slots_{};
+  std::array<TaskState, kTaskCount> tasks_{};
 };
 
-}  // namespace inventory
+}  // namespace taskflow
 ```
 
 顺序：包含 → 命名空间 → `inline constexpr` 常量 → `enum class` → `struct`（被依赖的在前）→ 自由函数 → 类。类的公共接口类型放在类内最前。
@@ -80,7 +79,7 @@ class Inventory {
 ## `.cpp` 的定义顺序
 
 - 与头文件声明同序：先类型和常量，再自由函数，再成员函数；成员函数按类内声明顺序。
-- 文件头注释之后先放本文件的 `namespace inventory {`，再放公共定义；不要在生产 `.cpp` 里开匿名命名空间，文件内辅助函数用 `static` 并放在项目命名空间内，测试文件例外。
+- 文件头注释之后先放本文件的 `namespace taskflow {`，再放公共定义；不要在生产 `.cpp` 里开匿名命名空间，文件内辅助函数用 `static` 并放在项目命名空间内，测试文件例外。
 - 构造函数、析构函数、拷贝/移动定义放在成员函数组的最前；`= default` 的定义放 `.cpp` 时紧跟声明顺序。
 - 不要为了「先编译」重排定义；C++ 不要求定义顺序，读者顺序优先。
 

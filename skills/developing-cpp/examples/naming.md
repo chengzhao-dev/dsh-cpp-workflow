@@ -34,17 +34,17 @@ void AdvanceOrder();             // 领域动作，不是 setter
 **差**：
 
 ```cpp
-bool Check(int row, int col) const;       // Check 什么？
+bool Check(int id) const;                  // Check 什么？
 Result DoSomething(Task task);            // 做什么？
-ItemState To(ItemState state);            // 从什么到什么？
+TaskState To(TaskState state);            // 从什么到什么？
 ```
 
 **好**：
 
 ```cpp
-[[nodiscard]] bool IsInRange(int row, int col) const;
+[[nodiscard]] bool Contains(int id) const;
 [[nodiscard]] ParseResult TryParse(std::string_view text);
-[[nodiscard]] ItemState SlotStateToItemState(SlotState state);
+[[nodiscard]] TaskState StatusCodeToTaskState(int code);
 ```
 
 - 判断用 `Is` / `Has`。

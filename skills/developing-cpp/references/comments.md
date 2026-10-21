@@ -8,9 +8,9 @@
 
 ```cpp
 //===----------------------------------------------------------------------===//
-// Inventory 的存储、边界检查与入库规则。
+// TaskTable 的存储、编号检查与状态更新规则。
 //
-// 不处理终端输入输出；程序层负责把用户输入翻译成 Position。
+// 不处理终端输入输出；程序层负责把用户输入翻译成 TaskId。
 //===----------------------------------------------------------------------===//
 ```
 
@@ -39,13 +39,12 @@
 公共头文件里的类型、函数、常量用 `///` 写契约，调用方读完就知道怎么用。
 
 ```cpp
-/// 返回 (row, col) 处的物品状态。
+/// 返回任务编号对应的状态。
 ///
-/// @param row 行号，必须在 [0, kSlotRows) 内
-/// @param col 列号，必须在 [0, kSlotCols) 内
-/// @return 该位置的物品状态
-/// @throws std::out_of_range row 或 col 越界
-[[nodiscard]] ItemState GetItem(int row, int col) const;
+/// @param id 任务编号，必须在 [0, kTaskCount) 内
+/// @return 该编号的任务状态
+/// @throws std::out_of_range id 越界
+[[nodiscard]] TaskState GetTaskState(int id) const;
 ```
 
 - 第一行一句话说清「做什么」，空一行后写参数、返回值、异常。
@@ -83,8 +82,8 @@ if (orders_.empty()) {
 统一格式：
 
 ```cpp
-// TODO: 阶段 3 - 支持撤销入库
-// TODO: issue #42 - 把边界检查抽到 Inventory
+// TODO: 阶段 3 - 支持撤销任务状态更新
+// TODO: issue #42 - 把编号检查抽到 TaskTable
 ```
 
 - `TODO:` 后先写定位（阶段名或 issue 号），再写一个短横线，再写动作。

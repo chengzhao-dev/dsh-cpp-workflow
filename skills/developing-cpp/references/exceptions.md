@@ -1,13 +1,13 @@
 # 异常与错误
 
-本项目对 Google「不使用异常」做书面偏离：**异常可用，但只用于合同违反和程序边界**。可预期的失败用返回值表达。这样既保留 C++ 的清晰错误路径，又不让异常成为控制流。
+本技能对 Google「不使用异常」做书面偏离：**异常可用，但只用于合同违反和程序边界**。可预期的失败用返回值表达。这样既保留 C++ 的清晰错误路径，又不让异常成为控制流。
 
 ## 抛还是返回
 
 | 情形 | 做法 | 例子 |
 | --- | --- | --- |
 | 用户输入非法、文件不存在、解析失败 | 返回结果类型 / `bool` / `std::optional` | `TryParse()` → `ParseResult` |
-| 查询越界、构造参数不满足 invariant | 抛合同异常 | `GetItem(row, col)` 越界抛 `std::out_of_range` |
+| 查询越界、构造参数不满足 invariant | 抛合同异常 | `GetTaskState(TaskId)` 越界抛 `std::out_of_range` |
 | 程序入口、CLI、工具边界 | 捕获 `std::exception`，打印并返回非零 | `main()` 捕获后 `std::format("错误: {}", e.what())` |
 | 内存不足、系统调用失败 | 让标准异常传播，或转成结果类型；不要吞掉 | `std::bad_alloc` 不捕获 |
 | 析构函数 | 不抛；失败只记录或忽略 | `~File()` 不抛 |
@@ -23,7 +23,7 @@
 
 ```cpp
 throw std::out_of_range{
-    std::format("GetItem: row={} 超出 [0, {})", row, kSlotRows)};
+    std::format("GetTaskState: id={} 超出 [0, {})", id, kTaskCount)};
 ```
 
 - 不要抛裸 `std::string`、`const char*` 或自定义无继承的类型；从 `std::exception` 派生时实现 `what()`。
@@ -59,7 +59,7 @@ int main() {
 
 异常消息是给调用者和用户看的诊断，不是日志流：
 
-- 格式固定为 `<ApiName>: <主体> <原因>`，例如 `GetItem: row=3 超出 [0, 3)`。
+- 格式固定为 `<ApiName>: <主体> <原因>`，例如 `GetTaskState: id=3 超出 [0, 3)`。
 - 写操作名和关键值，不写「出错了」「非法」这类没有信息量的词。
 - 不引入日志框架，不在库代码里打印；需要诊断上下文时由边界层记录，异常本身只携带消息。
 - 同一条消息在测试里断言稳定的前缀，不断言完整路径或平台相关文本。

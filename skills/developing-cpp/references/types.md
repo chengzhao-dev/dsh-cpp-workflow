@@ -98,7 +98,7 @@ class TaskBoard {
   void SetTaskState(TaskId id, TaskState state);
 
  private:
-  std::array<TaskState, kSlotCount> slots_{};
+  std::array<TaskState, kTaskCount> tasks_{};
 };
 ```
 
