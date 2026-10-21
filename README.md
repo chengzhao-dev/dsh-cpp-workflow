@@ -8,8 +8,8 @@
 
 | 技能 | 管什么 | 什么时候打开 |
 | --- | --- | --- |
-| `developing-cpp` | 定行为、定边界、定声明、定实现；`.h` / `.cpp` 的命名、异常和源码注释 | 用户点名一个函数、一条诊断或一个源文件 |
-| `building-cpp` | 定构建、定工具配置、通过检查；CMake、Ninja、Clang 配置、构建脚本和环境组合 | 改动落在构建文件、工具配置或环境声明上 |
+| `developing-cpp` | 定行为、定边界、定声明、定实现；`.h` / `.cpp` 的命名、异常和源码注释 | 用户点名源码，或需要新建/整段重构源码 |
+| `building-cpp` | 定构建、定工具配置、通过检查；CMake、Ninja、Clang 配置、构建脚本和环境组合 | 改动落在构建文件、工具配置或环境声明上，或第一次接构建 |
 
 两个技能都先读项目技能 `cpp-workflow-project`。没有项目技能时，门禁不会放出这两个名字。
 
@@ -61,7 +61,7 @@ dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.1.0
 
 生成器固定 Ninja，构建目录是 `build/clang/` 与 `build/gcc/`，不共用 `build/`。诊断工具固定 `clang-format`、`clang-tidy`、`clangd`；GCC 模式也不换成别的分析器。
 
-构建前先跑静态检查，再在构建宿主上跑活动检查。`<skill-dir>` 是插件安装后的 `building-cpp` 目录，不是目标工程里的目录：
+构建前先跑声明校验，再在构建宿主上跑活动校验。`<skill-dir>` 是插件安装后的 `building-cpp` 目录，不是目标工程里的目录：
 
 ```bash
 node "<skill-dir>/scripts/checking-environment.mjs" --project .

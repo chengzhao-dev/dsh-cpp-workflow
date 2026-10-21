@@ -8,8 +8,8 @@ Two skills for C++20 source work and build work. The plugin registers a skill pr
 
 | Skill | Covers | Open it when |
 | --- | --- | --- |
-| `developing-cpp` | Behavior, boundaries, declarations, implementation; naming, exceptions, and source comments in `.h` / `.cpp` | The user names a function, a diagnostic, or a source file |
-| `building-cpp` | Build setup, tool configuration, checks; CMake, Ninja, Clang config, build scripts, and environment combinations | The change touches build files, tool config, or the environment declaration |
+| `developing-cpp` | Behavior, boundaries, declarations, implementation; naming, exceptions, and source comments in `.h` / `.cpp` | The user names source code, or the work is a new project or whole-stage refactor |
+| `building-cpp` | Build setup, tool configuration, checks; CMake, Ninja, Clang config, build scripts, and environment combinations | The change touches build files, tool config, or the environment declaration, or the project is first connected to a build |
 
 Both skills read the project skill `cpp-workflow-project` first. Without it, the workspace gate never exposes these names.
 
@@ -61,7 +61,7 @@ Keep one `environment.json` per repository. Its three axes are intentionally emp
 
 The generator is always Ninja. Build directories are `build/clang/` and `build/gcc/`; they are never shared. Analysis tools are always `clang-format`, `clang-tidy`, and `clangd`; GCC mode does not switch to another analyzer.
 
-Run the static check first, then the live check on the build host. `<skill-dir>` is the installed `building-cpp` directory, not a directory in the target project:
+Run the declaration check first, then the live check on the build host. `<skill-dir>` is the installed `building-cpp` directory, not a directory in the target project:
 
 ```bash
 node "<skill-dir>/scripts/checking-environment.mjs" --project .

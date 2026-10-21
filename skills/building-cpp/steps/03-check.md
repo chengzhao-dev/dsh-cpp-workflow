@@ -8,7 +8,7 @@
 
 按固定顺序跑，前一步失败就停，不要带着失败继续：
 
-1. **静态校验环境声明**：读 `environment.json`，检查三个轴和组合是否合法。轴为空或组合非法时，停在这里，不找可执行文件。
+1. **校验环境声明（不带 `--live`）**：读 `environment.json`，检查三个轴和组合是否合法。轴为空或组合非法时，停在这里，不找可执行文件。
 2. **活动校验**：在声明的 build host 上跑 `--live`，核对 PATH 中的角色和版本。Windows 原生组合当前没有构建脚本，`--live` 会明确报告「缺的是 shell，不是编译器」。
 3. **跑项目入口命令**：项目技能里写的入口命令（如 `./running-build.sh clang`）。入口内部依次 configure → build → format → tidy → ctest → run；每一步失败都保留原始输出。
 4. **核对产物**：`build/<compiler>/compile_commands.json` 存在；`build/compile_commands.json` 指向当前编译器；`app` 可执行文件在 `build/<compiler>/bin`。
@@ -17,8 +17,8 @@
 环境校验脚本：
 
 ```bash
-node "<skill-dir>/scripts/checking-environment.mjs" --project .          # 静态
-node "<skill-dir>/scripts/checking-environment.mjs" --project . --live   # 活动
+node "<skill-dir>/scripts/checking-environment.mjs" --project .          # 声明校验
+node "<skill-dir>/scripts/checking-environment.mjs" --project . --live   # 活动校验
 ```
 
 `<skill-dir>` 换成插件里 `building-cpp` 的实际目录；不要复制脚本到项目里再改。脚本只读，不安装、不下载、不改 PATH。
@@ -41,7 +41,7 @@ node "<skill-dir>/scripts/checking-environment.mjs" --project . --live   # 活�
 
 ## 情况
 
-**第一次接工程**：先跑静态校验，再跑 `--live`；两者都过再跑入口命令。环境没声明对时，构建脚本再完美也会失败。
+**第一次接工程**：先跑声明校验，再跑 `--live`；两者都过再跑入口命令。环境没声明对时，构建脚本再完美也会失败。
 
 **只改源码**：仍跑完整入口命令；格式化和静态检查可能暴露声明层问题，不要只看编译通过。
 

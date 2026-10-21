@@ -77,7 +77,7 @@
 `<skill-dir>/scripts/checking-environment.mjs` 做两件事：
 
 1. **静态**（默认）：读 `environment.json`，检查三个轴和组合。轴为空或组合非法时以退出码 2 结束，不查找任何可执行文件。
-2. **活动**（`--live`）：先做静态检查，再核对当前进程是否在声明的 build host 上，然后查 PATH、角色和版本。声明本身不合法时仍以退出码 2 结束；声明合法但活动核对失败时以退出码 3 结束。
+2. **活动**（`--live`）：先做声明校验，再核对当前进程是否在声明的 build host 上，然后查 PATH、角色和版本。声明本身不合法时仍以退出码 2 结束；声明合法但活动核对失败时以退出码 3 结束。
 
 ```bash
 node "<skill-dir>/scripts/checking-environment.mjs" --project . --json
@@ -92,7 +92,7 @@ node "<skill-dir>/scripts/checking-environment.mjs" --project . --live
 - `--live` 在 `host=windows` + `build_host=native` 下直接报告「缺 POSIX 壳；本版没有 PowerShell 构建脚本」，不继续找编译器。
 - WSL 模式要求当前进程在 WSL 内（`WSL_DISTRO_NAME` / `WSL_INTEROP` 或 `/proc/version` 含 Microsoft）；只在 Linux 上但不在 WSL 时失败。
 - macOS 上声明 `compiler=gcc` 时，`g++ --version` 若显示 Apple clang，按「不是真正的 GCC」失败。
-- 没有 `--live` 时不做任何 PATH 探测，CI 和 Windows 开发机都能跑静态检查。
+- 没有 `--live` 时不做任何 PATH 探测，CI 和 Windows 开发机都能做声明校验。
 
 ## 退出码
 
