@@ -6,12 +6,7 @@ CompileFlags:
     - -Wall
     - -Wextra
 Diagnostics:
-  ClangTidy:
-    Add:
-      - bugprone-*
-      - modernize-*
-      - performance-*
-      - readability-*
+  # 静态检查规则只在 .clang-tidy 里维护；这里不复制检查列表。
   Suppress:
     # 项目头由编译数据库提供；解析噪声不掩盖真实诊断。
     - pp_file_not_found

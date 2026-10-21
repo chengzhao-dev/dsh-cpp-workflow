@@ -4,10 +4,11 @@
 # replaced. The row loads this package's `main` entry, which registers the
 # packaged developing-cpp and building-cpp skills through `ctx.skills`.
 #
-# Install from Git or npm, for example:
+# Install from npm or from the matching Git tag, for example:
 #
-#   dsh plugin --profile web add github:<owner>/dsh-cpp-workflow
+#   dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.1.0
+#   dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.1.0
 #
 - insert:
     - id: cpp-workflow
-      name: dsh-cpp-workflow
+      name: "@chengzhao-dev/dsh-cpp-workflow"

@@ -5,11 +5,11 @@
 ## clang-format
 
 ```bash
-clang-format --dry-run --Werror --fallback-style=Google src/*.cpp include/*.h tests/*.cpp
+clang-format --dry-run --Werror src/*.cpp include/*.h tests/*.cpp
 ```
 
 - 检查用 `--dry-run --Werror`；需要自动修复时单独跑 `clang-format -i`，不要在构建脚本里悄悄改源码。
-- 工程还没有 `.clang-format` 时加 `--fallback-style=Google`，否则会落到 clang-format 的 LLVM 默认风格，和插件的 Google 基线不一致。
+- 工程必须有根 `.clang-format`；缺失时先复制配置，不要回退到内置风格，回退会掩盖配置缺失。
 - 只扫描项目源码：`src/`、`include/`、`apps/`、`tests/` 等实际存在的目录；不扫描 `build/`、第三方、生成文件。
 - 配置文件在工程根 `.clang-format`；不要依赖用户主目录或编辑器内置配置。
 - `ColumnLimit: 100`、`Standard: c++20`、`BasedOnStyle: Google`；`IncludeCategories` 维持包含顺序。
@@ -19,20 +19,19 @@ clang-format --dry-run --Werror --fallback-style=Google src/*.cpp include/*.h te
 
 ```bash
 clang-tidy -p build/clang \
-  --header-filter='^(src|include|apps|tests)/' \
-  --exclude-header-filter='(^|/)build/_deps/' \
+  --header-filter="^$(pwd -P)/(include|src|apps|tests)/" \
   --warnings-as-errors='*' \
   src/*.cpp apps/*.cpp tests/*.cpp
 ```
 
 - `-p` 指向当前编译器的构建目录，读取 `compile_commands.json`。
 - `--header-filter` 控制哪些头文件的诊断被显示，不改变 clang-tidy 实际解析哪些头；模板实例化可能让一条根因产生多条警告，警告条数不等于缺陷条数。按根因修，不要按条数修。
-- `--header-filter` 用项目头目录的白名单，不要用 `.*` 把系统头和第三方头一并纳入；`--exclude-header-filter` 排除 `build/_deps/` 下的依赖头。
+- `--header-filter` 用项目头目录的白名单，不要用 `.*` 把系统头和第三方头一并纳入。clang-tidy 按绝对路径匹配，所以上面用 `$(pwd -P)` 前缀；上面是常见目录，工程用别的顶层目录时按实际替换。`--exclude-header-filter` 到 clang-tidy 19 才加入，16/17/18 都没有，不要依赖它。
 - 系统头默认被排除，不要加 `--system-headers`。
 - 只扫描项目源文件；不要把 `build/` 或第三方源码传给 clang-tidy。
 - `--warnings-as-errors='*'` 把警告当失败；修代码，不要新增 `NOLINT`。确需抑制时写 `// NOLINT(检查名): 理由`，理由必须具体。
 - 配置在工程根 `.clang-tidy`；关闭项逐条写理由，不整族关闭。`cppcoreguidelines-pro-bounds-constant-array-index` 不能整族关闭；优先把下标换成 `at()` 或带边界检查的辅助函数，并补负向越界测试。
-- 没有编译数据库时先回到第 5 步生成；不要用 `--` 手工拼编译参数绕过。
+- 没有编译数据库时先回到 `building-cpp` 的定构建生成；不要用 `--` 手工拼编译参数绕过。
 - `clang-tidy` 的诊断可能指向头文件；修头文件里的声明或实现，不要只改调用点。
 
 ## clangd
@@ -47,17 +46,13 @@ CompileFlags:
     - -Wall
     - -Wextra
 Diagnostics:
-  ClangTidy:
-    Add:
-      - bugprone-*
-      - modernize-*
-      - performance-*
-      - readability-*
+  Suppress:
+    - pp_file_not_found
 ```
 
 - `CompilationDatabase` 指向当前编译器目录；GCC 模式改 `build/gcc`。
 - `Add` 只补编译数据库里没有的公共选项；不要重复 `-I` 项目 include（数据库里已有）。
-- `Diagnostics.ClangTidy.Add` 与 `.clang-tidy` 保持同一套检查；不要两处各写一份完整列表。
+- 静态检查规则只在 `.clang-tidy` 里维护；clangd 读取同一份配置，不要在这里复制检查列表。
 - `Suppress` 只放确实无法避免的解析噪声（如 `pp_file_not_found`），并写理由。
 
 `--query-driver`：
@@ -133,9 +128,9 @@ Diagnostics:
 
 | 现象 | 可能原因 | 处理 |
 | --- | --- | --- |
-| `clang-tidy` 报找不到编译数据库 | 没 configure 或路径错 | 回到 05 生成 `build/<compiler>/compile_commands.json` |
+| `clang-tidy` 报找不到编译数据库 | 没 configure 或路径错 | 回到 `building-cpp` 的定构建生成 `build/<compiler>/compile_commands.json` |
 | clangd 报找不到系统头 | 编译数据库里的编译器是相对路径 | 用绝对路径重新 configure，或配 `--query-driver` |
 | 格式化结果与 CI 不同 | 版本不同或配置不是工程根那份 | 统一版本，确认 `.clang-format` 在工程根 |
 | tidy 报系统头 | 加了 `--system-headers` 或 header-filter 过宽 | 去掉 `--system-headers`，用项目头目录白名单 |
-| 大量 `readability-*` | 代码风格未统一 | 回到 `developing-cpp` 的 03/04 修声明与实现，不要批量 NOLINT |
+| 大量 `readability-*` | 代码风格未统一 | 回到 `developing-cpp` 的定声明 / 定实现修声明与实现，不要批量 NOLINT |
 | clangd 与 tidy 诊断不一致 | 两者读的数据库/版本不同 | 统一 `CompilationDatabase` 与工具版本 |

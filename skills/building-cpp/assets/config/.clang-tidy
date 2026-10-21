@@ -7,9 +7,9 @@ InheritParentConfig: false
 # 关闭项：
 # - bugprone-easily-swappable-parameters：相邻同型参数的顺序错误靠接口设计和 review，不靠命名噪声。
 # - modernize-use-trailing-return-type：Google 风格不要求尾置返回类型。
-# - portability-avoid-pragma-once：项目已把 #pragma once 写进偏差表。
-# - readability-identifier-length：短循环变量和坐标名（i、x）是领域习惯。
-# - readability-magic-numbers 与 cppcoreguidelines-avoid-magic-numbers：坐标、尺寸和测试数据常直接写字面量。
+# - portability-avoid-pragma-once：项目统一使用 #pragma once。
+# - readability-identifier-length：短循环变量和测试数据（i、x）是领域习惯。
+# - readability-magic-numbers 与 cppcoreguidelines-avoid-magic-numbers：阈值、尺寸和测试数据常直接写字面量。
 Checks: >
   -*,
   bugprone-*,
@@ -32,7 +32,7 @@ Checks: >
   -readability-magic-numbers
 
 WarningsAsErrors: '*'
-HeaderFilterRegex: '.*'
+# 头文件过滤由调用方按项目目录传入；这里不写 .*，避免把第三方头纳入。
 FormatStyle: file
 UseColor: true
 
@@ -77,7 +77,9 @@ CheckOptions:
   - key: readability-identifier-naming.GlobalConstantPrefix
     value: 'k'
   - key: readability-identifier-naming.LocalConstantCase
-    value: lower_case
+    value: CamelCase
+  - key: readability-identifier-naming.LocalConstantPrefix
+    value: 'k'
   - key: readability-identifier-naming.MacroDefinitionCase
     value: UPPER_CASE
   # 函数长度：Google 建议短函数，超过 40 行提示。

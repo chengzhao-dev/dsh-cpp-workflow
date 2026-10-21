@@ -39,17 +39,17 @@ CompileFlags:
 
 ```yaml
 CompileFlags:
-  CompilationDatabase: build   # 只有 build/clang 和 build/gcc 时，这里没有数据库
+  CompilationDatabase: build/clang   # 项目已切到 GCC，这里仍读 clang 的数据库
 ```
 
 **好**：
 
 ```yaml
 CompileFlags:
-  CompilationDatabase: build/clang
+  CompilationDatabase: build/gcc
 ```
 
-切换 GCC 时改成 `build/gcc`；不要两套配置并存。
+`.clangd` 的目录必须与 `environment.json` 的 `compiler` 一致；默认 clang 用 `build/clang`，切换 GCC 时改成 `build/gcc`，不要两套配置并存。
 
 ## 配置文件堆策略头
 
@@ -114,11 +114,11 @@ clang-tidy -p build/clang --system-headers src/main.cpp
 **好**：
 
 ```bash
-clang-tidy -p build/clang --header-filter='.*' \
+clang-tidy -p build/clang --header-filter="^$(pwd -P)/(include|src)/" \
   --warnings-as-errors='*' src/main.cpp
 ```
 
-`--header-filter='.*'` 只看非系统头；系统头默认排除。
+`--header-filter` 只列项目顶层目录，避免把第三方头纳入；系统头默认排除。工程有别的顶层目录时按实际替换。
 
 ## 构建脚本里自动格式化
 
@@ -131,7 +131,7 @@ clang-format -i src/*.cpp   # 构建时悄悄改源码
 **好**：
 
 ```bash
-clang-format --dry-run --Werror --fallback-style=Google "${sources[@]}"   # 只检查
+clang-format --dry-run --Werror "${sources[@]}"   # 只检查
 ```
 
 需要自动修复时单独运行 `clang-format -i`，由人确认 diff。
@@ -152,4 +152,4 @@ clang++ 18, clang-format 17, clangd 16
 clang++ 18.1.8, clang-format 18.1.8, clang-tidy 18.1.8, clangd 18.1.8
 ```
 
-同主版本；`--live` 会核对。Apple Clang 与 Homebrew 工具不同版本时，按 `references/environment.md` 的例外处理，不要强行降级。
+同主版本；`--live` 会核对。Apple Clang 与 Homebrew 工具不同版本时，仍按同一 LLVM 主版本要求处理，不要强行降级或改声明绕过。

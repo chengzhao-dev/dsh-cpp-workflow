@@ -15,6 +15,21 @@ import {
 const here = path.dirname(fileURLToPath(import.meta.url))
 const script = path.join(here, '..', 'skills', 'building-cpp', 'scripts', 'checking-environment.mjs')
 
+const VERSIONS = {
+  'clang++': 'clang version 18.1.3',
+  'clang-format': 'clang-format version 18.1.3',
+  'clang-tidy': 'LLVM version 18.1.3',
+  clangd: 'clangd version 18.1.3',
+  cmake: 'cmake version 3.29.0',
+  ninja: '1.11.1',
+  ctest: 'ctest version 3.29.0',
+}
+
+const GCC_VERSIONS = {
+  ...VERSIONS,
+  'g++': 'g++ (GCC) 14.1.0',
+}
+
 function workspace(environment) {
   const root = mkdtempSync(path.join(tmpdir(), 'dsh-cpp-workflow-env-'))
   mkdirSync(path.join(root, '.git'))
@@ -30,6 +45,19 @@ function workspace(environment) {
 
 function cli(args) {
   return spawnSync(process.execPath, [script, ...args], { encoding: 'utf8' })
+}
+
+/** Fake PATH resolver: every listed command exists at /fake/bin/<command>. */
+function resolver(command) {
+  return `/fake/bin/${command}`
+}
+
+/** Fake --version runner, keyed by the resolved command's basename. */
+function runner(versions) {
+  return (executable) => {
+    const command = path.basename(executable)
+    return { status: 0, stdout: `${versions[command] ?? ''}\n`, stderr: '', signal: null }
+  }
 }
 
 test('accepts each legal axis combination', () => {
@@ -53,7 +81,7 @@ test('windows native is legal statically but tells the truth about the missing s
     compiler: 'clang',
   })
   assert.equal(result.ok, true)
-  assert.match(result.notes.join('\n'), /缺 shell/)
+  assert.match(result.notes.join('\n'), /缺 POSIX 壳/)
 })
 
 test('rejects empty, unknown and non-string axes', () => {
@@ -194,7 +222,7 @@ test('live mode reports the Windows native shell gap without touching PATH', () 
     { platform: 'win32', env: {}, pathValue: '' },
   )
   assert.equal(result.ok, false)
-  assert.match(result.issues.join('\n'), /缺的是 shell/)
+  assert.match(result.issues.join('\n'), /缺的是壳/)
   assert.equal(result.checks.length, 0)
 })
 
@@ -205,6 +233,150 @@ test('live mode refuses a WSL declaration outside Linux/WSL', () => {
   )
   assert.equal(result.ok, false)
   assert.match(result.issues.join('\n'), /当前进程不在 WSL 内/)
+})
+
+test('live mode accepts a complete clang toolchain on the declared host', () => {
+  const result = checkLive(
+    { host: 'linux', build_host: 'native', compiler: 'clang' },
+    {
+      platform: 'linux',
+      env: {},
+      pathValue: '/fake/bin',
+      resolveExecutable: resolver,
+      runVersion: runner(VERSIONS),
+    },
+  )
+  assert.equal(result.ok, true, result.issues.join('; '))
+  assert.equal(result.checks.length, 7)
+  assert.equal(result.checks.find((check) => check.role === 'compiler')?.version, '18.1.3')
+})
+
+test('live mode accepts GCC while keeping the Clang analysis tools', () => {
+  const result = checkLive(
+    { host: 'linux', build_host: 'native', compiler: 'gcc' },
+    {
+      platform: 'linux',
+      env: {},
+      pathValue: '/fake/bin',
+      resolveExecutable: resolver,
+      runVersion: runner(GCC_VERSIONS),
+    },
+  )
+  assert.equal(result.ok, true, result.issues.join('; '))
+})
+
+test('live mode only requires clangd to exist in GCC mode', () => {
+  const result = checkLive(
+    { host: 'linux', build_host: 'native', compiler: 'gcc' },
+    {
+      platform: 'linux',
+      env: {},
+      pathValue: '/fake/bin',
+      resolveExecutable: resolver,
+      runVersion: runner({ ...GCC_VERSIONS, clangd: '' }),
+    },
+  )
+  assert.equal(result.ok, true, result.issues.join('; '))
+  const clangd = result.checks.find((check) => check.role === 'clangd')
+  assert.equal(clangd?.status, 'found')
+  assert.equal(clangd?.version, undefined)
+})
+
+test('live mode enforces one LLVM major version in clang mode', () => {
+  const result = checkLive(
+    { host: 'linux', build_host: 'native', compiler: 'clang' },
+    {
+      platform: 'linux',
+      env: {},
+      pathValue: '/fake/bin',
+      resolveExecutable: resolver,
+      runVersion: runner({ ...VERSIONS, 'clang-format': 'clang-format version 19.1.0' }),
+    },
+  )
+  assert.equal(result.ok, false)
+  assert.match(result.issues.join('\n'), /主版本不一致/)
+})
+
+test('live mode rejects clang-format before 16 even when majors agree', () => {
+  const old = {
+    'clang++': 'clang version 15.0.7',
+    'clang-format': 'clang-format version 15.0.7',
+    'clang-tidy': 'LLVM version 15.0.7',
+    clangd: 'clangd version 15.0.7',
+    cmake: 'cmake version 3.29.0',
+    ninja: '1.11.1',
+    ctest: 'ctest version 3.29.0',
+  }
+  const result = checkLive(
+    { host: 'linux', build_host: 'native', compiler: 'clang' },
+    {
+      platform: 'linux',
+      env: {},
+      pathValue: '/fake/bin',
+      resolveExecutable: resolver,
+      runVersion: runner(old),
+    },
+  )
+  assert.equal(result.ok, false)
+  assert.match(result.issues.join('\n'), /clang-format 15\.0\.7 过旧/)
+  assert.match(result.issues.join('\n'), /clang-tidy 15\.0\.7 过旧/)
+})
+
+test('live mode requires cmake 3.20 or newer', () => {
+  const result = checkLive(
+    { host: 'linux', build_host: 'native', compiler: 'clang' },
+    {
+      platform: 'linux',
+      env: {},
+      pathValue: '/fake/bin',
+      resolveExecutable: resolver,
+      runVersion: runner({ ...VERSIONS, cmake: 'cmake version 3.19.8' }),
+    },
+  )
+  assert.equal(result.ok, false)
+  assert.match(result.issues.join('\n'), /cmake 3\.19\.8 过旧/)
+})
+
+test('live mode rejects a g++ that is really Apple clang', () => {
+  const result = checkLive(
+    { host: 'macos', build_host: 'native', compiler: 'gcc' },
+    {
+      platform: 'darwin',
+      env: {},
+      pathValue: '/fake/bin',
+      resolveExecutable: resolver,
+      runVersion: runner({ ...GCC_VERSIONS, 'g++': 'Apple clang version 15.0.0' }),
+    },
+  )
+  assert.equal(result.ok, false)
+  assert.match(result.issues.join('\n'), /g\+\+ 实际是 Apple clang/)
+})
+
+test('live mode names every missing role instead of failing silently', () => {
+  const result = checkLive(
+    { host: 'linux', build_host: 'native', compiler: 'clang' },
+    {
+      platform: 'linux',
+      env: {},
+      pathValue: '',
+      resolveExecutable: () => undefined,
+    },
+  )
+  assert.equal(result.ok, false)
+  assert.equal(result.checks.every((check) => check.status === 'missing'), true)
+  for (const command of ['clang++', 'clang-format', 'clang-tidy', 'clangd', 'cmake', 'ninja', 'ctest']) {
+    assert.match(result.issues.join('\n'), new RegExp(command.replace('+', '\\+')))
+  }
+})
+
+test('live mode rejects a Linux declaration on another platform before PATH', () => {
+  const result = checkLive(
+    { host: 'linux', build_host: 'native', compiler: 'clang' },
+    { platform: 'win32', env: {}, pathValue: '' },
+  )
+  assert.equal(result.ok, false)
+  assert.match(result.issues.join('\n'), /请在 Linux 上运行/)
+  assert.equal(result.checks.length, 0)
 })
 
 test('CLI rejects malformed JSON as an invalid declaration', () => {

@@ -3,15 +3,12 @@
 //
 // Static mode validates `.agents/skills/cpp-workflow-project/environment.json`
 // without touching PATH. `--live` additionally verifies the current build host,
-// the declared tool roles, version compatibility and a real std::format probe.
+// the declared tool roles and version compatibility.
 //
-// It never installs, downloads, edits PATH or writes into the project. The only
-// temporary write is the std::format probe under the OS temp directory, removed
-// before exit.
-import { accessSync, constants, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+// It never installs, downloads, edits PATH or writes into the project.
+import { accessSync, constants, existsSync, readFileSync } from 'node:fs'
 import { access, readFile } from 'node:fs/promises'
 import { spawnSync } from 'node:child_process'
-import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
@@ -81,16 +78,14 @@ export function validateEnvironment(value) {
     }
   }
 
-  if (
-    axes.host === 'linux' || axes.host === 'macos'
-  ) {
+  if (axes.host === 'linux' || axes.host === 'macos') {
     if (axes.build_host === 'wsl') {
       issues.push('build_host=wsl 只允许 host=windows；Linux/macOS 请用 build_host=native')
     }
   }
 
   if (axes.host === 'windows' && axes.build_host === 'native') {
-    notes.push('windows + native 是合法声明，但本版本没有 PowerShell 构建脚本；--live 会报告缺 shell，而不是缺编译器')
+    notes.push('windows + native 是合法声明，但本版本没有 PowerShell 构建脚本；--live 会报告缺 POSIX 壳，而不是缺编译器')
   }
 
   for (const key of Object.keys(value)) {
@@ -221,10 +216,6 @@ function versionText(version) {
   return `${version.major}.${version.minor}.${version.patch}${version.apple ? ' (Apple clang)' : ''}`
 }
 
-function versionAtLeast(version, major) {
-  return Boolean(version) && version.major >= major
-}
-
 function isWsl(env = process.env) {
   if (env.WSL_DISTRO_NAME || env.WSL_INTEROP) return true
   try {
@@ -235,14 +226,15 @@ function isWsl(env = process.env) {
 }
 
 /**
- * Live check. Pure enough for tests when dependencies are injected: it does not
- * mutate the project and removes its temp probe directory.
+ * Live check. Dependencies are injectable so tests can exercise the host and
+ * PATH branches without invoking a compiler.
  */
 export function checkLive(declaration, options = {}) {
   const platform = options.platform ?? process.platform
   const env = options.env ?? process.env
   const pathValue = options.pathValue ?? env.PATH ?? ''
-  const cwd = options.cwd ?? process.cwd()
+  const resolveExecutable = options.resolveExecutable ?? findExecutable
+  const runVersion = options.runVersion ?? ((command) => run(command, ['--version']))
   const issues = []
   const notes = []
   const checks = []
@@ -257,7 +249,7 @@ export function checkLive(declaration, options = {}) {
     return {
       ok: false,
       issues: [
-        'Windows 原生构建缺少 PowerShell 构建脚本；缺的是 shell，不是编译器。请改用 WSL 并把 build_host 改成 wsl，或补一个 PowerShell 版本。',
+        'Windows 原生构建缺少 POSIX 壳；本版本没有 PowerShell 构建脚本。缺的是壳，不是编译器。请改用 WSL 并把 build_host 改成 wsl，或补一个 PowerShell 版本。',
       ],
       notes: validation.notes,
       checks,
@@ -267,6 +259,10 @@ export function checkLive(declaration, options = {}) {
   if (buildHost === 'wsl') {
     if (platform !== 'linux' || !isWsl(env)) {
       issues.push('声明 build_host=wsl，但当前进程不在 WSL 内；请在 WSL 里运行 --live')
+    }
+  } else if (host === 'windows') {
+    if (platform !== 'win32') {
+      issues.push(`声明 host=windows + build_host=native，但当前平台是 ${platform}；请在 Windows 上运行 --live`)
     }
   } else if (host === 'linux' && platform !== 'linux') {
     issues.push(`声明 host=linux，但当前平台是 ${platform}；请在 Linux 上运行 --live`)
@@ -291,7 +287,7 @@ export function checkLive(declaration, options = {}) {
 
   const resolved = new Map()
   for (const item of roles) {
-    const executable = findExecutable(item.command, pathValue)
+    const executable = resolveExecutable(item.command, pathValue)
     if (!executable) {
       issues.push(`${item.role}: PATH 中找不到 ${item.command}`)
       checks.push({ role: item.role, command: item.command, status: 'missing' })
@@ -308,8 +304,9 @@ export function checkLive(declaration, options = {}) {
   const versions = new Map()
   for (const item of roles) {
     if (item.role === 'ninja' || item.role === 'ctest') continue
+    if (compiler === 'gcc' && item.role === 'clangd') continue
     const executable = resolved.get(item.role)
-    const result = run(executable, ['--version'])
+    const result = runVersion(executable, ['--version'])
     const text = `${result.stdout}\n${result.stderr}`
     const version = parseVersion(text)
     versions.set(item.role, version)
@@ -324,9 +321,7 @@ export function checkLive(declaration, options = {}) {
   }
 
   const cmakeVersion = versions.get('cmake')
-  if (cmakeVersion && cmakeVersion.major < 3) {
-    issues.push(`cmake ${versionText(cmakeVersion)} 过旧；需要 >= 3.20`)
-  } else if (cmakeVersion && cmakeVersion.major === 3 && cmakeVersion.minor < 20) {
+  if (cmakeVersion && (cmakeVersion.major < 3 || (cmakeVersion.major === 3 && cmakeVersion.minor < 20))) {
     issues.push(`cmake ${versionText(cmakeVersion)} 过旧；需要 >= 3.20`)
   }
 
@@ -334,37 +329,27 @@ export function checkLive(declaration, options = {}) {
   const formatVersion = versions.get('clang-format')
   const tidyVersion = versions.get('clang-tidy')
   const clangdVersion = versions.get('clangd')
-  const compilerIsAppleAlias =
-    compiler === 'gcc' && compilerVersion?.apple === true
 
-  if (compiler === 'clang') {
-    if (compilerVersion && compilerVersion.major < 16) {
-      issues.push(`clang++ ${versionText(compilerVersion)} 过旧；需要 >= 16`)
-    }
-    if (compilerVersion && !compilerVersion.apple) {
-      for (const [role, version] of [
-        ['clang-format', formatVersion],
-        ['clang-tidy', tidyVersion],
-        ['clangd', clangdVersion],
-      ]) {
-        if (version && version.major !== compilerVersion.major) {
-          issues.push(
-            `${role} ${versionText(version)} 与 clang++ ${versionText(compilerVersion)} 主版本不一致；clang 模式要求同一 LLVM 主版本`,
-          )
-        }
-      }
-    } else if (compilerVersion?.apple) {
-      notes.push(
-        'clang++ 是 Apple Clang；clangd 需能经 xcrun 找到 SDK。不要把 Homebrew LLVM 与 Xcode 资源目录混用，也不要把 Homebrew 路径写死；跳过同主版本要求，但仍要求 clang-format/clang-tidy >= 16',
-      )
-    }
+  if (compiler === 'gcc' && compilerVersion?.apple === true) {
+    issues.push('声明 compiler=gcc，但 g++ 实际是 Apple clang；请安装真正的 GCC，或把 compiler 改成 clang')
   }
 
-  if (compiler === 'gcc') {
-    if (compilerIsAppleAlias) {
-      issues.push('声明 compiler=gcc，但 g++ 实际是 Apple clang；请安装真正的 GCC，或把 compiler 改成 clang')
-    } else if (compilerVersion && compilerVersion.major < 13) {
-      issues.push(`g++ ${versionText(compilerVersion)} 过旧；std::format 需要 GCC/libstdc++ >= 13`)
+  if (compiler === 'clang' && compilerVersion) {
+    for (const [role, version] of [
+      ['clang-format', formatVersion],
+      ['clang-tidy', tidyVersion],
+      ['clangd', clangdVersion],
+    ]) {
+      if (version && version.major !== compilerVersion.major) {
+        issues.push(
+          `${role} ${versionText(version)} 与 clang++ ${versionText(compilerVersion)} 主版本不一致；clang 模式要求同一 LLVM 主版本`,
+        )
+      }
+    }
+    if (compilerVersion.apple) {
+      notes.push(
+        'clang++ 是 Apple Clang；clangd 需能经 xcrun 找到 SDK。不要混用 Homebrew LLVM 与 Xcode 资源目录，也不要把 Homebrew 路径写死。',
+      )
     }
   }
 
@@ -373,24 +358,8 @@ export function checkLive(declaration, options = {}) {
     ['clang-tidy', tidyVersion],
   ]) {
     if (version && version.major < 16) {
-      issues.push(`${role} ${versionText(version)} 过旧；需要 >= 16`)
+      issues.push(`${role} ${versionText(version)} 过旧；需要 >= 16（配置使用 BreakAfterAttributes）`)
     }
-  }
-
-  if (issues.length > 0) {
-    return { ok: false, issues, notes: validation.notes.concat(notes), checks }
-  }
-
-  // Probe std::format for real: version numbers alone miss old libstdc++ headers.
-  const probe = probeFormat(resolved.get('compiler'), cwd)
-  checks.push({
-    role: 'std::format',
-    command: compilerCommand,
-    status: probe.ok ? 'found' : 'failed',
-    detail: probe.detail,
-  })
-  if (!probe.ok) {
-    issues.push(`std::format 探针失败：${probe.detail}`)
   }
 
   return {
@@ -399,57 +368,6 @@ export function checkLive(declaration, options = {}) {
     notes: validation.notes.concat(notes),
     checks,
     environment: validation.axes,
-  }
-}
-
-function probeFormat(compilerPath, cwd) {
-  const dir = mkdtempSync(path.join(tmpdir(), 'dsh-cpp-workflow-format-'))
-  const source = path.join(dir, 'main.cpp')
-  const binary = path.join(dir, 'probe')
-  try {
-    writeFileSync(
-      source,
-      [
-        '#include <format>',
-        '#include <iostream>',
-        '#include <string>',
-        '',
-        'int main() {',
-        '  const std::string name = "cpp";',
-        '  std::cout << std::format("hello, {}\\n", name);',
-        '  return 0;',
-        '}',
-        '',
-      ].join('\n'),
-      'utf8',
-    )
-    const compile = run(compilerPath, ['-std=c++20', source, '-o', binary], {
-      cwd,
-      timeout: 30000,
-    })
-    if (compile.error) {
-      return { ok: false, detail: `无法执行编译器：${compile.error.message}` }
-    }
-    if (compile.status !== 0) {
-      return {
-        ok: false,
-        detail: firstLines(compile.stderr || compile.stdout, 4) || '编译失败',
-      }
-    }
-    const execute = run(binary, [], { cwd: dir, timeout: 10000 })
-    if (execute.error) {
-      return { ok: false, detail: `无法运行探针：${execute.error.message}` }
-    }
-    const output = `${execute.stdout}`.trim()
-    if (execute.status !== 0 || output !== 'hello, cpp') {
-      return {
-        ok: false,
-        detail: `运行输出不符（退出码 ${execute.status}，输出 "${output}"）`,
-      }
-    }
-    return { ok: true, detail: '编译并运行通过' }
-  } finally {
-    rmSync(dir, { recursive: true, force: true })
   }
 }
 
@@ -482,7 +400,7 @@ const USAGE = `用法: node checking-environment.mjs [--project <dir>] [--live] 
 默认读取 <dir>/.agents/skills/cpp-workflow-project/environment.json，
 并向上走到 git 根（最多 64 层）。
 
-  --live   校验当前 build host、PATH 角色、版本与 std::format
+  --live   校验当前 build host、PATH 角色与版本
   --json   输出机器可读结果
   --help   显示本帮助`
 
@@ -540,7 +458,7 @@ async function main(argv) {
     return EXIT.ok
   }
 
-  const live = checkLive(read.value, { platform: process.platform, env: process.env, cwd: start })
+  const live = checkLive(read.value, { platform: process.platform, env: process.env })
   if (options.json) {
     process.stdout.write(
       `${JSON.stringify({ mode: 'live', file, ...live }, null, 2)}\n`,

@@ -73,21 +73,21 @@ WSL 只对 `host=windows` 合法；不要通过改 `host` 来绕过，先确认�
 声明合法，但本版本没有 PowerShell 构建脚本。`--live` 输出类似：
 
 ```text
-声明合法，但 Windows 原生构建缺少 PowerShell 构建脚本；缺的是 shell，不是编译器。
+声明合法，但 Windows 原生构建缺少 POSIX 构建脚本；缺的是 shell，不是编译器。
 ```
 
 不要把 `build_host` 改成 `wsl` 来「让它过」；要么补脚本，要么换到 WSL 并更新声明。
 
-## `std::format` 探针失败
+## GCC 模式不比较 GCC 主版本
 
 ```text
-GCC 12 环境：
-  g++ --version 通过（>= 13 检查失败）
-  或 g++ 13 但 libstdc++ 头文件来自旧版本
-  → std::format 探针编译/运行失败
+g++ 14.1.0
+clang-format 18.1.8
+clang-tidy 18.1.8
+clangd 18.1.8
 ```
 
-检查器报告探针的编译错误摘要，并提示「GCC/libstdc++ ≥ 13，或 libc++ ≥ 14」。不要改用 `printf` 绕过；升级标准库或换编译器。
+通过：检查器只要求 `g++` 是真的 GCC，`clang-format` / `clang-tidy` ≥ 16，`clangd` 可用。不要拿 GCC 的主版本去要求 Clang 工具，也不要因为版本号不同就换成一套不存在的 `gcc-format`。若 GCC 的标准库太旧、`<format>` 不可用，升级工具链，而不是改检查器。
 
 ## macOS 的 `g++` 别名
 
@@ -118,7 +118,7 @@ clang 模式要求四者同主版本；这里 18 与 16 不一致，`--live` 失
 # CI / Windows 开发机：只读声明，不需要工具链
 node scripts/checking-environment.mjs --project .
 
-# build host 上：核对 PATH、版本、std::format
+# build host 上：核对构建宿主、PATH 和版本
 node scripts/checking-environment.mjs --project . --live
 ```
 

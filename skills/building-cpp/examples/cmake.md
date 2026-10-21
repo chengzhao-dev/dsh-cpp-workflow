@@ -114,7 +114,7 @@ clang-tidy -p build/clang src/main.cpp
 **差**：
 
 ```bash
-LD_LIBRARY_PATH=build/lib ./build/bin/app   # 每次运行都要包一层
+LD_LIBRARY_PATH=build/clang/lib ./build/clang/bin/app   # 每次运行都要包一层
 ```
 
 **好**：
@@ -133,7 +133,7 @@ else()
 endif()
 ```
 
-从 `build/bin/app` 直接启动即可找到 `../lib` 下的共享库；安装场景另配 RPATH。
+从 `build/<compiler>/bin/app` 直接启动即可找到同级 `../lib` 下的共享库；安装场景另配 RPATH。
 
 ## 输出目录
 

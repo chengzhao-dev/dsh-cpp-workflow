@@ -1,180 +1,106 @@
 # dsh-cpp-workflow
 
-[English](README.en.md) | **简体中文**
+[English](README.en.md)
 
-为 [DeepSeek Harness](https://deepseek-harness.github.io/deepseek-harness/) 提供一套 C++20 工程技能：按「定行为 → 定边界 → 定声明 → 定实现 → 定构建 → 定工具配置 → 通过检查」推进，源码规则以 Google C++ Style Guide 为基线，构建统一用 CMake + Ninja，输出组合优先用 `std::format`。另配 C++ 教程写作与 Python↔C++ 协作两个外围技能，C++ 始终是核心。
-
-插件只注册技能，不注册工具，不安装工具链，也不改写工程文件；发现技能时只做一次有界的只读检查。项目级事实放在目标仓库的 `.agents/skills/cpp-workflow-project/`，通用规则留在插件里。
+把 C++20 的源码工作和构建工作收成两个技能。插件只注册技能 provider，不注册工具、不编译、不下载工具链、不写项目文件。
 
 ## 提供什么
 
-| 技能 | 覆盖 | 负责 | 不负责 |
-| --- | --- | --- | --- |
-| `developing-cpp` | 第 1–4 步 | 可观察行为、库与程序边界、头文件与声明、命名、异常、源码注释、`.cpp` 实现、类型/数值、STL、性能、领域建模 | CMake、`.clang-*`、构建脚本、教材正文、Python 编排 |
-| `building-cpp` | 第 5–7 步 | CMake target、Ninja、编译数据库、clang-format/tidy/clangd、环境三轴校验、构建脚本、链接与运行库 | 源码语义、命名、异常正文 |
-| `teaching-cpp` | 教程四步 | 读者任务、概念顺序、示例、练习、术语、示例验证 | 另立一套源码规则；源码和构建分别回前两个技能 |
-| `python-cpp-interop` | 协作边界 | 子进程、带版本的 JSON 行协议、超时与 stderr、本地 HTTP、ctypes/pybind11 取舍 | C++ 规则语义；Python 只做编排、验证和展示 |
+| 技能 | 管什么 | 什么时候打开 |
+| --- | --- | --- |
+| `developing-cpp` | 定行为、定边界、定声明、定实现；`.h` / `.cpp` 的命名、异常和源码注释 | 用户点名一个函数、一条诊断或一个源文件 |
+| `building-cpp` | 定构建、定工具配置、通过检查；CMake、Ninja、Clang 配置、构建脚本和环境组合 | 改动落在构建文件、工具配置或环境声明上 |
 
-四个技能从包内 `skills/<name>/SKILL.md` 发现，按需加载。步骤文件、references、examples 和 assets 都以技能目录为基准解析相对路径。
+两个技能都先读项目技能 `cpp-workflow-project`。没有项目技能时，门禁不会放出这两个名字。
 
 ## 安装
 
+npm 安装钉死版本：
+
 ```bash
-dsh plugin --profile web add npm:dsh-cpp-workflow@0.1.0
+dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.1.0
 ```
 
-`--profile` 换成实际运行的 profile。桌面应用使用 `desktop` profile 时，请在应用里走「设置 → 插件 → 添加插件」，地址填 `npm:dsh-cpp-workflow@0.1.0`；由应用管理的 profile 不要直接跑命令行 `add`。跟 GitHub 标签也可以写 `github:<owner>/dsh-cpp-workflow#v0.1.0`，但要锁定 commit 或 tag，并确认 `lib/` 已在仓库里。
+同版本的 Git 标签：
 
-要求 DSH 0.2.x、Node.js 22 及以上。发布包已带 `lib/`，安装后不需要构建；从 Git 链接安装时需要 `prepare` 或预编译的 `lib/`，本仓库提交了 `lib/`。
+```bash
+dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.1.0
+```
+
+桌面应用独占 `desktop` profile。命令行 `add` 被拒绝时，在应用设置里添加插件，地址填同一个 npm 版本。Git 标签安装使用仓库内已构建的 `lib/`，不在目标机器上重新构建；包内也不含需要授权执行的安装脚本。
 
 ## 工作区门禁
 
-`apply()` 只注册技能 provider，不写文件、不装工具链。provider 的 `list({ cwd })` 决定这次会话能不能看见四个技能：
+一个会话里要同时满足两件事，技能才会出现：
 
-- 从 `cwd` 向上找到最近的 git 根；
-- 满足下面任一条：`cwd` 到 git 根沿途的某一层存在 `.agents/skills/cpp-workflow-project/SKILL.md`（显式选用），或 git 根内同时存在 `CMakeLists.txt` 与 C++ 源文件/头文件（`.cpp`、`.cc`、`.cxx`、`.hpp`、`.hh`、`.hxx`、`.ixx`、`.cppm` 等）；
-- 没有 `cwd`、不在 git checkout、只有 CMake 没有 C++ 源文件、只有 C++ 示例没有 CMake、标记或工程在 git 根之上，都返回空列表。
+1. 从当前目录向上、停在 git 根，沿途有 `.agents/skills/cpp-workflow-project/SKILL.md`。
+2. 这份标记所在的 git 仓库里，跳过目录之外，有第一方 `CMakeLists.txt`，或有 `.c`、`.cc`、`.cpp`、`.cxx`、`.h`、`.hh`、`.hpp`、`.hxx` 源文件。
 
-扫描只用于这次候选发现，限制深度 6 层、最多 1500 个目录项，并跳过 `.git`、`build`、`node_modules`、`vendor`、`third_party`、`_book`、`docs`、`examples`、`samples` 等生成、依赖或示例目录；命中 `CMakeLists.txt` 与 C++ 源文件后立即停止。`get()` 在不带 `cwd` 时只读已加载 candidate；带 `cwd` 时重新过同一道门禁，避免同一会话切到非 C++ 目录后仍能展开正文。
+缺一件就返回空列表：没有项目技能时，即使仓库里有 CMake 或 `.cpp` 也不命中；有项目技能、但仓库里没有第一方 CMake 或 C++ 源文件，同样不命中。纯文档仓库、只复制了模板的仓库也不命中。扫描上限、跳过目录和八类边界情形见 [docs/plugin-boundaries.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-boundaries.md)。
 
-门禁只影响技能发现，不影响项目层同名技能的覆盖。项目 `.agents/skills` 的 rank 是 200，插件是 550：同名技能由项目层胜出。**不要把插件的四个技能嵌进项目**，否则项目里那份会覆盖插件正文，通用规则就会分叉。
-
-## 七步流程
-
-| 步 | 名称 | 产出 | 文件 |
-| --- | --- | --- | --- |
-| 1 | 定行为 | 一句可验收的可观察行为 | `skills/developing-cpp/steps/01-behavior.md` |
-| 2 | 定边界 | 库与程序的责任、依赖方向 | `skills/developing-cpp/steps/02-boundary.md` |
-| 3 | 定声明 | 头文件、命名、声明顺序、合同 | `skills/developing-cpp/steps/03-declaration.md` |
-| 4 | 定实现 | `.cpp` 操作顺序、分组、实现注释 | `skills/developing-cpp/steps/04-implementation.md` |
-| 5 | 定构建 | target-based CMake、Ninja、编译数据库 | `skills/building-cpp/steps/05-build.md` |
-| 6 | 定工具配置 | clang-format/tidy/clangd、编辑器 | `skills/building-cpp/steps/06-tooling.md` |
-| 7 | 通过检查 | 环境 live、入口命令、CTest、运行 | `skills/building-cpp/steps/07-check.md` |
-
-后一步发现前一步不完整时，退回被打破的那一步重走，不在当前层打补丁。第 5 步先做环境**静态**校验；第 7 步跑入口命令前再做 `--live`，检查真实 build host、PATH 角色、版本和 `std::format` 探针。
-
-## 教程与 Python 协作
-
-`teaching-cpp` 面向教材和课程，不替代源码与构建规则：
-
-| 步 | 产出 |
-| --- | --- |
-| 1 | 读者的可观察任务 |
-| 2 | 前置概念与讲解顺序 |
-| 3 | 最小完整示例与一个变化点 |
-| 4 | 真实编译、运行、测量输出 |
-
-示例基线是 `-std=c++20 -Wall -Wextra`；完整示例有 `int main()`，片段以 `// 片段` 开头；输出必须实测，版本特性标注最低标准。`references/` 里有讲解方法、章节顺序、示例验证、教学代码风格和术语口径。
-
-`python-cpp-interop` 把 Python 限定在外围：
-
-- 首选 `subprocess` + 带版本的 JSON 行协议；每条快照有 `version`、严格递增的 `sequence`，stdout 只放快照，提示和日志走 stderr。
-- 长会话要有显式命令、超时、关闭路径；不让 Python 解析「请选择」这类提示来同步状态。
-- 本地 Web 只绑定 `127.0.0.1`，请求体有上限，一个会话一个锁。
-- `ctypes` / `pybind11` 是最后手段，先说明进程边界为什么不够。
-
-可运行骨架在 `skills/python-cpp-interop/assets/`：`replay.py`、`web_bridge.py`，以及最小 C++ 协议端 `snapshot_demo.cpp`；三者都不依赖项目专属名称，只依赖协议。
+插件技能 rank 550。项目自己的 `.agents/skills` 技能 rank 200，会以同名覆盖插件；不要在项目里复制 `developing-cpp` 或 `building-cpp`。
 
 ## 项目级约定
 
-目标仓库只放这一份自己的技能：
+把 [templates/cpp-workflow-project](templates/cpp-workflow-project) 整个复制到目标仓库的 `.agents/skills/` 下，目录名保持 `cpp-workflow-project`；只补还不存在的文件，不覆盖已有的源码、`CMakeLists.txt` 或 `.clang-*`。项目技能只写本工程特有的事实：
 
-```text
-<repo>/.agents/skills/cpp-workflow-project/
-├── SKILL.md                  # 工程名、职责、入口命令、库/程序边界、阶段表
-├── environment.json          # host / build_host / compiler，三个空轴
-└── stages/stage-table.md     # 当前阶段的可观察行为、验证方式、状态
-```
+- 工程名、组件名和源码根；
+- 库与程序的边界、公共头位置；
+- 从仓库根能直接运行的入口命令；
+- 阶段表路径和术语增补。
 
-模板见 `templates/cpp-workflow-project/`。复制整个目录后填写真实事实；三个轴故意留空，插件不会替用户猜 WSL、Clang 或构建目录。项目的领域词、输入格式、外部约束放这里；Google 风格、CMake 规则、clang-tidy 清单不要复制进来。
+`environment.json` 一个仓库只有一份。模板里的三个轴故意留空，复制后必须填成工程的真实组合；留空时源码四步仍能做，但定构建会停。阶段表只写可观察行为，不写内部重构。
 
-## 环境三轴
-
-`environment.json` 只声明三个独立事实：
+## 环境组合
 
 | 轴 | 允许值 | 说明 |
 | --- | --- | --- |
-| `host` | `windows` / `linux` / `macos` | 工程实际运行的操作系统 |
-| `build_host` | `native` / `wsl` | `wsl` 只在 `host=windows` 合法；Linux/macOS 必须 `native` |
-| `compiler` | `clang` / `gcc` | 每次 configure 只选一个；生成器固定 Ninja |
+| `host` | `windows`、`linux`、`macos` | 编辑器和代理壳在哪 |
+| `build_host` | `native`、`wsl` | `wsl` 只在 `host=windows` 时合法 |
+| `compiler` | `clang`、`gcc` | 一次配置一个编译器 |
 
-合法组合：Windows + WSL + clang/gcc、Linux + native + clang/gcc、macOS + native + clang/gcc。Windows + native 是合法声明，但本版本没有 PowerShell 构建脚本；`--live` 会报告缺的是 shell，不是编译器。构建目录固定 `build/clang`、`build/gcc`，根 `build/compile_commands.json` 指向当前数据库。
+生成器固定 Ninja，构建目录是 `build/clang/` 与 `build/gcc/`，不共用 `build/`。诊断工具固定 `clang-format`、`clang-tidy`、`clangd`；GCC 模式也不换成别的分析器。
+
+构建前先跑静态检查，再在构建宿主上跑活动检查。`<skill-dir>` 是插件安装后的 `building-cpp` 目录，不是目标工程里的目录：
 
 ```bash
-node skills/building-cpp/scripts/checking-environment.mjs --project <repo>
-node skills/building-cpp/scripts/checking-environment.mjs --project <repo> --live
-node skills/building-cpp/scripts/checking-environment.mjs --project <repo> --json
+node "<skill-dir>/scripts/checking-environment.mjs" --project .
+node "<skill-dir>/scripts/checking-environment.mjs" --project . --live
 ```
 
-退出码：`0` 通过，`1` 脚本内部错误，`2` 声明缺失或非法，`3` live 检查失败。检查器只读；唯一临时写入是系统临时目录里的 `std::format` 探针，退出前删除。
-
-## 工具链要求
-
-- **C++20**，不使用 C++23；`std::print` 不可用，输出用 `std::cout` / `std::cerr` 配合 `std::format`。
-- **CMake ≥ 3.20**、**Ninja**、**CTest**。
-- **Clang 模式**：`clang++`、`clang-format`、`clang-tidy`、`clangd` 同一 LLVM 主版本，且都 ≥ 16。
-- **GCC 模式**：`g++ ≥ 13`（libstdc++ 的 `<format>`），`clang-format` / `clang-tidy` ≥ 16，`clangd` 只要求可用（工具角色固定用 Clang 工具链，不因编译器是 GCC 而降低）。
-- `std::format` 还要求实际标准库支持：GCC/libstdc++ ≥ 13，或 libc++ ≥ 14；检查器会编译运行探针，不只看版本号。
-- `.clangd` 的 `--query-driver` 是 clangd 命令行参数，放在 `.vscode/settings.json`，不是 `.clangd` 的 YAML 键；换编译器时先确认再改绝对路径。
-
-## 资产与模板
-
-`skills/building-cpp/assets/` 是脚手架来源：
-
-- `config/`：`.clang-format`、`.clang-tidy`、`.clangd`、`.vscode/`。
-- `cmake/`：统一警告、固定版本 GoogleTest、跨平台 `BUILD_RPATH`。
-- `templates/projects/`：`single`、`multi`、`static-library`、`shared-library`，外加 `common/running-build.sh`。四个模板都用 target-based CMake、`cxx_std_20`、`app` 程序 target，库与程序分离。
-
-只复制缺失文件，不覆盖已有 `CMakeLists.txt`、`.clang-*`、`.vscode` 或源码。CMake 助手模块复制到项目 `cmake/`，由项目在顶层 `CMAKE_MODULE_PATH` 后 include；不要从插件目录直接 include。
-
-`running-build.sh <clang|gcc>` 依次执行：无条件 configure → build → 编译数据库软链接 → CRLF 检查 → clang-format → clang-tidy（只收 `.cpp`）→ CTest → 从 `build/<compiler>/bin` 运行 `app`。
+`windows + native` 是合法组合，但本版没有 PowerShell 构建脚本；`--live` 会明确报告缺 POSIX 壳，而不是缺编译器。环境脚本不安装、不下载、不改 PATH。
 
 ## 包结构
 
 ```text
 dsh-cpp-workflow/
-├── src/index.ts              # provider 与门禁
-├── lib/index.js              # tsc 产物，随包发布
-├── skills/                   # 四个技能与 assets
-├── templates/                # 项目技能模板
-├── docs/                     # 创建参考、结构、校验记录
-├── scripts/                  # 结构自检
-├── locale/{zh,en}.json
-├── cordis.patch.yml          # 只 insert 一行 cpp-workflow
+├── lib/                 # 构建产物，随 npm 包发布
+├── skills/              # developing-cpp 与 building-cpp
+├── templates/           # 复制到项目的空模板
+├── package.json
+├── package-lock.json    # 只在仓库，供 npm ci
+├── LICENSE
+├── README.md
+├── README.en.md
+├── cordis.patch.yml     # 只 insert 一行
+├── locale/              # 中英文标题与描述
 └── icon.svg
 ```
 
-更细的分层、复制规则和自检项见 `docs/cpp-workflow-layout.md`；来源、Google 偏差和 cpp-board-games 审计见 `docs/cpp-workflow-validation.md` 与 `docs/creation-references.md`。
+边界与门禁的维护说明在 [docs/plugin-flow.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-flow.md)，目录和进包白名单在 [docs/plugin-layout.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-layout.md)，版本规则在 [docs/versioning.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/versioning.md)。
 
 ## 本地开发
 
+需要 Node.js 22 或更新版本。
+
 ```bash
-npm install
-npm run build      # tsc → lib/
-npm test           # provider + checker，不依赖本机 C++ 工具链
-npm run check      # build + 结构/链接/shell/模板/包元数据 + 同一组样例测试
-npm run pack:check # npm pack --dry-run
+npm ci
+npm test           # 构建、结构检查、门禁/环境/schema 测试
+npm run check      # 同 npm test
+npm run pack:check # 核对 npm 包内容
 ```
 
-`npm run check` 是计划里的完整自检：先编译 `lib/`，再核对技能链接与包元数据，最后跑 `tests/` 里的 provider 与 checker 样例。测试用临时目录模拟 `.git` 和项目技能标记，不写入真实仓库；checker 测试用 fixtures 和 CLI 子进程。模板编译不在 Node 测试里伪装，必须在声明的 build host 上按项目入口命令验收。
-
-## 设计基线
-
-- DSH 官方技能子系统与发布文档：bundle patch、`SkillProvider` 的 `list()`/`get()`、rank、`engines.dsh`、`files` 白名单。
-- Google C++ Style Guide：C++20 基线、命名、声明顺序、异常、include 顺序、cast 与所有权。
-- `cpp-board-games` 的 C++ 教学约定：Google 命名与声明顺序、异常分层、注释层次、target-based CMake、构建脚本阶段顺序。
-- 结构参考 `dsh-quarto-book` 与 `dsh-embedded-workbench`；下载量快照中没有 C++ 专用头部插件，因此按通用 bundle 约定实现，不发明运行时协议。
-
-有意偏差：异常只在合同违反/程序边界使用（Google 禁止异常）；`#pragma once`（Google 用 include guard）；100 列（Google 80）；`Get` + PascalCase 访问器；`.h/.cpp` 扩展；项目头从组件 `PUBLIC include/` 裸文件名包含；用 clang-format/tidy 代替 `cpplint.py`；封闭状态枚举可指定 `std::uint8_t`。完整表格和理由见 `skills/developing-cpp/references/google-cpp-style.md`。
-
-## 不做什么
-
-- 不修改源工程以外的仓库；本轮审计没有改 `cpp-board-games`。
-- 不提供 MSVC/clang-cl、C-only、调试器、ASan、vcpkg/Conan、Debug/Release 轴。
-- 不安装工具、不下载依赖、不编辑 PATH、不写 `~/.bashrc`。
-- 不注册工具，不在 `apply()` 里探测环境；环境检查只在用户/技能调用 checker 时发生。
-- 不做 LSP 客户端或代码导航服务；只保证当前构建写出 `compile_commands.json`，导航交给已有的 clangd/LSP 插件。
-- Windows 原生构建没有 PowerShell 入口；这是 v1 的已知缺口，不是隐式回退。
+源码在 `src/`，`npm run build` 生成 `lib/`。结构检查在 `scripts/checking-skill-links.mjs`；测试不调用本机编译器，环境检查用固定版本字符串。
 
 ## 许可
 

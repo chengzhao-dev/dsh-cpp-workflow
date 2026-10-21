@@ -6,7 +6,7 @@
 
 ## 通用情况
 
-- 语言固定 C++20，不使用 C++23 特性；头文件用 `#pragma once`（本项目对 Google 的书面偏离之一）。
+- 语言固定 C++20，不使用 C++23 特性；头文件用 `#pragma once`。
 - 命名按 `references/naming.md`：类型与函数 PascalCase，变量与参数 snake_case，类成员尾随 `_`，常量与枚举子 `k` 前缀。
 - 声明顺序按 `references/declaration-order.md`：类型 → 静态常量 → 工厂 → 构造/赋值/析构 → 其他函数 → 数据成员。
 - 公共头文件自包含：自身需要的头都直接包含，不依赖调用方的包含顺序。

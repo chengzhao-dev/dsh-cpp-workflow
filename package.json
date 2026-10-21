@@ -1,14 +1,13 @@
 {
-  "name": "dsh-cpp-workflow",
+  "name": "@chengzhao-dev/dsh-cpp-workflow",
   "version": "0.1.0",
-  "description": "C++20 工程流程技能包：七步源码与构建约定、环境组合校验、clang 工具链模板 · C++20 workflow skills for DeepSeek Harness",
+  "description": "C++20 工程流程技能包：源码四步与构建三步，按项目声明的环境组合校验 · C++20 workflow skills for DeepSeek Harness",
   "type": "module",
   "main": "./lib/index.js",
   "exports": {
     ".": "./lib/index.js",
     "./package.json": "./package.json",
-    "./cordis.patch.yml": "./cordis.patch.yml",
-    "./locale/*.json": "./locale/*.json"
+    "./cordis.patch.yml": "./cordis.patch.yml"
   },
   "files": [
     "lib",
@@ -19,9 +18,7 @@
     "README.md",
     "README.en.md",
     "LICENSE",
-    "templates",
-    "docs",
-    "scripts"
+    "templates"
   ],
   "engines": {
     "node": ">=22",
@@ -30,19 +27,29 @@
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "catalog": {
+      "category": "skill",
+      "summary": {
+        "zh": "按项目声明的环境组合，推进 C++20 源码与构建流程",
+        "en": "Advance C++20 source and build work with a project-declared environment"
+      },
+      "capabilities": [
+        "skills"
+      ]
     }
   },
   "icon": "./icon.svg",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "npm run build && node --test tests/*.test.mjs",
-    "check": "npm run build && node scripts/checking-skill-links.mjs && node --test tests/*.test.mjs",
+    "test": "npm run build && node scripts/checking-skill-links.mjs && node --test tests/*.test.mjs",
+    "check": "npm test",
     "pack:check": "npm pack --dry-run"
   },
   "keywords": [
     "dsh",
-    "deepseek-harness",
     "dsh-plugin",
+    "deepseek-harness",
     "cpp",
     "c++",
     "cplusplus",
@@ -53,6 +60,18 @@
     "skills"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chengzhao-dev/dsh-cpp-workflow.git"
+  },
+  "homepage": "https://github.com/chengzhao-dev/dsh-cpp-workflow#readme",
+  "bugs": {
+    "url": "https://github.com/chengzhao-dev/dsh-cpp-workflow/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "peerDependencies": {
     "@deepseek-ai/dsh-skill": ">=0.2.0-rc.1 <0.3.0-0"
   },

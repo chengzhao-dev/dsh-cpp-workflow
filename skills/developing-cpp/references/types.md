@@ -31,45 +31,45 @@ int CountWide(const std::vector<int>& values) {
 }
 ```
 
-循环下标与容器大小都用 `std::size_t`，避免混合比较。领域坐标另按下面的定宽约定。
+循环下标与容器大小都用 `std::size_t`，避免混合比较。业务编号另按下面的定宽约定。
 
 ## 项目对整型角色的约定
 
 | 角色 | 类型 | 理由 |
 | --- | --- | --- |
-| 领域坐标、尺寸、参与边界判定的下标 | `std::int32_t` | 能表达负坐标，避开 `size_t` 与负数比较的陷阱 |
-| 容器长度、`std::array` 长度、由坐标换算的索引 | `std::size_t` | 与 STL 和 NTTP 一致 |
+| 业务编号、尺寸、参与边界判定的下标 | `std::int32_t` | 能表达负值，避开 `size_t` 与负数比较的陷阱 |
+| 容器长度、`std::array` 长度、由编号换算的索引 | `std::size_t` | 与 STL 和 NTTP 一致 |
 | 封闭状态码的底层类型 | `std::uint8_t` | 只表达取值集合和布局，不参与算术 |
 
 - 不用裸 `int` 承担跨平台协议或布局；它的宽度不可预测。
-- 不用 `std::uint8_t` / `std::uint16_t` 当坐标；负坐标无法表达，整数提升还会制造意外。
+- 不用 `std::uint8_t` / `std::uint16_t` 当业务编号；负值无法表达，整数提升还会制造意外。
 - 有符号乘法进入容器长度前先显式拓宽，否则会触发 `bugprone-implicit-widening-of-multiplication-result`：
 
 ```cpp
-inline constexpr std::int32_t kRows = 3;
-inline constexpr std::int32_t kCols = 3;
-inline constexpr std::size_t kCellCount =
-    static_cast<std::size_t>(kRows) * static_cast<std::size_t>(kCols);
-std::array<Mark, kCellCount> cells_{};
+inline constexpr std::int32_t kBatchSize = 3;
+inline constexpr std::int32_t kItemsPerBatch = 3;
+inline constexpr std::size_t kItemCount =
+    static_cast<std::size_t>(kBatchSize) * static_cast<std::size_t>(kItemsPerBatch);
+std::array<TaskState, kItemCount> items_{};
 ```
 
-- 下标换算在同一函数里先 `static_cast<std::size_t>` 各操作数再乘加；不要为此关闭检查，也不要改领域坐标的类型。
+- 下标换算在同一函数里先 `static_cast<std::size_t>` 各操作数再乘加；不要为此关闭检查，也不要改业务编号的类型。
 
 ## 枚举类
 
 `enum class` 定义封闭取值集合：
 
-- 枚举值只在类型作用域内可见：`Mark::kEmpty`，不写 `kEmpty`。
-- 与整数之间不发生隐式转换；需要编号时写 `static_cast<int>(mark)`，只用于输出或既有接口。
+- 枚举值只在类型作用域内可见：`TaskState::kPending`，不写 `kPending`。
+- 与整数之间不发生隐式转换；需要编号时写 `static_cast<int>(state)`，只用于输出或既有接口。
 - 同类型值可以比较和赋值；不能参与算术。
-- 需要固定布局时写底层类型：`enum class Mark : std::uint8_t { kEmpty, kX, kO };`
+- 需要固定布局时写底层类型：`enum class TaskState : std::uint8_t { kPending, kActive, kDone };`
 
 约定：
 
-- 新代码用 `enum class`；unscoped `enum` 只用于兼容 C 接口，不作为教学默认。
+- 新代码用 `enum class`；unscoped `enum` 只用于兼容 C 接口，不作为默认写法。
 - 封闭状态码默认写 `: std::uint8_t`；普通枚举用默认底层类型。
 - 枚举值的行尾注释要么全写要么全不写；语义结果写在最前，`///<` 对齐。
-- 需要“编号”与“名字”两套表示时，写显式映射函数，例如 `MarkToChar` / `CharToMark`，不要在枚举和整数之间来回隐式转换。
+- 需要“编号”与“名字”两套表示时，写显式映射函数，例如 `TaskStateToName` / `TaskStateFromName`，不要在枚举和整数之间来回隐式转换。
 
 ## 强类型包装
 
@@ -92,13 +92,13 @@ struct Seconds {
 ## 成员函数尾部的 `const`
 
 ```cpp
-class Inventory {
+class TaskBoard {
  public:
-  [[nodiscard]] ItemState GetItem(int row, int col) const;
-  void PlaceItem(int row, int col, ItemState state);
+  [[nodiscard]] TaskState GetTaskState(TaskId id) const;
+  void SetTaskState(TaskId id, TaskState state);
 
  private:
-  std::array<ItemState, kSlotCount> slots_{};
+  std::array<TaskState, kSlotCount> slots_{};
 };
 ```
 
@@ -140,7 +140,7 @@ class Inventory {
 ## 检查清单
 
 - [ ] 参与协议、布局或跨平台边界的整数有明确宽度。
-- [ ] 坐标与容器下标没有混用有符号和无符号。
+- [ ] 业务编号与容器下标没有混用有符号和无符号。
 - [ ] 封闭状态集合用 `enum class`，没有裸整数状态码。
 - [ ] 查询成员标了尾部 `const`；`[[nodiscard]]` 只出现在结果型 API。
 - [ ] 下标访问前有边界证明，或使用 `at`。

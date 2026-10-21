@@ -1,4 +1,4 @@
-# 100 列：模板与格式化串在 80 列下换行过碎；团队统一，见 references/google-cpp-style.md。
+# 100 列：模板与格式化串在 80 列下换行过碎；全工程统一。
 Language: Cpp
 BasedOnStyle: Google
 Standard: c++20

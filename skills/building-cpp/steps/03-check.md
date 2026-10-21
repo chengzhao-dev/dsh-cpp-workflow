@@ -1,4 +1,4 @@
-# 第 7 步：通过检查
+# 第 3 步：通过检查
 
 ## 产出
 
@@ -9,7 +9,7 @@
 按固定顺序跑，前一步失败就停，不要带着失败继续：
 
 1. **静态校验环境声明**：读 `environment.json`，检查三个轴和组合是否合法。轴为空或组合非法时，停在这里，不找可执行文件。
-2. **活动校验**：在声明的 build host 上跑 `--live`，核对 PATH 中的角色、版本和 `std::format` 可用性。Windows 原生组合当前没有构建脚本，`--live` 会明确报告「缺的是 shell，不是编译器」。
+2. **活动校验**：在声明的 build host 上跑 `--live`，核对 PATH 中的角色和版本。Windows 原生组合当前没有构建脚本，`--live` 会明确报告「缺的是 shell，不是编译器」。
 3. **跑项目入口命令**：项目技能里写的入口命令（如 `./running-build.sh clang`）。入口内部依次 configure → build → format → tidy → ctest → run；每一步失败都保留原始输出。
 4. **核对产物**：`build/<compiler>/compile_commands.json` 存在；`build/compile_commands.json` 指向当前编译器；`app` 可执行文件在 `build/<compiler>/bin`。
 5. **记录结果**：通过时记录编译器版本、构建目录、测试数量；失败时记录命令、退出码、第一条根因诊断。
@@ -17,8 +17,8 @@
 环境校验脚本：
 
 ```bash
-node <skill-dir>/scripts/checking-environment.mjs --project .          # 静态
-node <skill-dir>/scripts/checking-environment.mjs --project . --live   # 活动
+node "<skill-dir>/scripts/checking-environment.mjs" --project .          # 静态
+node "<skill-dir>/scripts/checking-environment.mjs" --project . --live   # 活动
 ```
 
 `<skill-dir>` 换成插件里 `building-cpp` 的实际目录；不要复制脚本到项目里再改。脚本只读，不安装、不下载、不改 PATH。
@@ -27,16 +27,17 @@ node <skill-dir>/scripts/checking-environment.mjs --project . --live   # 活动
 
 | 现象 | 先看 | 回到 |
 | --- | --- | --- |
-| 轴为空、组合非法、版本不匹配 | `environment.json`、`--live` 输出 | 05，先修声明 |
-| 找不到头文件、链接失败、target 不存在 | `CMakeLists.txt`、`target_include_directories`、`target_link_libraries` | 05 |
-| 没有 `compile_commands.json`、clangd 跳转失败 | 生成器、`CMAKE_EXPORT_COMPILE_COMMANDS`、`.clangd` 路径 | 05 / 06 |
-| `clang-format` 报格式 | 源码排版 | 06；只改格式，不改行为 |
-| `clang-tidy` 报命名/类型/现代 C++ 用法 | 源码声明或实现 | `developing-cpp` 的 03 / 04 |
-| 编译错误指向函数体或类型 | 源码 | `developing-cpp` 的 04；先修语义，再重跑 |
-| CTest 失败 | 测试断言、行为句 | `developing-cpp` 的 01 / 04 |
-| `app` 启动失败、找不到共享库 | 输出目录、RPATH / 运行时库路径 | 05 |
+| 轴为空、组合非法、版本不匹配 | `environment.json`、`--live` 输出 | 定构建，先修声明 |
+| 找不到头文件、链接失败、target 不存在 | `CMakeLists.txt`、`target_include_directories`、`target_link_libraries` | 定构建 |
+| 没有 `compile_commands.json`、clangd 跳转失败 | 生成器、`CMAKE_EXPORT_COMPILE_COMMANDS`、`.clangd` 路径 | 定构建 / 定工具配置 |
+| `clang-format` 报格式 | 源码排版 | 定工具配置；只改格式，不改行为 |
+| `clang-tidy` 报命名/类型/现代 C++ 用法 | 源码声明或实现 | `developing-cpp` 的定声明 / 定实现 |
+| 编译错误指向声明或类型 | 头文件、类型定义、函数签名 | `developing-cpp` 的定声明 |
+| 编译错误指向函数体 | 实现 | `developing-cpp` 的定实现；先修语义，再重跑 |
+| CTest 失败 | 测试断言、行为句 | `developing-cpp` 的定行为 / 定实现 |
+| `app` 启动失败、找不到共享库 | 输出目录、RPATH / 运行时库路径 | 定构建 |
 
-分诊只定位，不自动改。一次只改一类问题；改完从第 1 步重跑，不要跳步验证。
+分诊只定位，不自动改。一次只改一类问题；改完从失败的那一步重跑，只有行为或边界也变了才回到定行为。
 
 ## 情况
 
@@ -46,11 +47,11 @@ node <skill-dir>/scripts/checking-environment.mjs --project . --live   # 活动
 
 **只改配置**：至少跑一次完整构建 + 格式化 + 静态检查；配置错误常常在 clangd 或 tidy 阶段才暴露。
 
-**没有测试**：CTest 显示没有测试是合法结果；不要为了「全绿」造空测试。行为验收由第 1 步的验收句负责。
+**没有测试**：CTest 显示没有测试是合法结果；不要为了「全绿」造空测试。行为验收由定行为的验收句负责。
 
 **Windows 原生**：当前版本没有 PowerShell 构建脚本；`--live` 会失败并说明缺 shell。不要伪造一个临时脚本绕过，也不要把 `build_host` 改成 `wsl` 来「让它过」；先和用户确认是否补脚本。
 
-**macOS**：Apple Clang 的 `clang++` 与 Homebrew 的 `clang-format` 可能不同主版本；`--live` 对 Apple Clang 只要求工具 ≥ 16 并给出提示，不强制同版本。不要为了通过而改 `environment.json` 的编译器。
+**macOS**：`/usr/bin/clang++` 通常是 Apple Clang；`.clangd` 不写死 Homebrew 路径，clangd 要能经 xcrun 找到 SDK。`compiler=clang` 时 `--live` 按同一 LLVM 主版本核对 clang++、clang-format、clang-tidy、clangd；不要混用 Homebrew LLVM 与 Xcode 资源目录来凑版本，也不要为了通过而改 `environment.json` 的编译器。
 
 ## 正反例指针
 

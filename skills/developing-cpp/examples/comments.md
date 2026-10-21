@@ -156,11 +156,11 @@ void RemoveTask();
 **差**：
 
 ```cpp
-enum class Status : std::uint8_t {
-  kInProgress,  // 进行中
-  kDraw,        // 平局
-  kXWins,       // X 获胜
-  kOWins        // O 获胜
+enum class TaskStatus : std::uint8_t {
+  kPending,  // 待处理
+  kActive,   // 处理中
+  kBlocked,  // 等待外部输入
+  kDone      // 已完成
 };
 ```
 
@@ -169,11 +169,11 @@ enum class Status : std::uint8_t {
 **好**：
 
 ```cpp
-enum class Status : std::uint8_t {
-  kInProgress,  ///< 对局继续，尚未判定结果
-  kDraw,        ///< 平局
-  kXWins,       ///< X 获胜
-  kOWins        ///< O 获胜
+enum class TaskStatus : std::uint8_t {
+  kPending,  ///< 已登记，尚未开始
+  kActive,   ///< 正在处理
+  kBlocked,  ///< 等待外部输入，不能继续
+  kDone      ///< 已完成，不再改动
 };
 ```
 
@@ -184,23 +184,22 @@ enum class Status : std::uint8_t {
 **差**：
 
 ```cpp
-/// 放置棋子。
-/// @param row 行
-/// @param col 列
-void Place(int row, int col, Mark mark);
+/// 修改任务优先级。
+/// @param id 任务编号
+/// @param priority 优先级
+void SetPriority(TaskId id, int priority);
 ```
 
 **好**：
 
 ```cpp
-/// 在 (row, col) 放置当前玩家的棋子。
+/// 修改任务优先级。
 ///
-/// @param row 行下标，必须在 [0, rows) 内
-/// @param col 列下标，必须在 [0, cols) 内
-/// @param mark 要放置的棋子，不能是 kEmpty
-/// @throws std::out_of_range 坐标越界
-/// @throws std::invalid_argument mark 为 kEmpty，或该位置已有棋子
-void Place(std::int32_t row, std::int32_t col, Mark mark);
+/// @param id 任务编号，必须已存在
+/// @param priority 新优先级，必须在 [0, 9] 内
+/// @throws std::out_of_range 编号不在当前任务表内
+/// @throws std::invalid_argument priority 越界
+void SetPriority(TaskId id, int priority);
 ```
 
 只写调用者无法从签名推出来的内容：范围、所有权、失败方式。`@brief` 不写，第一行就是摘要。
@@ -210,12 +209,12 @@ void Place(std::int32_t row, std::int32_t col, Mark mark);
 **差**：
 
 ```cpp
-// 这里先检查边界
-// 然后检查占用
+// 这里先检查存在性
+// 然后检查状态
 // 最后写入
-if (!InRange(row, col)) return false;
-if (cells_[Index(row, col)] != Mark::kEmpty) return false;
-cells_[Index(row, col)] = mark;
+if (!Contains(id)) return false;
+if (tasks_[Index(id)].status == TaskStatus::kDone) return false;
+tasks_[Index(id)].status = TaskStatus::kActive;
 return true;
 ```
 
@@ -223,9 +222,9 @@ return true;
 
 ```cpp
 // 先检查再写入：失败时不留下半完成状态。
-if (!InRange(row, col)) return false;
-if (cells_[Index(row, col)] != Mark::kEmpty) return false;
-cells_[Index(row, col)] = mark;
+if (!Contains(id)) return false;
+if (tasks_[Index(id)].status == TaskStatus::kDone) return false;
+tasks_[Index(id)].status = TaskStatus::kActive;
 return true;
 ```
 
