@@ -48,4 +48,4 @@ npm trust github @chengzhao-dev/dsh-cpp-workflow --repository chengzhao-dev/dsh-
 
 `npm trust` 和 `npm stage reject` 需要 2FA。登记完成后，推送 `v0.1.0` 标签，由 `publish.yml` 发布带 provenance 的 0.1.0。
 
-如果暂存发布也不可用，才使用本机引导：`npm publish --access public --no-provenance`。本机没有 OIDC，`publishConfig.provenance` 会让普通 `npm publish` 报 `EUSAGE`，所以必须显式关闭。这样发布的 0.1.0 没有 provenance，版本已经消耗，不能再推同号标签重发。
+如果暂存发布也不可用，才使用本机引导：`npm publish --access public --no-provenance`。本机没有 OIDC，`publishConfig.provenance` 会让普通 `npm publish` 报 `EUSAGE`，所以必须显式关闭。这样发布的 0.1.0 没有 provenance，版本已经消耗；`v0.1.0` 标签只作为提交标记，`publish.yml` 会因为版本已存在而失败。这次失败不算 0.1.0 发布失败，后续版本才由标签发布；不要为了重跑 0.1.0 改版本号或重发同号。
