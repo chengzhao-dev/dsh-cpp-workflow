@@ -121,7 +121,7 @@ function checkMarkdownLinks(files) {
 const packageJson = readJson('package.json')
 if (packageJson) {
   equal(packageJson.name, '@chengzhao-dev/dsh-cpp-workflow', '包名')
-  equal(packageJson.version, '0.1.0', '版本')
+  ok(/^\d+\.\d+\.\d+$/.test(packageJson.version), '版本必须是 x.y.z')
   equal(packageJson.type, 'module', 'type')
   equal(packageJson.main, './lib/index.js', 'main')
   equal(packageJson.license, 'MIT', 'license')
@@ -148,6 +148,7 @@ if (packageJson) {
   ok(Boolean(packageJson.devDependencies?.typescript), '缺少 TypeScript devDependency')
 
   equal(packageJson.publishConfig?.access, 'public', 'publishConfig.access')
+  ok(!existsSync(join(ROOT, '.npmignore')), '不应保留与 files 白名单重复的 .npmignore')
   equal(packageJson.publishConfig?.provenance, true, 'publishConfig.provenance')
   ok(packageJson.repository?.url?.includes('github.com/chengzhao-dev/dsh-cpp-workflow'), 'repository 指向 GitHub')
   equal(packageJson.scripts?.build, 'tsc -p tsconfig.json', 'build 脚本')
@@ -155,7 +156,7 @@ if (packageJson) {
   for (const token of ['npm run build', 'checking-skill-links.mjs', 'node --test tests/*.test.mjs']) {
     ok(packageJson.scripts?.test?.includes(token), `npm test 缺少 ${token}`)
   }
-  equal(packageJson.scripts?.check, 'npm test', 'check 脚本应复用 npm test')
+  equal(packageJson.scripts?.check, undefined, '不应保留与 npm test 重复的 check 脚本')
 
   equal(packageJson.dsh?.bundle?.patch, './cordis.patch.yml', 'dsh.bundle.patch')
   equal(packageJson.dsh?.catalog?.category, 'skill', 'dsh.catalog.category')
@@ -171,9 +172,11 @@ if (packageJson) {
 
 // package-lock stays in sync with the scoped name.
 const packageLock = readJson('package-lock.json')
-if (packageLock) {
+if (packageLock && packageJson) {
   equal(packageLock.name, '@chengzhao-dev/dsh-cpp-workflow', 'package-lock.name')
+  equal(packageLock.version, packageJson.version, 'package-lock.version')
   equal(packageLock.packages?.['']?.name, '@chengzhao-dev/dsh-cpp-workflow', 'package-lock 根包名')
+  equal(packageLock.packages?.['']?.version, packageJson.version, 'package-lock 根包版本')
 }
 
 // ---------------------------------------------------------------------------
@@ -434,7 +437,8 @@ for (const doc of docs) {
 ok(read('docs/plugin-boundaries.md').includes('4000'), '边界文档缺少 4000 项上限')
 ok(read('docs/plugin-boundaries.md').includes('12'), '边界文档缺少 12 层上限')
 ok(read('docs/plugin-layout.md').includes('files'), '布局文档缺少 files 白名单说明')
-ok(read('docs/versioning.md').includes('0.1.'), '版本文档缺少 0.1.x 规则')
+ok(read('docs/versioning.md').includes('## 修订号'), '版本文档缺少修订号规则')
+ok(read('docs/versioning.md').includes('## 次版本'), '版本文档缺少次版本规则')
 
 const readmeZh = read('README.md')
 const readmeEn = read('README.en.md')
@@ -448,9 +452,14 @@ equal(
   ['What it provides', 'Install', 'Workspace gate', 'Project conventions', 'Environment combinations', 'Package layout', 'Local development', 'License'],
   'README.en.md H2',
 )
-ok(readmeZh.includes('@chengzhao-dev/dsh-cpp-workflow@0.1.0'), 'README 缺少钉死版本的 npm 安装命令')
-ok(readmeZh.includes('github:chengzhao-dev/dsh-cpp-workflow#v0.1.0'), 'README 缺少 Git 标签安装命令')
-ok(readmeEn.includes('@chengzhao-dev/dsh-cpp-workflow@0.1.0'), 'README.en 缺少钉死版本的 npm 安装命令')
+const version = packageJson?.version ?? ''
+ok(version !== '', 'package.json 缺少 version')
+const npmPin = `@chengzhao-dev/dsh-cpp-workflow@${version}`
+const tagPin = `github:chengzhao-dev/dsh-cpp-workflow#v${version}`
+ok(readmeZh.includes(npmPin), 'README 缺少钉死版本的 npm 安装命令')
+ok(readmeZh.includes(tagPin), 'README 缺少 Git 标签安装命令')
+ok(readmeEn.includes(npmPin), 'README.en 缺少钉死版本的 npm 安装命令')
+ok(readmeEn.includes(tagPin), 'README.en 缺少 Git 标签安装命令')
 
 const creation = read('.github/creation-references.md')
 ok(creation.includes('deepseek-harness.github.io'), '创建依据缺少官方文档')
@@ -466,10 +475,14 @@ ok(ci.includes('npm ci') && ci.includes('npm test'), 'ci.yml 未运行 npm ci/te
 const publish = read('.github/workflows/publish.yml')
 ok(/tags:[\s\S]*v\*/.test(publish), 'publish.yml 未限定 v* 标签')
 ok(publish.includes('id-token: write'), 'publish.yml 缺少 id-token: write')
+ok(publish.includes('contents: write'), 'publish.yml 缺少 contents: write')
 ok(!publish.includes('pull_request'), 'publish.yml 不应在 pull request 上发布')
 ok(publish.includes('npm ci') && publish.includes('npm test'), 'publish.yml 未运行 npm ci/test')
-ok(publish.includes('npm run build'), 'publish.yml 未运行 build')
-ok(publish.includes('npm publish --provenance'), 'publish.yml 未带 provenance 发布')
+ok(publish.includes('npm publish'), 'publish.yml 未运行 npm publish')
+ok(!publish.includes('npm publish --provenance'), 'publish.yml 不应重复传 --provenance')
+ok(!publish.includes('npm run build'), 'publish.yml 不应重复 npm test 中的 build')
+ok(publish.includes('gh release create'), 'publish.yml 未创建 GitHub Release')
+ok(publish.includes('--verify-tag'), 'publish.yml 创建 Release 时未校验标签')
 
 // ---------------------------------------------------------------------------
 // Built entry and schema gate

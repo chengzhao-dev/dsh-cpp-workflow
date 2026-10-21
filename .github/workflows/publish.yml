@@ -6,7 +6,7 @@ on:
       - 'v*'
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 jobs:
@@ -22,6 +22,13 @@ jobs:
       - name: Require tag to match package version
         run: node -e "const p=require('./package.json'); if (process.env.GITHUB_REF_NAME !== 'v' + p.version) { console.error('tag ' + process.env.GITHUB_REF_NAME + ' does not match package ' + p.version); process.exit(1) }"
       - run: npm ci
+      # `npm test` already builds `lib/`; building again would only repeat work.
       - run: npm test
-      - run: npm run build
-      - run: npm publish --provenance
+      # `publishConfig.provenance` in package.json enables provenance; passing
+      # `--provenance` here as well would state the same flag twice.
+      - name: Publish to npm with provenance
+        run: npm publish
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes --title "$GITHUB_REF_NAME"
