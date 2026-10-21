@@ -18,13 +18,13 @@ Both skills read the project skill `cpp-workflow-project` first. Without it, the
 Pinned npm install:
 
 ```bash
-dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.1.0
+dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.1.1
 ```
 
 The matching Git tag:
 
 ```bash
-dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.1.0
+dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.1.1
 ```
 
 The desktop app owns the `desktop` profile. If the command-line `add` is rejected, add the plugin in the app settings and use the same pinned npm version. A Git tag install uses the prebuilt `lib/` committed in the repository and runs no build on the target machine; the package has no install script that needs approval.
@@ -96,7 +96,6 @@ Requires Node.js 22 or newer.
 ```bash
 npm ci
 npm test           # build, structural check, gate/environment/schema tests
-npm run check      # same as npm test
 npm run pack:check # inspect the npm package contents
 ```
 

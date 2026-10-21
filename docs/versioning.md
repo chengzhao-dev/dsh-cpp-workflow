@@ -1,6 +1,6 @@
 # 版本规则
 
-首版是 `0.1.0`。0.x 阶段按三档处理，发布版本以 `package.json` 为准，`package-lock.json` 的两个版本字段随之更新。
+发布版本以 `package.json` 为唯一来源；`package-lock.json` 的两个版本字段跟随它，不单独改。当前是 0.1.x。
 
 ## 修订号：0.1.x
 
@@ -22,30 +22,49 @@
 
 只有明确宣布契约稳定、并愿意为后续破坏性改动承担主版本号时才发。当前没有这个计划。
 
-## 标签与发布
+## 已发布版本
 
-- annotated 标签与 `package.json` 同号，例如 `v0.1.0`。
+| 版本 | 发布方式 | provenance | 说明 |
+| --- | --- | --- | --- |
+| `0.1.0` | 本机 `npm publish --no-provenance` | 无 | npm 上的首个版本。`v0.1.0` 标签只作提交标记，对应的 publish run 因版本已存在而失败。 |
+
+从 `0.1.1` 起，版本只由标签触发的 `publish.yml` 发布，并带 provenance。`0.1.0` 不重发，也不为了重跑它改版本号。
+
+## 发布流程
+
+1. 改 `package.json` 与 `package-lock.json` 的版本，提交并推送 `main`。
+2. 等 `ci` 在 `main` 上通过。
+3. 在要发布的那个提交上打 annotated 标签，推送标签：
+
+   ```bash
+   git tag -a v0.1.1 -m "v0.1.1"
+   git push origin v0.1.1
+   ```
+
+4. `publish.yml` 校验标签与 `package.json` 同号，跑 `npm ci` 和 `npm test`，再 `npm publish`。`publishConfig.provenance` 打开 provenance。
+5. 发布成功后，同一个 workflow 用 `gh release create --verify-tag --generate-notes` 建 GitHub Release。
+6. 读回两边的 commit，必须相同：
+
+   ```bash
+   npm view @chengzhao-dev/dsh-cpp-workflow@0.1.1 version gitHead
+   git rev-parse v0.1.1^{commit}
+   ```
+
+   `npm view @chengzhao-dev/dsh-cpp-workflow@0.1.1 dist.attestations` 应能看到 provenance 记录。
+
+## 标签约束
+
+- annotated 标签与 `package.json` 同号，例如 `v0.1.1`。
+- 标签打在发布提交上。标签之后再补文档提交，会让 npm 的 `gitHead` 与标签指向的 commit 不一致；`0.1.0` 就差了这样一个只改 `docs/versioning.md` 的提交。
 - 同一个版本不重复发布，也不把版本改回旧号重推同一个标签。
-- `publish.yml` 只在 `v*` 标签上运行；发布前 `npm test` 必须全绿。
-- 发布后核对 `npm view @chengzhao-dev/dsh-cpp-workflow@<version> version` 和 tarball 内容。
+- 版本还没进 registry 时，修好问题后可以删除本地与远端标签，重打在修正后的提交上；版本一旦可安装，只升版本号。
 
-## 首次发布引导
+## 首次发布已完成
 
-npm 上还没有这个包时，`npm trust github` 会返回 404：trusted publishing 只能登记到已经存在的包。先用暂存发布创建包记录，不要在本机直接发布 0.1.0：
+`0.1.0` 之前用 `npm stage publish` 建了包记录（`0.0.0-stage` 占位）。按 `0.1.0` 的 publish run 表现，trusted publisher 已登记到本仓库的 `publish.yml`：失败点是版本已存在，不是认证错误，说明 OIDC 已能被 registry 接受。
 
-```bash
-npm stage publish --access public
-npm stage list
-```
-
-`npm stage publish` 不需要 2FA，会创建一个不可安装的 `0.0.0-stage` 占位包，并把当前版本放进暂存区。如果 `npm stage list` 里出现 0.1.0，先用 `npm stage reject <stage-id>` 拒绝它；同一个版本不能同时存在暂存记录和正式发布。列表为空时，只留下占位包，0.1.0 仍然可发。
-
-然后登记 trusted publisher：
+这些引导步骤不再需要。`npm trust` 与 `npm stage` 需要 2FA，只在重新登记或排障时使用。如果 `0.1.1` 的 run 报 401/404，再登记一次：
 
 ```bash
 npm trust github @chengzhao-dev/dsh-cpp-workflow --repository chengzhao-dev/dsh-cpp-workflow --file publish.yml --allow-publish
 ```
-
-`npm trust` 和 `npm stage reject` 需要 2FA。登记完成后，推送 `v0.1.0` 标签，由 `publish.yml` 发布带 provenance 的 0.1.0。
-
-如果暂存发布也不可用，才使用本机引导：`npm publish --access public --no-provenance`。本机没有 OIDC，`publishConfig.provenance` 会让普通 `npm publish` 报 `EUSAGE`，所以必须显式关闭。这样发布的 0.1.0 没有 provenance，版本已经消耗；`v0.1.0` 标签只作为提交标记，`publish.yml` 会因为版本已存在而失败。这次失败不算 0.1.0 发布失败，后续版本才由标签发布；不要为了重跑 0.1.0 改版本号或重发同号。

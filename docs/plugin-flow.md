@@ -4,19 +4,7 @@
 
 ## 第一层：安装
 
-npm 安装钉死版本：
-
-```bash
-dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.1.0
-```
-
-同一版本的 Git 标签：
-
-```bash
-dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.1.0
-```
-
-桌面应用独占 `desktop` profile。命令行 `add` 被拒绝时，在应用设置里添加插件，地址填同一个 npm 版本。Git 标签安装使用仓库内已构建的 `lib/`，不在目标机器上重新构建；包内没有需要授权执行的安装脚本。npm 安装同样使用包内预构建的 `lib/`。
+用 `dsh plugin --profile <name> add` 安装。npm 版本、Git 标签两种地址和桌面应用的 `desktop` profile 限制见 [README 的安装一节](../README.md#安装)。本包只发预构建的 `lib/`，没有需要授权执行的安装脚本。
 
 安装后不会立刻出现在所有会话里。每次技能列表查询都会重新判断当前工作区。
 
