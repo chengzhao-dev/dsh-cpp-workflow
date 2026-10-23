@@ -13,6 +13,8 @@ metadata:
 
 编译失败先分因：诊断指向函数体，回 `developing-cpp` 的定实现；诊断指向声明或类型，回定声明；诊断是找不到头、链接失败、没有编译数据库或工具不在 PATH，留在本技能的定构建或定工具配置。
 
+源码和构建文件用 UTF-8 无 BOM、检出 LF；`.bat` / `.cmd` 用 CRLF；`.clang-format` 写 `LineEnding: LF`。MSVC 原生构建优先加 `/utf-8`，不要靠 BOM 过关。完整规则见 `references/encoding.md`，检查脚本是 `scripts/checking-encoding.mjs`，机器规则以仓库根 `.gitattributes` 与 `.editorconfig` 为准。
+
 存在项目技能 `cpp-workflow-project` 时先读它的 `SKILL.md`、`environment.json` 和 `stages/stage-table.md`。三个环境轴为空、`standard` 非法或组合非法时停在定构建，不猜 WSL、Clang 或构建目录；`windows` + `native` 直接拒绝，提示「本版本不能在 Windows 原生壳里构建」，不要给出补 PowerShell 的路线。环境组合空着时源码四步仍可做，只是不能构建。
 
 ## 两种走法

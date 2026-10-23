@@ -2,6 +2,8 @@
 
 ```text
 dsh-cpp-workflow/
+├── .editorconfig
+├── .gitattributes
 ├── .github/
 │   ├── creation-references.md
 │   └── workflows/
@@ -26,7 +28,7 @@ dsh-cpp-workflow/
 │   ├── developing-cpp/{SKILL.md,steps,examples,references}
 │   └── building-cpp/{SKILL.md,steps,examples,references,assets,scripts}
 ├── templates/cpp-workflow-project/{SKILL.md,environment.json,stages/stage-table.md}
-├── tests/{provider,environment,schema}.test.mjs
+├── tests/{provider,environment,schema,encoding}.test.mjs
 └── lib/                         # tsc 输出，随 npm 包发布
 ```
 
@@ -53,6 +55,8 @@ dsh-cpp-workflow/
 技能从 `skills/<name>/SKILL.md` 一层发现，不递归。每个技能目录是 `resourceBase`，`steps/`、`examples/`、`references/` 的相对链接从该目录解析。`templates/` 不注册为技能，只作为复制源。
 
 `skills/building-cpp/references/standards/` 下按 `c++11` 到 `c++23` 每档一个目录，目录内是 `README.md`（设施、工具、降档、验证）和 `cmake-snippet.cmake`（该 target 的最小 CMake 片段）；索引是 `standards/README.md`。公共模板仍只有四套，不按标准复制。
+
+`skills/building-cpp/references/encoding.md` 记编码与行尾；`skills/building-cpp/scripts/checking-encoding.mjs` 按 `portable` 或 `msvc` 档检查 BOM、行尾与末尾换行。根 `.editorconfig` 与 `.gitattributes` 是机器规则，`.clang-format` 的 `LineEnding` 跟它们同档。
 
 ## 版本与元数据
 

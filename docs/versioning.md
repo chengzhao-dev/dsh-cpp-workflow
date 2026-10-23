@@ -1,8 +1,8 @@
 # 版本规则
 
-发布版本以 `package.json` 为唯一来源；`package-lock.json` 的两个版本字段跟随它，不单独改。当前是 0.2.x。
+发布版本以 `package.json` 为唯一来源；`package-lock.json` 的两个版本字段跟随它，不单独改。当前是 0.3.x。
 
-## 修订号：0.1.x
+## 修订号：0.3.x
 
 只改措辞、文档、示例、注释、测试或内部实现，不改变技能名、步骤数、脚本参数、门禁条件和检查结果。已有工程升级后不应出现新的失败。
 
@@ -28,6 +28,8 @@
 | --- | --- | --- | --- |
 | `0.1.0` | 本机 `npm publish --no-provenance` | 无 | npm 上的首个版本。`v0.1.0` 标签只作提交标记，对应的 publish run 因版本已存在而失败。 |
 | `0.1.1` | 标签触发的 `publish.yml` | 有 | 统一 Google 风格与异常条文，修复 Windows 原生声明。 |
+| `0.2.0` | 标签触发的 `publish.yml` | 有 | 对齐 C++23 默认标准、补充构建与检查矩阵，修正模板文档。 |
+| `0.3.0` | 标签触发的 `publish.yml` | 有 | 新增编码检查与谓词命名约定，补齐 C++ 注释与读者正文的边界。 |
 
 从 `0.1.1` 起，版本只由标签触发的 `publish.yml` 发布，并带 provenance。`0.1.0` 不重发，也不为了重跑它改版本号。
 
@@ -38,8 +40,8 @@
 3. 在要发布的那个提交上打 annotated 标签，推送标签：
 
    ```bash
-   git tag -a v0.2.0 -m "v0.2.0"
-   git push origin v0.2.0
+   git tag -a v0.3.0 -m "v0.3.0"
+   git push origin v0.3.0
    ```
 
 4. `publish.yml` 校验标签与 `package.json` 同号，跑 `npm ci` 和 `npm test`，再 `npm publish`。`publishConfig.provenance` 打开 provenance。
@@ -47,15 +49,15 @@
 6. 读回两边的 commit，必须相同：
 
    ```bash
-   npm view @chengzhao-dev/dsh-cpp-workflow@0.2.0 version gitHead
-   git rev-parse v0.2.0^{commit}
+   npm view @chengzhao-dev/dsh-cpp-workflow@0.3.0 version gitHead
+   git rev-parse v0.3.0^{commit}
    ```
 
-   `npm view @chengzhao-dev/dsh-cpp-workflow@0.2.0 dist.attestations` 应能看到 provenance 记录。
+   `npm view @chengzhao-dev/dsh-cpp-workflow@0.3.0 dist.attestations` 应能看到 provenance 记录。
 
 ## 标签约束
 
-- annotated 标签与 `package.json` 同号，例如 `v0.2.0`。
+- annotated 标签与 `package.json` 同号，例如 `v0.3.0`。
 - 标签打在发布提交上。标签之后再补文档提交，会让 npm 的 `gitHead` 与标签指向的 commit 不一致；`0.1.0` 就差了这样一个只改 `docs/versioning.md` 的提交。
 - 同一个版本不重复发布，也不把版本改回旧号重推同一个标签。
 - 版本还没进 registry 时，修好问题后可以删除本地与远端标签，重打在修正后的提交上；版本一旦可安装，只升版本号。

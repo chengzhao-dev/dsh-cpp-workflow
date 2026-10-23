@@ -18,13 +18,13 @@ The exception material follows the C++ Core Guidelines' Error handling section a
 Pinned npm install:
 
 ```bash
-dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.2.0
+dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.3.0
 ```
 
 The matching Git tag:
 
 ```bash
-dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.2.0
+dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.3.0
 ```
 
 The desktop app owns the `desktop` profile. If the command-line `add` is rejected, add the plugin in the app settings and use the same pinned npm version. A Git tag install uses the prebuilt `lib/` committed in the repository and runs no build on the target machine; the package has no install script that needs approval.

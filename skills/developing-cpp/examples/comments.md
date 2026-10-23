@@ -231,3 +231,32 @@ return true;
 ```
 
 一段连续的实现注释只讲一个判断或一个取舍；不是逐行字幕。
+
+## 成员还是同一命名空间的函数
+
+**差**：
+
+```cpp
+class TaskTable {
+ public:
+  std::size_t CountOverdue() const;
+  bool HasOverdue() const { return CountOverdue() > 0; }
+};
+```
+
+`HasOverdue` 只组合公开查询，不需要直接访问表示，却做成了成员。
+
+**好**：
+
+```cpp
+class TaskTable {
+ public:
+  std::size_t CountOverdue() const;
+};
+
+bool HasOverdue(const TaskTable& table) {
+  return table.CountOverdue() > 0;
+}
+```
+
+函数和类放在同一命名空间；调用方只看到 `HasOverdue(table)`，类不增加只为转发而存在的成员。

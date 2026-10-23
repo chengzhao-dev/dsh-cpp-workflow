@@ -8,15 +8,17 @@
 
 按固定顺序跑，前一步失败就停，不要带着失败继续：
 
-1. **校验环境声明（不带 `--live`）**：读 `environment.json`，检查三个环境轴、`standard` 和组合是否合法。环境轴为空、`standard` 非法或组合非法时，停在这里，不找可执行文件。
-2. **活动校验**：在声明的 build host 上跑 `--live`，核对 PATH 中的角色和版本。`windows` + `native` 在声明校验阶段就返回失败，不会进入这一步。
-3. **跑项目入口命令**：项目技能里写的入口命令（如 `./running-build.sh clang`）。入口命令仍是 `<entry-command>` 或空白时，停在这里，不要猜命令；是真实命令才跑。入口内部依次 configure → build → format → tidy → ctest → run；每一步失败都保留原始输出。
-4. **核对产物**：`build/<compiler>/compile_commands.json` 存在；`build/compile_commands.json` 指向当前编译器；`app` 可执行文件在 `build/<compiler>/bin`。
-5. **记录结果**：通过时记录编译器版本、构建目录、测试数量；失败时记录命令、退出码、第一条根因诊断。
+1. **校验编码与行尾**：在仓库根跑编码检查。默认 UTF-8 无 BOM、LF；MSVC 原生工程加 `--profile msvc`。有问题先按 `references/encoding.md` 修正，不带着 BOM 或混用行尾继续。
+2. **校验环境声明（不带 `--live`）**：读 `environment.json`，检查三个环境轴、`standard` 和组合是否合法。环境轴为空、`standard` 非法或组合非法时，停在这里，不找可执行文件。
+3. **活动校验**：在声明的 build host 上跑 `--live`，核对 PATH 中的角色和版本。`windows` + `native` 在声明校验阶段就返回失败，不会进入这一步。
+4. **跑项目入口命令**：项目技能里写的入口命令（如 `./running-build.sh clang`）。入口命令仍是 `<entry-command>` 或空白时，停在这里，不要猜命令；是真实命令才跑。入口内部依次 configure → build → format → tidy → ctest → run；每一步失败都保留原始输出。
+5. **核对产物**：`build/<compiler>/compile_commands.json` 存在；`build/compile_commands.json` 指向当前编译器；`app` 可执行文件在 `build/<compiler>/bin`。
+6. **记录结果**：通过时记录编译器版本、构建目录、测试数量；失败时记录命令、退出码、第一条根因诊断。
 
-环境校验脚本：
+编码检查与环境校验脚本：
 
 ```bash
+node "<skill-dir>/scripts/checking-encoding.mjs" --profile portable      # UTF-8 无 BOM、LF
 node "<skill-dir>/scripts/checking-environment.mjs" --project .          # 声明校验
 node "<skill-dir>/scripts/checking-environment.mjs" --project . --live   # 活动校验
 ```

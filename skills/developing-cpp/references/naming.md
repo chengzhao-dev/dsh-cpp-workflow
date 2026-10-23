@@ -44,6 +44,14 @@
 - 修改器用 `Set` + 属性名（`SetCount()` / `set_count()`）或领域动作（`CompleteTask()`）；同一 API 只选一种，不要用 `SetItem` 这类暴露存储细节的名字。
 - `current_` 前缀只在有多个候选、且「当前」可能混淆时使用：`current_order_`。只有一个当前对象时不要加。
 
+## 谓词与查询命名
+
+- 返回 `bool` 的查询用肯定式，读起来像一句断言：`IsEmpty()`、`HasStock()`、`CanReserve()`、`CompletesLine()`。
+- `Get` 只用于取值，`Set` 只用于设值；不要用 `CheckLine()` 当布尔 getter。
+- `Check` / `Validate` 留给会报告错误、产生诊断或可能失败的操作；它们不返回纯 `bool` 查询。
+- 假设性查询在名字里写明条件：`CompletesLine(position, cell)` 读作「这一手会成线吗」；需要更强语气时用 `WouldCompleteLine()`。同一 API 只选一种，改名时同步声明、定义、调用点、测试和注释。
+- 私有谓词同样用肯定式；不要用 `flag`、`status` 或 `check` 这类不说明判据的名字。
+
 ## 类型命名的判断顺序
 
 1. 纯数据、无 invariant、可以直接聚合初始化 → `struct`，名字是名词：`Order`, `TaskRecord`。

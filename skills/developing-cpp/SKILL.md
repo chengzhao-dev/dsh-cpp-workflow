@@ -13,6 +13,8 @@ metadata:
 
 存在项目技能 `cpp-workflow-project` 时先读它的 `SKILL.md`：工程名、库与程序的边界、阶段表、术语增补、入口命令。没有项目技能时门禁不会放出本技能，不要猜项目约定。
 
+源码和构建文件的编码以 `building-cpp` 的 `references/encoding.md` 为准；行尾与 `.clang-format` 的 `LineEnding` 跟仓库根 `.gitattributes` 和 `.editorconfig`。
+
 ## 两种走法
 
 | 走法 | 什么时候用 | 怎么做 |

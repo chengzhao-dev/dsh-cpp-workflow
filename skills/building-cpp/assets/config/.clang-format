@@ -3,3 +3,5 @@
 Language: Cpp
 BasedOnStyle: Google
 Standard: Latest
+# 与根 .gitattributes 和 .editorconfig 同档：格式化不把行尾改回 CRLF。
+LineEnding: LF

@@ -445,6 +445,7 @@ for (const file of listFiles(ROOT).filter((item) => {
 }
 for (const file of [
   join(ROOT, 'skills', 'building-cpp', 'scripts', 'checking-environment.mjs'),
+  join(ROOT, 'skills', 'building-cpp', 'scripts', 'checking-encoding.mjs'),
   join(ROOT, 'scripts', 'checking-skill-links.mjs'),
 ]) {
   try {

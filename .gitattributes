@@ -5,3 +5,7 @@
 
 # Keep shell scripts explicit for readers and for older Git versions.
 *.sh text eol=lf
+
+# Batch files are the only exception: cmd.exe needs CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
