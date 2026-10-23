@@ -52,6 +52,8 @@ dsh-cpp-workflow/
 
 技能从 `skills/<name>/SKILL.md` 一层发现，不递归。每个技能目录是 `resourceBase`，`steps/`、`examples/`、`references/` 的相对链接从该目录解析。`templates/` 不注册为技能，只作为复制源。
 
+`skills/building-cpp/references/standards/` 下按 `c++11` 到 `c++23` 每档一个目录，目录内是 `README.md`（设施、工具、降档、验证）和 `cmake-snippet.cmake`（该 target 的最小 CMake 片段）；索引是 `standards/README.md`。公共模板仍只有四套，不按标准复制。
+
 ## 版本与元数据
 
 发布版本以 `package.json` 为唯一来源；`package-lock.json` 的两个版本字段跟随它，不单独改。`dsh.catalog` 声明分类和摘要，`publishConfig` 声明 public 与 provenance。`engines`、peer 和 dev 的 `@deepseek-ai/dsh-skill` 使用同一范围。

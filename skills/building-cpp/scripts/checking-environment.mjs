@@ -15,6 +15,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 export const HOSTS = ['windows', 'linux', 'macos']
 export const BUILD_HOSTS = ['native', 'wsl']
 export const COMPILERS = ['clang', 'gcc']
+export const STANDARDS = ['c++11', 'c++14', 'c++17', 'c++20', 'c++23']
+export const DEFAULT_STANDARD = 'c++23'
 const PROJECT_SKILL_DIR = path.join('.agents', 'skills', 'cpp-workflow-project')
 const MAX_ASCENT = 64
 
@@ -34,8 +36,9 @@ function normalize(value) {
 }
 
 /**
- * Validate the three axes and their combination. Pure: no filesystem or PATH.
- * @returns {{ok: boolean, issues: string[], notes: string[], axes: {host?: string, build_host?: string, compiler?: string}}}
+ * Validate the three environment axes, the language standard, and their combination.
+ * Pure: no filesystem or PATH.
+ * @returns {{ok: boolean, issues: string[], notes: string[], axes: {host?: string, build_host?: string, compiler?: string, standard?: string}}}
  */
 export function validateEnvironment(value) {
   const issues = []
@@ -53,6 +56,18 @@ export function validateEnvironment(value) {
     host: normalize(value.host),
     build_host: normalize(value.build_host),
     compiler: normalize(value.compiler),
+    standard: normalize(value.standard),
+  }
+
+  if (axes.standard === undefined || axes.standard === null || axes.standard === '') {
+    axes.standard = DEFAULT_STANDARD
+    notes.push(`standard 未声明或为空；按默认 ${DEFAULT_STANDARD} 处理，请在 environment.json 中显式写出`)
+  } else if (Array.isArray(axes.standard)) {
+    issues.push(`standard 只能声明一个值，当前是数组 [${axes.standard.join(', ')}]`)
+  } else if (typeof axes.standard !== 'string') {
+    issues.push(`standard 必须是字符串，当前是 ${typeof axes.standard}`)
+  } else if (!STANDARDS.includes(axes.standard)) {
+    issues.push(`standard 的值 "${axes.standard}" 非法；允许：${STANDARDS.join(' / ')}`)
   }
 
   for (const [key, allowed] of [
@@ -85,12 +100,12 @@ export function validateEnvironment(value) {
   }
 
   if (axes.host === 'windows' && axes.build_host === 'native') {
-    notes.push('windows + native 是合法声明，但本版本没有 PowerShell 构建脚本；--live 会报告缺 POSIX 壳，而不是缺编译器')
+    issues.push('本版本不能在 Windows 原生壳里构建')
   }
 
   for (const key of Object.keys(value)) {
-    if (!['host', 'build_host', 'compiler'].includes(key)) {
-      notes.push(`忽略未知键 "${key}"；环境只认 host / build_host / compiler`)
+    if (!['host', 'build_host', 'compiler', 'standard'].includes(key)) {
+      notes.push(`忽略未知键 "${key}"；环境只认 host / build_host / compiler / standard`)
     }
   }
 
@@ -245,24 +260,9 @@ export function checkLive(declaration, options = {}) {
   }
   const { host, build_host: buildHost, compiler } = validation.axes
 
-  if (host === 'windows' && buildHost === 'native') {
-    return {
-      ok: false,
-      issues: [
-        'Windows 原生构建缺少 POSIX 壳；本版本没有 PowerShell 构建脚本。缺的是壳，不是编译器。请改用 WSL 并把 build_host 改成 wsl，或补一个 PowerShell 版本。',
-      ],
-      notes: validation.notes,
-      checks,
-    }
-  }
-
   if (buildHost === 'wsl') {
     if (platform !== 'linux' || !isWsl(env)) {
       issues.push('声明 build_host=wsl，但当前进程不在 WSL 内；请在 WSL 里运行 --live')
-    }
-  } else if (host === 'windows') {
-    if (platform !== 'win32') {
-      issues.push(`声明 host=windows + build_host=native，但当前平台是 ${platform}；请在 Windows 上运行 --live`)
     }
   } else if (host === 'linux' && platform !== 'linux') {
     issues.push(`声明 host=linux，但当前平台是 ${platform}；请在 Linux 上运行 --live`)
@@ -358,7 +358,7 @@ export function checkLive(declaration, options = {}) {
     ['clang-tidy', tidyVersion],
   ]) {
     if (version && version.major < 16) {
-      issues.push(`${role} ${versionText(version)} 过旧；需要 >= 16（配置使用 BreakAfterAttributes）`)
+      issues.push(`${role} ${versionText(version)} 过旧；本工作流要求 >= 16`)
     }
   }
 

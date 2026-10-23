@@ -103,12 +103,12 @@ namespace string_utils {  // 一组自由函数
 **好**：
 
 ```cpp
-[[nodiscard]] const Task& GetTask(std::string_view name) const;  // 找不到抛 out_of_range
+[[nodiscard]] const Task& GetTask(std::string_view name) const;  // 找不到抛 TaskNotFoundError
 [[nodiscard]] const Task* FindTask(std::string_view name) const; // 找不到返回 nullptr
 [[nodiscard]] bool HasTask(std::string_view name) const;         // 只回答存在性
 ```
 
-`Get` 表示结果一定存在（或按合同失败），`Find` 表示可能找不到，`Has` / `Contains` 只回答是否存在。不要用 `Find` 返回 `bool`。
+`Get` 表示结果一定存在（否则抛出声明过的领域异常），`Find` 表示可能找不到，`Has` / `Contains` 只回答是否存在。不要用 `Find` 返回 `bool`。
 
 ## 谓词与 Lambda
 

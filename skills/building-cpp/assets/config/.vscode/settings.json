@@ -6,10 +6,25 @@
     "--header-insertion=never",
     "--background-index"
   ],
+  // VSCode 的配置、构建、运行和调试入口都留在 CMake Tools。
+  // 不另建 launch.json / tasks.json，避免出现第二套构建或启动路径。
   "cmake.buildDirectory": "${workspaceFolder}/build/clang",
   "cmake.generator": "Ninja",
   "cmake.configureOnOpen": false,
-  // 格式化统一交给 clangd，避免 cpptools 与 clang-format 两套结果。
+  "cmake.buildBeforeRun": true,
+  "cmake.exportCompileCommandsFile": true,
+  // CMake Tools 的快速调试默认使用 C/C++ 扩展的 cppdbg 适配器；
+  // 这里只把它的调试后端改成 LLDB。GCC 模式改成 gdb + /usr/bin/gdb。
+  "cmake.debugConfig": {
+    "type": "cppdbg",
+    "request": "launch",
+    "MIMode": "lldb",
+    "miDebuggerPath": "/usr/bin/lldb",
+    "stopAtEntry": false,
+    "externalConsole": false
+  },
+  // cpptools 只作为 CMake 的调试后端，不再提供 IntelliSense；
+  // 补全、跳转、诊断和格式化都由读取 compile_commands.json 的 clangd 负责。
   "C_Cpp.intelliSenseEngine": "disabled",
   "editor.formatOnSave": true,
   "[cpp]": {

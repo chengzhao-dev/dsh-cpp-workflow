@@ -250,7 +250,7 @@ for (const [skillName, spec] of Object.entries(SKILL_SPECS)) {
   ok(Boolean(fm), `${skillName}: 缺少 frontmatter`)
   equal(fm?.data.name, skillName, `${skillName}: frontmatter name 与目录名`)
   ok(/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(fm?.data.name ?? ''), `${skillName}: name 不是 kebab-case`)
-  ok(/C\+\+20/.test(fm?.data.description ?? ''), `${skillName}: description 未声明 C++20`)
+  ok(/C\+\+23/.test(fm?.data.description ?? ''), `${skillName}: description 未声明 C++23`)
   ok(Boolean(fm?.data['metadata.short-description'] || /metadata:\s*\n\s+short-description:/.test(text)), `${skillName}: 缺少 metadata.short-description`)
 
   equal(h2s(fm?.body ?? text), spec.h2, `${skillName}: H2 节`)
@@ -350,10 +350,11 @@ ok(!/developing-cpp|building-cpp/.test(templateSkill), '模板不应重复插件
 
 const templateEnvironment = readJson('templates/cpp-workflow-project/environment.json')
 if (templateEnvironment) {
-  equal(Object.keys(templateEnvironment), ['host', 'build_host', 'compiler'], '模板 environment.json 键')
+  equal(Object.keys(templateEnvironment), ['host', 'build_host', 'compiler', 'standard'], '模板 environment.json 键')
   for (const axis of ['host', 'build_host', 'compiler']) {
     equal(templateEnvironment[axis], '', `模板 environment.json 的 ${axis} 必须为空`)
   }
+  equal(templateEnvironment.standard, 'c++23', '模板 environment.json 默认 C++23')
 }
 
 const stageTable = read('templates/cpp-workflow-project/stages/stage-table.md')
@@ -365,7 +366,7 @@ const assetRoot = join(ROOT, 'skills', 'building-cpp', 'assets')
 for (const cmakeFile of listFiles(assetRoot).filter((file) => basename(file) === 'CMakeLists.txt')) {
   const text = read(rel(cmakeFile))
   ok(/target_compile_features\s*\(/.test(text), `${rel(cmakeFile)}: 缺少 target_compile_features`)
-  ok(/cxx_std_20/.test(text), `${rel(cmakeFile)}: 缺少 cxx_std_20`)
+  ok(/cxx_std_23/.test(text), `${rel(cmakeFile)}: 缺少 cxx_std_23`)
   ok(/CXX_EXTENSIONS\s+OFF/.test(text), `${rel(cmakeFile)}: 缺少 CXX_EXTENSIONS OFF`)
   ok(!/(?<!target_)include_directories\s*\(/.test(text), `${rel(cmakeFile)}: 不应有全局 include_directories`)
   ok(!/file\s*\(\s*GLOB/i.test(text), `${rel(cmakeFile)}: 不应使用 GLOB`)
@@ -374,11 +375,46 @@ for (const cmakeFile of listFiles(assetRoot).filter((file) => basename(file) ===
 }
 
 const clangFormat = read('skills/building-cpp/assets/config/.clang-format')
-ok(clangFormat.includes('BreakAfterAttributes'), 'clang-format 缺少 BreakAfterAttributes')
+ok(clangFormat.includes('BasedOnStyle: Google'), 'clang-format 未采用 Google 预设')
+ok(clangFormat.includes('Standard: Latest'), 'clang-format 未使用 Latest（兼容 C++23）')
+ok(!/ColumnLimit|TabWidth|IncludeCategories/.test(clangFormat), 'clang-format 不应覆盖 Google 预设')
 const clangTidy = read('skills/building-cpp/assets/config/.clang-tidy')
 ok(/Checks:/.test(clangTidy), 'clang-tidy 缺少 Checks')
 const clangd = read('skills/building-cpp/assets/config/.clangd')
 ok(/CompilationDatabase:/.test(clangd), '.clangd 缺少 CompilationDatabase')
+ok(!/-std=/.test(clangd), '.clangd 不应写死 -std，标准由 compile_commands.json 决定')
+
+const standardsRoot = join(ROOT, 'skills', 'building-cpp', 'references', 'standards')
+const standardIds = ['c++11', 'c++14', 'c++17', 'c++20', 'c++23']
+equal(
+  readdirSync(standardsRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort(),
+  standardIds,
+  'standards 标准目录',
+)
+const standards = read('skills/building-cpp/references/standards/README.md')
+for (const standard of standardIds) {
+  ok(standards.includes(standard), `standards/README.md 缺少 ${standard}`)
+  const number = standard.replace('c++', '')
+  const profile = read(`skills/building-cpp/references/standards/${standard}/README.md`)
+  ok(profile.includes(`\`${standard}\``), `${standard}/README.md 缺少 standard id`)
+  ok(profile.includes('__cplusplus'), `${standard}/README.md 缺少 __cplusplus`)
+  ok(profile.includes('## 最重要的三件事'), `${standard}/README.md 缺少最重要的三件事`)
+  ok(profile.includes('## 验证'), `${standard}/README.md 缺少验证`)
+  const snippet = read(`skills/building-cpp/references/standards/${standard}/cmake-snippet.cmake`)
+  ok(snippet.includes(`cxx_std_${number}`), `${standard}/cmake-snippet.cmake 缺少 cxx_std_${number}`)
+  ok(snippet.includes(`CXX_STANDARD ${number}`), `${standard}/cmake-snippet.cmake 缺少 CXX_STANDARD ${number}`)
+  ok(snippet.includes('CXX_STANDARD_REQUIRED ON'), `${standard}/cmake-snippet.cmake 缺少 CXX_STANDARD_REQUIRED ON`)
+  ok(snippet.includes('CXX_EXTENSIONS OFF'), `${standard}/cmake-snippet.cmake 缺少 CXX_EXTENSIONS OFF`)
+}
+ok(standards.includes('Latest'), 'standards/README.md 未说明 clang-format 21/22 的 Latest fallback')
+ok(standards.includes('CXX_STANDARD_REQUIRED ON'), 'standards/README.md 未说明 CXX_STANDARD_REQUIRED')
+ok(standards.includes('三个规划粒度'), 'standards/README.md 未说明项目/target/代码/验证粒度')
+ok(existsSync(join(ROOT, 'scripts', 'checking-standard-matrix.sh')), 'scripts/checking-standard-matrix.sh 不存在')
+ok(packageJson.scripts?.['test:matrix'] === 'bash scripts/checking-standard-matrix.sh', 'package.json 未提供 test:matrix 脚本')
+ok(read('scripts/checking-standard-matrix.sh').startsWith('#!/usr/bin/env bash'), 'scripts/checking-standard-matrix.sh 缺少 bash shebang')
 
 const buildScript = read('skills/building-cpp/assets/templates/projects/common/running-build.sh')
 ok(buildScript.includes('COMPILER="${1:-clang}"'), '构建脚本省略参数时应默认 clang')
@@ -434,8 +470,10 @@ for (const doc of docs) {
   ok(existsSync(abs), `缺少 docs/${doc}`)
   if (existsSync(abs)) ok(Boolean(h1(read(`docs/${doc}`))), `docs/${doc}: 缺少 H1`)
 }
-ok(read('docs/plugin-boundaries.md').includes('4000'), '边界文档缺少 4000 项上限')
-ok(read('docs/plugin-boundaries.md').includes('12'), '边界文档缺少 12 层上限')
+const boundaries = read('docs/plugin-boundaries.md')
+ok(boundaries.includes('.agents/skills/cpp-workflow-project/SKILL.md'), '边界文档缺少项目技能标记')
+ok(boundaries.includes('64'), '边界文档缺少 64 层 git 根上限')
+ok(!boundaries.includes('4000'), '边界文档不应再写源文件扫描上限')
 ok(read('docs/plugin-layout.md').includes('files'), '布局文档缺少 files 白名单说明')
 ok(read('docs/versioning.md').includes('## 修订号'), '版本文档缺少修订号规则')
 ok(read('docs/versioning.md').includes('## 次版本'), '版本文档缺少次版本规则')

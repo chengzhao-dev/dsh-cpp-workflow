@@ -1,35 +1,11 @@
-#===--------------------------------------------------------------------------------------------===#
-# 与 .clang-format 同一套命名；关闭项及理由集中写在 Checks 上方。
-#===--------------------------------------------------------------------------------------------===#
-
+# Google C++ Style Guide 是唯一基线。这里只跑 google-* 检查族，再加一条
+# 命名规则；不再整包启用 cppcoreguidelines-*，也不靠本地关闭项维持风格。
 InheritParentConfig: false
 
-# 关闭项：
-# - bugprone-easily-swappable-parameters：相邻同型参数的顺序错误靠接口设计和 review，不靠命名噪声。
-# - modernize-use-trailing-return-type：Google 风格不要求尾置返回类型。
-# - portability-avoid-pragma-once：项目统一使用 #pragma once。
-# - readability-identifier-length：短循环变量和测试数据（i、x）是领域习惯。
-# - readability-magic-numbers 与 cppcoreguidelines-avoid-magic-numbers：阈值、尺寸和测试数据常直接写字面量。
 Checks: >
   -*,
-  bugprone-*,
-  cppcoreguidelines-*,
-  misc-*,
-  modernize-*,
-  performance-*,
-  portability-*,
-  readability-*,
-  clang-analyzer-core.*,
-  google-build-using-namespace,
-  google-explicit-constructor,
-  google-global-names-in-headers,
-  google-readability-casting,
-  -bugprone-easily-swappable-parameters,
-  -cppcoreguidelines-avoid-magic-numbers,
-  -modernize-use-trailing-return-type,
-  -portability-avoid-pragma-once,
-  -readability-identifier-length,
-  -readability-magic-numbers
+  google-*,
+  readability-identifier-naming
 
 WarningsAsErrors: '*'
 # 头文件过滤由调用方按项目目录传入；这里不写 .*，避免把第三方头纳入。
@@ -37,7 +13,9 @@ FormatStyle: file
 UseColor: true
 
 CheckOptions:
-  # 类型与函数 PascalCase；变量 snake_case；私有成员尾随 _；常量 k 前缀。
+  # 命名按 Google：类型/函数 PascalCase，变量 snake_case，私有成员尾随 _，
+  # 常量 k 前缀。Google 允许访问器写成 count()/set_count()，因此不设
+  # FunctionCase，避免把 snake_case 访问器误报。
   - key: readability-identifier-naming.NamespaceCase
     value: lower_case
   - key: readability-identifier-naming.ClassCase
@@ -50,8 +28,6 @@ CheckOptions:
     value: CamelCase
   - key: readability-identifier-naming.EnumConstantPrefix
     value: 'k'
-  - key: readability-identifier-naming.FunctionCase
-    value: CamelCase
   - key: readability-identifier-naming.TypeAliasCase
     value: CamelCase
   - key: readability-identifier-naming.TypedefCase
@@ -62,6 +38,7 @@ CheckOptions:
     value: lower_case
   - key: readability-identifier-naming.ParameterCase
     value: lower_case
+  # 结构体成员不加尾随下划线；只有类的私有成员用 _ 后缀。
   - key: readability-identifier-naming.FieldCase
     value: lower_case
   - key: readability-identifier-naming.PrivateMemberCase
@@ -82,11 +59,3 @@ CheckOptions:
     value: 'k'
   - key: readability-identifier-naming.MacroDefinitionCase
     value: UPPER_CASE
-  # 函数长度：Google 建议短函数，超过 40 行提示。
-  - key: readability-function-size.LineThreshold
-    value: 40
-  - key: readability-function-size.StatementThreshold
-    value: 50
-  # 空容器/默认构造成员不加 {}；与 NSDMI 规则配套。
-  - key: readability-redundant-member-init.IgnoreBaseInCopyConstructors
-    value: true

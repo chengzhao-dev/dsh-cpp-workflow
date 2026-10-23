@@ -8,9 +8,9 @@
 
 按固定顺序跑，前一步失败就停，不要带着失败继续：
 
-1. **校验环境声明（不带 `--live`）**：读 `environment.json`，检查三个轴和组合是否合法。轴为空或组合非法时，停在这里，不找可执行文件。
-2. **活动校验**：在声明的 build host 上跑 `--live`，核对 PATH 中的角色和版本。Windows 原生组合当前没有构建脚本，`--live` 会明确报告「缺的是 shell，不是编译器」。
-3. **跑项目入口命令**：项目技能里写的入口命令（如 `./running-build.sh clang`）。入口内部依次 configure → build → format → tidy → ctest → run；每一步失败都保留原始输出。
+1. **校验环境声明（不带 `--live`）**：读 `environment.json`，检查三个环境轴、`standard` 和组合是否合法。环境轴为空、`standard` 非法或组合非法时，停在这里，不找可执行文件。
+2. **活动校验**：在声明的 build host 上跑 `--live`，核对 PATH 中的角色和版本。`windows` + `native` 在声明校验阶段就返回失败，不会进入这一步。
+3. **跑项目入口命令**：项目技能里写的入口命令（如 `./running-build.sh clang`）。入口命令仍是 `<entry-command>` 或空白时，停在这里，不要猜命令；是真实命令才跑。入口内部依次 configure → build → format → tidy → ctest → run；每一步失败都保留原始输出。
 4. **核对产物**：`build/<compiler>/compile_commands.json` 存在；`build/compile_commands.json` 指向当前编译器；`app` 可执行文件在 `build/<compiler>/bin`。
 5. **记录结果**：通过时记录编译器版本、构建目录、测试数量；失败时记录命令、退出码、第一条根因诊断。
 
@@ -49,7 +49,7 @@ node "<skill-dir>/scripts/checking-environment.mjs" --project . --live   # 活�
 
 **没有测试**：CTest 显示没有测试是合法结果；不要为了「全绿」造空测试。行为验收由定行为的验收句负责。
 
-**Windows 原生**：当前版本没有 PowerShell 构建脚本；`--live` 会失败并说明缺 shell。不要伪造一个临时脚本绕过，也不要把 `build_host` 改成 `wsl` 来「让它过」；先和用户确认是否补脚本。
+**Windows 原生**：本版本不支持 `host=windows` + `build_host=native`。声明校验会返回 `ok: false`，`issues` 只有一句「本版本不能在 Windows 原生壳里构建」。停在这里，不要伪造 PowerShell 脚本，不要建议改 WSL 来绕过，也不要让代理改 `environment.json` 过关。
 
 **macOS**：`/usr/bin/clang++` 通常是 Apple Clang；`.clangd` 不写死 Homebrew 路径，clangd 要能经 xcrun 找到 SDK。`compiler=clang` 时 `--live` 按同一 LLVM 主版本核对 clang++、clang-format、clang-tidy、clangd；不要混用 Homebrew LLVM 与 Xcode 资源目录来凑版本，也不要为了通过而改 `environment.json` 的编译器。
 

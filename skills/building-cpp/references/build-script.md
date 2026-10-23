@@ -1,6 +1,6 @@
 # 构建脚本
 
-`assets/templates/projects/common/running-build.sh` 是 POSIX build-host 脚本，适用于 Linux、macOS 和 Windows + WSL。Windows 原生组合（`build_host=native`）本版本没有 PowerShell 版本；这是已知缺口，不是编译器问题。
+`assets/templates/projects/common/running-build.sh` 是 POSIX build-host 脚本，适用于 Linux、macOS 和 Windows + WSL。`host=windows` + `build_host=native` 不是本版本支持的组合：声明校验会直接拒绝，脚本也不会在原生 Windows 壳里运行。
 
 ## 用法
 
@@ -60,4 +60,4 @@
 - 从工程根直接 `./build/clang/bin/app` 能启动（共享库场景由 RPATH 保证）。
 - 切换编译器后 `build/compile_commands.json` 指向新数据库。
 - 调用者的 `LD_LIBRARY_PATH` 在脚本结束后不变。
-- Windows 原生：没有脚本时明确报告缺口，不伪造通过。
+- Windows 原生：声明校验已拒绝该组合；不要伪造 PowerShell 脚本，也不要绕过声明。

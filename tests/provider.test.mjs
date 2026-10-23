@@ -1,6 +1,7 @@
-// Provider tests: the two-part workspace gate, candidate shape and get() confinement.
-// No C++ toolchain is needed: the gate is the project-skill marker plus a file
-// in the project, and the skills themselves are packaged Markdown.
+// Provider tests: the marker gate, candidate shape and get() confinement.
+// No C++ toolchain is needed: the gate is the project-skill marker, and the
+// skills themselves are packaged Markdown. CMake/C++ evidence is deliberately
+// not required, so an empty or freshly copied project still sees the workflow.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
@@ -75,33 +76,36 @@ test('CMake plus C++ source does not opt in without the project skill', async ()
   await rm(root, { recursive: true, force: true })
 })
 
-test('the project skill alone does not opt in', async () => {
+test('the project skill alone opts in, even in a documentation-only repository', async () => {
   const root = await makeRepo()
   await writeFile(path.join(root, 'README.md'), '# docs only\n', 'utf8')
-  const provider = makeProvider()
-  assert.deepEqual(await provider.list({ cwd: root }), [])
-  await rm(root, { recursive: true, force: true })
-})
-
-test('the project skill plus CMakeLists alone opts in', async () => {
-  const root = await makeRepo()
-  await writeFile(path.join(root, 'CMakeLists.txt'), 'project(demo LANGUAGES CXX)\n', 'utf8')
   const provider = makeProvider()
   const candidates = await provider.list({ cwd: root })
   assert.deepEqual(candidates.map((candidate) => candidate.name), ['building-cpp', 'developing-cpp'])
   await rm(root, { recursive: true, force: true })
 })
 
-test('the project skill plus a C++ header alone opts in', async () => {
+test('the project skill alone opts in before any CMake or source file exists', async () => {
   const root = await makeRepo()
-  await mkdir(path.join(root, 'include'), { recursive: true })
-  await writeFile(path.join(root, 'include', 'demo.h'), '#pragma once\n', 'utf8')
   const provider = makeProvider()
   assert.equal((await provider.list({ cwd: root })).length, 2)
   await rm(root, { recursive: true, force: true })
 })
 
-test('the project skill plus a C source opts in', async () => {
+test('C++ header evidence does not change an existing marker opt-in', async () => {
+  const root = await makeRepo()
+  await mkdir(path.join(root, 'include'), { recursive: true })
+  await writeFile(
+    path.join(root, 'include', 'demo.h'),
+    '#ifndef DEMO_INCLUDE_DEMO_H_\n#define DEMO_INCLUDE_DEMO_H_\n#endif\n',
+    'utf8',
+  )
+  const provider = makeProvider()
+  assert.equal((await provider.list({ cwd: root })).length, 2)
+  await rm(root, { recursive: true, force: true })
+})
+
+test('C source evidence does not change an existing marker opt-in', async () => {
   const root = await makeRepo()
   await writeFile(path.join(root, 'legacy.c'), 'int main(void) { return 0; }\n', 'utf8')
   const provider = makeProvider()
@@ -109,13 +113,13 @@ test('the project skill plus a C source opts in', async () => {
   await rm(root, { recursive: true, force: true })
 })
 
-test('C++ evidence in a nested subdirectory of the project counts', async () => {
+test('marker above a nested component opts in', async () => {
   const root = await makeRepo()
   const nested = path.join(root, 'games', 'ttt')
   await mkdir(nested, { recursive: true })
   await addCppProject(nested)
   const provider = makeProvider()
-  assert.equal((await provider.list({ cwd: root })).length, 2)
+  assert.equal((await provider.list({ cwd: nested })).length, 2)
   await rm(root, { recursive: true, force: true })
 })
 
@@ -130,7 +134,7 @@ test('a marker only below the session cwd does not opt in at the repo root', asy
   await rm(root, { recursive: true, force: true })
 })
 
-test('source evidence elsewhere in the same repository counts', async () => {
+test('marker in a subdirectory opts in from that subdirectory', async () => {
   const root = await makeRepo({ projectSkill: false })
   const game = path.join(root, 'game')
   await addProjectSkill(game)
@@ -143,8 +147,8 @@ test('source evidence elsewhere in the same repository counts', async () => {
   await rm(root, { recursive: true, force: true })
 })
 
-test('generated and dependency directories are not C++ evidence', async () => {
-  const root = await makeRepo()
+test('generated and dependency directories do not opt in without the marker', async () => {
+  const root = await makeRepo({ projectSkill: false })
   for (const skipped of ['build', 'node_modules', 'vendor', 'third_party', 'templates', 'temp', '.cache', '.git']) {
     const dir = path.join(root, skipped, 'nested')
     await mkdir(dir, { recursive: true })
@@ -156,7 +160,7 @@ test('generated and dependency directories are not C++ evidence', async () => {
   await rm(root, { recursive: true, force: true })
 })
 
-test('C++ evidence above the git root does not opt in', async () => {
+test('C++ evidence above the git root does not affect the marker', async () => {
   const parent = await makeTemp()
   await addCppProject(parent)
   const root = path.join(parent, 'repo')
@@ -164,7 +168,7 @@ test('C++ evidence above the git root does not opt in', async () => {
   await mkdir(path.join(root, '.git'))
   await addProjectSkill(root)
   const provider = makeProvider()
-  assert.deepEqual(await provider.list({ cwd: root }), [])
+  assert.equal((await provider.list({ cwd: root })).length, 2)
   await rm(parent, { recursive: true, force: true })
 })
 
@@ -224,7 +228,7 @@ test('both skills expose rank 550, bundled source and a directory resource base'
     assert.equal(candidate.source, 'bundled')
     assert.equal(candidate.resourceBase.kind, 'directory')
     assert.equal(path.basename(candidate.resourceBase.path), candidate.name)
-    assert.match(candidate.description, /C\+\+20/)
+    assert.match(candidate.description, /C\+\+23/)
     assert.deepEqual(candidate.invocation, { modelInvocable: true, userInvocable: true })
   }
 
@@ -243,9 +247,9 @@ test('the gate works from a deep cwd inside the checkout', async () => {
   await rm(root, { recursive: true, force: true })
 })
 
-test('get() rejects a candidate when the supplied cwd is not a C++ workspace', async () => {
+test('get() rejects a candidate when the supplied cwd has no project skill', async () => {
   const cppRoot = await makeRepo({ cpp: true })
-  const other = await makeRepo()
+  const other = await makeRepo({ projectSkill: false })
   const provider = makeProvider()
   const [candidate] = await provider.list({ cwd: cppRoot })
   assert.ok(candidate)

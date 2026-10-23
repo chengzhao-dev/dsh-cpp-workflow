@@ -1,5 +1,6 @@
 {
   "host": "",
   "build_host": "",
-  "compiler": ""
+  "compiler": "",
+  "standard": "c++23"
 }

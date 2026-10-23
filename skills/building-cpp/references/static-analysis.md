@@ -1,18 +1,18 @@
 # 静态分析与语言服务
 
-三件工具各管一段：`clang-format` 排版、`clang-tidy` 诊断、`clangd` 提供补全/跳转/诊断。它们都读同一份编译数据库，但职责不重叠。
+三件语言工具各管一段：`clang-format` 排版、`clang-tidy` 诊断、`clangd` 提供补全/跳转/诊断。它们都读同一份编译数据库，但职责不重叠。编辑器侧只保留 CMake Tools 作为配置、构建、运行和调试入口；C/C++ 扩展只做 `CMake: Debug` 的调试后端，不参与语言服务。
 
 ## clang-format
 
 ```bash
-clang-format --dry-run --Werror src/*.cpp include/*.h tests/*.cpp
+clang-format --dry-run --Werror src/*.cc include/*.h tests/*.cc
 ```
 
 - 检查用 `--dry-run --Werror`；需要自动修复时单独跑 `clang-format -i`，不要在构建脚本里悄悄改源码。
 - 工程必须有根 `.clang-format`；缺失时先复制配置，不要回退到内置风格，回退会掩盖配置缺失。
 - 只扫描项目源码：`src/`、`include/`、`apps/`、`tests/` 等实际存在的目录；不扫描 `build/`、第三方、生成文件。
 - 配置文件在工程根 `.clang-format`；不要依赖用户主目录或编辑器内置配置。
-- `ColumnLimit: 100`、`Standard: c++20`、`BasedOnStyle: Google`；`IncludeCategories` 维持包含顺序。
+- `BasedOnStyle: Google`、`Standard: Latest`；clang-format 21/22 不接受 `c++23`，`Latest` 按工具支持的最高标准解析。列宽 80、2 空格、包含顺序都取 Google 预设，不另写 `ColumnLimit` 或 `IncludeCategories`。
 - 格式化失败就是失败，不要用 `// clang-format off` 绕过；确需关闭时只包住无法排版的宏或表格，并写一句理由。
 
 ## clang-tidy
@@ -21,7 +21,7 @@ clang-format --dry-run --Werror src/*.cpp include/*.h tests/*.cpp
 clang-tidy -p build/clang \
   --header-filter="^$(pwd -P)/(include|src|apps|tests)/" \
   --warnings-as-errors='*' \
-  src/*.cpp apps/*.cpp tests/*.cpp
+  src/*.cc apps/*.cc tests/*.cc
 ```
 
 - `-p` 指向当前编译器的构建目录，读取 `compile_commands.json`。
@@ -30,7 +30,7 @@ clang-tidy -p build/clang \
 - 系统头默认被排除，不要加 `--system-headers`。
 - 只扫描项目源文件；不要把 `build/` 或第三方源码传给 clang-tidy。
 - `--warnings-as-errors='*'` 把警告当失败；修代码，不要新增 `NOLINT`。确需抑制时写 `// NOLINT(检查名): 理由`，理由必须具体。
-- 配置在工程根 `.clang-tidy`；关闭项逐条写理由，不整族关闭。`cppcoreguidelines-pro-bounds-constant-array-index` 不能整族关闭；优先把下标换成 `at()` 或带边界检查的辅助函数，并补负向越界测试。
+- 配置在工程根 `.clang-tidy`；默认集合是 `google-*` 加 `readability-identifier-naming`。关闭某条时逐条写理由，不整族关闭；命名规则只配项目确实统一的项，不设 `FunctionCase`。
 - 没有编译数据库时先回到 `building-cpp` 的定构建生成；不要用 `--` 手工拼编译参数绕过。
 - `clang-tidy` 的诊断可能指向头文件；修头文件里的声明或实现，不要只改调用点。
 
@@ -41,17 +41,13 @@ clang-tidy -p build/clang \
 ```yaml
 CompileFlags:
   CompilationDatabase: build/clang
-  Add:
-    - -std=c++20
-    - -Wall
-    - -Wextra
 Diagnostics:
   Suppress:
     - pp_file_not_found
 ```
 
 - `CompilationDatabase` 指向当前编译器目录；GCC 模式改 `build/gcc`。
-- `Add` 只补编译数据库里没有的公共选项；不要重复 `-I` 项目 include（数据库里已有）。
+- 不要在 `.clangd` 写 `-std`：它会覆盖 `compile_commands.json`，把 C++23 工程降成旧标准。标准只由构建声明和编译数据库决定。
 - 静态检查规则只在 `.clang-tidy` 里维护；clangd 读取同一份配置，不要在这里复制检查列表。
 - `Suppress` 只放确实无法避免的解析噪声（如 `pp_file_not_found`），并写理由。
 
@@ -82,7 +78,11 @@ Diagnostics:
 
 ```json
 {
-  "recommendations": ["llvm-vs-code-extensions.vscode-clangd", "ms-vscode.cmake-tools"]
+  "recommendations": [
+    "llvm-vs-code-extensions.vscode-clangd",
+    "ms-vscode.cmake-tools",
+    "ms-vscode.cpptools"
+  ]
 }
 ```
 
@@ -96,13 +96,25 @@ Diagnostics:
     "--background-index"
   ],
   "cmake.buildDirectory": "${workspaceFolder}/build/clang",
-  "cmake.generator": "Ninja"
+  "cmake.generator": "Ninja",
+  "cmake.buildBeforeRun": true,
+  "cmake.exportCompileCommandsFile": true,
+  "cmake.debugConfig": {
+    "type": "cppdbg",
+    "request": "launch",
+    "MIMode": "lldb",
+    "miDebuggerPath": "/usr/bin/lldb",
+    "stopAtEntry": false
+  },
+  "C_Cpp.intelliSenseEngine": "disabled"
 }
 ```
 
+- 配置、构建、运行和调试只从 CMake Tools 进入；不要同时维护 `tasks.json` 或 `launch.json`，否则会出现第二套构建或启动路径。
+- C/C++ 扩展只作为 CMake 快速调试的 `cppdbg` 后端；IntelliSense 关闭，补全、跳转、诊断和格式化只由 clangd 提供。
 - 不推荐与 clangd 冲突的 C++ 智能提示插件；只保留一个语言服务。
 - 不把 `compile_commands.json` 提交进仓库；它是构建产物。
-- 切换编译器时同时改 `.clangd`、`settings.json` 和构建目录；三处不一致会让诊断指向旧代码。
+- 切换编译器时同时改 `.clangd`、`settings.json` 和构建目录；三处不一致会让诊断指向旧代码。GCC 模式把 `MIMode` 改为 `gdb`、`miDebuggerPath` 改为 `/usr/bin/gdb`。
 
 ## 门禁分级
 
@@ -110,9 +122,9 @@ Diagnostics:
 
 | 级别 | 典型检查 | 处理 |
 | --- | --- | --- |
-| 失败 | `bugprone-*`、`readability-math-missing-parentheses`、`readability-identifier-naming`、项目声明的致命集 | 修代码；不允许用 NOLINT 掩盖 |
+| 失败 | `google-*`、`readability-identifier-naming`、项目声明的致命集 | 修代码；不允许用 NOLINT 掩盖 |
 | 失败 | 编译诊断、链接诊断、格式检查 | 直接失败 |
-| 观察 | 迁移期暂时无法修完的 `modernize-*` | 在项目技能里列清单、写负责人和退出条件；不默认全仓关闭 |
+| 观察 | 迁移期暂时无法修完的个别 `google-*` 子项 | 在项目技能里列清单、写负责人和退出条件；不默认全仓关闭 |
 
 - 致命集宁可小、可解释，也不要把所有检查一刀切。
 - 观察项不是免死金牌：新代码不应新增观察项，已有项只能减少。

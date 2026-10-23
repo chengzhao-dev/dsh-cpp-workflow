@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-#===--------------------------------------------------------------------------------------------===#
-# 配置、构建、格式化、静态检查、测试并运行当前 C++20 工程。
+#===------------------------------------------------------------------------===#
+# 配置、构建、格式化、静态检查、测试并运行当前 C++11–C++23 工程（默认 C++23）。
 #
 # 用法：./running-build.sh [clang|gcc]；省略时用 clang。
-# 构建目录：build/<compiler>；编译数据库：build/<compiler>/compile_commands.json
-# 适用于 Linux、macOS 和 Windows + WSL；Windows 原生组合需要另写 PowerShell 版本。
-#===--------------------------------------------------------------------------------------------===#
+# 构建目录：build/<compiler>；
+# 编译数据库：build/<compiler>/compile_commands.json
+# 适用于 Linux、macOS 和 Windows + WSL；
+# 本版本不支持 Windows 原生壳。
+#===------------------------------------------------------------------------===#
 
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -29,9 +31,9 @@ esac
 readonly COMPILER CXX
 readonly BUILD_DIR="${BUILD_ROOT}/${COMPILER}"
 
-#===--------------------------------------------------------------------------------------------===#
+#===------------------------------------------------------------------------===#
 # 输出辅助
-#===--------------------------------------------------------------------------------------------===#
+#===------------------------------------------------------------------------===#
 
 header() {
   printf '\n== %s ==\n' "$1"
@@ -41,23 +43,29 @@ err() {
   printf '错误: %s\n' "$1" >&2
 }
 
-trap 'status=$?; printf "失败（退出码 %s）：%s\n" "${status}" "${BASH_COMMAND}" >&2' ERR
+on_error() {
+  local status=$?
+  printf '失败（退出码 %s）：%s\n' "${status}" "${BASH_COMMAND}" >&2
+}
+trap on_error ERR
 
-#===--------------------------------------------------------------------------------------------===#
+#===------------------------------------------------------------------------===#
 # 项目源码
-#===--------------------------------------------------------------------------------------------===#
+#===------------------------------------------------------------------------===#
 
 collect_sources() {
   find . \
     \( -type d \( -name .git -o -name .cache -o -name node_modules \
        -o -name third_party -o -name external -o -name vendor \
        -o -name build -o -name temp -o -name templates \) -prune \) -o \
-    -type f \( -name '*.c' -o -name '*.cc' -o -name '*.cpp' -o -name '*.cxx' \
-       -o -name '*.h' -o -name '*.hh' -o -name '*.hpp' -o -name '*.hxx' \) -print0
+    -type f \( -name '*.c' -o -name '*.cc' -o -name '*.cpp' \
+       -o -name '*.cxx' -o -name '*.h' -o -name '*.hh' \
+       -o -name '*.hpp' -o -name '*.hxx' \) -print0
 }
 
-# 只让项目自身目录的头文件诊断进入结果。顶层目录从项目文件推导，
-# 不硬编码 include/src；项目根同时覆盖 clang-tidy 输出的绝对路径。
+# 只让项目自身目录的头文件诊断进入结果。
+# 顶层目录从项目文件推导，不硬编码 include/src；
+# 项目根同时覆盖 clang-tidy 输出的绝对路径。
 # 第三方头即使被包含，也不在项目根 + 顶层目录的白名单里。
 header_filter_for() {
   local tops=()
@@ -77,12 +85,14 @@ header_filter_for() {
     printf '^(%s/)?[^/]+$' "${root}"
     return 0
   fi
-  printf '^(%s/)?((%s)/|[^/]+$)' "${root}" "$(printf '%s\n' "${tops[@]}" | sort -u | paste -sd '|' -)"
+  local top_pattern
+  top_pattern="$(printf '%s\n' "${tops[@]}" | sort -u | paste -sd '|' -)"
+  printf '^(%s/)?((%s)/|[^/]+$)' "${root}" "${top_pattern}"
 }
 
-#===--------------------------------------------------------------------------------------------===#
+#===------------------------------------------------------------------------===#
 # 主流程
-#===--------------------------------------------------------------------------------------------===#
+#===------------------------------------------------------------------------===#
 
 main() {
   header "配置 (${COMPILER})"
@@ -97,7 +107,8 @@ main() {
 
   header "编译数据库"
   rm -f "${BUILD_ROOT}/compile_commands.json"
-  ln -s "${COMPILER}/compile_commands.json" "${BUILD_ROOT}/compile_commands.json"
+  ln -s "${COMPILER}/compile_commands.json" \
+    "${BUILD_ROOT}/compile_commands.json"
 
   local format_sources=()
   local tidy_sources=()

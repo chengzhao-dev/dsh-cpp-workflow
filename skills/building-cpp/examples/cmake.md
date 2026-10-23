@@ -10,14 +10,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
-add_library(greeting STATIC greeting/src/greeting.cpp)
+add_library(greeting STATIC greeting/src/greeting.cc)
 target_include_directories(greeting PUBLIC greeting/include)
-target_compile_features(greeting PUBLIC cxx_std_20)
+target_compile_features(greeting PUBLIC cxx_std_23)
 set_target_properties(greeting PROPERTIES CXX_EXTENSIONS OFF)
 target_compile_options(greeting PRIVATE -Wall -Wextra -Werror)
 
-add_executable(app src/main.cpp)
-target_compile_features(app PRIVATE cxx_std_20)
+add_executable(app src/main.cc)
+target_compile_features(app PRIVATE cxx_std_23)
 set_target_properties(app PROPERTIES CXX_EXTENSIONS OFF)
 target_link_libraries(app PRIVATE greeting)
 ```
@@ -30,7 +30,7 @@ target_link_libraries(app PRIVATE greeting)
 
 ```cmake
 include_directories(include greeting/include)
-add_executable(app src/main.cpp greeting/src/greeting.cpp)
+add_executable(app src/main.cc greeting/src/greeting.cc)
 ```
 
 问题：所有 target 共享 include，边界消失；程序直接编译库源码，测试无法只链接库。
@@ -47,7 +47,7 @@ target_link_libraries(app PRIVATE greeting)
 **差**：
 
 ```cmake
-file(GLOB SOURCES "src/*.cpp")
+file(GLOB SOURCES "src/*.cc")
 add_executable(app ${SOURCES})
 ```
 
@@ -57,9 +57,9 @@ add_executable(app ${SOURCES})
 
 ```cmake
 add_executable(app
-  src/main.cpp
-  src/task_list.cpp
-  src/task_parser.cpp
+  src/main.cc
+  src/task_list.cc
+  src/task_parser.cc
 )
 ```
 
@@ -70,15 +70,15 @@ add_executable(app
 **差**：
 
 ```cmake
-add_library(core STATIC src/main.cpp src/core.cpp)
-add_executable(app src/main.cpp)   # 重复定义
+add_library(core STATIC src/main.cc src/core.cc)
+add_executable(app src/main.cc)   # 重复定义
 ```
 
 **好**：
 
 ```cmake
-add_library(core STATIC src/core.cpp)
-add_executable(app src/main.cpp)
+add_library(core STATIC src/core.cc)
+add_executable(app src/main.cc)
 target_link_libraries(app PRIVATE core)
 ```
 
@@ -93,7 +93,7 @@ target_link_libraries(app PRIVATE core)
 ```
 
 ```bash
-clang-tidy src/main.cpp   # 没有编译参数，头路径和标准都不对
+clang-tidy src/main.cc   # 没有编译参数，头路径和标准都不对
 ```
 
 **好**：
@@ -106,7 +106,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 cmake -S . -B build/clang -G Ninja -DCMAKE_CXX_COMPILER=clang++
 rm -f build/compile_commands.json
 ln -s clang/compile_commands.json build/compile_commands.json
-clang-tidy -p build/clang src/main.cpp
+clang-tidy -p build/clang src/main.cc
 ```
 
 ## 共享库运行时路径
@@ -120,11 +120,11 @@ LD_LIBRARY_PATH=build/clang/lib ./build/clang/bin/app   # 每次运行都要包�
 **好**：
 
 ```cmake
-add_library(greeting SHARED greeting/src/greeting.cpp)
+add_library(greeting SHARED greeting/src/greeting.cc)
 set_target_properties(greeting PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
-add_executable(app src/main.cpp)
+add_executable(app src/main.cc)
 target_link_libraries(app PRIVATE greeting)
 if(APPLE)
   set_target_properties(app PROPERTIES BUILD_RPATH "@loader_path/../lib")

@@ -6,15 +6,15 @@
 | --- | --- | --- |
 | declaration | 声明 | 告诉编译器名字和类型，不分配存储 |
 | definition | 定义 | 分配存储或给出函数体 |
-| translation unit | 翻译单元 | 一个 `.cpp` 加上它包含的头，预处理后的整体 |
+| translation unit | 翻译单元 | 一个 `.cc` 加上它包含的头，预处理后的整体 |
 | header | 头文件 | `.h` / `.hpp`，放声明和可内联实现 |
-| source file | 源文件 | `.cpp`，放普通函数体 |
+| source file | 源文件 | `.cc`，放普通函数体 |
 | target | 目标 | CMake 的构建单元，如 `app`、`greeting` |
 | observable behavior | 可观察行为 | 用户或测试能看到的输出、返回值、退出码、文件内容 |
 | boundary | 边界 | 库与程序、模块与模块之间的职责分界 |
 | invariant | 不变量 | 对象在任何公共操作后都必须成立的条件 |
 | contract | 契约 | 调用方必须满足的前置条件，以及被调用方承诺的结果 |
-| precondition | 前置条件 | 调用前必须为真；违反通常抛合同异常 |
+| precondition | 前置条件 | 调用前必须为真；违反时函数通常抛出声明过的异常 |
 | postcondition | 后置条件 | 调用成功后保证为真 |
 | exception safety | 异常安全 | 抛出后对象仍有效、资源不泄漏的保证 |
 | ownership | 所有权 | 谁负责释放资源；`unique_ptr` 表达独占 |
@@ -46,7 +46,7 @@
 | qualified name | 限定名 | 带命名空间或类前缀的名字，如 `inventory::Item` |
 | namespace | 命名空间 | 给名字分组、避免冲突的作用域 |
 | forward declaration | 前向声明 | 只声明名字不给出定义，减少头文件依赖 |
-| include guard | 包含守卫 | 防止头文件重复展开；本项目用 `#pragma once` |
+| include guard | 包含守卫 | 防止头文件重复展开；本项目用 `#define` 守卫，名字由源码树全路径生成 |
 | ODR | 单一定义规则 | 一个实体在整个程序中至多一个定义，内联实体例外 |
 | overload | 重载 | 同名但参数不同的函数 |
 | template | 模板 | 按类型或值参数生成代码的机制 |
@@ -83,6 +83,6 @@
 
 - **声明 vs 定义**：头文件里多是声明；函数体、全局变量初始化是定义。
 - **参数 vs 实参**：声明里叫参数（parameter），调用点叫实参（argument）；中文口语都叫参数时，写文档要区分。
-- **接口 vs 实现**：公共头是接口，`.cpp` 是实现；不要用「接口」指整个类。
-- **异常 vs 错误**：异常是语言机制；错误是结果。可预期错误用返回值，不叫「异常」。
+- **接口 vs 实现**：公共头是接口，`.cc` 是实现；不要用「接口」指整个类。
+- **异常 vs 错误**：异常是语言机制，错误是结果；是否用异常表达错误由接口合同和 invariant 决定，不能把两者当同义词。规则见 `references/exceptions.md`。
 - **格式化 vs 排版**：`std::format` 组合消息；clang-format 排版源码。不要混用「格式化」指代两者。

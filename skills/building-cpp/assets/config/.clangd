@@ -1,10 +1,7 @@
-# 指向当前编译器目录；GCC 模式改成 build/gcc，不要两套并存。
+# 标准来自 build/clang/compile_commands.json，不要在这里写死 -std：
+# 否则 C++23 工程会被降成 .clangd 里的旧标准。
 CompileFlags:
   CompilationDatabase: build/clang
-  Add:
-    - -std=c++20
-    - -Wall
-    - -Wextra
 Diagnostics:
   # 静态检查规则只在 .clang-tidy 里维护；这里不复制检查列表。
   Suppress:

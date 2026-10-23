@@ -1,10 +1,12 @@
-#pragma once
+#ifndef CPP_WORKFLOW_TEMPLATE_MULTI_INCLUDE_GREETING_H_
+#define CPP_WORKFLOW_TEMPLATE_MULTI_INCLUDE_GREETING_H_
 
 #include <string>
-#include <string_view>
 
 namespace greeting {
 
-[[nodiscard]] std::string MakeGreeting(std::string_view name);
+std::string MakeGreeting(const std::string& name);
 
 }  // namespace greeting
+
+#endif  // CPP_WORKFLOW_TEMPLATE_MULTI_INCLUDE_GREETING_H_

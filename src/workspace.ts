@@ -1,11 +1,11 @@
 // Workspace evidence for dsh-cpp-workflow.
 //
 // A repository opts in only when it carries the project skill on the path from
-// the session cwd up to the git root AND that repository carries first-party C++
-// or CMake evidence. A stray `CMakeLists.txt`, a sample under `templates/`, or a
-// CMake file above the git root is never enough. The git root is the
-// repository boundary: once the marker opts the repository in, evidence is
-// searched across the repository, not outside it or in a sibling checkout.
+// the session cwd up to the git root. The marker is the opt-in declaration;
+// first-party C++ or CMake evidence is deliberately not part of the gate, so a
+// freshly copied template still sees the workflow. The git root is the
+// repository boundary: marker lookup ignores sibling directories and never
+// searches above the root.
 import { access, readdir } from 'node:fs/promises'
 import path from 'node:path'
 
@@ -75,7 +75,7 @@ export async function findGitRoot(cwd: string | undefined): Promise<string | und
 /**
  * Find the nearest project-skill marker between `cwd` and the git root,
  * inclusive. A marker above the git root never counts. The marker's directory
- * is also returned for diagnostics, but evidence is repository-wide.
+ * is also returned for diagnostics; it is not the repository boundary.
  */
 export async function findProjectSkill(
   cwd: string | undefined,
@@ -154,16 +154,17 @@ export async function hasCppProject(root: string): Promise<boolean> {
 }
 
 /**
- * Session gate. Both halves are required:
- *   1. the project skill sits between `cwd` and the git root (inclusive), and
- *   2. that git repository contains first-party C++ or CMake evidence.
- * No cwd, no git checkout, a marker above the git root, a marker only in a
- * sibling directory, or a documentation-only repository returns false.
+ * Session gate. The project skill must sit between `cwd` and the git root
+ * (inclusive). First-party C++ or CMake evidence is deliberately not required:
+ * a freshly copied template still needs the workflow, and an empty project
+ * legitimately stops at the build step.
+ *
+ * No cwd, no git checkout, a marker above the git root, or a marker only in a
+ * sibling directory returns false.
  */
 export async function isCppWorkflowWorkspace(cwd: string | undefined): Promise<boolean> {
   const gitRoot = await findGitRoot(cwd)
   if (!gitRoot) return false
   const project = await findProjectSkill(cwd, gitRoot)
-  if (!project) return false
-  return hasCppProject(gitRoot)
+  return project !== undefined
 }

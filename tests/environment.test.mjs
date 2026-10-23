@@ -70,18 +70,62 @@ test('accepts each legal axis combination', () => {
   ]) {
     const result = validateEnvironment(environment)
     assert.equal(result.ok, true, result.issues.join('; '))
-    assert.deepEqual(result.axes, environment)
+    assert.deepEqual(result.axes, { ...environment, standard: 'c++23' })
   }
 })
 
-test('windows native is legal statically but tells the truth about the missing shell', () => {
+test('accepts each supported language standard', () => {
+  for (const standard of ['c++11', 'c++14', 'c++17', 'c++20', 'c++23']) {
+    const result = validateEnvironment({
+      host: 'linux',
+      build_host: 'native',
+      compiler: 'clang',
+      standard,
+    })
+    assert.equal(result.ok, true, result.issues.join('; '))
+    assert.equal(result.axes.standard, standard)
+  }
+})
+
+test('missing or empty standard defaults to c++23 with a migration note', () => {
+  for (const value of [undefined, '']) {
+    const environment = { host: 'linux', build_host: 'native', compiler: 'clang', standard: value }
+    const result = validateEnvironment(environment)
+    assert.equal(result.ok, true, result.issues.join('; '))
+    assert.equal(result.axes.standard, 'c++23')
+    assert.match(result.notes.join('\n'), /standard 未声明或为空/)
+  }
+})
+
+test('rejects unknown, non-string and multiple standards', () => {
+  for (const standard of ['c++98', '23', 23]) {
+    const result = validateEnvironment({
+      host: 'linux',
+      build_host: 'native',
+      compiler: 'clang',
+      standard,
+    })
+    assert.equal(result.ok, false)
+    assert.match(result.issues.join('\n'), /standard/)
+  }
+  const array = validateEnvironment({
+    host: 'linux',
+    build_host: 'native',
+    compiler: 'clang',
+    standard: ['c++20', 'c++23'],
+  })
+  assert.equal(array.ok, false)
+  assert.match(array.issues.join('\n'), /只能声明一个值/)
+})
+
+test('windows native is rejected statically with one plain reason', () => {
   const result = validateEnvironment({
     host: 'windows',
     build_host: 'native',
     compiler: 'clang',
   })
-  assert.equal(result.ok, true)
-  assert.match(result.notes.join('\n'), /缺 POSIX 壳/)
+  assert.equal(result.ok, false)
+  assert.deepEqual(result.issues, ['本版本不能在 Windows 原生壳里构建'])
 })
 
 test('rejects empty, unknown and non-string axes', () => {
@@ -123,7 +167,7 @@ test('rejects non-object declarations', () => {
   }
 })
 
-test('notes unknown keys without rejecting the legal three axes', () => {
+test('notes unknown keys without rejecting the legal environment axes', () => {
   const result = validateEnvironment({
     host: 'linux',
     build_host: 'native',
@@ -197,6 +241,7 @@ test('CLI static mode exits 0 and emits JSON for a legal declaration', () => {
       host: 'windows',
       build_host: 'wsl',
       compiler: 'clang',
+      standard: 'c++23',
     })
   } finally {
     rmSync(root, { recursive: true, force: true })
@@ -216,13 +261,13 @@ test('CLI exits 2 for an invalid combination before looking for executables', ()
   }
 })
 
-test('live mode reports the Windows native shell gap without touching PATH', () => {
+test('live mode stops on Windows native before touching PATH', () => {
   const result = checkLive(
     { host: 'windows', build_host: 'native', compiler: 'clang' },
     { platform: 'win32', env: {}, pathValue: '' },
   )
   assert.equal(result.ok, false)
-  assert.match(result.issues.join('\n'), /缺的是壳/)
+  assert.deepEqual(result.issues, ['本版本不能在 Windows 原生壳里构建'])
   assert.equal(result.checks.length, 0)
 })
 

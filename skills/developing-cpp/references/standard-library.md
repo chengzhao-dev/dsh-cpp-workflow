@@ -77,7 +77,7 @@ std::erase_if(values, [](int value) { return value % 2 == 0; });
 ## `std::format` 与输出
 
 - 组合消息优先 `std::format`；它返回 `std::string`，不直接写流。
-- 输出仍走 `std::cout` / `std::cerr` / 项目传入的 `std::ostream&`；C++20 没有 `std::print`。
+- 输出仍走 `std::cout` / `std::cerr` / 项目传入的 `std::ostream&`；C++23 且库支持时程序边界可用 `std::print`，C++20 及更早没有。
 - 格式串里的 `{}` 按顺序取参数；需要位置时写 `{0}`、`{1}`。
 - 自定义类型要格式化时，特化 `std::formatter<T>`；不要在 `operator<<` 里塞业务格式。
 - 浮点默认格式可能与预期不同；需要固定精度时写 `{:.2f}`，需要科学计数时写 `{:e}`。

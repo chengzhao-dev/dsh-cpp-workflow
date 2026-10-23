@@ -1,19 +1,19 @@
 ---
 name: building-cpp
-description: 用 CMake、Ninja、clang-format、clang-tidy、clangd 配置、构建和检查 C++20 工程时使用；按定构建、定工具配置、通过检查三步推进。不用于只改源码语义、文档、Python 或与 C++ 无关的文件。
+description: 用 CMake、Ninja、clang-format、clang-tidy、clangd 配置、构建和检查 C++11–C++23 工程时使用；新工程默认 C++23；按定构建、定工具配置、通过检查三步推进。一次改动同时碰到源码和构建文件时，先打开 developing-cpp。不用于只改源码语义、文档、Python 或与 C++ 无关的文件。
 metadata:
-  short-description: C++20 构建三步
+  short-description: C++11–C++23 构建三步
 ---
 
 # building-cpp
 
 ## 适用场景
 
-管 `CMakeLists.txt`、`cmake/`、`running-build.sh`、`.clang-format`、`.clang-tidy`、`.clangd`、`.vscode/` 和 `environment.json`。函数体、类型、命名、异常和源码注释只开 `developing-cpp`；一次改动同时越过库与程序的边界时，先做完 `developing-cpp` 的第 2 步，再开本技能。`.qmd`、仓库 README、Python 和非 C++ 文档不打开本技能。
+管 `CMakeLists.txt`、`cmake/`、`running-build.sh`、`.clang-format`、`.clang-tidy`、`.clangd`、`.vscode/` 和 `environment.json`。函数体、类型、命名、异常和源码注释只开 `developing-cpp`。一次改动同时碰到源码和构建文件时，先打开 `developing-cpp`：只改函数体、命名、异常或注释且入口命令可运行时，定实现后直接到本技能的通过检查；新增或移动源文件、改库与程序的边界、补测试 target 时，到本技能先做定构建，把文件写进 CMake，再决定是否定工具配置，最后通过检查。`.qmd`、仓库 README、Python 和非 C++ 文档不打开本技能。
 
 编译失败先分因：诊断指向函数体，回 `developing-cpp` 的定实现；诊断指向声明或类型，回定声明；诊断是找不到头、链接失败、没有编译数据库或工具不在 PATH，留在本技能的定构建或定工具配置。
 
-存在项目技能 `cpp-workflow-project` 时先读它的 `SKILL.md`、`environment.json` 和 `stages/stage-table.md`。三个轴为空或组合非法时停在定构建，不猜 WSL、Clang 或构建目录；环境组合空着时源码四步仍可做，只是不能构建。
+存在项目技能 `cpp-workflow-project` 时先读它的 `SKILL.md`、`environment.json` 和 `stages/stage-table.md`。三个环境轴为空、`standard` 非法或组合非法时停在定构建，不猜 WSL、Clang 或构建目录；`windows` + `native` 直接拒绝，提示「本版本不能在 Windows 原生壳里构建」，不要给出补 PowerShell 的路线。环境组合空着时源码四步仍可做，只是不能构建。
 
 ## 两种走法
 
@@ -36,9 +36,9 @@ metadata:
 
 ## 完成判据
 
-- 项目 `environment.json` 的三个轴齐全且是合法组合；没有靠猜。
+- 项目 `environment.json` 的三个环境轴齐全且是合法组合，`standard` 在 `c++11`–`c++23` 内；新工程默认 `c++23`，没有靠猜。
 - 配置命令固定 Ninja 和单一编译器，`build/<compiler>/compile_commands.json` 存在，根 `build/compile_commands.json` 指向当前编译器。
-- 标准写在 target 上，`CXX_EXTENSIONS OFF`，没有全局 `include_directories()` 或 GLOB。
+- 标准写在 target 上（`CXX_STANDARD` + `CXX_STANDARD_REQUIRED ON` + `cxx_std_*`），`CXX_EXTENSIONS OFF`；`compile_commands.json` 的实际 `-std` 与 `environment.json` 一致，没有全局 `include_directories()` 或 GLOB。
 - `clang-format --dry-run --Werror` 与 `clang-tidy` 在项目源码上零告警；只扫描项目源码和项目头。
 - CTest 全绿，程序从该编译器的构建目录启动；失败时报告的是具体角色和原因。
 - 没有改源码语义，没有覆盖已有工程文件，也没有安装或下载任何工具。

@@ -1,40 +1,5 @@
-# 100 列：模板与格式化串在 80 列下换行过碎；全工程统一。
+# Google 预设给 80 列、2 空格、不用 tab、包含顺序。
+# clang-format 21/22 不接受 Standard: c++23；Latest 会按当前工具支持的最高标准解析。
 Language: Cpp
 BasedOnStyle: Google
-Standard: c++20
-ColumnLimit: 100
-ReflowComments: true
-AlignAfterOpenBracket: Align
-AlignOperands: Align
-BreakBeforeTernaryOperators: true
-DerivePointerAlignment: false
-PointerAlignment: Left
-AccessModifierOffset: -1
-EmptyLineBeforeAccessModifier: Always
-EmptyLineAfterAccessModifier: Never
-IndentWidth: 2
-TabWidth: 2
-UseTab: Never
-MaxEmptyLinesToKeep: 1
-KeepEmptyLinesAtTheStartOfBlocks: false
-AllowShortFunctionsOnASingleLine: Empty
-AllowShortIfStatementsOnASingleLine: Never
-AllowShortLoopsOnASingleLine: false
-AllowShortCaseLabelsOnASingleLine: false
-BreakAfterAttributes: Never
-AlwaysBreakTemplateDeclarations: Yes
-BreakConstructorInitializers: BeforeColon
-ConstructorInitializerIndentWidth: 4
-SpacesBeforeTrailingComments: 2
-IncludeBlocks: Regroup
-IncludeCategories:
-  # C 系统头先于 C++ 标准库；gtest 归第三方，不排到标准库前面。
-  - Regex: '^<[^/>]*\.h>'
-    Priority: 1
-  - Regex: '^<gtest/'
-    Priority: 3
-  - Regex: '^<.*>'
-    Priority: 2
-  # 其余引号头（本项目组件头）排最后。
-  - Regex: '.*'
-    Priority: 4
+Standard: Latest

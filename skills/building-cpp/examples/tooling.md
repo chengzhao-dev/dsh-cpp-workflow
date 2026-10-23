@@ -33,6 +33,27 @@ CompileFlags:
 }
 ```
 
+## `.clangd` 写死标准
+
+**差**：
+
+```yaml
+# 工程已经在 CMake 里声明 C++23
+CompileFlags:
+  CompilationDatabase: build/clang
+  Add:
+    - -std=c++20   # 覆盖 compile_commands.json，C++23 补全/诊断全部降级
+```
+
+**好**：
+
+```yaml
+CompileFlags:
+  CompilationDatabase: build/clang
+```
+
+标准只来自 `compile_commands.json`。没有数据库时先回到定构建生成，不要在 `.clangd` 里猜一个 `-std`。
+
 ## 编译数据库指错目录
 
 **差**：
@@ -64,11 +85,13 @@ ColumnLimit: 100
 **好**：
 
 ```yaml
-# 100 列：模板和格式化串在 80 列下换行过碎。
-ColumnLimit: 100
+# 全部取 Google 预设：80 列、2 空格、不用 tab、包含顺序。
+Language: Cpp
+BasedOnStyle: Google
+Standard: Latest
 ```
 
-配置注释解释取值，不重复策略；策略在技能文档里。
+配置只选预设和语言版本，不重复策略；列宽、缩进、包含顺序都由 Google 预设决定。需要新规则时先改技能文档并说明理由，不要在手写配置里堆本地约定。
 
 ## 整族关闭检查
 
@@ -87,26 +110,18 @@ Checks: >
 ```yaml
 Checks: >
   -*,
-  clang-analyzer-*,
-  bugprone-*,
-  cppcoreguidelines-*,
   google-*,
-  modernize-*,
-  performance-*,
-  readability-*
-CheckOptions:
-  # 团队用 100 列，tidy 的列宽判断跟随 clang-format。
-  readability-identifier-length.MinimumVariableNameLength: 2
+  readability-identifier-naming
 ```
 
-保留主体；关闭项逐条写理由。
+保留 Google 检查主体和项目命名规则；关闭项逐条写理由，不整族关闭。不设 `FunctionCase`，Google 允许 `count()` / `set_count()` 这类访问器。
 
 ## tidy 扫描系统头
 
 **差**：
 
 ```bash
-clang-tidy -p build/clang --system-headers src/main.cpp
+clang-tidy -p build/clang --system-headers src/main.cc
 ```
 
 系统头也参与诊断，出现大量第三方告警。
@@ -115,7 +130,7 @@ clang-tidy -p build/clang --system-headers src/main.cpp
 
 ```bash
 clang-tidy -p build/clang --header-filter="^$(pwd -P)/(include|src)/" \
-  --warnings-as-errors='*' src/main.cpp
+  --warnings-as-errors='*' src/main.cc
 ```
 
 `--header-filter` 只列项目顶层目录，避免把第三方头纳入；系统头默认排除。工程有别的顶层目录时按实际替换。
@@ -125,7 +140,7 @@ clang-tidy -p build/clang --header-filter="^$(pwd -P)/(include|src)/" \
 **差**：
 
 ```bash
-clang-format -i src/*.cpp   # 构建时悄悄改源码
+clang-format -i src/*.cc   # 构建时悄悄改源码
 ```
 
 **好**：

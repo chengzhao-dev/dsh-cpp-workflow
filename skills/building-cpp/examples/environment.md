@@ -70,13 +70,14 @@ WSL 只对 `host=windows` 合法；不要通过改 `host` 来绕过，先确认�
 }
 ```
 
-声明合法，但本版本没有 PowerShell 构建脚本。`--live` 输出类似：
+这不是「合法但暂时不能构建」，而是本版本直接拒绝的组合。声明校验返回：
 
 ```text
-声明合法，但 Windows 原生构建缺少 POSIX 构建脚本；缺的是 shell，不是编译器。
+ok: false
+issues: ["本版本不能在 Windows 原生壳里构建"]
 ```
 
-不要把 `build_host` 改成 `wsl` 来「让它过」；要么补脚本，要么换到 WSL 并更新声明。
+停在这里。不要建议改 `build_host` 为 `wsl` 来绕过，也不要补 PowerShell 脚本。
 
 ## GCC 模式不比较 GCC 主版本
 

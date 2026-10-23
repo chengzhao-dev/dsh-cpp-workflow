@@ -5,7 +5,7 @@
 **差**：
 
 ```cpp
-// task_list.cpp
+// task_list.cc
 // 作者：张三
 // 创建：2024-01-01
 // 修改：2024-02-01 修复 bug
@@ -43,11 +43,11 @@ Task GetTask(int index) const;
 ///
 /// @param index 任务下标，必须在 [0, tasks_.size()) 内
 /// @return 该位置的任务
-/// @throws std::out_of_range index 越界
+/// @throws TaskIndexError index 越界
 [[nodiscard]] Task GetTask(int index) const;
 ```
 
-契约完整：范围、返回、异常。
+契约完整：范围、返回、异常声明。
 
 ## 实现注释
 
@@ -121,11 +121,13 @@ ColumnLimit: 100
 **好**：
 
 ```yaml
-# 100 列：模板和格式化串在 80 列下换行过碎。
-ColumnLimit: 100
+# 列宽、缩进、包含顺序都取 Google 预设，不逐项覆盖。
+Language: Cpp
+BasedOnStyle: Google
+Standard: Latest
 ```
 
-解释取值理由，不写策略头，不指文档路径。
+解释为什么选预设，不写策略头，不指文档路径。
 
 ## 横幅
 
@@ -197,8 +199,8 @@ void SetPriority(TaskId id, int priority);
 ///
 /// @param id 任务编号，必须已存在
 /// @param priority 新优先级，必须在 [0, 9] 内
-/// @throws std::out_of_range 编号不在当前任务表内
-/// @throws std::invalid_argument priority 越界
+/// @throws TaskIndexError 编号不在当前任务表内
+/// @throws InvalidPriorityError priority 越界
 void SetPriority(TaskId id, int priority);
 ```
 

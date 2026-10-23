@@ -20,7 +20,7 @@
 **差**：库函数直接打印，程序只调用它。
 
 ```cpp
-// task_list.cpp（库）
+// task_list.cc（库）
 void TaskList::Print() const {
   for (const auto& task : tasks_) {
     std::cout << task.priority << " " << task.name << "\n";
@@ -36,7 +36,7 @@ void TaskList::Print() const {
 // task_list.h（库）
 [[nodiscard]] std::vector<Task> SortedByPriority() const;
 
-// app/cli.cpp（程序）
+// app/cli.cc（程序）
 void PrintTasks(const std::vector<Task>& tasks, std::ostream& out) {
   for (const auto& task : tasks) {
     out << std::format("{} {}\n", task.priority, task.name);
@@ -50,29 +50,32 @@ void PrintTasks(const std::vector<Task>& tasks, std::ostream& out) {
 
 **差**：
 
-```cpp
-#include "task_list/task_list.h"   // 公共根下又套一层组件名
-```
-
 ```text
 src/task_list.h                  // 公共头藏在 src，测试无法只依赖公共接口
+src/detail.h                     // 私有头被测试直接包含
+```
+
+```cpp
+#include "src/task_list.h"       // 从仓库根写到了实现目录
 ```
 
 **好**：
 
 ```text
 task_list/include/task_list.h    // 公共头
-task_list/src/task_list.cpp      // 实现
+task_list/src/task_list.cc       // 实现
 task_list/src/detail.h           // 私有头，只被本组件包含
 ```
 
 ```cpp
-#include "task_list.h"           // 相对公共 include 根
+#include "task_list/include/task_list.h"  // 从源码根写公共头的完整路径
 ```
+
+构建时把仓库根加入 include 搜索路径；不要用 `#include "../task_list/include/task_list.h"` 这种随文件位置漂移的写法。
 
 ## 单文件何时拆库
 
-**先不拆**：一个 `main.cpp`，辅助函数在匿名命名空间，只有程序自己用。
+**先不拆**：一个 `main.cc`，辅助函数在匿名命名空间，只有程序自己用。
 
 **该拆**：测试需要直接调用排序逻辑；或第二个程序要复用同一逻辑；或逻辑已经超过一个屏幕。
 

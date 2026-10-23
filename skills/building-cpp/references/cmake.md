@@ -2,6 +2,12 @@
 
 目标：一个编译器、Ninja、target-based 规则、可用的编译数据库。下面是最小形状和常见边界；模板在 `assets/templates/projects/`。
 
+## 排版
+
+CMake 没有官方风格指南。这里跟随 Google 自家项目的 `cmake-format` 配置：缩进 2 个空格、行宽 80、不用 tab。来源是 [or-tools 的 .cmake-format.py](https://github.com/google/or-tools/blob/stable/.cmake-format.py) 与 [draco 的 .cmake-format.py](https://github.com/google/draco/blob/master/.cmake-format.py)，两处都设 `tab_size=2`、`line_width=80`。命令行、列表和注释都按这个宽度换行；`CMakeLists.txt` 与 `*.cmake` 一视同仁。
+
+Shell 脚本用 2 个空格缩进、不用 tab，来源是 [Google Shell Style Guide](https://google.github.io/styleguide/shellguide.html#indentation)。
+
 ## 最小可用形状
 
 ### 单文件
@@ -13,9 +19,13 @@ project({{PROJECT_NAME}} VERSION 0.1.0 LANGUAGES CXX)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-add_executable(app src/main.cpp)
-target_compile_features(app PRIVATE cxx_std_20)
-set_target_properties(app PROPERTIES CXX_EXTENSIONS OFF)
+add_executable(app src/main.cc)
+target_compile_features(app PRIVATE cxx_std_23)
+set_target_properties(app PROPERTIES
+  CXX_STANDARD 23
+  CXX_STANDARD_REQUIRED ON
+  CXX_EXTENSIONS OFF
+)
 target_compile_options(app PRIVATE -Wall -Wextra -Werror)
 ```
 
@@ -32,32 +42,40 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
 add_subdirectory(greeting)
 
-add_executable(app src/main.cpp)
-target_compile_features(app PRIVATE cxx_std_20)
-set_target_properties(app PROPERTIES CXX_EXTENSIONS OFF)
+add_executable(app src/main.cc)
+target_compile_features(app PRIVATE cxx_std_23)
+set_target_properties(app PROPERTIES
+  CXX_STANDARD 23
+  CXX_STANDARD_REQUIRED ON
+  CXX_EXTENSIONS OFF
+)
 target_link_libraries(app PRIVATE greeting)
 target_compile_options(app PRIVATE -Wall -Wextra -Werror)
 ```
 
 ```cmake
 # greeting/CMakeLists.txt
-add_library(greeting STATIC src/greeting.cpp)
-target_include_directories(greeting PUBLIC include)
-target_compile_features(greeting PUBLIC cxx_std_20)
-set_target_properties(greeting PROPERTIES CXX_EXTENSIONS OFF)
+add_library(greeting STATIC src/greeting.cc)
+target_include_directories(greeting PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
+target_compile_features(greeting PUBLIC cxx_std_23)
+set_target_properties(greeting PROPERTIES
+  CXX_STANDARD 23
+  CXX_STANDARD_REQUIRED ON
+  CXX_EXTENSIONS OFF
+)
 target_compile_options(greeting PRIVATE -Wall -Wextra -Werror -Wold-style-cast -Wshadow)
 ```
 
-- 库的 `PUBLIC include` 让程序能 `#include "greeting.h"`，不需要程序再写 include 路径。
-- `cxx_std_20` 用 `PUBLIC` 从库传播；程序自己再加一次也无害。
-- `CXX_EXTENSIONS OFF` 把 `-std=gnu++20` 收成 `-std=c++20`，与 Google 的「不用非标准扩展」一致；每个 target 都要设。
+- 库的 `PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..` 让程序能从仓库根写 `#include "greeting/include/greeting.h"`，不需要程序再写 include 路径。
+- `cxx_std_23` 用 `PUBLIC` 从库传播；程序自己再加一次也无害。`CXX_STANDARD_REQUIRED ON` 防止 CMake 在编译器不支持时静默 decay；显式 `CXX_STANDARD` 与 `standard` 保持一致。
+- `CXX_EXTENSIONS OFF` 把 `-std=gnu++23` 收成 `-std=c++23`，与 Google 的「不用非标准扩展」一致；每个 target 都要设。configure 后检查 `compile_commands.json` 的最后一条 `-std=`，不能是 `gnu++NN`。
 - 程序 target 固定 `app`；库 target 用组件名。
 
 ## target-based 规则
 
 - 每个 target 自己声明 include、标准、编译选项、链接库；不要用全局 `include_directories()`、`add_definitions()`、`CMAKE_CXX_FLAGS` 给所有 target 加料。
 - `target_include_directories(<target> PUBLIC|PRIVATE <dir>)`：公共头给 `PUBLIC`，私有实现目录给 `PRIVATE`。
-- `target_compile_features(<target> PUBLIC cxx_std_20)`：标准是 target 属性，不是全局开关。
+- `target_compile_features(<target> PUBLIC cxx_std_23)`：标准是 target 属性，不是全局开关。
 - `target_link_libraries(<target> PRIVATE|PUBLIC <lib>)`：实现依赖用 `PRIVATE`，接口依赖用 `PUBLIC`。
 - 不要 `file(GLOB ...)`；显式列源文件，新增文件时改 CMake，构建系统才知道。`CONFIGURE_DEPENDS` 依赖构建系统每次检查目录，跨生成器行为也不完全一致，不作为工程规则。
 - 不把 `main()` 编进库；程序只做装配和 I/O。
@@ -117,7 +135,7 @@ endif()
 - 一个构建树只用一个 C++ 标准库实现。Clang 可以配 libstdc++（Linux 默认）或 libc++，但 `clang++`、`clang-tidy`、`clangd` 和链接进同一个程序的库必须一致。
 - `-stdlib=libc++` 是编译和链接都要的选项，不要只加在编译选项上；也不要全局 `add_compile_options`，按 target 传，或由工具链文件统一设置。
 - 混用 libstdc++ 与 libc++ 的典型症状是链接期大量未定义符号、`std::string` ABI 不匹配，或运行期崩溃；先查 `clang++ -v` 与 `ldd`，不要靠加 `-lstdc++` 掩盖。
-- 项目想固定 libc++ 时，在 CMake 工具链文件或项目自己的编译选项里写清，不要只写在某个人的脚本里；`environment.json` 只保留 `host`、`build_host`、`compiler` 三个轴，不放 libc++。换机器后必须能复现同一组合。
+- 项目想固定 libc++ 时，在 CMake 工具链文件或项目自己的编译选项里写清，不要只写在某个人的脚本里；`environment.json` 只保留 `host`、`build_host`、`compiler`、`standard` 四个轴，不放 libc++。换机器后必须能复现同一组合。
 - 本插件默认使用目标平台默认标准库；只有项目明确要求 libc++ 时才切换，并保证整套工具一致。
 
 ## 警告与静态检查
@@ -150,7 +168,7 @@ FetchContent_MakeAvailable(googletest)
 
 | 模板 | 何时用 | 关键文件 |
 | --- | --- | --- |
-| `single` | 一个 `main.cpp`，辅助函数很少 | `CMakeLists.txt`, `src/main.cpp` |
+| `single` | 一个 `main.cc`，辅助函数很少 | `CMakeLists.txt`, `src/main.cc` |
 | `multi` | 多个源文件，一个程序 | `CMakeLists.txt`, `include/`, `src/` |
 | `static-library` | 库需要被测试或第二个程序链接 | 根 + `greeting/` 子目录 |
 | `shared-library` | 需要运行时加载/替换 | 同上，`SHARED` + RPATH |
@@ -160,7 +178,7 @@ FetchContent_MakeAvailable(googletest)
 ## 反模式
 
 - 全局 `include_directories(include)`：所有 target 共享，边界消失。
-- `file(GLOB sources "src/*.cpp")`：新增文件不触发重新配置。
+- `file(GLOB sources "src/*.cc")`：新增文件不触发重新配置。
 - 把库和 `main()` 编进同一个 target：测试无法只链接库。
 - 在源码目录生成 `compile_commands.json` 或可执行文件。
 - 同时设 `CMAKE_CXX_COMPILER` 和 `CXX` 环境变量，互相覆盖。
