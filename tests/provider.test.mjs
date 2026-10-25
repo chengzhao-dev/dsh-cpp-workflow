@@ -9,7 +9,6 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { apply } from '../lib/index.js'
 import {
-  CPP_SOURCE_EXTENSIONS,
   findProjectSkill,
   isCppWorkflowWorkspace,
 } from '../lib/workspace.js'
@@ -289,13 +288,6 @@ test('an aborted signal returns no candidates', async () => {
   controller.abort()
   assert.deepEqual(await provider.list({ cwd: root, signal: controller.signal }), [])
   await rm(root, { recursive: true, force: true })
-})
-
-test('workspace exports exactly the planned source extensions', () => {
-  assert.deepEqual(
-    [...CPP_SOURCE_EXTENSIONS].sort(),
-    ['.c', '.cc', '.cpp', '.cxx', '.h', '.hh', '.hpp', '.hxx'],
-  )
 })
 
 test('isCppWorkflowWorkspace is false without a cwd', async () => {

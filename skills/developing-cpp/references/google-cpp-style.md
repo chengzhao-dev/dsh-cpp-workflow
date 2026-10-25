@@ -12,15 +12,15 @@
 
 ## 头文件
 
-- 每个头文件用 `#define` 守卫，符号由项目源码树全路径生成：`<PROJECT>_<PATH>_<FILE>_H_`，例如 `FOO_BAR_BAZ_H_`。不要用 `#pragma once`。
+- 每个头文件用 `#define` 守卫，符号由项目源码树全路径生成：`<PROJECT>_<PATH>_<FILE>_H_`，例如 `FOO_BAR_BAZ_H_`。不要用 `#pragma once`，也不要两者并存；模板见 `references/file-template.md`。
 - 头文件必须自包含：自己用到的类型、宏、标准库头都直接包含，不依赖调用方的包含顺序。
-- `.cc` 第一个包含自己的配对头，然后按下面的顺序包含。
+- `.cpp` 第一个包含自己的配对头，然后按下面的顺序包含。
 - 包含顺序：配对头 → C 系统头 → C++ 标准库头 → 其他库头 → 本项目头。每组之间空一行，组内按字母序；不要依赖 `clang-format` 的 `IncludeCategories` 自定义分组，本项目不再覆盖 Google 预设。
 - 本项目头用引号，路径从项目源码根开始，例如 `#include "base/logging.h"`。构建时把源码根加入 include 搜索路径，不要只把组件的 `include/` 设为根再写裸文件名。
 - 公共头文件直接放在组件的 `include/` 下；不要为了「整齐」再加一层命名空间目录。
 - 跨文件共享的常量用 `inline constexpr`，放在命名空间里并带 `k` 前缀；头文件里不要定义非 inline 的普通全局变量。
-- 头文件里只放模板、`constexpr`、类内联小函数和声明；普通函数的函数体放 `.cc`。
-- 头文件里不要用匿名命名空间或 `static` 隐藏定义；内部链接的实现放 `.cc`。
+- 头文件里只放模板、`constexpr`、类内联小函数和声明；普通函数的函数体放 `.cpp`。
+- 头文件里不要用匿名命名空间或 `static` 隐藏定义；内部链接的实现放 `.cpp`。
 
 ## 命名
 
@@ -38,7 +38,7 @@
 
 - 一个 API 不混用两套命名。对外函数用 PascalCase，成员变量用 snake_case，不要出现 `get_task` 与 `GetTask` 并存。
 - 查询函数遵循同一 API 选定的访问器约定：Google 允许 `Count()` 或 `count()`，也允许 `GetCurrentOrder()`；同一 API 内不要混用两套。
-- 谓词用 `Is` / `Has`：`Contains()`、`HasStock()`。返回 `bool` 但语义不是判断的函数，换成领域动词。
+- 谓词用 `Is` / `Has` / `Can`，成对规则可用 `Completes` 这类限定式；唯一前缀集与 `Contains` 例外见 `references/naming.md`。返回 `bool` 但语义不是判断的函数，换成领域动词。
 - 尝试用 `Try`：`TryReserve()` 返回结果类型；确定性动作直接用领域动词：`CompleteTask()`、`Reset()`。
 - 映射函数的名字要含来源与目标角色：`OrderToReceipt()`、`TaskTableToString()`；禁止裸 `To()` / `Of()`。
 - 计算函数用动词开头：`ScoreOrder()`、`CollectPendingTasks()`。
@@ -53,18 +53,18 @@
 - 默认成员初始化写在声明处（NSDMI），不要在构造函数初始化列表里重复。
 - 默认用花括号初始化：`int count{};`、`std::vector<int> values{1, 2, 3};`。只有需要对比、`auto` 推导或赋值语义时用 `=`；不要用 `()` 初始化普通对象。
 - 类声明顺序：public → protected → private；类型与别名 → 静态常量 → 工厂 → 构造/赋值/析构 → 其他函数 → 数据成员。
-- 用户声明的拷贝/移动/析构函数在头文件声明、在 `.cc` 定义；只有零参数且默认实现足够时才写 `= default`。
+- 用户声明的拷贝/移动/析构函数在头文件声明、在 `.cpp` 定义；只有零参数且默认实现足够时才写 `= default`。
 - 查询成员函数标尾部 `const`；返回结果对象的 API 加 `[[nodiscard]]`，不要给所有非 `void` 函数机械添加。
 - 所有权优先 `std::unique_ptr`；没有共享所有权的理由时不用 `std::shared_ptr`。禁止裸 `new` / `delete`。
 - 禁止 C 风格强制转换；用 `static_cast`、`const_cast`、`reinterpret_cast`、`std::bit_cast`，并让 `clang-tidy` 的 `google-readability-casting` 兜底。
-- `.cc` 里不需要外部引用的定义放匿名命名空间或声明 `static`；不要在生产 `.cc` 里为了「整洁」强行用 `static`，按是否需要内部链接决定。
+- `.cpp` 里不需要外部引用的定义放匿名命名空间或声明 `static`；不要在生产 `.cpp` 里为了「整洁」强行用 `static`，按是否需要内部链接决定。
 
 ## 函数
 
 - 优先返回值，不用输出参数：返回 `std::string`、`std::vector<T>`、结果结构体。
 - 已有成员按 `const` 引用返回，例如 `GetHistory()`；不要返回内部容器的可变引用。
 - 函数保持短小；没有硬上限，超过约 40 行时先拆出有名字的步骤，而不是加注释分节。
-- 头文件里只把大约 10 行以内、确实适合内联的短函数就地定义；更长或需要完整定义的函数放 `.cc`，避免头文件膨胀和重复编译。
+- 头文件里只把大约 10 行以内、确实适合内联的短函数就地定义；更长或需要完整定义的函数放 `.cpp`，避免头文件膨胀和重复编译。
 - 虚函数不用默认参数；默认参数只用于非虚的便利接口。
 - 尾置返回类型只在普通语法不可行或明显更难读时使用，例如返回类型依赖参数；不要为了风格统一全面改写。
 - 只对自己的类型重载运算符；不重载 `&&`、`||`、`,`、一元 `&`；不定义用户字面量。

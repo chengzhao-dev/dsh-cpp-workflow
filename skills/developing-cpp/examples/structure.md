@@ -20,7 +20,7 @@
 **差**：库函数直接打印，程序只调用它。
 
 ```cpp
-// task_list.cc（库）
+// task_list.cpp（库）
 void TaskList::Print() const {
   for (const auto& task : tasks_) {
     std::cout << task.priority << " " << task.name << "\n";
@@ -36,7 +36,7 @@ void TaskList::Print() const {
 // task_list.h（库）
 [[nodiscard]] std::vector<Task> SortedByPriority() const;
 
-// app/cli.cc（程序）
+// app/cli.cpp（程序）
 void PrintTasks(const std::vector<Task>& tasks, std::ostream& out) {
   for (const auto& task : tasks) {
     out << std::format("{} {}\n", task.priority, task.name);
@@ -63,7 +63,7 @@ src/detail.h                     // 私有头被测试直接包含
 
 ```text
 task_list/include/task_list.h    // 公共头
-task_list/src/task_list.cc       // 实现
+task_list/src/task_list.cpp       // 实现
 task_list/src/detail.h           // 私有头，只被本组件包含
 ```
 
@@ -75,7 +75,7 @@ task_list/src/detail.h           // 私有头，只被本组件包含
 
 ## 单文件何时拆库
 
-**先不拆**：一个 `main.cc`，辅助函数在匿名命名空间，只有程序自己用。
+**先不拆**：一个 `main.cpp`，辅助函数在匿名命名空间，只有程序自己用。
 
 **该拆**：测试需要直接调用排序逻辑；或第二个程序要复用同一逻辑；或逻辑已经超过一个屏幕。
 

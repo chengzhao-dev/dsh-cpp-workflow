@@ -5,7 +5,7 @@
 ## clang-format
 
 ```bash
-clang-format --dry-run --Werror src/*.cc include/*.h tests/*.cc
+clang-format --dry-run --Werror src/*.cpp include/*.h tests/*.cpp
 ```
 
 - 检查用 `--dry-run --Werror`；需要自动修复时单独跑 `clang-format -i`，不要在构建脚本里悄悄改源码。
@@ -21,7 +21,7 @@ clang-format --dry-run --Werror src/*.cc include/*.h tests/*.cc
 clang-tidy -p build/clang \
   --header-filter="^$(pwd -P)/(include|src|apps|tests)/" \
   --warnings-as-errors='*' \
-  src/*.cc apps/*.cc tests/*.cc
+  src/*.cpp apps/*.cpp tests/*.cpp
 ```
 
 - `-p` 指向当前编译器的构建目录，读取 `compile_commands.json`。
@@ -30,7 +30,7 @@ clang-tidy -p build/clang \
 - 系统头默认被排除，不要加 `--system-headers`。
 - 只扫描项目源文件；不要把 `build/` 或第三方源码传给 clang-tidy。
 - `--warnings-as-errors='*'` 把警告当失败；修代码，不要新增 `NOLINT`。确需抑制时写 `// NOLINT(检查名): 理由`，理由必须具体。
-- 配置在工程根 `.clang-tidy`；默认集合是 `google-*` 加 `readability-identifier-naming`。关闭某条时逐条写理由，不整族关闭；命名规则只配项目确实统一的项，不设 `FunctionCase`。
+- 配置在工程根 `.clang-tidy`；默认集合是 `google-*`、`portability-avoid-pragma-once` 加 `readability-identifier-naming`（第二条去掉 `#pragma once`，与路径式守卫一致）。关闭某条时逐条写理由，不整族关闭；命名规则只配项目确实统一的项，不设 `FunctionCase`。
 - 没有编译数据库时先回到 `building-cpp` 的定构建生成；不要用 `--` 手工拼编译参数绕过。
 - `clang-tidy` 的诊断可能指向头文件；修头文件里的声明或实现，不要只改调用点。
 

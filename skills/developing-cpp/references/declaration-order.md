@@ -43,6 +43,8 @@ class TaskTable {
 
 ## 命名空间作用域的头文件
 
+文件槽位与守卫名以 `references/file-template.md` 为准；本节只看命名空间作用域内的排列顺序。
+
 ```cpp
 #ifndef TASKFLOW_INCLUDE_TASK_TABLE_H_
 #define TASKFLOW_INCLUDE_TASK_TABLE_H_
@@ -79,11 +81,11 @@ class TaskTable {
 
 顺序：包含 → 命名空间 → `inline constexpr` 常量 → `enum class` → `struct`（被依赖的在前）→ 自由函数 → 类。类的公共接口类型放在类内最前。
 
-## `.cc` 的定义顺序
+## `.cpp` 的定义顺序
 
 - 与头文件声明同序：先类型和常量，再自由函数，再成员函数；成员函数按类内声明顺序。
 - 文件头注释之后先放本文件的 `namespace taskflow {`，再放公共定义；不需要外部引用的实现放匿名命名空间，或声明 `static`；按是否需要内部链接选择，不要为了「整洁」强行加。
-- 构造函数、析构函数、拷贝/移动定义放在成员函数组的最前；`= default` 的定义放 `.cc` 时紧跟声明顺序。
+- 构造函数、析构函数、拷贝/移动定义放在成员函数组的最前；`= default` 的定义放 `.cpp` 时紧跟声明顺序。
 - 不要为了「先编译」重排定义；C++ 不要求定义顺序，读者顺序优先。
 
 ## 空行

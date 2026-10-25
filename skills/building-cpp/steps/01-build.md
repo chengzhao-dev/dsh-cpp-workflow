@@ -60,7 +60,7 @@ GCC 模式把目录和编译器换成 `build/gcc`、`g++`。工程确有 C 源�
 
 ## 情况
 
-**新工程**：从 `assets/templates/projects/` 选形态：`single` 单文件、`multi` 多文件单程序、`static-library` 静态库 + 程序、`shared-library` 动态库 + 程序。只复制目标工程缺的文件；已有的 `CMakeLists.txt`、`.clang-*`、源码不覆盖。模板里的 `{{PROJECT_NAME}}` 换成真实工程名，默认标准 C++23；四套模板已按 `__cplusplus` 条件使用 `std::format`，把 `standard`、`cxx_std_*`、`CXX_STANDARD` 和 `.clang-format` 的解析档位一起降到 C++11–C++20 后仍应能构建，降完跑 `references/standards/README.md` 的五档矩阵。模板源码是 `.cc`，头文件用路径式 `#define` 守卫；新增文件沿用 `.cc` / `.h`，已有工程保持原有扩展名。
+**新工程**：从 `assets/templates/projects/` 选形态：`single` 单文件、`multi` 多文件单程序、`static-library` 静态库 + 程序、`shared-library` 动态库 + 程序。只复制目标工程缺的文件；已有的 `CMakeLists.txt`、`.clang-*`、源码不覆盖。模板里的 `{{PROJECT_NAME}}` 换成真实工程名，默认标准 C++23；四套模板已按 `__cplusplus` 条件使用 `std::format`，把 `standard`、`cxx_std_*`、`CXX_STANDARD` 和 `.clang-format` 的解析档位一起降到 C++11–C++20 后仍应能构建，降完跑 `references/standards/README.md` 的五档矩阵。模板源码是 `.cpp`，头文件用路径式 `#define` 守卫；新增文件沿用 `.cpp` / `.h`，已有工程保持原有扩展名。
 
 **已有工程**：先读现有 `CMakeLists.txt`，找出全局设置、GLOB、输出目录和 target 命名；只改与当前任务相关的一处。大改前先让通过检查的项目入口跑通，保留可回退点。
 

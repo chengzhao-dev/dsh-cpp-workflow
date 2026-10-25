@@ -298,6 +298,66 @@ for (const doc of ['docs', 'templates']) {
 }
 checkMarkdownLinks([...new Set([...skillMarkdown.map(rel), ...docMarkdown])].map((item) => join(ROOT, item)))
 
+// ---------------------------------------------------------------------------
+// Architecture and trigger docs
+// ---------------------------------------------------------------------------
+
+const architecture = read('docs/architecture.md')
+equal(h1(architecture), '技能架构', 'docs/architecture.md: H1')
+ok(/```mermaid\s*[\s\S]*?flowchart/.test(architecture), 'docs/architecture.md: 缺少 Mermaid 数据流图')
+for (const token of [
+  'developing-cpp',
+  'building-cpp',
+  'cpp-workflow-project',
+  'checking-comments.mjs',
+  'checking-environment.mjs',
+  'environment.json',
+  'compile_commands.json',
+]) {
+  ok(architecture.includes(token), `docs/architecture.md: 缺少 ${token}`)
+}
+for (const skill of ['developing-cpp', 'building-cpp']) {
+  for (const section of ['steps', 'references', 'examples', 'scripts']) {
+    const dir = join(ROOT, 'skills', skill, section)
+    if (!existsSync(dir)) continue
+    for (const abs of listFiles(dir).filter((file) => /\.(md|mjs)$/.test(file))) {
+      ok(architecture.includes(basename(abs)), `docs/architecture.md: 文件职责缺少 ${rel(abs)}`)
+    }
+  }
+}
+
+const triggering = read('docs/triggering.md')
+equal(h1(triggering), '触发与分流', 'docs/triggering.md: H1')
+equal(h2s(triggering), ['判据', '触发矩阵', '反例', '验证与维护'], 'docs/triggering.md: H2 节')
+for (const token of [
+  'CMake',
+  'Ninja',
+  'clang-format',
+  'clang-tidy',
+  'clangd',
+  'C++23',
+  '注释',
+  '异常',
+  '命名',
+  'developing-cpp',
+  'building-cpp',
+]) {
+  ok(triggering.includes(token), `docs/triggering.md: 缺少关键词 ${token}`)
+}
+ok(
+  [...triggering.matchAll(/^\|\s*\d+\s*\|/gm)].length >= 12,
+  'docs/triggering.md: 触发矩阵与反例合计少于 12 行',
+)
+ok((triggering.match(/都不出现/g) ?? []).length >= 6, 'docs/triggering.md: 反例行少于 6 条')
+
+for (const readme of ['README.md', 'README.en.md']) {
+  const text = read(readme)
+  ok(text.includes('docs/architecture.md'), `${readme}: 未链接 docs/architecture.md`)
+  ok(text.includes('docs/triggering.md'), `${readme}: 未链接 docs/triggering.md`)
+}
+ok(read('docs/plugin-layout.md').includes('architecture.md'), 'docs/plugin-layout.md: 目录树缺少 architecture.md')
+ok(read('docs/plugin-layout.md').includes('triggering.md'), 'docs/plugin-layout.md: 目录树缺少 triggering.md')
+
 // Forbidden leftovers: old step numbering and formatting fallbacks.
 const SCANNED = new Set()
 for (const base of ['skills', 'templates', 'docs', 'locale']) {
@@ -460,7 +520,14 @@ for (const file of [
 // Docs, README and workflows
 // ---------------------------------------------------------------------------
 
-const docs = ['plugin-boundaries.md', 'plugin-flow.md', 'plugin-layout.md', 'versioning.md']
+const docs = [
+  'architecture.md',
+  'plugin-boundaries.md',
+  'plugin-flow.md',
+  'plugin-layout.md',
+  'triggering.md',
+  'versioning.md',
+]
 equal(
   readdirSync(join(ROOT, 'docs')).filter((name) => name.endsWith('.md')).sort(),
   docs,
@@ -478,6 +545,25 @@ ok(!boundaries.includes('4000'), '边界文档不应再写源文件扫描上限'
 ok(read('docs/plugin-layout.md').includes('files'), '布局文档缺少 files 白名单说明')
 ok(read('docs/versioning.md').includes('## 修订号'), '版本文档缺少修订号规则')
 ok(read('docs/versioning.md').includes('## 次版本'), '版本文档缺少次版本规则')
+
+const domains = ['写作', '布局', '排版', '润色']
+const domainRows = (text) =>
+  text
+    .split('\n')
+    .filter((line) => /^\| (写作|布局|排版|润色) \|/.test(line))
+    .map((line) => line.split('|')[1].trim())
+const domainFiles = (text) =>
+  text
+    .split('\n')
+    .filter((line) => /^\| (写作|布局|排版|润色) \|/.test(line))
+    .map((line) => [...new Set(line.match(/`[a-z0-9-]+\.md`/g) ?? [])].sort())
+equal(domainRows(read('skills/developing-cpp/SKILL.md')), domains, 'SKILL.md 四类改动表的域名与顺序')
+equal(domainRows(read('docs/architecture.md')), domains, 'architecture.md 四个写作域表的域名与顺序')
+equal(
+  domainFiles(read('skills/developing-cpp/SKILL.md')),
+  domainFiles(read('docs/architecture.md')),
+  '两处四域表的权威条文',
+)
 
 const readmeZh = read('README.md')
 const readmeEn = read('README.en.md')

@@ -1,6 +1,6 @@
 # CMake
 
-目标：一个编译器、Ninja、target-based 规则、可用的编译数据库。下面是最小形状和常见边界；模板在 `assets/templates/projects/`。
+目标：一个编译器、Ninja、target-based 规则、可用的编译数据库。下面是最小形状和常见边界；模板在 `assets/templates/projects/`，可复用的 CMake 片段在 `assets/cmake/`：`applying-warnings.cmake` 管警告选项，`fetching-googletest.cmake` 取测试框架，`setting-rpath.cmake` 设运行时库路径。
 
 ## 排版
 
@@ -19,7 +19,7 @@ project({{PROJECT_NAME}} VERSION 0.1.0 LANGUAGES CXX)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-add_executable(app src/main.cc)
+add_executable(app src/main.cpp)
 target_compile_features(app PRIVATE cxx_std_23)
 set_target_properties(app PROPERTIES
   CXX_STANDARD 23
@@ -42,7 +42,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
 add_subdirectory(greeting)
 
-add_executable(app src/main.cc)
+add_executable(app src/main.cpp)
 target_compile_features(app PRIVATE cxx_std_23)
 set_target_properties(app PROPERTIES
   CXX_STANDARD 23
@@ -55,7 +55,7 @@ target_compile_options(app PRIVATE -Wall -Wextra -Werror)
 
 ```cmake
 # greeting/CMakeLists.txt
-add_library(greeting STATIC src/greeting.cc)
+add_library(greeting STATIC src/greeting.cpp)
 target_include_directories(greeting PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 target_compile_features(greeting PUBLIC cxx_std_23)
 set_target_properties(greeting PROPERTIES
@@ -168,7 +168,7 @@ FetchContent_MakeAvailable(googletest)
 
 | 模板 | 何时用 | 关键文件 |
 | --- | --- | --- |
-| `single` | 一个 `main.cc`，辅助函数很少 | `CMakeLists.txt`, `src/main.cc` |
+| `single` | 一个 `main.cpp`，辅助函数很少 | `CMakeLists.txt`, `src/main.cpp` |
 | `multi` | 多个源文件，一个程序 | `CMakeLists.txt`, `include/`, `src/` |
 | `static-library` | 库需要被测试或第二个程序链接 | 根 + `greeting/` 子目录 |
 | `shared-library` | 需要运行时加载/替换 | 同上，`SHARED` + RPATH |
@@ -178,7 +178,7 @@ FetchContent_MakeAvailable(googletest)
 ## 反模式
 
 - 全局 `include_directories(include)`：所有 target 共享，边界消失。
-- `file(GLOB sources "src/*.cc")`：新增文件不触发重新配置。
+- `file(GLOB sources "src/*.cpp")`：新增文件不触发重新配置。
 - 把库和 `main()` 编进同一个 target：测试无法只链接库。
 - 在源码目录生成 `compile_commands.json` 或可执行文件。
 - 同时设 `CMAKE_CXX_COMPILER` 和 `CXX` 环境变量，互相覆盖。

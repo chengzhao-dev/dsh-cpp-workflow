@@ -8,7 +8,7 @@ Two skills for C++11–C++23 source and build work; new projects default to C++2
 
 | Skill | Covers | Open it when |
 | --- | --- | --- |
-| `developing-cpp` | Behavior, boundaries, declarations, implementation; naming, exceptions, and source comments in `.h` / `.cc` | The user names source code, or the work is a new project or whole-stage refactor |
+| `developing-cpp` | Behavior, boundaries, declarations, implementation; naming, exceptions, and source comments in `.h` / `.cpp` / `.cc` | The user names source code, or the work is a new project or whole-stage refactor |
 | `building-cpp` | Build setup, tool configuration, checks; CMake, Ninja, Clang config, build scripts, and environment combinations | The change touches build files, tool config, or the environment declaration, or the project is first connected to a build |
 
 The exception material follows the C++ Core Guidelines' Error handling section and guides source and examples only during development; the plugin runtime never compiles or executes those rules. Both skills read the project skill `cpp-workflow-project` first. Without it, the workspace gate never exposes these names.
@@ -18,13 +18,13 @@ The exception material follows the C++ Core Guidelines' Error handling section a
 Pinned npm install:
 
 ```bash
-dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.3.0
+dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.3.1
 ```
 
 The matching Git tag:
 
 ```bash
-dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.3.0
+dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.3.1
 ```
 
 The desktop app owns the `desktop` profile. If the command-line `add` is rejected, add the plugin in the app settings and use the same pinned npm version. A Git tag install uses the prebuilt `lib/` committed in the repository and runs no build on the target machine; the package has no install script that needs approval.
@@ -89,7 +89,9 @@ dsh-cpp-workflow/
 └── icon.svg
 ```
 
-Maintenance notes: flow and gate in [docs/plugin-flow.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-flow.md), directory and npm whitelist in [docs/plugin-layout.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-layout.md), version rules in [docs/versioning.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/versioning.md).
+The repository also keeps `src/`, `scripts/`, `tests/` and `docs/` for development and review; they are not published. The whitelist lives in [docs/plugin-layout.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-layout.md).
+
+Maintenance notes: flow and gate in [docs/plugin-flow.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-flow.md), skill layers and data flow in [docs/architecture.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/architecture.md), trigger matrix in [docs/triggering.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/triggering.md), directory and npm whitelist in [docs/plugin-layout.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-layout.md), version rules in [docs/versioning.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/versioning.md).
 
 ## Local development
 
@@ -97,7 +99,7 @@ Requires Node.js 22 or newer.
 
 ```bash
 npm ci
-npm test              # build, structural check, gate/environment/schema tests
+npm test              # build, structural check, gate/environment/schema/comment tests
 npm run test:matrix   # real build matrix: 4 templates x 5 standards
 npm run pack:check    # inspect the npm package contents
 ```

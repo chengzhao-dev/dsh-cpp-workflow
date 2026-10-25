@@ -97,4 +97,4 @@ std::erase_if(values, [](int value) { return value % 2 == 0; });
 - [ ] 没有保存 `string_view` / `span` 指向的临时对象。
 - [ ] 修改容器大小前处理了迭代器失效。
 - [ ] 能用算法表达时没有手写下标循环。
-- [ ] 输出用 `std::format` 组合、流输出，没有 `std::print`。
+- [ ] 组合消息用 `std::format` 或流输出；`std::print` 只出现在 C++23 的程序边界，库代码没有。

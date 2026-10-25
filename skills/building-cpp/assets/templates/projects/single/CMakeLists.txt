@@ -6,7 +6,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 enable_testing()
 
-add_executable(app src/main.cc)
+add_executable(app src/main.cpp)
 target_compile_features(app PRIVATE cxx_std_23)
 set_target_properties(app PROPERTIES
   CXX_STANDARD 23

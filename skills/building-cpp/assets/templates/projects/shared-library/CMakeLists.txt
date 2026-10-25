@@ -9,7 +9,7 @@ enable_testing()
 
 add_subdirectory(greeting)
 
-add_executable(app src/main.cc)
+add_executable(app src/main.cpp)
 target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_features(app PRIVATE cxx_std_23)
 set_target_properties(app PROPERTIES

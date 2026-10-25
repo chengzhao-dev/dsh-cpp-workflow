@@ -5,6 +5,7 @@ InheritParentConfig: false
 Checks: >
   -*,
   google-*,
+  portability-avoid-pragma-once,
   readability-identifier-naming
 
 WarningsAsErrors: '*'

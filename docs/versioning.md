@@ -40,8 +40,8 @@
 3. 在要发布的那个提交上打 annotated 标签，推送标签：
 
    ```bash
-   git tag -a v0.3.0 -m "v0.3.0"
-   git push origin v0.3.0
+   git tag -a v0.3.1 -m "v0.3.1"
+   git push origin v0.3.1
    ```
 
 4. `publish.yml` 校验标签与 `package.json` 同号，跑 `npm ci` 和 `npm test`，再 `npm publish`。`publishConfig.provenance` 打开 provenance。
@@ -49,15 +49,15 @@
 6. 读回两边的 commit，必须相同：
 
    ```bash
-   npm view @chengzhao-dev/dsh-cpp-workflow@0.3.0 version gitHead
-   git rev-parse v0.3.0^{commit}
+   npm view @chengzhao-dev/dsh-cpp-workflow@0.3.1 version gitHead
+   git rev-parse v0.3.1^{commit}
    ```
 
-   `npm view @chengzhao-dev/dsh-cpp-workflow@0.3.0 dist.attestations` 应能看到 provenance 记录。
+   `npm view @chengzhao-dev/dsh-cpp-workflow@0.3.1 dist.attestations` 应能看到 provenance 记录。
 
 ## 标签约束
 
-- annotated 标签与 `package.json` 同号，例如 `v0.3.0`。
+- annotated 标签与 `package.json` 同号，例如 `v0.3.1`。
 - 标签打在发布提交上。标签之后再补文档提交，会让 npm 的 `gitHead` 与标签指向的 commit 不一致；`0.1.0` 就差了这样一个只改 `docs/versioning.md` 的提交。
 - 同一个版本不重复发布，也不把版本改回旧号重推同一个标签。
 - 版本还没进 registry 时，修好问题后可以删除本地与远端标签，重打在修正后的提交上；版本一旦可安装，只升版本号。

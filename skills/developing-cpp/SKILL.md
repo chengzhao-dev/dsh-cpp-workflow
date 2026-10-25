@@ -9,7 +9,7 @@ metadata:
 
 ## 适用场景
 
-管 `.h` / `.cc` 里换一台机器也不会改的内容：可观察行为、库与程序的边界、声明、命名、异常和源码注释。排版、命名、头文件与包含顺序以 `references/google-cpp-style.md` 的 Google 基线为准。异常条文采用 C++ Core Guidelines 的 Error handling，作为开发阶段的源码指导；它不进入插件运行时。`CMakeLists.txt`、`cmake/`、`running-build.sh`、`.clang-*`、`.vscode/` 和 `environment.json` 只开 `building-cpp`。只改函数体、命名、异常或注释且入口命令可运行时，定实现后只开 `building-cpp` 的「通过检查」；新增或移动源文件、改库与程序的边界、补测试 target 时，声明和实现可以先写，但完成前必须开 `building-cpp` 的定构建，把文件写进 CMake，再决定是否定工具配置，最后通过检查。`.qmd`、仓库 README、Python 和非 C++ 文档不打开本技能。
+管 `.h` / `.hpp` / `.cpp` / `.cc` 里换一台机器也不会改的内容：可观察行为、库与程序的边界、声明、命名、异常和源码注释。文件槽位与守卫以 `references/file-template.md` 为准；排版、命名、头文件与包含顺序以 `references/google-cpp-style.md` 的 Google 基线为准。异常条文采用 C++ Core Guidelines 的 Error handling，作为开发阶段的源码指导；它不进入插件运行时。`CMakeLists.txt`、`cmake/`、`running-build.sh`、`.clang-*`、`.vscode/` 和 `environment.json` 只开 `building-cpp`。只改函数体、命名、异常或注释且入口命令可运行时，定实现后只开 `building-cpp` 的「通过检查」；新增或移动源文件、改库与程序的边界、补测试 target 时，声明和实现可以先写，但完成前必须开 `building-cpp` 的定构建，把文件写进 CMake，再决定是否定工具配置，最后通过检查。`.qmd`、仓库 README、Python 和非 C++ 文档不打开本技能。
 
 存在项目技能 `cpp-workflow-project` 时先读它的 `SKILL.md`：工程名、库与程序的边界、阶段表、术语增补、入口命令。没有项目技能时门禁不会放出本技能，不要猜项目约定。
 
@@ -31,9 +31,22 @@ metadata:
 | 1 | 定行为 | `steps/01-behavior.md` | 把这一处要能观察到的结果写成验收句 |
 | 2 | 定边界 | `steps/02-boundary.md` | 决定哪些放库、哪些放程序，依赖朝哪个方向 |
 | 3 | 定声明 | `steps/03-declaration.md` | 写命名、声明顺序、头文件契约和声明注释 |
-| 4 | 定实现 | `steps/04-implementation.md` | 写 `.cc` 的操作顺序、分组和实现注释 |
+| 4 | 定实现 | `steps/04-implementation.md` | 写 `.cpp` 函数体的操作顺序、分组和实现注释 |
 
-每步只打开同号的一个步骤文件。判不准才打开 `examples/` 里与该步对应的案例；`references/` 保存完整条文，只在排错、整目录重构，或步骤里明确指向某一条文时按需打开。
+每步只打开同号的一个步骤文件。判不准才打开 `examples/` 里与该步对应的案例；`references/` 保存完整条文，只在排错、整目录重构，或步骤里明确指向某一条文时按需打开。性能问题读 `references/performance.md`，标准库设施选型读 `references/standard-library.md`，链接与产物的细节读 `building-cpp` 的 `references/linking.md`。
+
+### 四类改动
+
+先认这次改的是哪一类，再决定从哪一步进；一次改动混了两类时，按「写作 → 布局 → 排版 → 润色」的次序拆开做，前一类落定并经检查再进下一类。
+
+| 类型 | 典型请求 | 从哪进 | 先读哪份条文 |
+| --- | --- | --- | --- |
+| 写作 | 新增类型、函数或文件；改可观察行为；改库与程序的边界 | 第 1 步 | `steps/01-behavior.md`、`02-boundary.md`、`references/project-design.md` |
+| 布局 | 换文件位置、拆头文件、调声明顺序、补测试 target | 第 3 步 | `references/file-template.md`、`declaration-order.md` |
+| 排版 | 只改缩进、行宽、包含顺序或格式 | 第 3 步的声明写法，或 `building-cpp` 的「定工具配置」 | `references/google-cpp-style.md`、`layout.md` |
+| 润色 | 只改命名、只改注释措辞 | 第 3、4 步 | `references/naming.md`、`comments.md` |
+
+只改格式时不动行为，只改注释时不动签名；类型注释的职责、跨文件边界与线程规则，只按 `references/comments.md` 的条文取内容。
 
 ## 完成判据
 
@@ -41,4 +54,5 @@ metadata:
 - 第 2 步的库 target 不依赖终端、GUI 或脚本；程序 target 只做装配和输入输出；共享抽象有第二个真实使用方。
 - 第 3 步的公共头文件自包含，命名、声明顺序和异常声明符合 `references/` 的条文。
 - 第 4 步的实现只兑现声明；资源由 RAII 管理；失败是正常结果时用返回值，函数无法完成任务时抛异常，不拿异常做正常分支。
+- 源码注释符合 `references/comments.md` 的四层规范，`node "<skill-dir>/scripts/checking-comments.mjs" --root <项目根>` 无输出。
 - 没有改 `CMakeLists.txt`、`.clang-*`、构建脚本，也没有把外部资料路径或项目专属类名写进通用条文。

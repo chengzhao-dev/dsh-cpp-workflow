@@ -15,7 +15,7 @@
 | 命名空间 | snake_case | `taskflow`, `warehouse` | `Taskflow`, `Warehouse` |
 | 宏 | 全大写 + 项目前缀，尽量不用 | `CPP_WORKFLOW_ASSERT` | `ASSERT` |
 
-- 文件名用 snake_case：`order_result.h`、`task_table.cc`；测试文件 `task_table_test.cc`。
+- 文件名用 snake_case：`order_result.h`、`task_table.cpp`；测试文件 `task_table_test.cpp`。
 - 布尔变量用 `is_` / `has_` / `can_` 开头：`is_valid`、`has_stock`；不要用 `flag`、`status`。
 - 容器用复数：`tasks`、`orders`；单个元素用单数。
 - 缩写按单词处理：`url`、`id`、`http`，不要写 `URL` 混进 snake_case；类型名里可以 `HttpClient`。
@@ -26,7 +26,7 @@
 | 角色 | 前缀 / 动词 | 例子 | 说明 |
 | --- | --- | --- | --- |
 | 查询 | `Get` 或访问器风格 | `GetCurrentOrder()`、`CurrentOrder()` | 只读、不改变状态；同一 API 选一种 |
-| 判断 | `Is` / `Has` / `Can` | `Contains()`, `HasStock()` | 返回 `bool`，不抛异常 |
+| 判断 | `Is` / `Has` / `Can`；成对规则用 `Completes` 等限定式 | `IsEmpty()`、`HasStock()`、`CompletesLine()` | 返回 `bool`，不抛异常 |
 | 查找 | `Find` | `FindTask()` | 找不到是正常结果，返回 `optional` 或迭代器，不抛 |
 | 计数 | `Count` | `CountPendingTasks()` | 返回数量，不修改状态 |
 | 尝试 | `Try` | `TryReserve()` | 可能失败但不抛异常，返回结果类型 |
@@ -47,6 +47,7 @@
 ## 谓词与查询命名
 
 - 返回 `bool` 的查询用肯定式，读起来像一句断言：`IsEmpty()`、`HasStock()`、`CanReserve()`、`CompletesLine()`。
+- 前缀集就是这四类：`Is` / `Has` / `Can`，外加与成对规则一一对应的 `Completes`、`Would` 这类限定式；`Contains` 只保留给容器成员（`std::vector::empty` 一类已有标准名），不拿它当一般谓词。
 - `Get` 只用于取值，`Set` 只用于设值；不要用 `CheckLine()` 当布尔 getter。
 - `Check` / `Validate` 留给会报告错误、产生诊断或可能失败的操作；它们不返回纯 `bool` 查询。
 - 假设性查询在名字里写明条件：`CompletesLine(position, cell)` 读作「这一手会成线吗」；需要更强语气时用 `WouldCompleteLine()`。同一 API 只选一种，改名时同步声明、定义、调用点、测试和注释。

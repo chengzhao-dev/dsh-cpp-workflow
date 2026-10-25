@@ -5,66 +5,194 @@
 **差**：
 
 ```cpp
-// task_list.cc
-// 作者：张三
-// 创建：2024-01-01
-// 修改：2024-02-01 修复 bug
+// board.h
+// 作者：chengzhao-dev
+// 创建：2026-01-01
+// 修改：2026-03-02 增加 CompletesLine
 ```
 
 **好**：
 
 ```cpp
 //===----------------------------------------------------------------------===//
-// TaskList 的存储、优先级排序与稳定顺序。
+// board.h - 定义井字棋棋盘。
 //
-// 不处理终端输入输出；程序层负责解析「优先级 名称」并打印。
+// 棋盘只保存格子状态与规则判断，不含对局流程；对局流程在 game.h。
 //===----------------------------------------------------------------------===//
 ```
 
-文件头回答「这个文件负责什么、不负责什么」，不写作者和变更史。
+文件头回答「这个文件负责什么、不负责什么」，不写作者和变更史。后两行是这条边界：读的人由此知道该去哪个文件找回合推进。
 
-## 声明注释
+## 类型注释：概念与约定，不是功能清单
 
 **差**：
 
 ```cpp
-/// 获取任务。
-/// @param index 索引
-/// @return 任务
-Task GetTask(int index) const;
+/// 井字棋棋盘。
+///
+/// 提供检查坐标区间、检查棋盘格子是否为空、获取棋盘格子类型、放置棋子、清空棋盘和判定终局的功能。
+/// 棋盘为 3 行 3 列。
+class Board {
 ```
 
-问题：没说越界行为，没说返回的是拷贝还是引用。
+问题有两处：把成员函数抄了一遍，接口一改就过期；「棋盘为 3 行 3 列」被拆成单独一句，读者不知道它在回答什么问题。
+
+**差**（把别的类型和以后才发生的事都写进来）：
+
+```cpp
+/// 井字棋棋盘。
+///
+/// 棋盘只保存 3×3 的格子状态和规则判断，不含回合推进：谁该落子、落子被拒后怎么提示留在 Game。
+///
+/// 棋盘是值语义，可以自由拷贝；所有查询都是 const，对局和搜索可以交替读取同一棋盘。
+class Board {
+```
+
+第二段说的是 `Game` 负责什么，读者读完仍不知道 `Board` 保证什么，重构一次这句话就过期；后两段里的可拷贝、`const` 查询在类声明里已经写清，「搜索要读同一棋盘」还不是现在的调用方。读者真正需要的是这个类型自己的不变量与失败方式。
 
 **好**：
 
 ```cpp
-/// 返回 index 处的任务副本。
+/// 井字棋棋盘。
 ///
-/// @param index 任务下标，必须在 [0, tasks_.size()) 内
-/// @return 该位置的任务
-/// @throws TaskIndexError index 越界
-[[nodiscard]] Task GetTask(int index) const;
+/// 3×3 个格子，每格取空、X 或 O；越界坐标不会写入棋盘。
+class Board {
 ```
 
-契约完整：范围、返回、异常声明。
+两句都是本类型能兑现、读代码又不容易一眼看全的事，函数各自的契约下沉到函数注释；设计理由与分层不写进注释，写进书稿。
+
+## 风格理由不进注释
+
+**差**（在十几个函数上各写一遍）：
+
+```cpp
+/// 检查坐标是否在范围内。函数名用 UpperCamel 而不是 snake_case，与标准库区分。
+[[nodiscard]] static bool IsInRange(CellPosition position) noexcept;
+
+/// 检查格子是否为空。函数名用 UpperCamel 而不是 snake_case，与标准库区分。
+[[nodiscard]] bool IsCellEmpty(CellPosition position) const;
+```
+
+**好**（只写契约）：
+
+```cpp
+/// 检查坐标是否落在棋盘下标区间内。
+///
+/// 只判断几何边界，不检查格子是否为空、对局是否已经结束。
+[[nodiscard]] static bool IsInRange(CellPosition position) noexcept;
+```
+
+命名与风格约定写进项目文档和读者正文，注释里不解释「为什么用这种命名」。
+
+## 函数契约
+
+**差**：
+
+```cpp
+/// 尝试执行一次落子。
+///
+/// @param move 落子。
+/// @returns 落子执行成功返回 kPlaced，被拒绝返回 kRejected。
+[[nodiscard]] PlaceResult TryPlace(const Move& move);
+```
+
+`@param move 落子` 是把类型名翻译成中文，没有信息；`@returns` 不是 Doxygen 标签；没有说被拒绝的条件，调用方只能读实现。
+
+**好**：
+
+```cpp
+/// 尝试执行一次落子。
+///
+/// 只有本局仍在进行、且落子玩家正是当前玩家时才继续，棋盘、轮次、历史三者一起更新。
+///
+/// @param move 待执行的落子，玩家必须是当前轮到的玩家。
+/// @return 落子写入棋盘并换手时返回 kPlaced；对局已结束或上述任一条件不满足时返回 kRejected，
+///         棋盘和轮次都不变。
+[[nodiscard]] PlaceResult TryPlace(const Move& move);
+```
+
+## 布尔查询要写「不检查什么」
+
+**差**：
+
+```cpp
+/// 检查指定坐标上的棋盘格子是否为空。
+[[nodiscard]] bool IsCellEmpty(CellPosition position) const;
+```
+
+**好**：
+
+```cpp
+/// 检查指定坐标上的棋盘格子是否为空。
+///
+/// 只回答「这一格能不能落子」，不判断对局是否已经结束：对局结束后格子仍是空的，
+/// 但再落子没有意义。是否需要先看对局状态由调用方决定，棋盘不替它下结论。
+///
+/// @param position 待检查的坐标。
+/// @return 坐标在棋盘内且该格为空时返回 true；越界或该格已有棋子时返回 false。
+[[nodiscard]] bool IsCellEmpty(CellPosition position) const;
+```
+
+布尔函数最容易被误用；把「不检查什么」写出来，比多写一个参数说明有用。
+
+## 枚举
+
+**差**：
+
+```cpp
+enum class Player : std::uint8_t {
+  kCross,  // X
+  kNought  // O
+};
+```
+
+**好**：
+
+```cpp
+/// 对局结果。
+enum class GameResult : std::uint8_t {
+  kInProgress = 0,  ///< 游戏进行中：还可以落子。
+  kCrossWin = 1,    ///< X 获胜：达成三连。
+  kNoughtWin = 2,   ///< O 获胜：达成三连。
+  kDraw = 3,        ///< 平局：棋盘已满，双方都没有三连。
+};
+```
+
+行尾注释先写语义，需要时用冒号补一句能核实的条件或结果，两段都短；不重复名字，不写嵌套子句，同一枚举要么全写要么全不写。
+
+## 数据成员
+
+**差**：
+
+```cpp
+Board board_;
+Player current_player_;
+GameResult result_;
+```
+
+**好**：
+
+```cpp
+Board board_;                             // 对局棋盘。
+Player current_player_ = Player::kCross;  // 当前轮到的玩家，开局时 X 先手。
+GameResult result_ = GameResult::kInProgress;  // 对局结果；落子被拒时不改写。
+```
+
+行尾写「存什么 + 初值含义 + 什么时候变」，同类成员对齐。
 
 ## 实现注释
 
 **差**：
 
 ```cpp
-// 如果 tasks_ 为空
-if (tasks_.empty()) {
-  // 返回空
-  return {};
-}
-// 遍历 tasks_
-for (const auto& task : tasks_) {
-  // 比较优先级
-  if (task.priority < best.priority) {
-    // 更新 best
-    best = task;
+// 遍历所有空格
+for (const auto& position : empty_cells) {
+  // 尝试落子
+  const bool wins = game.Board().CompletesLine(position, cell_type);
+  // 如果能赢
+  if (wins) {
+    // 返回这一手
+    return position;
   }
 }
 ```
@@ -74,20 +202,16 @@ for (const auto& task : tasks_) {
 **好**：
 
 ```cpp
-// 空列表是合法状态，调用方不应被迫先判空。
-if (tasks_.empty()) {
-  return {};
-}
-
-// 优先级相同时保留先加入的任务：用严格小于，不交换等值元素。
-for (const auto& task : tasks_) {
-  if (task.priority < best.priority) {
-    best = task;
+// 先找能立刻赢的格子：启发式只在「马上赢」和「马上挡」之间做选择，
+// 不在这里做更深的前瞻，深搜留给 MinimaxAi。
+for (const auto& position : empty_cells) {
+  if (game.CompletesLine(position, CellType::kX)) {
+    return position;
   }
 }
 ```
 
-解释「为什么」和「稳定排序的取舍」，不翻译语句。
+解释「为什么停在这一层」，不翻译语句。
 
 ## TODO
 
@@ -96,14 +220,12 @@ for (const auto& task : tasks_) {
 ```cpp
 // TODO: 参考 xxx
 // FIXME: 这里可能有问题
-// TODO(张三): 优化
 ```
 
 **好**：
 
 ```cpp
-// TODO: 阶段 2 - 支持按截止日期排序
-// TODO: issue #42 - 把优先级解析抽成 TryParsePriority
+// TODO: 阶段 5 - 给 MinimaxAi 加置换表，减少重复局面的搜索。
 ```
 
 有定位、有动作、能搜索。
@@ -129,134 +251,25 @@ Standard: Latest
 
 解释为什么选预设，不写策略头，不指文档路径。
 
-## 横幅
+## 不该进注释的东西
 
 **差**：
 
 ```cpp
-// ===== 函数 =====
-void AddTask();
-void RemoveTask();
-// ===== 结束 =====
+// 2026-03-02 把 Board 从 Game 里拆出来，因为之前 Game 太长。
+// 参见 https://example.com/2026/03/02/refactor
+// 其余成员见下方注释，两处不重复。
+// 本团队要求所有类注释写满五行。
 ```
 
 **好**：
 
 ```cpp
 //===----------------------------------------------------------------------===//
-// 查询
+// board.h - 棋盘状态与规则判断
+//
+// 这一层只有格子状态和胜负判定；回合推进在 game.h，输入输出在 apps/。
 //===----------------------------------------------------------------------===//
-
-[[nodiscard]] std::size_t Size() const;
-[[nodiscard]] bool IsEmpty() const;
 ```
 
-横幅是跳转锚点，不是装饰；一组函数一个横幅，单函数不加。
-
-## 枚举行尾注释
-
-**差**：
-
-```cpp
-enum class TaskStatus : std::uint8_t {
-  kPending,  // 待处理
-  kActive,   // 处理中
-  kBlocked,  // 等待外部输入
-  kDone      // 已完成
-};
-```
-
-问题：四个成员都写等于没写，且把名字重复了一遍。
-
-**好**：
-
-```cpp
-enum class TaskStatus : std::uint8_t {
-  kPending,  ///< 已登记，尚未开始
-  kActive,   ///< 正在处理
-  kBlocked,  ///< 等待外部输入，不能继续
-  kDone      ///< 已完成，不再改动
-};
-```
-
-若只有部分成员需要解释，同一枚举内要写就写全，或全不写；不要半套。语义结果写在最前，判定条件放冒号后。
-
-## 声明注释的完整契约
-
-**差**：
-
-```cpp
-/// 修改任务优先级。
-/// @param id 任务编号
-/// @param priority 优先级
-void SetPriority(TaskId id, int priority);
-```
-
-**好**：
-
-```cpp
-/// 修改任务优先级。
-///
-/// @param id 任务编号，必须已存在
-/// @param priority 新优先级，必须在 [0, 9] 内
-/// @throws TaskIndexError 编号不在当前任务表内
-/// @throws InvalidPriorityError priority 越界
-void SetPriority(TaskId id, int priority);
-```
-
-只写调用者无法从签名推出来的内容：范围、所有权、失败方式。`@brief` 不写，第一行就是摘要。
-
-## 相邻注释
-
-**差**：
-
-```cpp
-// 这里先检查存在性
-// 然后检查状态
-// 最后写入
-if (!Contains(id)) return false;
-if (tasks_[Index(id)].status == TaskStatus::kDone) return false;
-tasks_[Index(id)].status = TaskStatus::kActive;
-return true;
-```
-
-**好**：
-
-```cpp
-// 先检查再写入：失败时不留下半完成状态。
-if (!Contains(id)) return false;
-if (tasks_[Index(id)].status == TaskStatus::kDone) return false;
-tasks_[Index(id)].status = TaskStatus::kActive;
-return true;
-```
-
-一段连续的实现注释只讲一个判断或一个取舍；不是逐行字幕。
-
-## 成员还是同一命名空间的函数
-
-**差**：
-
-```cpp
-class TaskTable {
- public:
-  std::size_t CountOverdue() const;
-  bool HasOverdue() const { return CountOverdue() > 0; }
-};
-```
-
-`HasOverdue` 只组合公开查询，不需要直接访问表示，却做成了成员。
-
-**好**：
-
-```cpp
-class TaskTable {
- public:
-  std::size_t CountOverdue() const;
-};
-
-bool HasOverdue(const TaskTable& table) {
-  return table.CountOverdue() > 0;
-}
-```
-
-函数和类放在同一命名空间；调用方只看到 `HasOverdue(table)`，类不增加只为转发而存在的成员。
+变更史进提交说明，外部资料进文档，团队流程进规范文件，跨文件的边界写文件头；类注释只写本类型自己的契约。

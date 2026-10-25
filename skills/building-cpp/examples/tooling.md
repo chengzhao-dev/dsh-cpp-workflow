@@ -121,7 +121,7 @@ Checks: >
 **差**：
 
 ```bash
-clang-tidy -p build/clang --system-headers src/main.cc
+clang-tidy -p build/clang --system-headers src/main.cpp
 ```
 
 系统头也参与诊断，出现大量第三方告警。
@@ -130,7 +130,7 @@ clang-tidy -p build/clang --system-headers src/main.cc
 
 ```bash
 clang-tidy -p build/clang --header-filter="^$(pwd -P)/(include|src)/" \
-  --warnings-as-errors='*' src/main.cc
+  --warnings-as-errors='*' src/main.cpp
 ```
 
 `--header-filter` 只列项目顶层目录，避免把第三方头纳入；系统头默认排除。工程有别的顶层目录时按实际替换。
@@ -140,7 +140,7 @@ clang-tidy -p build/clang --header-filter="^$(pwd -P)/(include|src)/" \
 **差**：
 
 ```bash
-clang-format -i src/*.cc   # 构建时悄悄改源码
+clang-format -i src/*.cpp   # 构建时悄悄改源码
 ```
 
 **好**：

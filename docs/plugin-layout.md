@@ -11,9 +11,11 @@ dsh-cpp-workflow/
 │       └── publish.yml
 ├── cordis.patch.yml
 ├── docs/
+│   ├── architecture.md
 │   ├── plugin-boundaries.md
 │   ├── plugin-flow.md
 │   ├── plugin-layout.md
+│   ├── triggering.md
 │   └── versioning.md
 ├── icon.svg
 ├── locale/{en,zh}.json
@@ -22,13 +24,13 @@ dsh-cpp-workflow/
 ├── README.en.md
 ├── package-lock.json            # 只在仓库，供 npm ci
 ├── package.json
-├── scripts/checking-skill-links.mjs
+├── scripts/{checking-skill-links.mjs,checking-standard-matrix.sh}
 ├── src/{index.ts,workspace.ts}
 ├── skills/
-│   ├── developing-cpp/{SKILL.md,steps,examples,references}
+│   ├── developing-cpp/{SKILL.md,steps,examples,references,scripts}
 │   └── building-cpp/{SKILL.md,steps,examples,references,assets,scripts}
 ├── templates/cpp-workflow-project/{SKILL.md,environment.json,stages/stage-table.md}
-├── tests/{provider,environment,schema,encoding}.test.mjs
+├── tests/{provider,environment,schema,encoding,comments}.test.mjs
 └── lib/                         # tsc 输出，随 npm 包发布
 ```
 

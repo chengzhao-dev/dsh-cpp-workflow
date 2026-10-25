@@ -18,7 +18,7 @@
 
 | 改动 | 打开 |
 | --- | --- |
-| `.h`、`.cc`、命名、异常、源码注释 | `developing-cpp` |
+| `.h`、`.cpp`、`.cc`、命名、异常、源码注释 | `developing-cpp` |
 | `CMakeLists.txt`、`cmake/`、`running-build.sh`、`.clang-*`、`.vscode/`、`environment.json` | `building-cpp` |
 | 只改函数体、命名、异常、注释，且入口命令可运行 | `developing-cpp`；定实现后只开 `building-cpp` 的「通过检查」 |
 | 新增或移动源文件、改库与程序的边界、补测试 target | 先写声明和实现；完成前必须开 `building-cpp` 的定构建，把文件写进 CMake，再决定是否定工具配置，最后通过检查 |

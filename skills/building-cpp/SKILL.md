@@ -32,9 +32,9 @@ metadata:
 | --- | --- | --- | --- |
 | 1 | 定构建 | `steps/01-build.md` | 一次配置一个编译器，Ninja，target-based CMake，编译数据库 |
 | 2 | 定工具配置 | `steps/02-tooling.md` | 格式化、静态检查、clangd 各管一段，互不越界 |
-| 3 | 通过检查 | `steps/03-check.md` | 先跑环境脚本的 `--live`，再跑项目入口，按失败位置分诊 |
+| 3 | 通过检查 | `steps/03-check.md` | 按编码 → 声明校验 → 活动校验 → 项目入口的次序跑，前一步失败就停 |
 
-每步只打开同号的一个步骤文件。判不准才打开 `examples/` 里与该步对应的案例；`references/` 保存完整条文，只在排错、整目录重构，或步骤里明确指向某一条文时按需打开。
+每步只打开同号的一个步骤文件。判不准才打开 `examples/` 里与该步对应的案例；`references/` 保存完整条文，只在排错、整目录重构，或步骤里明确指向某一条文时按需打开。链接、rpath 与产物布局读 `references/linking.md`；警告选项、GoogleTest 与 rpath 的 CMake 片段在 `assets/cmake/`，由 `references/cmake.md` 指路。
 
 ## 完成判据
 
