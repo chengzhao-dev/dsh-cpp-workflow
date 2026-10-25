@@ -84,6 +84,30 @@ class Board {
 
 命名与风格约定写进项目文档和读者正文，注释里不解释「为什么用这种命名」。
 
+## 第一句：先写结果或限制
+
+**差**：
+
+```cpp
+/// 检查坐标。
+/// 返回格子类型；越界会抛异常。
+CellType GetCellType(CellPosition position) const;
+```
+
+前两句都没有直接回答“合法时拿到什么、越界时发生什么”，读者要读完三句才拼出合同。
+
+**好**：
+
+```cpp
+/// 坐标越界时抛出 std::out_of_range；合法坐标返回该格类型。
+///
+/// @param position 行列坐标。
+/// @throws std::out_of_range 坐标不在棋盘范围内。
+CellType GetCellType(CellPosition position) const;
+```
+
+第一句就是结果或失败方式；后面的标签只补参数与异常细节，不再重复这句话。
+
 ## 函数契约
 
 **差**：

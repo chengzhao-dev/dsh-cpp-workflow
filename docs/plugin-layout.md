@@ -28,6 +28,7 @@ dsh-cpp-workflow/
 ├── src/{index.ts,workspace.ts}
 ├── skills/
 │   ├── developing-cpp/{SKILL.md,steps,examples,references,scripts}
+│   ├── configuring-cmake/{SKILL.md,steps,examples,references,assets}
 │   └── building-cpp/{SKILL.md,steps,examples,references,assets,scripts}
 ├── templates/cpp-workflow-project/{SKILL.md,environment.json,stages/stage-table.md}
 ├── tests/{provider,environment,schema,encoding,comments}.test.mjs
@@ -54,7 +55,7 @@ dsh-cpp-workflow/
 
 `main` 指向 `lib/index.js`。入口只导出 `name`、`inject: ['skills']` 和 `apply()`；`apply()` 只注册技能 provider。`cordis.patch.yml` 只有一条 `insert`，`id` 是 `cpp-workflow`，`name` 与 npm 包名逐字相同。没有 `dsh.client`，没有额外补丁行。
 
-技能从 `skills/<name>/SKILL.md` 一层发现，不递归。每个技能目录是 `resourceBase`，`steps/`、`examples/`、`references/` 的相对链接从该目录解析。`templates/` 不注册为技能，只作为复制源。
+技能从 `skills/<name>/SKILL.md` 一层发现，不递归。每个技能目录是 `resourceBase`，`steps/`、`examples/`、`references/`、`assets/` 的相对链接从该目录解析。`templates/` 不注册为技能，只作为复制源。CMake 契约与可复用函数在 `skills/configuring-cmake/`，构建、工具链与工程模板在 `skills/building-cpp/`。
 
 `skills/building-cpp/references/standards/` 下按 `c++11` 到 `c++23` 每档一个目录，目录内是 `README.md`（设施、工具、降档、验证）和 `cmake-snippet.cmake`（该 target 的最小 CMake 片段）；索引是 `standards/README.md`。公共模板仍只有四套，不按标准复制。
 

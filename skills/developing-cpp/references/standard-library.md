@@ -62,6 +62,7 @@ std::erase_if(values, [](int value) { return value % 2 == 0; });
 | 二分查找 | `std::lower_bound` / `std::upper_bound`（要求已排序） |
 
 - 算法接收迭代器区间，不接收容器；调用时写 `values.begin(), values.end()` 或 C++20 `std::ranges::sort(values)`。
+- 嵌套数组整体赋同一个值时用 `std::ranges::fill` 与 `std::views::join`，例见 `examples/structure.md`；逐格做不同处理时仍用 `row` / `col` 循环。
 - 谓词只做判断，不改元素；需要修改时用 `transform`。
 - 捕获列表只捕获需要的变量；默认 `[&]` 容易悬空，默认 `[=]` 容易复制大对象。
 - 不在比较函数里写有副作用的逻辑；排序要求严格弱序，违反会导致未定义行为。

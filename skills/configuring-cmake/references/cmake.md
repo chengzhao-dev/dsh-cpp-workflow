@@ -1,10 +1,12 @@
 # CMake
 
-目标：一个编译器、Ninja、target-based 规则、可用的编译数据库。下面是最小形状和常见边界；模板在 `assets/templates/projects/`，可复用的 CMake 片段在 `assets/cmake/`：`applying-warnings.cmake` 管警告选项，`fetching-googletest.cmake` 取测试框架，`setting-rpath.cmake` 设运行时库路径。
+目标：一个编译器、Ninja、target-based 规则、可用的编译数据库。下面是最小形状和常见边界；工程模板仍由 `building-cpp` 提供，在 `../../building-cpp/assets/templates/projects/`，可复用的 CMake 函数在本技能的 `assets/cmake/`：`CompileSettings.cmake` 收标准与警告，`LinkSettings.cmake` 收构建期 RPATH 与 GoogleTest 依赖。
 
 ## 排版
 
-CMake 没有官方风格指南。这里跟随 Google 自家项目的 `cmake-format` 配置：缩进 2 个空格、行宽 80、不用 tab。来源是 [or-tools 的 .cmake-format.py](https://github.com/google/or-tools/blob/stable/.cmake-format.py) 与 [draco 的 .cmake-format.py](https://github.com/google/draco/blob/master/.cmake-format.py)，两处都设 `tab_size=2`、`line_width=80`。命令行、列表和注释都按这个宽度换行；`CMakeLists.txt` 与 `*.cmake` 一视同仁。
+CMake 没有单独的官方风格指南文档，但官方仓库的 [.editorconfig](https://raw.githubusercontent.com/Kitware/CMake/master/.editorconfig) 明确规定：`CMakeLists.txt`、`*.cmake`、`*.rst` 使用 `indent_size = 2`、`indent_style = space`。这是官方代码风格的直接依据。行宽 80 列来自社区 `cmake-format` 约定（[or-tools](https://github.com/google/or-tools/blob/stable/.cmake-format.py)、[draco](https://github.com/google/draco/blob/master/.cmake-format.py) 都设 `tab_size=2`、`line_width=80`），不是 CMake 官方强制值。命令行、列表和注释都按项目约定的宽度换行；`CMakeLists.txt` 与 `*.cmake` 一视同仁。
+
+注释不用 `#[[.rst:`。那层标记只属于要进 CMake 手册的模块：Kitware 在 [documentation.rst](https://github.com/Kitware/CMake/blob/master/Help/dev/documentation.rst) 里用 `.. command::` 与参数段，供 Sphinx 从源码抽进手册；本仓的模块不进手册，读者也读不懂这层标记。公开函数上方写中文 `#` 契约：第一句说功能，空一行写边界，再用 `:param 名字:` 标位置参数、`:keyword 名字:` 标 `cmake_parse_arguments` 的关键字；CMake 函数没有返回值，不写 `:return:`，也不把 C++ 的 `@param`、`@return` 搬进来。字段取自 [CMinx](https://cmakepp.github.io/CMinx/documenting/function.html)；本仓不跑 CMinx，注释保持普通 `#` 行。签名留在 `function()` 那一行，同一文件的函数组之间用一条 `#---` 短横线分隔；行注释只写原因，不画 `#===...===#` 方框。官方 [GoogleTest.cmake](https://github.com/Kitware/CMake/blob/master/Modules/GoogleTest.cmake) 在一个文件里放多个测试函数，可作“文件按职责聚合”的参照；社区 [CompilerWarnings.cmake](https://github.com/cpp-best-practices/cmake_template/blob/main/cmake/CompilerWarnings.cmake) 在每个警告 flag 后写它抓什么问题，可作参数注释的参照。
 
 Shell 脚本用 2 个空格缩进、不用 tab，来源是 [Google Shell Style Guide](https://google.github.io/styleguide/shellguide.html#indentation)。
 
@@ -19,14 +21,12 @@ project({{PROJECT_NAME}} VERSION 0.1.0 LANGUAGES CXX)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
+# 先把 assets/cmake/ 里的 CompileSettings.cmake 复制到工程的 cmake/。
+include(CompileSettings)
+
 add_executable(app src/main.cpp)
-target_compile_features(app PRIVATE cxx_std_23)
-set_target_properties(app PROPERTIES
-  CXX_STANDARD 23
-  CXX_STANDARD_REQUIRED ON
-  CXX_EXTENSIONS OFF
-)
-target_compile_options(app PRIVATE -Wall -Wextra -Werror)
+CompileSettings_SetCxxStandard(app PRIVATE c++23)
+CompileSettings_SetWarnings(app PRIVATE LEVEL standard)
 ```
 
 ### 库 + 程序
@@ -40,42 +40,56 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
+# 先把 assets/cmake/ 里的 CompileSettings.cmake 复制到工程的 cmake/。
+include(CompileSettings)
+
 add_subdirectory(greeting)
 
 add_executable(app src/main.cpp)
-target_compile_features(app PRIVATE cxx_std_23)
-set_target_properties(app PROPERTIES
-  CXX_STANDARD 23
-  CXX_STANDARD_REQUIRED ON
-  CXX_EXTENSIONS OFF
-)
+CompileSettings_SetCxxStandard(app PRIVATE c++23)
+CompileSettings_SetWarnings(app PRIVATE LEVEL standard)
 target_link_libraries(app PRIVATE greeting)
-target_compile_options(app PRIVATE -Wall -Wextra -Werror)
 ```
 
 ```cmake
 # greeting/CMakeLists.txt
 add_library(greeting STATIC src/greeting.cpp)
 target_include_directories(greeting PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
-target_compile_features(greeting PUBLIC cxx_std_23)
-set_target_properties(greeting PROPERTIES
-  CXX_STANDARD 23
-  CXX_STANDARD_REQUIRED ON
-  CXX_EXTENSIONS OFF
-)
-target_compile_options(greeting PRIVATE -Wall -Wextra -Werror -Wold-style-cast -Wshadow)
+CompileSettings_SetCxxStandard(greeting PUBLIC c++23)
+CompileSettings_SetWarnings(greeting PRIVATE LEVEL standard)
 ```
 
 - 库的 `PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..` 让程序能从仓库根写 `#include "greeting/include/greeting.h"`，不需要程序再写 include 路径。
-- `cxx_std_23` 用 `PUBLIC` 从库传播；程序自己再加一次也无害。`CXX_STANDARD_REQUIRED ON` 防止 CMake 在编译器不支持时静默 decay；显式 `CXX_STANDARD` 与 `standard` 保持一致。
-- `CXX_EXTENSIONS OFF` 把 `-std=gnu++23` 收成 `-std=c++23`，与 Google 的「不用非标准扩展」一致；每个 target 都要设。configure 后检查 `compile_commands.json` 的最后一条 `-std=`，不能是 `gnu++NN`。
+- 标准用 `CompileSettings_SetCxxStandard`：库用 `PUBLIC` 传播，程序用 `PRIVATE`；函数内部同时写 `target_compile_features` 与 `CXX_STANDARD` 三属性。
+- `CXX_STANDARD_REQUIRED ON` 防止 CMake 在编译器不支持时静默 decay；`CXX_EXTENSIONS OFF` 把 `-std=gnu++NN` 收成 `-std=c++NN`。configure 后检查 `compile_commands.json` 的最后一条 `-std=`。
 - 程序 target 固定 `app`；库 target 用组件名。
+
+## 标准与复用
+
+C++11–C++23 的两层声明、可见性、常见错误与验证见 `references/cxx-standard.md`。通用函数 `CompileSettings_SetCxxStandard(target visibility c++NN)` 在 `assets/cmake/CompileSettings.cmake`：
+
+```cmake
+CompileSettings_SetCxxStandard(app PRIVATE c++23)
+CompileSettings_SetCxxStandard(greeting PUBLIC c++20)
+```
+
+函数名不绑定单一标准；新增档位只改函数里的支持列表。模块何时抽、文件怎么放、怎么导入与测试见 `references/modules.md`。
+
+## 警告等级
+
+`cmake/CompileSettings.cmake` 的 `CompileSettings_SetWarnings(<target> <visibility> LEVEL basic|standard|strict)` 把常用 flag 收成三档；`visibility` 用 `PRIVATE` 或 `INTERFACE`，`PRIVATE` 不向使用方传播。警告与标准写在同一份编译设置模块里。
+
+- `basic`：`-Wall -Wextra`；适合刚开始接 CI 的旧代码。
+- `standard`：`basic` 加 `-Werror`、`-Wshadow`、`-Wold-style-cast`、`-Wpedantic`、`-Wnon-virtual-dtor`、`-Woverloaded-virtual`；默认档。
+- `strict`：`standard` 加 `-Wconversion`、`-Wsign-conversion`、`-Wcast-align`、`-Wcast-qual`、`-Wformat=2`、`-Wundef`、`-Wdouble-promotion`、`-Wimplicit-fallthrough`、`-Wnull-dereference`；适合新代码或质量闸门。
+
+MSVC 分支用 `/W4`、`/permissive-`、`/WX`；其他编译器直接报错，避免静默地没有警告。警告是 target 的 `PRIVATE` 选项，库不把自己的策略强加给消费者。
 
 ## target-based 规则
 
 - 每个 target 自己声明 include、标准、编译选项、链接库；不要用全局 `include_directories()`、`add_definitions()`、`CMAKE_CXX_FLAGS` 给所有 target 加料。
 - `target_include_directories(<target> PUBLIC|PRIVATE <dir>)`：公共头给 `PUBLIC`，私有实现目录给 `PRIVATE`。
-- `target_compile_features(<target> PUBLIC cxx_std_23)`：标准是 target 属性，不是全局开关。
+- `target_compile_features(<target> PUBLIC cxx_std_NN)`：标准是 target 属性，不是全局开关；优先调用项目 `cmake/` 里的标准函数。
 - `target_link_libraries(<target> PRIVATE|PUBLIC <lib>)`：实现依赖用 `PRIVATE`，接口依赖用 `PUBLIC`。
 - 不要 `file(GLOB ...)`；显式列源文件，新增文件时改 CMake，构建系统才知道。`CONFIGURE_DEPENDS` 依赖构建系统每次检查目录，跨生成器行为也不完全一致，不作为工程规则。
 - 不把 `main()` 编进库；程序只做装配和 I/O。
@@ -119,16 +133,14 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 ## 共享库运行时路径
 
 ```cmake
-if(APPLE)
-  set_target_properties(app PROPERTIES BUILD_RPATH "@loader_path/../lib")
-else()
-  set_target_properties(app PROPERTIES BUILD_RPATH "$ORIGIN/../lib")
-endif()
+include(LinkSettings)
+LinkSettings_SetBuildRpath(app)
 ```
 
+- 函数按平台写 `BUILD_RPATH`：Linux 用 `$ORIGIN/../lib`，Apple 用 `@loader_path/../lib`。
 - 只对需要直接运行构建产物的程序设置；安装规则另算。
 - 不要用全局 `LD_LIBRARY_PATH` 包装所有命令；共享库的运行时路径由 target 的 RPATH 设置，不在脚本里全局改寻库路径。
-- `$ORIGIN` 在 CMake 字符串里要转义成 `\$ORIGIN` 吗？在双引号里 `$ORIGIN` 会被 CMake 当变量；写成 `"$ORIGIN/../lib"` 在 CMake 中 `$ORIGIN` 不是 `${...}`，不会被展开，保持字面量。若遇到展开问题，用 `"\$ORIGIN/../lib"`。
+- `$ORIGIN` 在 CMake 双引号里不是 `${...}`，不会被展开，保持字面量；若遇到展开问题，用 `"\$ORIGIN/../lib"`。
 
 ## 标准库与编译器一致
 
@@ -147,21 +159,15 @@ endif()
 
 ## GoogleTest
 
-需要测试框架时，用固定版本的 `FetchContent`：
+需要测试框架时，用固定版本的 `LinkSettings_FetchGoogleTest`：
 
 ```cmake
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://codeload.github.com/google/googletest/tar.gz/refs/tags/v1.17.0
-  URL_HASH SHA256=65fab701d9829d38cb77c14acdc431d2108bfdbf8979e40eb8ae567edf10b27c
-)
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+include(LinkSettings)
+LinkSettings_FetchGoogleTest()
 ```
 
-- 版本固定，不用 `master`；URL 和哈希写在一起，避免供应链漂移。
-- 只在 `tests/` 需要时拉取；库和程序不依赖测试框架。
+- 函数内部固定 GoogleTest v1.17.0 的 URL 与 SHA-256，避免供应链漂移；版本升级只改一处。
+- 只在 `tests/` 需要时调用；库和程序不依赖测试框架。
 - 没有网络时，项目可以自带 vendored 副本；不要构建时静默跳过测试。
 
 ## 模板选择

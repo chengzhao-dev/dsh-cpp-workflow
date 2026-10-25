@@ -2,29 +2,30 @@
 
 [English](README.en.md)
 
-把 C++11–C++23 的源码工作和构建工作收成两个技能，新工程默认 C++23。插件只注册技能 provider，不注册工具、不编译、不下载工具链、不写项目文件。
+把 C++11–C++23 的源码、CMake 与构建工作收成三个技能，新工程默认 C++23。插件只注册技能 provider，不注册工具、不编译、不下载工具链、不写项目文件。
 
 ## 提供什么
 
 | 技能 | 管什么 | 什么时候打开 |
 | --- | --- | --- |
 | `developing-cpp` | 定行为、定边界、定声明、定实现；`.h` / `.cpp` / `.cc` 的命名、异常和源码注释 | 用户点名源码，或需要新建/整段重构源码 |
-| `building-cpp` | 定构建、定工具配置、通过检查；CMake、Ninja、Clang 配置、构建脚本和环境组合 | 改动落在构建文件、工具配置或环境声明上，或第一次接构建 |
+| `configuring-cmake` | 定 target、定模块、通过检查；CMakeLists.txt、`cmake/` 函数与模块、target 属性、C++11–C++23 标准、2 空格排版 | 改动落在 CMake target、标准、链接边界、函数或模块上 |
+| `building-cpp` | 定构建、定工具配置、通过检查；Ninja、Clang 配置、构建脚本、环境组合、格式化与静态检查 | 改动落在构建命令、工具配置或环境声明上，或第一次接构建 |
 
-异常条文采用 C++ Core Guidelines 的 Error handling，只在开发阶段指导源码和示例；插件运行时不编译、不执行这些规则。两个技能都先读项目技能 `cpp-workflow-project`。没有项目技能时，门禁不会放出这两个名字。
+异常条文采用 C++ Core Guidelines 的 Error handling，只在开发阶段指导源码和示例；插件运行时不编译、不执行这些规则。三个技能都先读项目技能 `cpp-workflow-project`。没有项目技能时，门禁不会放出这三个名字。
 
 ## 安装
 
 npm 安装钉死版本：
 
 ```bash
-dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.3.1
+dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.5.0
 ```
 
 同版本的 Git 标签：
 
 ```bash
-dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.3.1
+dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.5.0
 ```
 
 桌面应用独占 `desktop` profile。命令行 `add` 被拒绝时，在应用设置里添加插件，地址填同一个 npm 版本。Git 标签安装使用仓库内已构建的 `lib/`，不在目标机器上重新构建；包内也不含需要授权执行的安装脚本。
@@ -35,7 +36,7 @@ dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.3.1
 
 项目技能标记就是仓库选择加入本工作流的声明。插件不再要求同一仓库里已经有第一方 `CMakeLists.txt` 或 C++ 源文件：纯文档仓库、只复制了模板、还没有任何源文件的仓库也会出现；环境轴为空时，源码四步仍能做，但定构建会停。没有标记就返回空列表，即使仓库里有 CMake 或 `.cpp`。扫描上限和边界情形见 [docs/plugin-boundaries.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-boundaries.md)。
 
-插件技能 rank 550。项目自己的 `.agents/skills` 技能 rank 200，会以同名覆盖插件；不要在项目里复制 `developing-cpp` 或 `building-cpp`。
+插件技能 rank 550。项目自己的 `.agents/skills` 技能 rank 200，会以同名覆盖插件；不要在项目里复制 `developing-cpp`、`configuring-cmake` 或 `building-cpp`。
 
 ## 项目级约定
 
@@ -57,7 +58,7 @@ dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.3.1
 | `compiler` | `clang`、`gcc` | 一次配置一个编译器 |
 | `standard` | `c++11`、`c++14`、`c++17`、`c++20`、`c++23` | 新工程默认 `c++23`；一个工程一个标准 |
 
-标准写在 `environment.json` 的 `standard`，并同步到 CMake target 和编译数据库。新工程默认 C++23；C++11–C++20 工程把 `standard`、`cxx_std_*`、`CXX_STANDARD` 和 `.clang-format` 的解析档位一起降级，不要只改一处。每档的设施、工具和降档表见 [标准目录](skills/building-cpp/references/standards/README.md)。
+标准写在 `environment.json` 的 `standard`，并同步到 CMake target 和编译数据库；CMake 侧优先调用 `configuring-cmake` 提供的 `CompileSettings_SetCxxStandard` 函数。新工程默认 C++23；C++11–C++20 工程把 `standard`、`cxx_std_*`、`CXX_STANDARD` 和 `.clang-format` 的解析档位一起降级，不要只改一处。每档的设施、工具和降档表见 [标准目录](skills/building-cpp/references/standards/README.md)，CMake 两层声明见 [cxx-standard.md](skills/configuring-cmake/references/cxx-standard.md)。
 
 生成器固定 Ninja，构建目录是 `build/clang/` 与 `build/gcc/`，不共用 `build/`。诊断工具固定 `clang-format`、`clang-tidy`、`clangd`；GCC 模式也不换成别的分析器。
 
@@ -77,7 +78,7 @@ node "<skill-dir>/scripts/checking-environment.mjs" --project . --live
 ```text
 dsh-cpp-workflow/
 ├── lib/                 # 构建产物，随 npm 包发布
-├── skills/              # developing-cpp 与 building-cpp
+├── skills/              # developing-cpp、configuring-cmake 与 building-cpp
 ├── templates/           # 复制到项目的空模板
 ├── package.json
 ├── package-lock.json    # 只在仓库，供 npm ci
@@ -99,7 +100,7 @@ dsh-cpp-workflow/
 
 ```bash
 npm ci
-npm test              # 构建、结构检查、门禁/环境/schema/注释测试
+npm test              # 构建、三技能结构检查、门禁/环境/schema/注释测试
 npm run test:matrix   # 四套模板 × 五档标准的真实构建矩阵
 npm run pack:check    # 核对 npm 包内容
 ```

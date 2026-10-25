@@ -21,7 +21,7 @@ const SOURCE_EXT = new Set([
 ])
 const HEADER_EXT = new Set(['.h', '.hh', '.hpp', '.hxx', '.h++', '.inl', '.ipp', '.tpp'])
 const SKIP_DIR = new Set([
-  '.git', '.hg', '.svn', 'build', 'out', 'node_modules', '_book', '.quarto', '.cache',
+  '.git', '.hg', '.svn', 'build', 'build-release', 'out', 'node_modules', '_book', '.quarto', '.cache',
   '.tmp', 'temp', 'third_party', 'third-party', 'external', 'vendor', 'deps', 'cmake-build-debug',
   'cmake-build-release', '.vs', '.idea',
 ])
@@ -40,7 +40,7 @@ function usage(message) {
 }
 
 function parseArgs(argv) {
-  const options = { root: undefined, width: 80, bannerWidth: 80, requireHeader: true, json: false, quiet: false }
+  const options = { root: undefined, width: 80, bannerWidth: 80, widthExplicit: false, bannerWidthExplicit: false, requireHeader: true, json: false, quiet: false }
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index]
     if (arg === '--root') {
@@ -48,9 +48,11 @@ function parseArgs(argv) {
       index += 1
     } else if (arg === '--width') {
       options.width = Number(argv[index + 1])
+      options.widthExplicit = true
       index += 1
     } else if (arg === '--banner-width') {
       options.bannerWidth = Number(argv[index + 1])
+      options.bannerWidthExplicit = true
       index += 1
     } else if (arg === '--no-header') {
       options.requireHeader = false
@@ -70,6 +72,18 @@ function parseArgs(argv) {
     }
   }
   return options
+}
+
+/** 从工程 .clang-format 读取 ColumnLimit；没有配置时返回 undefined。 */
+function readColumnLimit(root) {
+  const dir = statSync(root).isDirectory() ? root : path.dirname(root)
+  try {
+    const text = readFileSync(path.join(dir, '.clang-format'), 'utf8')
+    const match = text.match(/^\s*ColumnLimit:\s*(\d+)\s*$/m)
+    return match ? Number(match[1]) : undefined
+  } catch {
+    return undefined
+  }
 }
 
 /** 中文按两列计宽，用于判断渲染后的行宽。 */
@@ -225,6 +239,18 @@ export function checkText(text, options = {}) {
     }
   }
 
+  for (let index = 0; index + 1 < lines.length; index += 1) {
+    const trimmed = lines[index].trim()
+    if (!trimmed.startsWith('//') || trimmed.startsWith('///') || trimmed.startsWith('//!')) continue
+    const next = lines[index + 1].trim()
+    if (next === '' || next.startsWith('//')) continue
+    if (!/(下标|存储|对应坐标|行优先)/.test(trimmed)) continue
+    const identifiers = next.match(/[A-Za-z_]\w*/g) ?? []
+    if (identifiers.some((identifier) => trimmed.includes(identifier))) {
+      add(index + 1, 'restates-next', '实现注释在复述下一行声明或存储细节：删掉这句，让声明自己表达')
+    }
+  }
+
   for (let index = 0; index < lines.length; index += 1) {
     const trimmed = lines[index].trim()
     if (!/^(template\s*<[^>]*>\s*)?enum\b/.test(trimmed)) continue
@@ -247,6 +273,30 @@ export function checkText(text, options = {}) {
       add(index + 1, 'enum-partial', '枚举成员注释需全写或全不写，当前只有部分成员有 ///<')
     }
     index = body
+  }
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const trimmed = lines[index].trim()
+    if (trimmed.startsWith('//') || trimmed.startsWith('///') || !/\bnoexcept\b/.test(trimmed)) continue
+    let bodyStart = index
+    if (!trimmed.includes('{')) {
+      let next = index + 1
+      while (next < lines.length && lines[next].trim() === '') next += 1
+      if (next >= lines.length || !lines[next].trim().startsWith('{')) continue
+      bodyStart = next
+    }
+    const afterBrace = trimmed.slice(trimmed.indexOf('{') + 1)
+    if (afterBrace.includes('.at(')) {
+      add(index + 1, 'noexcept-throws', 'noexcept 函数体内调用 at()：越界会抛 std::out_of_range，去掉 noexcept 或改用 [] 与显式越界检查')
+      continue
+    }
+    for (let cursor = bodyStart + 1; cursor < lines.length; cursor += 1) {
+      if (/^\}/.test(lines[cursor])) break
+      if (lines[cursor].includes('.at(')) {
+        add(cursor + 1, 'noexcept-throws', 'noexcept 函数体内调用 at()：越界会抛 std::out_of_range，去掉 noexcept 或改用 [] 与显式越界检查')
+        break
+      }
+    }
   }
 
   return issues.sort((left, right) => left.line - right.line)
@@ -280,6 +330,11 @@ function main(argv) {
   }
   if (options.help) return usage()
   const root = options.root ? path.resolve(options.root) : process.cwd()
+  const columnLimit = readColumnLimit(root)
+  if (columnLimit !== undefined) {
+    if (!options.widthExplicit) options.width = columnLimit
+    if (!options.bannerWidthExplicit) options.bannerWidth = columnLimit
+  }
   let files
   try {
     files = collectFiles(root)

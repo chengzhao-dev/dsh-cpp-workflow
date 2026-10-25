@@ -19,7 +19,7 @@
 - 布尔变量用 `is_` / `has_` / `can_` 开头：`is_valid`、`has_stock`；不要用 `flag`、`status`。
 - 容器用复数：`tasks`、`orders`；单个元素用单数。
 - 缩写按单词处理：`url`、`id`、`http`，不要写 `URL` 混进 snake_case；类型名里可以 `HttpClient`。
-- 不要用单字母名，循环下标 `i` / `j` 除外；不要用 `data`、`info`、`tmp` 这类不说明内容的名字。
+- 不用单字母名：坐标用 `position`，行、列用 `row`、`col`；`i` / `j` 只用于没有领域名字的计数（如遍历固定长度的下标）。也不要用 `data`、`info`、`tmp` 这类不说明内容的名字。
 
 ## 语义角色
 
@@ -37,7 +37,7 @@
 | 访问器 | `Get` + PascalCase，或 snake_case | `GetHistory()`、`history()` | Google 允许两种；同一 API 只选一种，不用成员名直接当函数名 |
 
 - 返回 `bool` 的 lambda 也用 `is_` / `has_` / `can_` 命名：`auto is_empty = [](const Order& order) { ... };`。
-- `Find` 不把“没找到”当异常；`Get` 在前置条件不满足时可以抛带领域语义的异常（如 `TaskIndexError`），而不是机械地抛 `std::out_of_range`。两者不要互换。
+- `Find` 不把“没找到”当异常；`Get` 在前置条件不满足时抛标准异常：坐标越界用 `std::out_of_range`，调用时不变量已破坏用 `std::logic_error`；只有调用方必须把这些类型区分开时，才新增派生自它们的类型。两种构建模式的抛出条件相同。两者不要互换。
 - 查询返回多个值时用 `struct`，不要用三个 `GetXxx()` 加输出参数。
 
 - 禁止裸 `To()` / `Of()`：调用点看不出方向。

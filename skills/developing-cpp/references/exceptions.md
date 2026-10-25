@@ -37,21 +37,18 @@ class ParseError : public std::runtime_error {
 };
 ```
 
-标准库异常只做两种用途：作为基类，或在确实没有更多信息时直接使用通用类型（如 `std::runtime_error`）。不要为了「看起来规范」而强制每个参数错误都抛 `std::invalid_argument`、每个越界都抛 `std::out_of_range`；有领域语义时就定义自己的类型，让调用方按语义捕获。
+标准库已经命名的失败直接用标准类型：坐标越界用 `std::out_of_range`，调用时不变量已破坏用 `std::logic_error`，正常输入里的解析失败可以用 `std::runtime_error`。只有调用方必须把这些失败和上述类型区分开时，才新增派生自它们的类型；不要为了「看起来规范」给每个参数错误都建一支。项目若定义自己的异常基类（如 `Error`），先定基类再按领域派生，调用方捕获基类就能接住整族异常。
 
-### Boost.Exception 的类型层级
+## 两种构建模式的三层合同
 
-Boost.Exception 展示了「异常类型只做语义标签」的做法：类型不带数据，用多继承表达一个错误同时属于多个类别，数据由 `error_info` 在抛出点或传播途中携带。异常类型之间用 virtual 继承，避免 `catch (const std::exception&)` 在多继承下出现二义性。
+库的失败方式在 Debug 与 Release 下必须可预测；只有诊断信息的详略可以不同。
 
-```cpp
-struct exception_base : virtual std::exception, virtual boost::exception {};
-struct io_error : virtual exception_base {};
-struct file_error : virtual io_error {};
-struct read_error : virtual io_error {};
-struct file_read_error : virtual file_error, virtual read_error {};
-```
+- 返回值：两种模式完全一致。函数用返回值报告可恢复失败时，Debug 不得改成抛异常，Release 也不得把异常改成 false。
+- 标准异常：两种模式的抛出条件相同。越界抛 `std::out_of_range`，前置条件被破坏抛 `std::logic_error`；项目若定义 `Error` 基类，派生类型同时派生自 `std::exception`，Debug 的 `what()` 可带 `file:line`，Release 只留值。
+- `Check`：项目保留这种断言时，两种模式都检查，失败时打印诊断并终止；用于 invariant 已被破坏、继续执行没有意义的场合。没有 `Check` 的项目直接用 `assert` 或 `std::terminate` 表达同一边界，不另写包装。
+- `DebugCheck`：项目保留时只在 Debug 生效，`NDEBUG` 后展开为空；用于代价高、只在开发期值得做的自检。不得用它承担 Release 也必须执行的检查。
 
-这段代码只作为**设计典范**，不要求工程引入 Boost。若项目已有自己的异常基类，照同样的原则做：语义标签用类型表达，共享数据放在基类或错误信息容器里，多继承时用 virtual 基类。`boost::exception` 不直接派生 `std::exception`，正是为了让用户类型能以 virtual 基类方式同时派生两者；这是 Koenig 的洞察，异常处理路径上的虚继承开销可以忽略。
+`Check` 不是 `[[noreturn]]`：条件成立时正常返回。`DebugCheck` 的参数在 Release 不求值，不能放入有副作用的表达式。
 
 ## 抛出与捕获
 
@@ -72,7 +69,7 @@ E.31：`catch` 子句从派生到基类、从具体到通用排序，`catch (...
 
 ## 不抛的边界
 
-E.12：在不可能或不可接受抛异常的地方用 `noexcept`。E.13：直接拥有资源的函数不要抛，资源释放应交给 RAII。E.16：析构、`deallocate`、`swap` 以及异常类型的拷贝/移动构造不得失败；析构和 `swap` 应当是 `noexcept`。
+E.12：在不可能或不可接受抛异常的地方用 `noexcept`。声明前先读实现：函数体里出现 `at()` 或其他可能抛出的调用，就去掉 `noexcept`。正例是只比较两个整数的 `IsInRange`；反例是用 `at()` 写入并可能抛 `std::out_of_range` 的 `PlaceCell`。E.13：直接拥有资源的函数不要抛，资源释放应交给 RAII。E.16：析构、`deallocate`、`swap` 以及异常类型的拷贝/移动构造不得失败；析构和 `swap` 应当是 `noexcept`。
 
 E.30：不要写异常规范（`throw(...)` 之类）；C++11 之后用 `noexcept` 表达「不抛」。需要无异常构建时，由项目单独决定，不要把这套异常指导改写成两面都对的模糊话。
 
@@ -113,4 +110,6 @@ Config ReadConfig(const std::filesystem::path& path);
 - [ ] 析构、`swap`、异常类型的拷贝/移动不抛。
 - [ ] 没有用异常做正常分支，也没有在每个函数里捕获所有异常。
 - [ ] 入口有统一捕获，消息可定位，退出码符合项目合同。
-- [ ] 公共声明的 `@throws` 与实际抛出类型一致。
+- [ ] 公共声明的 `@throws` 与实际抛出类型一致，且 Debug/Release 的抛出条件相同。
+- [ ] 每个 `noexcept` 函数的函数体不调用 `at()` 或其他会抛的接口。
+- [ ] 项目若保留 `Check` / `DebugCheck`：`Check` 两模式都生效，`DebugCheck` 只在 Debug 生效；没有让 Debug 抛、Release 返回 false。

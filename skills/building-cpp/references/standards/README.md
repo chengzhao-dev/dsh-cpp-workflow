@@ -160,6 +160,6 @@ target_link_options(app PRIVATE -stdlib=libc++)
 ## 相关文件
 
 - [environment.md](../environment.md)：四轴声明与校验。
-- [cmake.md](../cmake.md)：CMake 形状与排版。
+- [configuring-cmake/references/cxx-standard.md](../../../configuring-cmake/references/cxx-standard.md)：C++11–C++23 在 CMake 里的两层声明与验证。
 - [static-analysis.md](../static-analysis.md)：clang-format / clang-tidy / clangd 分工。
 - [01-build.md](../../steps/01-build.md)：定构建步骤。

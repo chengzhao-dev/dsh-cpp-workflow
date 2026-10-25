@@ -9,7 +9,7 @@ metadata:
 
 ## 适用场景
 
-管 `.h` / `.hpp` / `.cpp` / `.cc` 里换一台机器也不会改的内容：可观察行为、库与程序的边界、声明、命名、异常和源码注释。文件槽位与守卫以 `references/file-template.md` 为准；排版、命名、头文件与包含顺序以 `references/google-cpp-style.md` 的 Google 基线为准。异常条文采用 C++ Core Guidelines 的 Error handling，作为开发阶段的源码指导；它不进入插件运行时。`CMakeLists.txt`、`cmake/`、`running-build.sh`、`.clang-*`、`.vscode/` 和 `environment.json` 只开 `building-cpp`。只改函数体、命名、异常或注释且入口命令可运行时，定实现后只开 `building-cpp` 的「通过检查」；新增或移动源文件、改库与程序的边界、补测试 target 时，声明和实现可以先写，但完成前必须开 `building-cpp` 的定构建，把文件写进 CMake，再决定是否定工具配置，最后通过检查。`.qmd`、仓库 README、Python 和非 C++ 文档不打开本技能。
+管 `.h` / `.hpp` / `.cpp` / `.cc` 里换一台机器也不会改的内容：可观察行为、库与程序的边界、声明、命名、异常和源码注释。文件槽位与守卫以 `references/file-template.md` 为准；排版、命名、头文件与包含顺序以 `references/google-cpp-style.md` 的 Google 基线为准。异常条文采用 C++ Core Guidelines 的 Error handling，作为开发阶段的源码指导；它不进入插件运行时。`CMakeLists.txt` 与 `cmake/` 开 `configuring-cmake`；`running-build.sh`、`.clang-*`、`.vscode/` 和 `environment.json` 开 `building-cpp`。只改函数体、命名、异常或注释且入口命令可运行时，定实现后只开 `building-cpp` 的「通过检查」；新增或移动源文件、改库与程序的边界、补测试 target 时，声明和实现可以先写，但完成前必须开 `configuring-cmake` 把文件写进 CMake，再开 `building-cpp` 定工具配置并通过检查。`.qmd`、仓库 README、Python 和非 C++ 文档不打开本技能。
 
 存在项目技能 `cpp-workflow-project` 时先读它的 `SKILL.md`：工程名、库与程序的边界、阶段表、术语增补、入口命令。没有项目技能时门禁不会放出本技能，不要猜项目约定。
 

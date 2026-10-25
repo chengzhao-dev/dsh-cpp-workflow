@@ -2,29 +2,30 @@
 
 [中文](README.md)
 
-Two skills for C++11–C++23 source and build work; new projects default to C++23. The plugin registers a skill provider only; it does not register tools, compile, download a toolchain, or write project files.
+Three skills for C++11–C++23 source, CMake, and build work; new projects default to C++23. The plugin registers a skill provider only; it does not register tools, compile, download a toolchain, or write project files.
 
 ## What it provides
 
 | Skill | Covers | Open it when |
 | --- | --- | --- |
 | `developing-cpp` | Behavior, boundaries, declarations, implementation; naming, exceptions, and source comments in `.h` / `.cpp` / `.cc` | The user names source code, or the work is a new project or whole-stage refactor |
-| `building-cpp` | Build setup, tool configuration, checks; CMake, Ninja, Clang config, build scripts, and environment combinations | The change touches build files, tool config, or the environment declaration, or the project is first connected to a build |
+| `configuring-cmake` | Targets, modules, checks; CMakeLists.txt, `cmake/` functions and modules, target properties, C++11–C++23 standards, 2-space layout | The change touches CMake targets, standards, link boundaries, functions, or modules |
+| `building-cpp` | Build setup, tool configuration, checks; Ninja, Clang config, build scripts, environment combinations, formatting, and static analysis | The change touches build commands, tool config, or the environment declaration, or the project is first connected to a build |
 
-The exception material follows the C++ Core Guidelines' Error handling section and guides source and examples only during development; the plugin runtime never compiles or executes those rules. Both skills read the project skill `cpp-workflow-project` first. Without it, the workspace gate never exposes these names.
+The exception material follows the C++ Core Guidelines' Error handling section and guides source and examples only during development; the plugin runtime never compiles or executes those rules. All three skills read the project skill `cpp-workflow-project` first. Without it, the workspace gate never exposes these names.
 
 ## Install
 
 Pinned npm install:
 
 ```bash
-dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.3.1
+dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.5.0
 ```
 
 The matching Git tag:
 
 ```bash
-dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.3.1
+dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.5.0
 ```
 
 The desktop app owns the `desktop` profile. If the command-line `add` is rejected, add the plugin in the app settings and use the same pinned npm version. A Git tag install uses the prebuilt `lib/` committed in the repository and runs no build on the target machine; the package has no install script that needs approval.
@@ -35,7 +36,7 @@ Only one condition must hold before either skill appears: walking up from the cu
 
 The project skill marker is the repository's opt-in declaration. The plugin no longer requires a first-party `CMakeLists.txt` or C++ source file in the same repository: a docs-only repository, a repository that only copied the template, or a repository with no source files yet still matches; with an empty environment axis, the four source steps still work but build setup stops. Without the marker the list is empty, even when the repository contains CMake or `.cpp` files. Scan limits and boundary cases are in [docs/plugin-boundaries.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-boundaries.md).
 
-The packaged skills use rank 550. A project `.agents/skills` skill uses rank 200 and overrides a plugin skill with the same name; do not copy `developing-cpp` or `building-cpp` into a project.
+The packaged skills use rank 550. A project `.agents/skills` skill uses rank 200 and overrides a plugin skill with the same name; do not copy `developing-cpp`, `configuring-cmake`, or `building-cpp` into a project.
 
 ## Project conventions
 
@@ -57,7 +58,7 @@ Keep one `environment.json` per repository. Its first three environment axes are
 | `compiler` | `clang`, `gcc` | One compiler per configuration |
 | `standard` | `c++11`, `c++14`, `c++17`, `c++20`, `c++23` | New projects default to `c++23`; one standard per project |
 
-The standard lives in `environment.json` as `standard` and must match the CMake target and compile database. New projects default to C++23; for C++11–C++20, lower `standard`, `cxx_std_*`, `CXX_STANDARD`, and the `.clang-format` parsing level together, not one at a time. Per-standard facilities, tooling, and downgrade tables are in the [standard directory](skills/building-cpp/references/standards/README.md).
+The standard lives in `environment.json` as `standard` and must match the CMake target and compile database; on the CMake side, prefer `configuring-cmake`'s `CompileSettings_SetCxxStandard` function. New projects default to C++23; for C++11–C++20, lower `standard`, `cxx_std_*`, `CXX_STANDARD`, and the `.clang-format` parsing level together, not one at a time. Per-standard facilities, tooling, and downgrade tables are in the [standard directory](skills/building-cpp/references/standards/README.md); the CMake two-layer declaration is in [cxx-standard.md](skills/configuring-cmake/references/cxx-standard.md).
 
 The generator is always Ninja. Build directories are `build/clang/` and `build/gcc/`; they are never shared. Analysis tools are always `clang-format`, `clang-tidy`, and `clangd`; GCC mode does not switch to another analyzer.
 
@@ -77,7 +78,7 @@ The project root carries only `.vscode/extensions.json` and `settings.json`: cla
 ```text
 dsh-cpp-workflow/
 ├── lib/                 # build output, shipped in the npm package
-├── skills/              # developing-cpp and building-cpp
+├── skills/              # developing-cpp, configuring-cmake, and building-cpp
 ├── templates/           # empty project template to copy
 ├── package.json
 ├── package-lock.json    # repository only, used by npm ci
@@ -99,7 +100,7 @@ Requires Node.js 22 or newer.
 
 ```bash
 npm ci
-npm test              # build, structural check, gate/environment/schema/comment tests
+npm test              # build, three-skill structural check, gate/environment/schema/comment tests
 npm run test:matrix   # real build matrix: 4 templates x 5 standards
 npm run pack:check    # inspect the npm package contents
 ```

@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "C++ Workflow",
-    "description": "Four source steps and three build steps for C++11–C++23 projects (C++23 by default), checked against the environment the project declares."
+    "description": "Four source steps, three CMake steps, and three build steps for C++11–C++23 projects (C++23 by default), checked against the environment the project declares."
   }
 }

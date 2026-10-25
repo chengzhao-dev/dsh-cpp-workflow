@@ -80,14 +80,14 @@ test('the project skill alone opts in, even in a documentation-only repository',
   await writeFile(path.join(root, 'README.md'), '# docs only\n', 'utf8')
   const provider = makeProvider()
   const candidates = await provider.list({ cwd: root })
-  assert.deepEqual(candidates.map((candidate) => candidate.name), ['building-cpp', 'developing-cpp'])
+  assert.deepEqual(candidates.map((candidate) => candidate.name), ['building-cpp', 'configuring-cmake', 'developing-cpp'])
   await rm(root, { recursive: true, force: true })
 })
 
 test('the project skill alone opts in before any CMake or source file exists', async () => {
   const root = await makeRepo()
   const provider = makeProvider()
-  assert.equal((await provider.list({ cwd: root })).length, 2)
+  assert.equal((await provider.list({ cwd: root })).length, 3)
   await rm(root, { recursive: true, force: true })
 })
 
@@ -100,7 +100,7 @@ test('C++ header evidence does not change an existing marker opt-in', async () =
     'utf8',
   )
   const provider = makeProvider()
-  assert.equal((await provider.list({ cwd: root })).length, 2)
+  assert.equal((await provider.list({ cwd: root })).length, 3)
   await rm(root, { recursive: true, force: true })
 })
 
@@ -108,7 +108,7 @@ test('C source evidence does not change an existing marker opt-in', async () => 
   const root = await makeRepo()
   await writeFile(path.join(root, 'legacy.c'), 'int main(void) { return 0; }\n', 'utf8')
   const provider = makeProvider()
-  assert.equal((await provider.list({ cwd: root })).length, 2)
+  assert.equal((await provider.list({ cwd: root })).length, 3)
   await rm(root, { recursive: true, force: true })
 })
 
@@ -118,7 +118,7 @@ test('marker above a nested component opts in', async () => {
   await mkdir(nested, { recursive: true })
   await addCppProject(nested)
   const provider = makeProvider()
-  assert.equal((await provider.list({ cwd: nested })).length, 2)
+  assert.equal((await provider.list({ cwd: nested })).length, 3)
   await rm(root, { recursive: true, force: true })
 })
 
@@ -129,7 +129,7 @@ test('a marker only below the session cwd does not opt in at the repo root', asy
   await addCppProject(sub)
   const provider = makeProvider()
   assert.deepEqual(await provider.list({ cwd: root }), [])
-  assert.equal((await provider.list({ cwd: sub })).length, 2)
+  assert.equal((await provider.list({ cwd: sub })).length, 3)
   await rm(root, { recursive: true, force: true })
 })
 
@@ -142,7 +142,7 @@ test('marker in a subdirectory opts in from that subdirectory', async () => {
   await writeFile(path.join(sibling, 'CMakeLists.txt'), 'project(other LANGUAGES CXX)\n', 'utf8')
   await writeFile(path.join(sibling, 'src', 'main.cpp'), 'int main() { return 0; }\n', 'utf8')
   const provider = makeProvider()
-  assert.equal((await provider.list({ cwd: game })).length, 2)
+  assert.equal((await provider.list({ cwd: game })).length, 3)
   await rm(root, { recursive: true, force: true })
 })
 
@@ -167,7 +167,7 @@ test('C++ evidence above the git root does not affect the marker', async () => {
   await mkdir(path.join(root, '.git'))
   await addProjectSkill(root)
   const provider = makeProvider()
-  assert.equal((await provider.list({ cwd: root })).length, 2)
+  assert.equal((await provider.list({ cwd: root })).length, 3)
   await rm(parent, { recursive: true, force: true })
 })
 
@@ -215,12 +215,12 @@ test('findProjectSkill refuses a gitRoot that is not an ancestor', async () => {
   await rm(root, { recursive: true, force: true })
 })
 
-test('both skills expose rank 550, bundled source and a directory resource base', async () => {
+test('all three skills expose rank 550, bundled source and a directory resource base', async () => {
   const root = await makeRepo({ cpp: true })
   const provider = makeProvider()
   const candidates = await provider.list({ cwd: root })
 
-  assert.deepEqual(candidates.map((candidate) => candidate.name), ['building-cpp', 'developing-cpp'])
+  assert.deepEqual(candidates.map((candidate) => candidate.name), ['building-cpp', 'configuring-cmake', 'developing-cpp'])
   for (const candidate of candidates) {
     assert.equal(candidate.rank, 550)
     assert.equal(candidate.provider, 'dsh-cpp-workflow')
@@ -242,7 +242,7 @@ test('the gate works from a deep cwd inside the checkout', async () => {
   const nested = path.join(root, 'src', 'core', 'detail')
   await mkdir(nested, { recursive: true })
   const provider = makeProvider()
-  assert.equal((await provider.list({ cwd: nested })).length, 2)
+  assert.equal((await provider.list({ cwd: nested })).length, 3)
   await rm(root, { recursive: true, force: true })
 })
 

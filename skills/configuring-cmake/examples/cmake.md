@@ -10,15 +10,17 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
+# 先把 assets/cmake/ 里的 CompileSettings.cmake 复制到工程的 cmake/。
+include(CompileSettings)
+
 add_library(greeting STATIC greeting/src/greeting.cpp)
 target_include_directories(greeting PUBLIC greeting/include)
-target_compile_features(greeting PUBLIC cxx_std_23)
-set_target_properties(greeting PROPERTIES CXX_EXTENSIONS OFF)
-target_compile_options(greeting PRIVATE -Wall -Wextra -Werror)
+CompileSettings_SetCxxStandard(greeting PUBLIC c++23)
+CompileSettings_SetWarnings(greeting PRIVATE LEVEL standard)
 
 add_executable(app src/main.cpp)
-target_compile_features(app PRIVATE cxx_std_23)
-set_target_properties(app PROPERTIES CXX_EXTENSIONS OFF)
+CompileSettings_SetCxxStandard(app PRIVATE c++23)
+CompileSettings_SetWarnings(app PRIVATE LEVEL standard)
 target_link_libraries(app PRIVATE greeting)
 ```
 
@@ -84,6 +86,45 @@ target_link_libraries(app PRIVATE core)
 
 库不依赖 `main()`；测试链接库时不会碰到入口。
 
+## 标准只写一半
+
+**差**：
+
+```cmake
+target_compile_features(app PRIVATE cxx_std_20)
+# 没写 CXX_STANDARD_REQUIRED；编译器不支持时可能静默降级
+set_target_properties(app PROPERTIES CXX_STANDARD 20)
+```
+
+问题：meta-feature 只保证“至少”，`CXX_STANDARD` 又允许 decay，实际标准可能不是 20。
+
+**好**：
+
+```cmake
+CompileSettings_SetCxxStandard(app PRIVATE c++20)
+```
+
+两套声明同时写；`CXX_STANDARD_REQUIRED ON` 禁止降级，`CXX_EXTENSIONS OFF` 把 `gnu++20` 收成 `c++20`。
+
+## 警告等级
+
+**差**：
+
+```cmake
+target_compile_options(app PRIVATE -Wall -Wextra -Werror)
+target_compile_options(core PRIVATE -Wall -Wextra -Werror)
+# 每个 target 复制一遍；想加 -Wshadow 时要逐处改
+```
+
+**好**：
+
+```cmake
+CompileSettings_SetWarnings(app PRIVATE LEVEL standard)
+CompileSettings_SetWarnings(core PRIVATE LEVEL strict)
+```
+
+`basic` 只开 `-Wall -Wextra`；`standard` 加 `-Werror`、`-Wshadow`、`-Wold-style-cast`、`-Wpedantic`、`-Wnon-virtual-dtor`、`-Woverloaded-virtual`；`strict` 再加转换、格式化与可移植性告警。警告只作用于传入 target，不通过 `INTERFACE` 传播。
+
 ## 编译数据库
 
 **差**：
@@ -120,17 +161,16 @@ LD_LIBRARY_PATH=build/clang/lib ./build/clang/bin/app   # 每次运行都要包�
 **好**：
 
 ```cmake
+# LinkSettings.cmake 提供 RPATH 与 GoogleTest 依赖函数。
+include(LinkSettings)
+
 add_library(greeting SHARED greeting/src/greeting.cpp)
 set_target_properties(greeting PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
 add_executable(app src/main.cpp)
 target_link_libraries(app PRIVATE greeting)
-if(APPLE)
-  set_target_properties(app PROPERTIES BUILD_RPATH "@loader_path/../lib")
-else()
-  set_target_properties(app PROPERTIES BUILD_RPATH "$ORIGIN/../lib")
-endif()
+LinkSettings_SetBuildRpath(app)
 ```
 
 从 `build/<compiler>/bin/app` 直接启动即可找到同级 `../lib` 下的共享库；安装场景另配 RPATH。
@@ -148,3 +188,37 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 ```
 
 构建产物全在 `build/<compiler>/` 下。
+
+## 注释
+
+**差**：
+
+```cmake
+#[[.rst:
+CompileSettings_SetWarnings
+---------------------------
+
+.. command:: CompileSettings_SetWarnings(target visibility)
+
+:param target: 目标。
+@param visibility: 可见性。
+@return: 无。
+]]
+```
+
+`#[[.rst:` 与 `.. command::` 是给要进 CMake 手册的模块用的抽取标记，本仓模块不进手册；`@param`、`@return` 是 C++ 的 Doxygen 标签，CMake 里不用。CMake 函数也没有返回值，`:return:` 同样不写。
+
+**好**：
+
+```cmake
+# 给一个目标加上编译警告。
+#
+# 只改传入的目标。PRIVATE 不向使用方传播。
+#
+# :param target: 已经存在的 CMake 目标。
+# :param visibility: 取 PRIVATE 或 INTERFACE。
+# :keyword LEVEL: 可省略。取 basic、standard 或 strict；省略时按 standard。
+function(CompileSettings_SetWarnings target visibility)
+```
+
+普通 `#` 行，签名留在 `function()` 那一行；位置参数用 `:param`，`cmake_parse_arguments` 的关键字用 `:keyword`。

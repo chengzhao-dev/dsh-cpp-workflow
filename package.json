@@ -1,7 +1,7 @@
 {
   "name": "@chengzhao-dev/dsh-cpp-workflow",
-  "version": "0.3.1",
-  "description": "C++11–C++23 工程流程技能包：源码四步与构建三步，按项目声明的环境组合校验 · C++11–C++23 workflow skills for DeepSeek Harness",
+  "version": "0.5.0",
+  "description": "C++11–C++23 工程流程技能包：源码四步、CMake 三步与构建三步，按项目声明的环境组合校验 · C++11–C++23 workflow skills for DeepSeek Harness",
   "type": "module",
   "main": "./lib/index.js",
   "exports": {

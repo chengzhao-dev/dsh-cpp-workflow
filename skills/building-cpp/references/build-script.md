@@ -40,6 +40,17 @@
 - 失败时保留原始命令输出；不要在脚本里 `2>/dev/null` 吞掉诊断。
 - 脚本自身用 `bash -n` 检查语法；文件权限保持可执行。
 
+## 构建模式的错误合同
+
+脚本可以为 Debug、Release 各跑一次；模式只改变诊断详略，不改变失败方式：
+
+- 返回值：两种模式的返回值相同，调用方不按 `NDEBUG` 分支。
+- 自定义异常：两种模式都抛；Debug 的 `what()` 可以带 `file:line`，Release 只留值。
+- `Check`：两种模式都在条件不成立时打印诊断并终止。
+- `DebugCheck`：只在 Debug 生效，`NDEBUG` 后展开为空，参数不能带副作用。
+
+不要写成 Debug 抛异常、Release 返回 false 的模式分支；这会把调用方逼成两套逻辑。规则详见 `developing-cpp/references/exceptions.md`。
+
 ## 失败分诊
 
 | 输出 | 先看 | 回到 |

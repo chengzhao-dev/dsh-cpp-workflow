@@ -80,3 +80,74 @@ task_list/src/detail.h           // 私有头，只被本组件包含
 **该拆**：测试需要直接调用排序逻辑；或第二个程序要复用同一逻辑；或逻辑已经超过一个屏幕。
 
 拆的时候先定公共头（只暴露 `SortedByPriority`），把实现移到 `src/`，行为句不变，测试先绿再改构建。
+
+## 固定坐标用表
+
+**差**：每次判断成线，都用循环把八条线的坐标重新拼一遍；行、列、对角线混在一个循环里，读者要跟着跑两遍才知道哪八条。
+
+```cpp
+// 差：用循环现写八条线，坐标藏在控制流里。
+std::vector<std::vector<CellPosition>> BuildLines() {
+  std::vector<std::vector<CellPosition>> lines;
+  for (int row = 0; row < kRows; ++row) { /* ... */ }
+  // 列与两条对角线再各写一段
+  return lines;
+}
+```
+
+**好**：固定坐标写成匿名命名空间里的常量表，`HasLine` 与 `IsLineComplete` 共用；格子用 `[]`，整条线 `all_of`、八条线 `any_of`。
+
+```cpp
+// board.cpp 的匿名命名空间：行、列、对角线三组，坐标固定。
+constexpr std::array<std::array<CellPosition, 3>, 8> kLines{{
+    {{{0, 0}, {0, 1}, {0, 2}}},  // 行 0
+    {{{1, 0}, {1, 1}, {1, 2}}},  // 行 1
+    {{{2, 0}, {2, 1}, {2, 2}}},  // 行 2
+    {{{0, 0}, {1, 0}, {2, 0}}},  // 列 0
+    {{{0, 1}, {1, 1}, {2, 1}}},  // 列 1
+    {{{0, 2}, {1, 2}, {2, 2}}},  // 列 2
+    {{{0, 0}, {1, 1}, {2, 2}}},  // 对角线
+    {{{0, 2}, {1, 1}, {2, 0}}},  // 反对角线
+}};
+```
+
+每个格子要分别处理时仍写 `row` / `col` 循环，例如收集空格、终端打印。
+
+## 推演一步读原数据
+
+**差**：先复制整盘，再在副本上落子，最后判断成线；调用方看不出副本只是中间量。
+
+```cpp
+Board hypothetical = *this;
+hypothetical.PlaceCell(position, cell_type);
+return hypothetical.HasLine(cell_type);
+```
+
+**好**：判断「这一格换成某种棋子后会不会成线」不需要第二份棋盘。越界、空格、已占用仍按 `PlaceCell` 的拒绝条件返回 `false`；通过之后只在包含该坐标的线上把这一格算作 `cell_type`，其余格子读原棋盘。
+
+```cpp
+bool Board::IsLineComplete(CellPosition position, CellType cell_type) const noexcept {
+  if (!IsInRange(position) || cell_type == CellType::kEmpty) {
+    return false;
+  }
+  if (cells_[position.row][position.col] != CellType::kEmpty) {
+    return false;
+  }
+
+  const auto matches = [&](CellPosition cell) {
+    if (cell.row == position.row && cell.col == position.col) {
+      return true;
+    }
+    return cells_[cell.row][cell.col] == cell_type;
+  };
+
+  return std::ranges::any_of(kLines, [&](const auto& line) {
+    const bool contains = std::ranges::find_if(line, [&](CellPosition cell) {
+                            return cell.row == position.row && cell.col == position.col;
+                          }) != line.end();
+    return contains && std::ranges::all_of(line, matches);
+  });
+}
+```
+
+只用 `[]` 与 `IsInRange`，不调用 `at()`，头文件上的 `noexcept` 可以留下；原棋盘不被写入。

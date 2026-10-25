@@ -22,11 +22,11 @@ struct ParseResult {
 
 [[nodiscard]] ParseResult TryParseTask(std::string_view line);
 
-/// @throws TaskIndexError index 不在 [0, size()) 内。
+/// @throws std::out_of_range index 不在 [0, size()) 内。
 [[nodiscard]] Task GetTask(int index) const;
 ```
 
-`TryParseTask` 把失败作为正常结果返回。`GetTask` 的前提是调用方给出有效下标；下标无效时函数无法返回一个任务，于是抛出带领域语义的 `TaskIndexError`。如果越界其实是正常输入，应该改成返回 `std::optional<Task>`，而不是让调用方捕获异常。
+`TryParseTask` 把失败作为正常结果返回。`GetTask` 的前提是调用方给出有效下标；越界时函数无法返回一个任务，抛标准库已有的 `std::out_of_range`。如果越界其实是正常输入，应该改成返回 `std::optional<Task>`，而不是让调用方捕获异常；只有项目需要把这种越界和别处的 `out_of_range` 区分开时，才定义派生类。
 
 ## 异常类型与消息
 
@@ -36,34 +36,53 @@ struct ParseResult {
 throw "bad index";
 ```
 
-**好**：定义有语义的类型；确实没有更多信息时，才直接用标准库通用类型。
+**好**：语义已经由标准类型给出时直接用标准类型；需要额外携带领域信息时，再派生自它。
 
 ```cpp
-class TaskIndexError : public std::out_of_range {
- public:
-  explicit TaskIndexError(const std::string& message)
-      : std::out_of_range(message) {}
-};
-
-throw TaskIndexError{
+throw std::out_of_range{
     std::format("GetTask: index={} 超出 [0, {})", index, tasks_.size())};
 ```
 
-消息写操作和关键值，不写「出错了」；`std::format` 只是构造消息的方式，不强制固定模板。
+消息写操作和关键值，不写「出错了」；`std::format` 只是构造消息的方式，不强制固定模板。项目若定义 `Error` 基类，按 `references/exceptions.md` 先定基类再派生，调用方捕获基类接住整族。
 
-## 多语义类型：Boost.Exception 风格
+## Debug 与 Release 的三层合同
 
-一个错误可以同时属于多个类别。类型只做 `catch` 的标签，数据由基类或错误信息容器携带；多继承时用 virtual 基类，避免 `catch (const std::exception&)` 二义性。
+**差**：同一个函数在 Debug 抛异常、在 Release 返回 false；调用方被迫按构建模式写两套分支。
 
 ```cpp
-struct exception_base : virtual std::exception, virtual boost::exception {};
-struct io_error : virtual exception_base {};
-struct file_error : virtual io_error {};
-struct read_error : virtual io_error {};
-struct file_read_error : virtual file_error, virtual read_error {};
+#ifdef NDEBUG
+return false;
+#else
+throw std::out_of_range{row, col};
+#endif
 ```
 
-这只是设计典范，不要求引入 Boost。项目自己的异常层级也可以照这个形状写。
+**好**：返回值在两种模式完全一致；需要异常时两种模式都抛，只有 `what()` 的详略不同。
+
+```cpp
+// 返回值：失败是可恢复结果，两种模式都返回 false。
+[[nodiscard]] bool TryPlace(CellPosition position, Player player) noexcept;
+
+// 越界：两种模式都抛 std::out_of_range；Debug 消息可带 file:line。
+void Place(CellPosition position, Player player);
+```
+
+越界用标准库已有的 `std::out_of_range`，调用方不需要认识项目私有类型；只有调用方必须把它和其它 `out_of_range` 区分开时，才定义派生类并在 `what()` 里补位置信息。
+
+**差**：用 `assert` 承担 Release 也必须执行的 invariant 检查；`NDEBUG` 后检查消失。
+
+```cpp
+assert(game.GetResult() == GameResult::kInProgress);
+```
+
+**好**：两种模式都必须检查的 invariant 用 `Check`（项目保留时），失败时打印诊断并终止；只在开发期值得做、Release 可以省掉的自检用 `DebugCheck`。没有这两个宏时分别用 `assert` 与 `std::terminate`。
+
+```cpp
+Check(game.GetResult() == GameResult::kInProgress, "Ai::Choose: game is already over");
+DebugCheck(index < history_.size(), "history index out of range");
+```
+
+`Check` 不是 `[[noreturn]]`：条件成立时正常返回。`DebugCheck` 在 `NDEBUG` 后展开为空，参数不能带副作用。
 
 ## 捕获
 

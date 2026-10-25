@@ -216,7 +216,7 @@ if (ok(existsSync(iconPath), '缺少 icon.svg')) {
 }
 
 // ---------------------------------------------------------------------------
-// Two skills and their steps
+// Three skills and their steps
 // ---------------------------------------------------------------------------
 
 const skillsRoot = join(ROOT, 'skills')
@@ -224,12 +224,17 @@ const skillDirs = readdirSync(skillsRoot, { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
   .map((entry) => entry.name)
   .sort()
-equal(skillDirs, ['building-cpp', 'developing-cpp'], 'skills 目录')
+equal(skillDirs, ['building-cpp', 'configuring-cmake', 'developing-cpp'], 'skills 目录')
 
 const SKILL_SPECS = {
   'developing-cpp': {
     title: 'developing-cpp',
     steps: ['01-behavior.md', '02-boundary.md', '03-declaration.md', '04-implementation.md'],
+    h2: ['适用场景', '两种走法', '步骤', '完成判据'],
+  },
+  'configuring-cmake': {
+    title: 'configuring-cmake',
+    steps: ['01-targets.md', '02-modules.md', '03-check.md'],
     h2: ['适用场景', '两种走法', '步骤', '完成判据'],
   },
   'building-cpp': {
@@ -307,6 +312,7 @@ equal(h1(architecture), '技能架构', 'docs/architecture.md: H1')
 ok(/```mermaid\s*[\s\S]*?flowchart/.test(architecture), 'docs/architecture.md: 缺少 Mermaid 数据流图')
 for (const token of [
   'developing-cpp',
+  'configuring-cmake',
   'building-cpp',
   'cpp-workflow-project',
   'checking-comments.mjs',
@@ -316,7 +322,7 @@ for (const token of [
 ]) {
   ok(architecture.includes(token), `docs/architecture.md: 缺少 ${token}`)
 }
-for (const skill of ['developing-cpp', 'building-cpp']) {
+for (const skill of ['developing-cpp', 'configuring-cmake', 'building-cpp']) {
   for (const section of ['steps', 'references', 'examples', 'scripts']) {
     const dir = join(ROOT, 'skills', skill, section)
     if (!existsSync(dir)) continue
@@ -340,6 +346,7 @@ for (const token of [
   '异常',
   '命名',
   'developing-cpp',
+  'configuring-cmake',
   'building-cpp',
 ]) {
   ok(triggering.includes(token), `docs/triggering.md: 缺少关键词 ${token}`)
@@ -406,7 +413,7 @@ ok(templateSkill.includes('复制整个目录'), '模板未说明复制整个目
 ok(templateSkill.includes('<project-name>'), '模板缺少工程名空位')
 ok(templateSkill.includes('<entry-command>'), '模板缺少入口命令空位')
 ok(templateSkill.includes('stages/stage-table.md'), '模板缺少阶段表路径')
-ok(!/developing-cpp|building-cpp/.test(templateSkill), '模板不应重复插件技能正文')
+ok(!/developing-cpp|configuring-cmake|building-cpp/.test(templateSkill), '模板不应重复插件技能正文')
 
 const templateEnvironment = readJson('templates/cpp-workflow-project/environment.json')
 if (templateEnvironment) {
@@ -547,23 +554,31 @@ ok(read('docs/versioning.md').includes('## 修订号'), '版本文档缺少修�
 ok(read('docs/versioning.md').includes('## 次版本'), '版本文档缺少次版本规则')
 
 const domains = ['写作', '布局', '排版', '润色']
-const domainRows = (text) =>
-  text
-    .split('\n')
-    .filter((line) => /^\| (写作|布局|排版|润色) \|/.test(line))
-    .map((line) => line.split('|')[1].trim())
-const domainFiles = (text) =>
-  text
-    .split('\n')
-    .filter((line) => /^\| (写作|布局|排版|润色) \|/.test(line))
-    .map((line) => [...new Set(line.match(/`[a-z0-9-]+\.md`/g) ?? [])].sort())
-equal(domainRows(read('skills/developing-cpp/SKILL.md')), domains, 'SKILL.md 四类改动表的域名与顺序')
-equal(domainRows(read('docs/architecture.md')), domains, 'architecture.md 四个写作域表的域名与顺序')
-equal(
-  domainFiles(read('skills/developing-cpp/SKILL.md')),
-  domainFiles(read('docs/architecture.md')),
-  '两处四域表的权威条文',
-)
+const domainRowLines = (text, heading) => {
+  const lines = withoutFences(text).split('\n')
+  const start = lines.findIndex((line) => line.trim() === heading)
+  if (start === -1) return []
+  const rows = []
+  for (let index = start + 1; index < lines.length; index += 1) {
+    if (/^#{2,3}\s+/.test(lines[index])) break
+    if (/^\| (写作|布局|排版|润色) \|/.test(lines[index])) rows.push(lines[index])
+  }
+  return rows
+}
+const domainNames = (lines) => lines.map((line) => line.split('|')[1].trim())
+const domainFiles = (lines) =>
+  lines.map((line) => [...new Set(line.match(/`[a-z0-9-]+\.md`/g) ?? [])].sort())
+for (const [skill, heading] of [
+  ['developing-cpp', '### developing-cpp'],
+  ['configuring-cmake', '### configuring-cmake'],
+  ['building-cpp', '### building-cpp'],
+]) {
+  const skillRows = domainRowLines(read(`skills/${skill}/SKILL.md`), '### 四类改动')
+  const architectureRows = domainRowLines(read('docs/architecture.md'), heading)
+  equal(domainNames(skillRows), domains, `${skill} SKILL.md 四类改动的域名与顺序`)
+  equal(domainNames(architectureRows), domains, `${skill} architecture.md 四类改动的域名与顺序`)
+  equal(domainFiles(skillRows), domainFiles(architectureRows), `${skill} 两处四类改动的权威条文`)
+}
 
 const readmeZh = read('README.md')
 const readmeEn = read('README.en.md')

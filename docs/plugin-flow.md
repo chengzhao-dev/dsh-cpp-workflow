@@ -1,6 +1,6 @@
 # 插件流程
 
-这个包只做一件事：在已经声明 C++ 工作流的仓库里，提供 `developing-cpp` 与 `building-cpp` 两个技能。它不注册工具，不编译，不写项目文件，也不改系统提示词。
+这个包只做一件事：在已经声明 C++ 工作流的仓库里，提供 `developing-cpp`、`configuring-cmake` 与 `building-cpp` 三个技能。它不注册工具，不编译，不写项目文件，也不改系统提示词。
 
 ## 第一层：安装
 
@@ -19,13 +19,14 @@
 | 改动 | 打开 |
 | --- | --- |
 | `.h`、`.cpp`、`.cc`、命名、异常、源码注释 | `developing-cpp` |
-| `CMakeLists.txt`、`cmake/`、`running-build.sh`、`.clang-*`、`.vscode/`、`environment.json` | `building-cpp` |
+| `CMakeLists.txt`、`cmake/`、target、属性、语言标准、GLOB、RPATH | `configuring-cmake` |
+| `running-build.sh`、`.clang-*`、`.vscode/`、`environment.json`、构建目录与命令 | `building-cpp` |
 | 只改函数体、命名、异常、注释，且入口命令可运行 | `developing-cpp`；定实现后只开 `building-cpp` 的「通过检查」 |
-| 新增或移动源文件、改库与程序的边界、补测试 target | 先写声明和实现；完成前必须开 `building-cpp` 的定构建，把文件写进 CMake，再决定是否定工具配置，最后通过检查 |
+| 新增或移动源文件、改库与程序的边界、补测试 target | 先定声明和实现；再用 `configuring-cmake` 把文件写进 CMake，最后到 `building-cpp` 定工具配置并通过检查 |
 | 入口命令仍是 `<entry-command>` 或空白 | 到 `building-cpp` 的通过检查停住，不猜命令 |
-| `.qmd`、仓库 README、Python、非 C++ 文档 | 两个都不开 |
+| `.qmd`、仓库 README、Python、非 C++ 文档 | 三个都不开 |
 
-编译失败先分因：诊断指向函数体，回到定实现；指向声明或类型，回到定声明；诊断是找不到头、链接失败、没有编译数据库、工具不在 PATH，留在定构建或定工具配置。
+编译失败先分因：诊断指向函数体，回到定实现；指向声明或类型，回到定声明；指向找不到头、链接失败、target 不存在或标准不对，转 `configuring-cmake`；指向没有编译数据库、工具不在 PATH 或入口脚本错误，留在 `building-cpp` 的定构建或定工具配置。
 
 VSCode 侧只保留一个入口：推荐 clangd、CMake Tools 和 C/C++ 扩展；clangd 负责编辑、补全、诊断和格式化，CMake Tools 负责配置、构建、运行和调试，C/C++ 扩展只作为 `CMake: Debug` 的调试后端并关闭 IntelliSense。工程根只带 `.vscode/extensions.json` 和 `settings.json`，不写 `tasks.json` 或 `launch.json`，避免第二套构建或启动路径。
 

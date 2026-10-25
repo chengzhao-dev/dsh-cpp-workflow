@@ -1,8 +1,8 @@
 # 版本规则
 
-发布版本以 `package.json` 为唯一来源；`package-lock.json` 的两个版本字段跟随它，不单独改。当前是 0.3.x。
+发布版本以 `package.json` 为唯一来源；`package-lock.json` 的两个版本字段跟随它，不单独改。当前是 0.5.x。
 
-## 修订号：0.3.x
+## 修订号：0.5.x
 
 只改措辞、文档、示例、注释、测试或内部实现，不改变技能名、步骤数、脚本参数、门禁条件和检查结果。已有工程升级后不应出现新的失败。
 
@@ -31,6 +31,7 @@
 | `0.2.0` | 标签触发的 `publish.yml` | 有 | 对齐 C++23 默认标准、补充构建与检查矩阵，修正模板文档。 |
 | `0.3.0` | 标签触发的 `publish.yml` | 有 | 新增编码检查与谓词命名约定，补齐 C++ 注释与读者正文的边界。 |
 | `0.3.1` | 标签触发的 `publish.yml` | 有 | 统一注释行宽与行宽口径、修正技能文档冲突，补齐注释检查器与架构文档。 |
+| `0.5.0` | 随 `v0.5.0` 标签发布 | 有 | 新增 `configuring-cmake` 技能，把 CMake 从构建中拆出；新增无 `.rst` 的契约注释约定、`noexcept` 与 `at()` 的检查，以及井字棋同款 CMake 样板。 |
 
 从 `0.1.1` 起，版本只由标签触发的 `publish.yml` 发布，并带 provenance。`0.1.0` 不重发，也不为了重跑它改版本号。
 
@@ -41,8 +42,8 @@
 3. 在要发布的那个提交上打 annotated 标签，推送标签：
 
    ```bash
-   git tag -a v0.3.1 -m "v0.3.1"
-   git push origin v0.3.1
+   git tag -a v0.5.0 -m "v0.5.0"
+   git push origin v0.5.0
    ```
 
 4. `publish.yml` 校验标签与 `package.json` 同号，跑 `npm ci` 和 `npm test`，再 `npm publish`。`publishConfig.provenance` 打开 provenance。
@@ -50,11 +51,11 @@
 6. 读回两边的 commit，必须相同：
 
    ```bash
-   npm view @chengzhao-dev/dsh-cpp-workflow@0.3.1 version gitHead
-   git rev-parse v0.3.1^{commit}
+   npm view @chengzhao-dev/dsh-cpp-workflow@0.5.0 version gitHead
+   git rev-parse v0.5.0^{commit}
    ```
 
-   `npm view @chengzhao-dev/dsh-cpp-workflow@0.3.1 dist.attestations` 应能看到 provenance 记录。
+   `npm view @chengzhao-dev/dsh-cpp-workflow@0.5.0 dist.attestations` 应能看到 provenance 记录。
 
 ## 标签约束
 

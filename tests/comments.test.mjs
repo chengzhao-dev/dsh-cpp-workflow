@@ -169,6 +169,38 @@ test('CLI 跳过构建目录', () => {
   }
 })
 
+test('紧贴声明的存储注释会复述下一行', () => {
+  const text = file(
+    'class Board {',
+    '  // 行优先存储：cells_[row][col] 对应坐标 (row, col)。',
+    '  std::array<std::array<Cell, 3>, 3> cells_{};',
+    '};',
+  )
+  assert.ok(rules(text).includes('restates-next'))
+  const ok = file(
+    'class Board {',
+    '  // 棋盘。',
+    '  std::array<std::array<Cell, 3>, 3> cells_{};',
+    '};',
+  )
+  assert.ok(!rules(ok).includes('restates-next'))
+})
+
+test('CLI 从 .clang-format 读取 ColumnLimit', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
+  try {
+    writeFileSync(path.join(dir, '.clang-format'), 'ColumnLimit: 120\n')
+    writeFileSync(path.join(dir, 'note.h'), '// ' + 'a'.repeat(100) + '\nint f();\n')
+    const wide = runCli(['--root', dir, '--no-header', '--json'])
+    assert.equal(wide.status, 0, wide.stdout)
+    const strict = runCli(['--root', dir, '--no-header', '--json', '--width', '80'])
+    assert.equal(strict.status, 1)
+    assert.ok(JSON.parse(strict.stdout).issues.some((issue) => issue.rule === 'comment-width'))
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
 function runCli(args) {
   try {
     const stdout = execFileSync(process.execPath, [SCRIPT, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
