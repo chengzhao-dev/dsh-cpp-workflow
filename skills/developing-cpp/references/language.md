@@ -44,7 +44,7 @@ auto total = 0.0;                  // auto 只能用 =，不能用 {}
 | `constinit` | 静态存储期变量在编译期完成初始化 | 全局/静态变量 |
 | `inline constexpr` | 头文件里可共享的编译期常量，避免 ODR 问题 | 命名空间作用域常量 |
 
-- 共享常量写在头文件的命名空间作用域：`inline constexpr int kMaxRows = 3;`，不要用 `#define`。
+- 共享常量写在头文件的命名空间作用域：`inline constexpr int kMaxRows = 3;`，不要用 `#define`。`.cpp` 里非 `inline`、非 `extern` 的命名空间作用域 `constexpr` 已有内部链接。
 - `constexpr` 函数的定义要放在头文件里，否则其他翻译单元无法在编译期调用。
 - 不要给所有函数加 `constexpr`；只有确实需要在编译期使用、且实现满足约束时才加。
 - `constinit` 只保证初始化时机，不保证不可修改；需要不可修改时同时写 `const`。

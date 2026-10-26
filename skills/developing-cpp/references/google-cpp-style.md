@@ -57,7 +57,8 @@
 - 查询成员函数标尾部 `const`；返回结果对象的 API 加 `[[nodiscard]]`，不要给所有非 `void` 函数机械添加。
 - 所有权优先 `std::unique_ptr`；没有共享所有权的理由时不用 `std::shared_ptr`。禁止裸 `new` / `delete`。
 - 禁止 C 风格强制转换；用 `static_cast`、`const_cast`、`reinterpret_cast`、`std::bit_cast`，并让 `clang-tidy` 的 `google-readability-casting` 兜底。
-- `.cpp` 里不需要外部引用的定义放匿名命名空间或声明 `static`；不要在生产 `.cpp` 里为了「整洁」强行用 `static`，按是否需要内部链接决定。
+- `.cpp` 里不需要外部引用的 `constexpr` 直接放具名命名空间；仅一个函数使用时才用函数内 `static constexpr`；函数和类型仍放匿名命名空间。
+- 常量要出 `.cpp` 时按四步升：1) 其他翻译单元要的是算出来的答案，给类加查询、表留 `.cpp`；2) 要同一份坐标但仍不是公开契约，放组件 `src/` 的私有头；3) 对方必须写 `Board::kLines` 且这是类型的稳定事实，才用类内 `public static constexpr`；不依赖某个对象的公开常量则用命名空间 `inline constexpr`；4) 第二使用方复用同一套坐标时再抽共享组件。
 
 ## 函数
 

@@ -1,6 +1,6 @@
 # 构建脚本
 
-`assets/templates/projects/common/running-build.sh` 是 POSIX build-host 脚本，适用于 Linux、macOS 和 Windows + WSL。`host=windows` + `build_host=native` 不是本版本支持的组合：声明校验会直接拒绝，脚本也不会在原生 Windows 壳里运行。
+`assets/templates/projects/common/running-build.sh` 是 POSIX build-host 脚本，适用于 Linux、macOS 和 Windows + WSL。`host=windows` + `build_host=native` 不是本版本支持的组合：声明校验会直接拒绝，脚本也不会在原生 Windows 壳里运行。脚本只做配置、构建、CTest 与运行；格式化与静态检查在编辑时手动跑，不混进构建入口。
 
 ## 用法
 
@@ -22,10 +22,8 @@
 4. **configure**：每次运行都重新 configure，不复用缓存；传 `-G Ninja`、`-DCMAKE_BUILD_TYPE=Debug`、`-DCMAKE_C_COMPILER`、`-DCMAKE_CXX_COMPILER`、`-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`。C 与 C++ 使用同一套编译器；没有 C 语言的工程会忽略 C 编译器设置。
 5. **build**：`cmake --build "$BUILD_DIR"`。
 6. **编译数据库链接**：先 `rm -f build/compile_commands.json`，再 `ln -s "${COMPILER}/compile_commands.json" build/compile_commands.json`；不用 `ln -n`，它在 BSD/macOS 上不可移植。
-7. **format**：收集项目源码，`clang-format --dry-run --Werror`；没有源文件时跳过。
-8. **tidy**：`clang-tidy -p "$BUILD_DIR" --warnings-as-errors='*'` 扫描项目源文件；`--header-filter` 由脚本从项目根和顶层目录生成，绝对路径和相对路径都只放行项目自身头文件。不要用 clang-tidy 19 才加入的 `--exclude-header-filter`，最低支持版本是 16。
-9. **test**：`ctest --test-dir "$BUILD_DIR" --output-on-failure`；没有测试时 CTest 成功。
-10. **run**：`(cd "$BUILD_DIR/bin" && "./$APP_NAME")`；共享库的运行时路径由定构建的 CMake RPATH 负责，不在脚本里设全局 `LD_LIBRARY_PATH`。
+7. **test**：`ctest --test-dir "$BUILD_DIR" --output-on-failure`；没有测试时 CTest 成功。
+8. **run**：`(cd "$BUILD_DIR/bin" && "./$APP_NAME")`；共享库的运行时路径由定构建的 CMake RPATH 负责，不在脚本里设全局 `LD_LIBRARY_PATH`。
 
 最后一行是 `main "$@"`；函数定义在 `main()` 之前，`set` / `readonly` 在最前。
 
@@ -34,7 +32,6 @@
 - 只用 POSIX shell + Bash 数组；不要依赖 `mapfile`（macOS 自带 Bash 3.2 没有）。
 - 路径含空格时全部加引号；`find -print0` 配 `read -d ''`。
 - `set -u` 下空数组展开会报错；先判 `${#sources[@]}` 再传给工具。
-- 不把 `clang-format -i` 放进脚本；检查阶段只读。
 - 不在脚本里设全局 `LD_LIBRARY_PATH`；共享库的运行时路径由 CMake 的 RPATH 设置。
 - 不 `sudo`、不 `apt install`、不 `pip install`。
 - 失败时保留原始命令输出；不要在脚本里 `2>/dev/null` 吞掉诊断。
@@ -59,8 +56,6 @@
 | `ninja: error: ... missing and no known rule` | 源文件是否在 CMake 中列出 | 定构建 |
 | `fatal error: ... No such file` | `target_include_directories` | 定构建 |
 | `undefined reference` | `target_link_libraries`、库 target 名 | 定构建 |
-| `clang-format` 差异 | 源码排版 | 定工具配置 |
-| `clang-tidy` 命名/类型诊断 | 声明或实现 | `developing-cpp` 的定声明 / 定实现 |
 | `CTest` 失败 | 测试断言、行为句 | `developing-cpp` 的定行为 / 定实现 |
 | 运行时报找不到 `.so` | RPATH / `LD_LIBRARY_PATH` | 定构建 |
 

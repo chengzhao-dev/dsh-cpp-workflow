@@ -2,7 +2,7 @@
 
 ## 产出
 
-一次干净的 configure、一次构建、一份与 `environment.json` 一致的编译数据库。检查只回答「target 契约是否成立」，完整的格式化、静态检查、CTest 与运行由 `building-cpp` 的通过检查接手。
+一次干净的 configure、一次构建、一份与 `environment.json` 一致的编译数据库。检查只回答「target 契约是否成立」，完整的 CTest 与运行由 `building-cpp` 的通过检查接手。
 
 ## 命令
 
@@ -32,8 +32,8 @@ GCC 模式把目录和编译器换成 `build/gcc`、`g++`。每次检查都重�
 | 找不到 target、链接失败、include 路径不对 | 第 1 步 |
 | 目标标准没有生效、`-std` 与声明不一致 | 第 1 步，必要时重读 `references/cxx-standard.md` |
 | 函数参数没校验、模块重复导入、旧模块残留 | 第 2 步 |
-| 只是 clang-format、clang-tidy、CTest 或运行失败 | 转 `building-cpp` 的通过检查 |
+| 只是 CTest 或运行失败 | 转 `building-cpp` 的通过检查 |
 
 ## 边界
 
-本步不替代 `building-cpp`：不安装工具链，不改 `running-build.sh`，不跑 `clang-tidy` 或 CTest。检查通过的判据是 configure 与构建成功、数据库标准正确、结构规则无命中；完整的工具链检查仍由 `building-cpp` 的通过检查给出。
+本步不替代 `building-cpp`：不安装工具链，不改 `running-build.sh`，不跑 `clang-tidy` 或 CTest。检查通过的判据是 configure 与构建成功、数据库标准正确、结构规则无命中；完整的构建、测试与运行检查仍由 `building-cpp` 的通过检查给出。

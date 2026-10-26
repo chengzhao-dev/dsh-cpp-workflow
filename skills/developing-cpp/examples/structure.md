@@ -95,10 +95,10 @@ std::vector<std::vector<CellPosition>> BuildLines() {
 }
 ```
 
-**好**：固定坐标写成匿名命名空间里的常量表，`HasLine` 与 `IsLineComplete` 共用；格子用 `[]`，整条线 `all_of`、八条线 `any_of`。
+**好**：固定坐标写成具名命名空间里的 `constexpr` 常量表，`HasLine` 与 `IsLineComplete` 共用，所以不放进任何一个函数体；格子用 `at()`，整条线 `all_of`、八条线 `any_of`，函数不标 `noexcept`。
 
 ```cpp
-// board.cpp 的匿名命名空间：行、列、对角线三组，坐标固定。
+// board.cpp 的 namespace tictactoe：行、列、对角线三组，坐标固定。
 constexpr std::array<std::array<CellPosition, 3>, 8> kLines{{
     {{{0, 0}, {0, 1}, {0, 2}}},  // 行 0
     {{{1, 0}, {1, 1}, {1, 2}}},  // 行 1
@@ -126,11 +126,11 @@ return hypothetical.HasLine(cell_type);
 **好**：判断「这一格换成某种棋子后会不会成线」不需要第二份棋盘。越界、空格、已占用仍按 `PlaceCell` 的拒绝条件返回 `false`；通过之后只在包含该坐标的线上把这一格算作 `cell_type`，其余格子读原棋盘。
 
 ```cpp
-bool Board::IsLineComplete(CellPosition position, CellType cell_type) const noexcept {
+bool Board::IsLineComplete(CellPosition position, CellType cell_type) const {
   if (!IsInRange(position) || cell_type == CellType::kEmpty) {
     return false;
   }
-  if (cells_[position.row][position.col] != CellType::kEmpty) {
+  if (cells_.at(position.row).at(position.col) != CellType::kEmpty) {
     return false;
   }
 
@@ -138,7 +138,7 @@ bool Board::IsLineComplete(CellPosition position, CellType cell_type) const noex
     if (cell.row == position.row && cell.col == position.col) {
       return true;
     }
-    return cells_[cell.row][cell.col] == cell_type;
+    return cells_.at(cell.row).at(cell.col) == cell_type;
   };
 
   return std::ranges::any_of(kLines, [&](const auto& line) {
@@ -150,4 +150,4 @@ bool Board::IsLineComplete(CellPosition position, CellType cell_type) const noex
 }
 ```
 
-只用 `[]` 与 `IsInRange`，不调用 `at()`，头文件上的 `noexcept` 可以留下；原棋盘不被写入。
+先用 `IsInRange` 拒绝越界，再用 `at()` 读取；失败路径不碰数组，`noexcept` 也就不再成立。

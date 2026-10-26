@@ -2,7 +2,7 @@
 // 只读注释审计：按 references/comments.md 的硬规则检查 C/C++ 源文件。
 //
 // 检查项：文件头横幅、横幅宽度、注释行宽度、Doxygen 标签、注释与声明的贴合、
-// 类型注释存在性、成员功能清单、设计论证（方案对比）、@param 完整性、枚举成员注释一致性。
+// 类型注释存在性、成员功能清单、设计论证（方案对比）、否定式边界、领域尺寸、谓词首句、@param 完整性、枚举成员注释一致性。
 // 不重写任何文件。
 //
 // 用法：
@@ -31,6 +31,9 @@ const MEMBER_LIST = /提供[^。]{0,40}、[^。]{0,40}(的功能|的能力|的�
 const RATIONALE = /而不是|而非|代价.{0,4}忽略|只留一份|与其|比.{0,12}更|更(?:安全|快|清楚|直接|好写|难写)/
 const FORWARD_REF = /(?:留在|归|交给|由)\s*`?[A-Z][A-Za-z0-9_]*`?/
 const TYPE_SYSTEM = /值语义|自由拷贝/
+const NEGATED_BOUNDARY = /只保存|不拥有|不含/
+const DOMAIN_SIZE = /\d+\s*[×xX]\s*\d+|九格|九个格子/
+const PREDICATE_DECL = /^(?:\[\[nodiscard\]\]\s*)?(?:static\s+)?bool\s+(?:Is|Has|Can|Completes)[A-Za-z0-9_]*\s*\(|operator==/
 const DECL_KEYWORDS = /^(class|struct|union|enum|namespace|using|typedef|template|#|if|else|for|while|switch|return|case|default)\b/
 
 function usage(message) {
@@ -226,6 +229,16 @@ export function checkText(text, options = {}) {
     }
     if (isType && TYPE_SYSTEM.test(block)) {
       add(start + 1, 'type-system', '类型注释在复述类型系统已表达的性质：可拷贝与 const 查询由声明给出，删掉这句')
+    }
+    if (isType && NEGATED_BOUNDARY.test(block)) {
+      add(start + 1, 'negated-boundary', '类型注释用「只保存/不拥有/不含」写否定式边界：改成名词短语，边界交给成员类型表达')
+    }
+    if (isType && DOMAIN_SIZE.test(block)) {
+      add(start + 1, 'domain-size', '类型注释在写领域尺寸：格子数由 cells_ 之类成员声明表达，删掉这句')
+    }
+    const firstDocLine = lines[start].trim().replace(/^\/\/\/\s*/, '')
+    if (!isType && PREDICATE_DECL.test(declaration) && !firstDocLine.startsWith('检查')) {
+      add(start + 1, 'predicate-first', '布尔查询或 operator== 的第一句应写「检查…是否…」')
     }
     const params = functionParams(declaration)
     if (!params) continue

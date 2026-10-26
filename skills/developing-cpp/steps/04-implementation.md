@@ -34,5 +34,6 @@
 ## 正反例指针
 
 - 实现注释复述代码、分组混乱：`examples/comments-implementation.md`「实现注释」。
+- 为了保住 `noexcept` 再包一层只转发下标的私有函数：`references/exceptions.md`「不抛的边界」。
 - 异常类型与结果类型混用：`examples/exceptions.md`「什么时候抛」。
 - `std::format` 与流输出混用得当：`examples/exceptions.md`「异常类型与消息」。

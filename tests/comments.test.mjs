@@ -1,6 +1,6 @@
 // 注释检查器锁定 references/comments.md 的硬规则：横幅、标签、注释与声明的贴合、
-// 成员清单、设计论证、跨类分工、类型系统复述、@param 完整性与枚举行尾注释。
-// 规则改动时必须同步这里的用例。
+// 成员清单、设计论证、跨类分工、类型系统复述、否定式边界、领域尺寸、谓词首句、
+// @param 完整性与枚举行尾注释。规则改动时必须同步这里的用例。
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
 import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs'
@@ -73,9 +73,32 @@ test('类型注释不许交代别的类型负责什么', () => {
     '/// 不含回合推进：谁该落子留在 Game。',
     'class Board {};',
   )
-  assert.deepEqual(rules(text), ['forward-ref'])
-  const contract = file('/// 井字棋棋盘。', '///', '/// 3×3 个格子，每格取空、X 或 O；越界坐标不会写入棋盘。', 'class Board {};')
+  assert.deepEqual(rules(text), ['forward-ref', 'negated-boundary'])
+  const contract = file('/// 井字棋棋盘。', '///', '/// 每格取空、X 或 O；越界坐标不会写入棋盘。', 'class Board {};')
   assert.deepEqual(rules(contract), [])
+})
+
+test('类型注释不写否定式边界', () => {
+  const text = file('/// 棋盘坐标。', '///', '/// 只保存位置，不拥有棋盘区间。', 'struct CellPosition {};')
+  assert.deepEqual(rules(text), ['negated-boundary'])
+  const ok = file('/// 棋盘坐标。', 'struct CellPosition {};')
+  assert.deepEqual(rules(ok), [])
+})
+
+test('类型注释不写领域尺寸', () => {
+  const text = file('/// 井字棋棋盘。', '///', '/// 3×3 个格子。', 'class Board {};')
+  assert.deepEqual(rules(text), ['domain-size'])
+  const ok = file('/// 井字棋棋盘。', 'class Board {};')
+  assert.deepEqual(rules(ok), [])
+})
+
+test('谓词首句写检查是否', () => {
+  const bad = file('/// 坐标在棋盘内时返回 true。', 'bool IsInRange(CellPosition position) const;')
+  assert.deepEqual(rules(bad), ['predicate-first'])
+  const opBad = file('/// 比较两个坐标。', 'bool operator==(const CellPosition& other) const;')
+  assert.deepEqual(rules(opBad), ['predicate-first'])
+  const ok = file('/// 检查坐标是否在棋盘内。', 'bool IsInRange(CellPosition position) const;')
+  assert.deepEqual(rules(ok), [])
 })
 
 test('类型注释不许复述类型系统已表达的性质', () => {
