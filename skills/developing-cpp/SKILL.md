@@ -47,14 +47,16 @@ metadata:
 
 先认这次改的是哪一类，再决定从哪一步进；一次改动混了两类时，按「写作 → 布局 → 排版 → 润色」的次序拆开做，前一类落定并经检查再进下一类。
 
-| 类型 | 典型请求 | 从哪进 | 先读哪份条文 |
-| --- | --- | --- | --- |
-| 写作 | 新增类型、函数或文件；改可观察行为；改库与程序的边界 | 第 1 步 | `steps/01-behavior.md`、`02-boundary.md`、`references/project-design.md` |
-| 布局 | 换文件位置、拆头文件、调声明顺序、补测试 target | 第 3 步 | `references/file-template.md`、`declaration-order.md` |
-| 排版 | 只改缩进、行宽、包含顺序或格式 | 第 3 步的声明写法，或 `building-cpp` 的「定工具配置」 | `references/google-cpp-style.md`、`layout.md` |
-| 润色 | 只改命名、只改注释措辞 | 第 3、4 步 | `references/naming.md`、`comments.md` |
+| 类型 | 典型请求 | 入口步骤 |
+| --- | --- | --- |
+| 写作 | 新增类型、函数或文件；改可观察行为；改库与程序的边界；补构造后置条件与成员事实 | `steps/01-behavior.md` |
+| 布局 | 换文件位置、拆头文件、调声明顺序、补测试 target；改注释位置与行尾形态 | `steps/03-declaration.md` |
+| 排版 | 只改缩进、行宽、包含顺序或注释符号 | `steps/03-declaration.md` |
+| 润色 | 只改命名、只改注释措辞 | `steps/03-declaration.md` |
 
-只改格式时不动行为，只改注释时不动签名；类型注释的职责、跨文件边界与线程规则，只按 `references/comments.md` 的条文取内容。
+只改格式时不动行为，只改注释时不动签名；条文由入口步骤按需打开。
+
+同一处命中多条规则时，先按 `references/priority.md` 的五级次序判：行为与契约 > 结构 > 清晰 > 一致 > 形式。高层未解决，不先做低层润色；低层改动碰到高层事实就停手退回。
 
 ## 完成判据
 
@@ -62,5 +64,5 @@ metadata:
 - 第 2 步的库 target 不依赖终端、GUI 或脚本；程序 target 只做装配和输入输出；共享抽象有第二个真实使用方。
 - 第 3 步的公共头文件自包含，命名、声明顺序和异常声明符合 `references/` 的条文。
 - 第 4 步的实现只兑现声明；资源由 RAII 管理；失败是正常结果时用返回值，函数无法完成任务时抛异常，不拿异常做正常分支。
-- 源码注释符合 `references/comments.md` 的四层规范，`node "<skill-dir>/scripts/checking-comments.mjs" --root <项目根>` 无输出。
+- 源码注释符合 `references/comments.md` 的四节规范，`node "<skill-dir>/scripts/checking-comments.mjs" --root <项目根>` 无输出。
 - 没有改 `CMakeLists.txt`、`.clang-*`、构建脚本，也没有把外部资料路径或项目专属类名写进通用条文。

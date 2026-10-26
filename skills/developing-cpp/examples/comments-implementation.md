@@ -31,9 +31,12 @@ for (const auto& position : empty_cells) {
     return position;
   }
 }
+
+// 没有必胜格，交给下一层策略；这里不猜后续几步。
+return std::nullopt;
 ```
 
-解释「为什么停在这一层」，不翻译语句。
+空行分开的阶段各一句，写这一阶段为什么停在这里；不给每个分支单独配注释。
 
 ## TODO
 

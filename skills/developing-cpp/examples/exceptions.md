@@ -30,20 +30,21 @@ struct ParseResult {
 
 ## 异常类型与消息
 
-**差**：抛内建类型或裸字符串，调用方只能捕获一切。
+**差**：抛字符串，或把来源、条件和值揉成一句口语；调用方接到的 `what()` 既不稳定，也无法定位是哪一步失败。
 
 ```cpp
 throw "bad index";
+throw std::out_of_range{std::format("GetTask: 下标 {} 越界", index)};
 ```
 
-**好**：语义已经由标准类型给出时直接用标准类型；需要额外携带领域信息时，再派生自它。
+**好**：语义已经由标准类型给出时直接用标准类型；消息按「来源、条件、值、限度」组织，语言由项目约定，入口需要面向用户的前缀时只加前缀。
 
 ```cpp
-throw std::out_of_range{
-    std::format("GetTask: index={} 超出 [0, {})", index, tasks_.size())};
+throw std::out_of_range{std::format(
+    "GetTask: index is out of range (index={})", index)};
 ```
 
-消息写操作和关键值，不写「出错了」；`std::format` 只是构造消息的方式，不强制固定模板。项目若定义 `Error` 基类，按 `references/exceptions.md` 先定基类再派生，调用方捕获基类接住整族。
+消息写操作和关键值；示例中的英文消息条件小写、句末不加句号，中文消息按中文标点，两者槽位顺序不变；有实际值才写括号，有分号时条件必须是小句。`std::format` 只是构造消息的方式，句式见 `references/exceptions.md` 的「消息」节。项目若定义 `Error` 基类，按该文件先定基类再派生，调用方捕获基类接住整族。
 
 ## Debug 与 Release 的三层合同
 

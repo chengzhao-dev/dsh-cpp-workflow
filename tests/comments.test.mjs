@@ -34,6 +34,23 @@ test('缺少文件头横幅时报错', () => {
   assert.deepEqual(rules('class Board {};\n', { requireHeader: false }), [])
 })
 
+test('文件头提到别的源文件或目录时报错', () => {
+  const cross = file(
+    '// board.h - 定义棋盘。',
+    '//',
+    '// 对局流程在 game.h。',
+    'class Board {};',
+  )
+  assert.ok(rules(cross, { fileName: 'board.h' }).includes('header-cross-file'))
+  const own = file(
+    '// board.h - 定义棋盘。',
+    'class Board {};',
+  )
+  assert.ok(!rules(own, { fileName: 'board.h' }).includes('header-cross-file'))
+  const apps = file('// board.h - 定义棋盘。', '//', '// 输入输出在 apps/。', 'class Board {};')
+  assert.ok(rules(apps, { fileName: 'board.h' }).includes('header-cross-file'))
+})
+
 test('禁止的 Doxygen 标签', () => {
   for (const tag of ['@returns 结果', '@brief 简述', '@author 某人', '@details 细节']) {
     assert.deepEqual(rules(file(`/// 函数。`, `///`, `/// ${tag}`, `int F();`)), ['forbidden-tag'], tag)
@@ -195,18 +212,73 @@ test('CLI 跳过构建目录', () => {
 test('紧贴声明的存储注释会复述下一行', () => {
   const text = file(
     'class Board {',
-    '  // 行优先存储：cells_[row][col] 对应坐标 (row, col)。',
+    '  // cells_ 存储棋盘格子。',
     '  std::array<std::array<Cell, 3>, 3> cells_{};',
     '};',
   )
   assert.ok(rules(text).includes('restates-next'))
+  const axis = file(
+    'class Board {',
+    '  /// 井字棋棋盘格子数组，外层是行，内层是列。',
+    '  std::array<std::array<Cell, 3>, 3> cells_{};',
+    '};',
+  )
+  assert.ok(!rules(axis).includes('restates-next'))
   const ok = file(
     'class Board {',
-    '  // 棋盘。',
+    '  /// 棋盘。',
     '  std::array<std::array<Cell, 3>, 3> cells_{};',
     '};',
   )
   assert.ok(!rules(ok).includes('restates-next'))
+})
+
+test('数据成员只有行尾注释时报主注释缺失', () => {
+  const bad = file(
+    'class Board {',
+    ' private:',
+    '  std::array<std::array<Cell, 3>, 3> cells_{};  // 值初始化后每个棋盘格子都是空格子。',
+    '};',
+  )
+  assert.ok(rules(bad).includes('member-comment-missing'))
+  const good = file(
+    'class Board {',
+    ' private:',
+    '  /// 井字棋棋盘格子数组，外层是行，内层是列。',
+    '  std::array<std::array<Cell, 3>, 3> cells_{};',
+    '};',
+  )
+  assert.ok(!rules(good).includes('member-comment-missing'))
+  assert.ok(!rules(good).includes('member-comment-trailing'))
+  assert.ok(!rules(good).includes('member-comment-slash'))
+  const trailing = file(
+    'class Board {',
+    ' private:',
+    '  /// 井字棋棋盘格子数组，外层是行，内层是列。',
+    '  std::array<std::array<Cell, 3>, 3> cells_{};  // 值初始化后每个棋盘格子都是空格子。',
+    '};',
+  )
+  assert.ok(rules(trailing).includes('member-comment-trailing'))
+  const slash = file(
+    'class Board {',
+    ' private:',
+    '  // 井字棋棋盘格子数组，外层是行，内层是列。',
+    '  std::array<std::array<Cell, 3>, 3> cells_{};',
+    '};',
+  )
+  assert.ok(rules(slash).includes('member-comment-slash'))
+  const enumLine = file(
+    'enum class CellType {',
+    '  kEmpty,  ///< 空格子。',
+    '};',
+  )
+  assert.ok(!rules(enumLine).includes('member-comment-missing'))
+  const publicField = file(
+    'struct Stats {',
+    '  int count_{};  ///< 已落子数。',
+    '};',
+  )
+  assert.ok(!rules(publicField).includes('member-comment-missing'))
 })
 
 test('CLI 从 .clang-format 读取 ColumnLimit', () => {

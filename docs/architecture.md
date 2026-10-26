@@ -34,12 +34,12 @@ flowchart TD
 
 ### developing-cpp
 
-| 域 | 内容 | 入口 | 权威条文 |
-| --- | --- | --- | --- |
-| 写作 | 可观察行为、库与程序的边界、声明与实现 | 第 1 步 | `steps/01-behavior.md`、`02-boundary.md`、`references/project-design.md` |
-| 布局 | 文件槽位与命名、头文件拆合、声明顺序、测试 target | 第 3 步 | `references/file-template.md`、`declaration-order.md` |
-| 排版 | 缩进、行宽、包含顺序、格式基线与偏差点 | 第 3 步或 `building-cpp` 的定工具配置 | `references/google-cpp-style.md`、`layout.md` |
-| 润色 | 命名措辞、注释四层与长度预算 | 第 3–4 步 | `references/naming.md`、`comments.md` |
+| 域 | 内容 | 入口步骤 |
+| --- | --- | --- |
+| 写作 | 可观察行为、库与程序的边界、声明与实现、构造后置条件与成员事实 | `steps/01-behavior.md` |
+| 布局 | 文件槽位与命名、头文件拆合、声明顺序、测试 target、注释位置与行尾形态 | `steps/03-declaration.md` |
+| 排版 | 缩进、行宽、包含顺序、格式基线与偏差点、注释符号 | `steps/03-declaration.md` |
+| 润色 | 命名措辞、注释四节与长度预算 | `steps/03-declaration.md` |
 
 ### configuring-cmake
 
@@ -59,7 +59,7 @@ flowchart TD
 | 排版 | 编码、行尾、clang-format | 第 2 步 | `references/encoding.md`、`steps/02-tooling.md` |
 | 润色 | 诊断措辞、失败分流说明 | 第 3 步 | `steps/03-check.md`、`references/build-script.md` |
 
-域只决定入口，不新增加载层：每域仍落到现有的步骤文件与条文，`references/` 不按域建子目录，避免同一事实出现两份路径。写作域先落定行为与边界，布局与排版只改变形状，润色只改措辞。`comments.md` 的类型注释判据——只写本类型契约、不写跨类分工、不复述类型系统、不写未来用法——是润色域的硬规则，`scripts/checking-comments.mjs` 逐条检查。
+域只决定入口，不新增加载层：每域仍落到现有的步骤文件与条文，`references/` 不按域建子目录，避免同一事实出现两份路径。写作域先落定行为与边界，布局与排版只改变形状，润色只改措辞。`comments.md` 按四类改动分节：写作定构造后置条件与成员事实，布局定注释位置与行尾形态，排版定符号、宽度与标签，润色删复述、统一句式；`scripts/checking-comments.mjs` 逐条检查。`exceptions.md` 的「消息」节定 `what()` 的来源、条件、实际值与限度，语言由项目约定，消息不在抛出点做本地化。同一处命中多条规则时，按 `priority.md` 的五级次序判：行为与契约 > 结构 > 清晰 > 一致 > 形式。
 
 ## 为什么没有 shared/
 
@@ -87,7 +87,8 @@ flowchart TD
 | `skills/developing-cpp/SKILL.md` | 触发描述、适用边界、四步路由、完成判据 |
 | `skills/developing-cpp/steps/01-behavior.md`、`02-boundary.md`、`03-declaration.md`、`04-implementation.md` | 单步操作与退出条件 |
 | `skills/developing-cpp/examples/comments-declaration.md`、`comments-implementation.md`、`exceptions.md`、`naming.md`、`structure.md` | 对应步骤的正反例 |
-| `skills/developing-cpp/references/comments.md` | 注释四层规范与长度预算 |
+| `skills/developing-cpp/references/comments.md` | 注释四节（写作、布局、排版、润色）与长度预算 |
+| `skills/developing-cpp/references/priority.md` | 规则冲突时的五级次序与常见冲突 |
 | `skills/developing-cpp/references/file-template.md` | 文件槽位、守卫、扩展名 |
 | `skills/developing-cpp/references/google-cpp-style.md` | Google 基线与本仓偏差点 |
 | `skills/developing-cpp/references/naming.md`、`types.md`、`language.md`、`exceptions.md`、`declaration-order.md`、`layout.md`、`performance.md`、`standard-library.md`、`project-design.md`、`glossary.md` | 各自主题的完整条文；术语只在 `glossary.md` 定义 |

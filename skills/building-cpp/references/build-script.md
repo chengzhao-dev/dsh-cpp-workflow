@@ -2,6 +2,18 @@
 
 `assets/templates/projects/common/running-build.sh` 是 POSIX build-host 脚本，适用于 Linux、macOS 和 Windows + WSL。`host=windows` + `build_host=native` 不是本版本支持的组合：声明校验会直接拒绝，脚本也不会在原生 Windows 壳里运行。脚本只做配置、构建、CTest 与运行；格式化与静态检查在编辑时手动跑，不混进构建入口。
 
+## 格式化与静态检查
+
+不在 `running-build.sh` 里跑。构建脚本只做配置、构建、CTest 与运行；格式化是编辑时动作，不能让构建顺手改动源码。检查放在编辑器保存时或 CI 的独立步骤里。
+
+检查（按工程实际源码根替换 `src/`、`include/`、`apps/`、`tests/`）：
+
+```bash
+clang-format --dry-run --Werror src/*.cpp include/*.h
+```
+
+需要修复时单独运行 `clang-format -i`，再回看 diff。`clang-format` 只排版，不会把行尾注释搬到上一行；数据成员注释位置按 `developing-cpp/references/comments.md` 的规则和 `checking-comments.mjs` 检查。
+
 ## 用法
 
 ```bash
@@ -39,7 +51,7 @@
 
 ## 构建模式的错误合同
 
-脚本可以为 Debug、Release 各跑一次；模式只改变诊断详略，不改变失败方式：
+工程需要 Release 时另建构建目录；模式只改变诊断详略，不改变失败方式：
 
 - 返回值：两种模式的返回值相同，调用方不按 `NDEBUG` 分支。
 - 自定义异常：两种模式都抛；Debug 的 `what()` 可以带 `file:line`，Release 只留值。

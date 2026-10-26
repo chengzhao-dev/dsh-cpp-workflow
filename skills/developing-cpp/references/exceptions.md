@@ -11,11 +11,7 @@ Google C++ Style Guide 明确写「We do not use C++ exceptions」。本工作�
 
 ## 先定错误策略
 
-E.1 要求尽早决定错误处理策略。写接口前先回答：
-
-- 这个函数不能完成自己的任务时，调用方还能继续吗？
-- 失败是「正常的另一种结果」，还是「invariant 被破坏、继续执行没有意义」？
-- 失败信息需要跨层携带，还是只需在边界打印？
+E.1 要求尽早决定错误处理策略：先问调用方还能不能继续、失败是正常结果还是 invariant 已破坏、消息是否需要跨层携带，再写接口。
 
 策略一旦定下，声明、实现、测试和入口都用同一套；不要在同一层里一半返回错误码、一半抛异常。
 
@@ -52,16 +48,7 @@ class ParseError : public std::runtime_error {
 
 ## 抛出与捕获
 
-E.15：按值抛出、按引用捕获（通常是 `const` 引用）；不要抛裸指针；重新抛出用 `throw;`，不要 `throw error;` 丢类型。
-
-```cpp
-try {
-  ReadConfig(path);
-} catch (const FileReadError& error) {
-  // 能补偿才捕获；不能补偿就让异常继续向上。
-  throw;
-}
-```
+E.15：按值抛出、按引用捕获（通常是 `const` 引用）；不要抛裸指针；重新抛出用 `throw;`，不要 `throw error;` 丢类型。捕获后能补偿才捕获，不能补偿就让异常继续向上。
 
 E.17：不要在每个函数里捕获所有异常。E.18：少用显式 `try/catch`，优先 RAII 和 `finally` 风格的清理对象。E.19：没有资源句柄时，用 `final_action` 之类的 scope guard 做清理。
 
@@ -88,7 +75,25 @@ int main() {
 }
 ```
 
-消息要能让调用者定位操作和关键值；不强制固定消息模板，也不要求库代码打印日志。`std::format` 只是构造 `what()` 或边界消息的一种方式。C++20 及更早没有 `std::print`；默认 C++23 且标准库支持时，可在程序边界用 `std::print`，库代码仍只组合消息、不直接打印。
+消息要能让调用者定位操作和关键值，句式见下节；`std::format` 只是构造 `what()` 或边界消息的方式。C++20 及更早没有 `std::print`；默认 C++23 且标准库支持时，可在程序边界用 `std::print`，库代码仍只组合消息、不直接打印。
+
+## 消息
+
+`what()` 是给程序员看的诊断文本，句式是「标签: 条件 (值); 限度」，四个槽位不动。标签是标识符，成员写 `Type::Function`，自由函数只写函数名，冒号后一个空格。先写清哪一步失败、失败条件是什么、手上有什么值，再写允许的限度；语言由项目约定，下面的示例用英文。条件不写 Error / Failed，不写空泛的「失败」；有分号时条件必须是带动词的小句，写 `board position is out of range`，不写无动词片段。括号只放导致失败的实际值，写 `name=value`，逗号后一个空格，等号两侧不空格；没有实际值就不写括号。分号后只放限度，且必须自成小句，如 `board is {}x{}`；没有限度就不写分号。
+
+下面的英文示例只用 `:`、`()`、`,`、`=`、`;` 五个 ASCII 符号：冒号紧贴标签、后接一个空格；左括号前一个空格、内侧不空；逗号前不空、后一个空格；等号两侧不空；分号写在右括号外、前不空、后一个空格。不用第二个冒号、句号、问号、感叹号、破折号或 `×`；尺寸写 `3x3`，`out of range` 不加连字符。中文消息按中文标点，但槽位顺序和「值只放实际值」不变。
+
+有插值才用 `std::format`，没有洞的消息用字符串字面量。`std::out_of_range` 与 `std::logic_error` 在构造时复制消息，不能把格式化推迟到 `what()`。格式串只填手头的整数和短文本；格式化若抛出，调用方看到 `std::format_error` 或 `std::bad_alloc`，所以不在抛出表达式里做 I/O。自有异常类型才在 `what()` 里惰性格式化并兜底，本仓库不为此新增类型。
+
+`what()` 不是分支接口；调用方要数字就放进类型成员，不解析字符串。入口可以在消息前加面向用户的前缀，库代码不打印日志。
+
+```cpp
+throw std::out_of_range{std::format(
+    "Board::GetCellType: board position is out of range (row={}, col={}); board is {}x{}",
+    position.row, position.col, kBoardRows, kBoardCols)};
+throw std::logic_error{"Ai::Choose: game is already over"};
+throw std::logic_error{"EmptyCellsOrThrow: no empty cell left to place"};
+```
 
 ## 声明注释
 

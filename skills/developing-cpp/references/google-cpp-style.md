@@ -85,6 +85,8 @@
 
 Google 原文不使用 C++ 异常；本工作流只在开发阶段的源码指导中按 `references/exceptions.md` 采用 C++ Core Guidelines 的 Error handling，插件运行时不编译、不执行这套策略。其余条目仍以 Google 原文为准。
 
+异常消息的组织方式见 `references/exceptions.md` 的「消息」节。
+
 ## 输出与格式化
 
 - 组合消息以 `std::format` 为主：`std::format("任务 {} 进入状态 {}", task, state)`。

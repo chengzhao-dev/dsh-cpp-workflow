@@ -256,6 +256,9 @@ for (const [skillName, spec] of Object.entries(SKILL_SPECS)) {
   equal(fm?.data.name, skillName, `${skillName}: frontmatter name 与目录名`)
   ok(/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(fm?.data.name ?? ''), `${skillName}: name 不是 kebab-case`)
   ok(/C\+\+23/.test(fm?.data.description ?? ''), `${skillName}: description 未声明 C++23`)
+  const description = fm?.data.description ?? ''
+  ok([...description].length <= 450, `${skillName}: description 超过 450 字符`)
+  ok(description.includes('不用于'), `${skillName}: description 缺少「不用于」`)
   ok(Boolean(fm?.data['metadata.short-description'] || /metadata:\s*\n\s+short-description:/.test(text)), `${skillName}: 缺少 metadata.short-description`)
 
   equal(h2s(fm?.body ?? text), spec.h2, `${skillName}: H2 节`)

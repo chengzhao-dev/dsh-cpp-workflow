@@ -2,7 +2,7 @@
 // 只读注释审计：按 references/comments.md 的硬规则检查 C/C++ 源文件。
 //
 // 检查项：文件头横幅、横幅宽度、注释行宽度、Doxygen 标签、注释与声明的贴合、
-// 类型注释存在性、成员功能清单、设计论证（方案对比）、否定式边界、领域尺寸、谓词首句、@param 完整性、枚举成员注释一致性。
+// 类型注释存在性、成员功能清单、设计论证（方案对比）、否定式边界、领域尺寸、谓词首句、@param 完整性、枚举成员注释一致性、数据成员主注释位置。
 // 不重写任何文件。
 //
 // 用法：
@@ -170,6 +170,30 @@ export function functionParams(declaration) {
   return splitParams(decl.slice(open + 1, close)).map(paramName).filter(Boolean)
 }
 
+/** 标记每一行是否位于 class/struct 体内，供数据成员注释位置检查使用。 */
+function classMemberLines(lines) {
+  const flags = new Array(lines.length).fill(false)
+  const starts = []
+  let depth = 0
+  let pending = false
+  for (let index = 0; index < lines.length; index += 1) {
+    const code = lines[index].replace(/\/\/.*$/, '').trim()
+    if (/^(?:template\s*<[^>]*>\s*)?(?:class|struct)\b/.test(code)) pending = true
+    const opens = (code.match(/\{/g) ?? []).length
+    const closes = (code.match(/\}/g) ?? []).length
+    if (pending && opens > 0) {
+      starts.push(depth)
+      pending = false
+    } else if (pending && opens === 0 && code.endsWith(';')) {
+      pending = false
+    }
+    flags[index] = starts.length > 0 && depth > starts[starts.length - 1]
+    depth += opens - closes
+    while (starts.length > 0 && depth <= starts[starts.length - 1]) starts.pop()
+  }
+  return flags
+}
+
 /** 检查一段文本，返回问题列表；每个问题带 1 起始的行号。 */
 export function checkText(text, options = {}) {
   const width = options.width ?? 80
@@ -178,10 +202,23 @@ export function checkText(text, options = {}) {
   const lines = text.split(/\r?\n/)
   const issues = []
   const add = (line, rule, message) => issues.push({ line, rule, message })
+  const inClass = classMemberLines(lines)
 
   const firstContent = lines.findIndex((line) => line.trim() !== '')
   if (requireHeader && firstContent !== -1 && !BANNER.test(lines[firstContent].trim())) {
     add(firstContent + 1, 'header-missing', '文件开头缺少文件头横幅（//===...===//）')
+  }
+  if (firstContent !== -1 && BANNER.test(lines[firstContent].trim())) {
+    const own = options.fileName ? options.fileName.split(/[\\/]/).pop() : ''
+    for (let index = firstContent + 1; index < lines.length; index += 1) {
+      const trimmed = lines[index].trim()
+      if (BANNER.test(trimmed) || !trimmed.startsWith('//')) break
+      const names = trimmed.match(/\b[A-Za-z0-9_-]+\.(?:h|hpp|cpp|cc)\b/g) ?? []
+      for (const name of names) {
+        if (name !== own) add(index + 1, 'header-cross-file', `文件头提到了别的源文件 ${name}：只介绍本文件，删掉跨文件句子`)
+      }
+      if (/\bapps\//.test(trimmed)) add(index + 1, 'header-cross-file', '文件头指向了另一个目录：只介绍本文件')
+    }
   }
 
   for (let index = 0; index < lines.length; index += 1) {
@@ -225,7 +262,7 @@ export function checkText(text, options = {}) {
       add(start + 1, 'member-list', '类型注释在罗列成员功能，应改写为概念与使用约定')
     }
     if (isType && FORWARD_REF.test(block)) {
-      add(start + 1, 'forward-ref', '类型注释在交代别的类型负责什么：只写本类型的契约，跨文件边界留给文件头')
+      add(start + 1, 'forward-ref', '类型注释在交代别的类型负责什么：只写本类型的契约，删掉这句，不要挪到文件头')
     }
     if (isType && TYPE_SYSTEM.test(block)) {
       add(start + 1, 'type-system', '类型注释在复述类型系统已表达的性质：可拷贝与 const 查询由声明给出，删掉这句')
@@ -257,10 +294,40 @@ export function checkText(text, options = {}) {
     if (!trimmed.startsWith('//') || trimmed.startsWith('///') || trimmed.startsWith('//!')) continue
     const next = lines[index + 1].trim()
     if (next === '' || next.startsWith('//')) continue
-    if (!/(下标|存储|对应坐标|行优先)/.test(trimmed)) continue
+    if (!/(下标|存储|对应坐标|行优先|存放)/.test(trimmed)) continue
     const identifiers = next.match(/[A-Za-z_]\w*/g) ?? []
-    if (identifiers.some((identifier) => trimmed.includes(identifier))) {
-      add(index + 1, 'restates-next', '实现注释在复述下一行声明或存储细节：删掉这句，让声明自己表达')
+    if (!identifiers.some((identifier) => trimmed.includes(identifier))) continue
+    let residue = trimmed
+    for (const identifier of identifiers) residue = residue.split(identifier).join('')
+    residue = residue.replace(
+      /(对应坐标|行优先|下标|存储|存放|声明|类型|棋盘|格子|元素|坐标|行列|行|列|当前|每个|所有|用来|用于|表示|保存|初始化|的是|的了|在|中|里|和|与|及|或|按|class|struct|enum|const|auto|row|col|index|indices|cell|cells|board|data|value|values)/g,
+      '',
+    )
+    residue = residue.replace(/[\s\p{P}\p{S}\p{N}]/gu, '')
+    if (residue === '') {
+      add(index + 1, 'restates-next', '实现注释只重复下一行声明的标识符或类型：删掉这句，让声明自己表达')
+    }
+  }
+
+  for (let index = 0; index < lines.length; index += 1) {
+    if (!inClass[index]) continue
+    const line = lines[index]
+    const commentAt = line.indexOf('//')
+    const code = (commentAt === -1 ? line : line.slice(0, commentAt)).trim()
+    if (!code.endsWith(';') || code.includes('(')) continue
+    const names = code.match(/\b[A-Za-z_]\w*_\b/g)
+    if (!names) continue
+    const member = names.at(-1)
+    const previous = index > 0 ? lines[index - 1].trim() : ''
+    if (commentAt !== -1) {
+      if (line.slice(commentAt).startsWith('///<')) continue
+      if (!previous.startsWith('//')) {
+        add(index + 1, 'member-comment-missing', `数据成员 ${member} 只有行尾注释：主注释写在声明上一行，行尾不写补充`)
+      } else {
+        add(index + 1, 'member-comment-trailing', `数据成员 ${member} 的行尾注释应删掉：主注释只写在声明上一行，行尾只允许 ///< 用于枚举项或 struct 短字段`)
+      }
+    } else if (previous.startsWith('//') && !previous.startsWith('///')) {
+      add(index + 1, 'member-comment-slash', `数据成员 ${member} 的主注释用了 //：类数据成员统一用 ///，写在声明上一行`)
     }
   }
 
@@ -363,7 +430,7 @@ function main(argv) {
       process.stderr.write(`错误：读取 ${file} 失败：${error.message}\n`)
       return EXIT.usage
     }
-    for (const issue of checkText(text, options)) results.push({ file: path.relative(root, file) || file, ...issue })
+    for (const issue of checkText(text, { ...options, fileName: path.relative(root, file) || file })) results.push({ file: path.relative(root, file) || file, ...issue })
   }
   if (options.json) {
     process.stdout.write(`${JSON.stringify({ root, files: files.length, issues: results }, null, 2)}\n`)

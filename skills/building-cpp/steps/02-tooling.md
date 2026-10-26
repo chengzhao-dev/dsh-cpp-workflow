@@ -20,7 +20,7 @@
 - 配置注释写「为什么这样设」，不写「这一项是什么」；不写策略头、不指向文档路径。
 - 格式化与静态检查只扫描项目源码：`src/`、`include/`、`apps/`、`tests/` 等实际存在的源码根；不扫描 `build/`、第三方目录、生成文件。
 - `clang-tidy` 用 `-p build/<compiler>` 读取编译数据库，`--header-filter` 只列项目根下的顶层目录，避免把第三方头纳入；不要加 `--system-headers`，也不要用 clang-tidy 19 才加入、16 没有的 `--exclude-header-filter`。
-- 格式化用 `--dry-run --Werror` 做检查；需要自动修复时单独运行 `-i`，不要让构建脚本悄悄改源码。
+- 格式化用 `--dry-run --Werror` 做检查；需要自动修复时单独运行 `-i`，不要让构建脚本悄悄改源码。`clang-format` 只排版，不会把行尾注释搬到上一行；数据成员注释位置按 `developing-cpp/references/comments.md` 检查。
 - 工程模板里不预置 `compile_commands.json`；它由定构建的 configure 生成，是构建产物。
 
 ## 情况
