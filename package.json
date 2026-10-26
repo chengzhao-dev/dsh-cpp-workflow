@@ -1,6 +1,6 @@
 {
   "name": "@chengzhao-dev/dsh-cpp-workflow",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "C++11–C++23 工程流程技能包：源码四步、CMake 三步与构建三步，按项目声明的环境组合校验 · C++11–C++23 workflow skills for DeepSeek Harness",
   "type": "module",
   "main": "./lib/index.js",
@@ -42,8 +42,9 @@
   "icon": "./icon.svg",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "npm run build && node scripts/checking-skill-links.mjs && node skills/building-cpp/scripts/checking-encoding.mjs --quiet && node --test tests/*.test.mjs",
+    "test": "npm run build && node scripts/checking-skill-links.mjs && node skills/building-cpp/scripts/checking-encoding.mjs --quiet && node scripts/checking-github-workflows.mjs && node --test tests/*.test.mjs",
     "check:encoding": "node skills/building-cpp/scripts/checking-encoding.mjs",
+    "check:workflows": "node scripts/checking-github-workflows.mjs",
     "test:matrix": "bash scripts/checking-standard-matrix.sh",
     "pack:check": "npm pack --dry-run"
   },
@@ -79,6 +80,7 @@
   "devDependencies": {
     "@deepseek-ai/dsh-skill": ">=0.2.0-rc.1 <0.3.0-0",
     "@types/node": "^22.20.5",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "yaml": "^2.9.1"
   }
 }
