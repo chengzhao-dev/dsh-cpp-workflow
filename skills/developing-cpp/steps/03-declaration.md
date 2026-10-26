@@ -30,4 +30,4 @@
 
 - 命名、访问器、语义角色：`examples/naming.md`。
 - 异常声明与返回值选择：`examples/exceptions.md`。
-- 声明注释写成了实现说明：`examples/comments.md`「声明注释」。
+- 声明注释写成了实现说明：`examples/comments-declaration.md`。

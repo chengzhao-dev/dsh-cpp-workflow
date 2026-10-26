@@ -34,6 +34,14 @@ metadata:
 
 每步只打开同号的一个步骤文件。判不准才打开 `examples/cmake.md`；`references/cmake.md` 保存 target、链接、输出、RPATH、依赖与反模式的完整条文，`references/cxx-standard.md` 保存 C++11–C++23 的标准映射，`references/modules.md` 保存函数与模块契约。可复制的函数在 `assets/cmake/`：`CompileSettings.cmake` 放标准与警告，`LinkSettings.cmake` 放构建期 RPATH 与 GoogleTest 依赖；一个文件按性质收一组函数。
 
+本轮激活按三条上限走：
+
+- 只开当前步对应的一个步骤文件；本轮已经开了别的技能，就不再开第二个技能的步骤。
+- 条文只开该步点名的一份；同号案例留到下一次激活。
+- 标准档只打开项目技能声明的那一档，没有声明时用本技能已有的新工程默认，不把其余标准档读进来。
+
+项目技能列出了检查命令时只跑那一条，没有时跑插件根目录的 `npm test`；退出码为 0 后在同一轮结束 goal，不再继续走没有失败的步骤。
+
 五档标准的语言设施、工具映射与降档仍由 `building-cpp/references/standards/` 维护；本技能只负责这些标准在 CMake 里怎么写。
 
 ### 四类改动

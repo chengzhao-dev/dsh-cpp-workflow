@@ -78,13 +78,15 @@ flowchart TD
 
 `SKILL.md` 的「步骤」表是唯一的路由表：步号、名称、文件、一句话。`references/` 不自动加载，必须由步骤或 `SKILL.md` 带条件句指向，例如「判不准坐标类型时打开 `references/types.md` 的区间与半开区间一节」；只写「详见 references/」不算。
 
+单次激活的上限是「一个 `SKILL.md` + 一个步骤文件 + 该步点名的一份条文或案例」；同号案例留到下一次激活，标准档只开项目技能声明的那一档。检查命令退出码为 0 后在同一轮结束 goal，不继续走没有失败的步骤。
+
 ## 文件职责
 
 | 路径 | 唯一职责 |
 | --- | --- |
 | `skills/developing-cpp/SKILL.md` | 触发描述、适用边界、四步路由、完成判据 |
 | `skills/developing-cpp/steps/01-behavior.md`、`02-boundary.md`、`03-declaration.md`、`04-implementation.md` | 单步操作与退出条件 |
-| `skills/developing-cpp/examples/comments.md`、`exceptions.md`、`naming.md`、`structure.md` | 对应步骤的正反例 |
+| `skills/developing-cpp/examples/comments-declaration.md`、`comments-implementation.md`、`exceptions.md`、`naming.md`、`structure.md` | 对应步骤的正反例 |
 | `skills/developing-cpp/references/comments.md` | 注释四层规范与长度预算 |
 | `skills/developing-cpp/references/file-template.md` | 文件槽位、守卫、扩展名 |
 | `skills/developing-cpp/references/google-cpp-style.md` | Google 基线与本仓偏差点 |

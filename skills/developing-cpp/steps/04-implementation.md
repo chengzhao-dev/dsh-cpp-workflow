@@ -33,6 +33,6 @@
 
 ## 正反例指针
 
-- 实现注释复述代码、分组混乱：`examples/comments.md`「实现注释」。
+- 实现注释复述代码、分组混乱：`examples/comments-implementation.md`「实现注释」。
 - 异常类型与结果类型混用：`examples/exceptions.md`「什么时候抛」。
 - `std::format` 与流输出混用得当：`examples/exceptions.md`「异常类型与消息」。

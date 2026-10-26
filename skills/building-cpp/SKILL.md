@@ -38,6 +38,14 @@ metadata:
 
 每步只打开同号的一个步骤文件。判不准才打开 `examples/` 里与该步对应的案例；`references/` 保存完整条文，只在排错、整目录重构，或步骤里明确指向某一条文时按需打开。链接、rpath 与产物布局读 `references/linking.md`；CMake 的 target、标准和函数写法读 `../configuring-cmake/references/`，可复用片段在 `../configuring-cmake/assets/cmake/`。
 
+本轮激活按三条上限走：
+
+- 只开当前步对应的一个步骤文件；本轮已经开了别的技能，就不再开第二个技能的步骤。
+- 条文只开该步点名的一份；同号案例留到下一次激活。
+- 标准档只打开项目技能声明的那一档，没有声明时用本技能已有的新工程默认，不把其余标准档读进来。
+
+项目技能列出了检查命令时只跑那一条，没有时跑本技能自己的 `scripts/checking-environment.mjs` 与 `scripts/checking-encoding.mjs`；退出码为 0 后在同一轮结束 goal，不再继续走没有失败的步骤。
+
 ### 四类改动
 
 先认这次改的是哪一类，再决定从哪一步进；一次改动混了两类时，按「写作 → 布局 → 排版 → 润色」的次序拆开做。
