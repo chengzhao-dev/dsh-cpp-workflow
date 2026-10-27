@@ -82,7 +82,10 @@ export const TAG_LABEL: Record<string, string> = {
 }
 
 /** 预览里的示例摘要：用户没填 @brief 时用它，避免预览出现空标签。 */
-export const SAMPLE_BRIEF = '定义井字棋棋盘、格子坐标与格子类型。'
+export const SAMPLE_BRIEF = '<一句话说明本文件>'
+
+/** 预览里的示例文件名：只是占位符，不对应任何工程的真实文件。 */
+export const SAMPLE_FILE = '<文件名>'
 
 /** 出厂配置：文件头只留 @file 与 @brief，契约标签全开，隐私标签全关。 */
 export const DEFAULT_CONFIG: CommentConfig = {
@@ -134,7 +137,7 @@ export function normalizeConfig(raw?: unknown): CommentConfig {
  */
 export function renderFileHeader(raw: unknown, fileName: string): string[] {
   const config = normalizeConfig(raw)
-  const name = text(fileName) || 'board.h'
+  const name = text(fileName) || SAMPLE_FILE
   const lines = [`/// @file ${name}`]
   if (config.brief.enabled) {
     lines.push(config.brief.value ? `/// @brief ${config.brief.value}` : '/// @brief')
@@ -153,15 +156,15 @@ export function previewParts(
   sampleName?: string,
 ): { header: string[]; contract: string[]; declaration: string } {
   const config = normalizeConfig(raw)
-  const header = renderFileHeader(config, sampleName || 'board.h')
+  const header = renderFileHeader(config, sampleName || SAMPLE_FILE)
   // 预览是示例：@brief 开着但用户没填句子时，用示例文件自己的摘要顶替。
   const briefIndex = header.indexOf('/// @brief')
   if (briefIndex !== -1) header[briefIndex] = `/// @brief ${SAMPLE_BRIEF}`
   const contract: string[] = []
-  if (config.param) contract.push('/// @param position 目标行列坐标。')
+  if (config.param) contract.push('/// @param row 目标行号。')
   if (config.returns) contract.push('/// @return 放置成功时为 true。')
-  if (config.throws) contract.push('/// @throws std::out_of_range 坐标越界时抛出。')
-  const declaration = '[[nodiscard]] bool PlaceCell(CellPosition position, CellType cell_type);'
+  if (config.throws) contract.push('/// @throws std::out_of_range 行号越界时抛出。')
+  const declaration = '[[nodiscard]] bool Place(int row, int column);'
   return { header, contract, declaration }
 }
 
@@ -170,7 +173,7 @@ export function previewParts(
  */
 export function previewText(raw: unknown, sampleName?: string): string {
   const { header, contract, declaration } = previewParts(raw, sampleName)
-  const lines = [...header, '///', '/// 放置成功返回 true；坐标越界或目标已占时返回 false。']
+  const lines = [...header, '///', '/// 放置成功时返回 true；行号越界或目标格子已占时返回 false。']
   if (contract.length > 0) lines.push('///', ...contract)
   lines.push(declaration)
   return lines.join('\n')

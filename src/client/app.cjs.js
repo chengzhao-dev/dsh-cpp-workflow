@@ -3,27 +3,28 @@
 // 客户端半侧：设置导航里的「C++ 工程流程」页与插件页的配置卡片共用同一个组件。
 // 标签策略在本文件上方内联（由 scripts/building-client.mjs 从 src/comment-policy.js
 // 拼进来），所以预览、默认值与服务端快照永远同源；这里只做表单与排版。
+//
+// 版式参照 VS Code 设置页：左侧标签与说明、右侧控件，行间细分隔线；
+// 修改过默认值的行在标签前加一个圆点，底部固定一条保存栏。
 const React = require('react')
 const h = React.createElement
 
 const PACKAGE_NAME = '@chengzhao-dev/dsh-cpp-workflow'
-const SAMPLE_FILE = 'board.h'
 
 const STRINGS = {
   zh: {
     nav: 'C++ 工程流程',
     title: '文档注释',
-    intro: '文件头与函数契约默认写出哪些 Doxygen 标签。配置只影响代理写注释的默认值，不改已有源码。',
+    intro: '设置文件头与函数声明注释里默认写出的 Doxygen 标签；改动影响之后写出的注释，已有源码保持原样。',
     header: '文件头',
-    headerHint: '每个手写源文件开头的一段 ///；带值的标签填写后写出，@brief 留空由文件自述。',
+    headerHint: '每个手写源文件开头的一段 /// 注释。',
     contract: '函数契约',
-    contractHint: '声明注释里的参数与失败方式；关闭后不再要求写出这些标签。',
+    contractHint: '函数声明注释里要求的参数与失败信息。',
     extra: '更多标签',
-    extraHint: '默认关闭；需要时在单个函数上补写。',
+    extraHint: '需要时在单个函数上补写。',
     file: '@file',
-    fixed: '自动',
-    fileHint: '固定为当前文件名，不参与配置。',
-    briefHint: '一句话说明本文件定义或实现什么；留空则由每个文件自己写。',
+    fileHint: '取自当前文件名。',
+    briefHint: '一句话说明这个文件定义或实现什么；留空则由文件自述。',
     authorHint: '作者署名；留空不写。',
     dateHint: '创建或修改日期；留空不写。',
     copyrightHint: '版权声明；留空不写。',
@@ -31,7 +32,7 @@ const STRINGS = {
     emptyValue: '留空不写',
     briefEmpty: '留空则由文件自述',
     preview: '预览',
-    previewHint: '示例文件名 board.h；预览随开关即时更新。',
+    previewHint: '按当前开关生成；文件名以占位符表示。',
     save: '保存',
     reset: '重置',
     saved: '已保存，下一次读取技能时生效。',
@@ -39,24 +40,23 @@ const STRINGS = {
     unsaved: '有未保存的改动。',
     loading: '正在读取配置…',
     unreadable: '当前账户不能修改这份配置。',
-    readOnly: '此处只显示出厂值。要修改配置，请到「插件」页打开 dsh-cpp-workflow 的配置卡片。',
+    readOnly: '此处显示出厂值；修改在「插件」页的配置卡片里进行。',
     openSettings: '打开插件配置',
-    noForm: '这个入口没有可写表单，配置在插件页修改。',
+    modified: '与出厂值不同',
   },
   en: {
     nav: 'C++ Workflow',
     title: 'Documentation comments',
-    intro: 'Which Doxygen tags the agent writes by default. This changes defaults only; existing sources are untouched.',
+    intro: 'Choose the Doxygen tags written by default in file headers and declaration comments. Changes affect new comments; existing sources stay as they are.',
     header: 'File header',
-    headerHint: 'The /// block at the top of every hand-written source; value tags are written only when filled.',
+    headerHint: 'The /// block at the top of every hand-written source.',
     contract: 'Function contract',
-    contractHint: 'Parameter and failure tags in declaration comments; turning one off stops requiring it.',
+    contractHint: 'Parameter and failure tags required in declaration comments.',
     extra: 'More tags',
-    extraHint: 'Off by default; add them per function when needed.',
+    extraHint: 'Add them per function when needed.',
     file: '@file',
-    fixed: 'Auto',
-    fileHint: 'Always the current file name; not configurable.',
-    briefHint: 'One sentence about what this file defines; leave empty and each file writes its own.',
+    fileHint: 'Taken from the current file name.',
+    briefHint: 'One sentence about what this file defines; leave empty and the file writes its own.',
     authorHint: 'Author credit; left empty, omitted.',
     dateHint: 'Creation or change date; left empty, omitted.',
     copyrightHint: 'Copyright notice; left empty, omitted.',
@@ -64,7 +64,7 @@ const STRINGS = {
     emptyValue: 'Empty means omit',
     briefEmpty: 'Empty: the file writes its own',
     preview: 'Preview',
-    previewHint: 'Sample name board.h; the preview follows the switches.',
+    previewHint: 'Generated from the switches; the file name is a placeholder.',
     save: 'Save',
     reset: 'Reset',
     saved: 'Saved; the next skill read uses it.',
@@ -72,9 +72,9 @@ const STRINGS = {
     unsaved: 'Unsaved changes.',
     loading: 'Reading configuration…',
     unreadable: 'This account cannot edit the configuration.',
-    readOnly: 'Showing factory defaults. Edit the dsh-cpp-workflow card on the Plugins page.',
+    readOnly: 'Factory values are shown here; edit them on the Plugins page.',
     openSettings: 'Open plugin settings',
-    noForm: 'This entry has no writable form; edit it on the Plugins page.',
+    modified: 'Differs from the factory value',
   },
 }
 
@@ -90,7 +90,6 @@ function t() {
 const palette = {
   label: 'var(--dsw-alias-label-primary, inherit)',
   muted: 'var(--dsw-alias-label-secondary, #6b7280)',
-  faint: 'var(--dsw-alias-label-tertiary, #8b93a1)',
   line: 'var(--dsw-alias-border-l2, rgba(127, 127, 127, 0.24))',
   surface: 'var(--dsw-alias-bg-layer-2, rgba(127, 127, 127, 0.06))',
   field: 'var(--dsw-alias-bg-layer-1, rgba(127, 127, 127, 0.04))',
@@ -98,115 +97,143 @@ const palette = {
   mono: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
 }
 
-const hintStyle = () => ({ margin: '2px 0 0', fontSize: 12, lineHeight: 1.55, color: palette.muted })
-const labelCellStyle = () => ({
-  padding: '10px 0',
-  fontFamily: palette.mono,
-  fontSize: 12.5,
-  lineHeight: '20px',
-  color: palette.label,
-  whiteSpace: 'nowrap',
-  borderBottom: `1px solid ${palette.line}`,
-})
-const controlCellStyle = () => ({
-  padding: '10px 0',
-  minWidth: 0,
-  borderBottom: `1px solid ${palette.line}`,
-})
-const gridStyle = () => ({ display: 'grid', gridTemplateColumns: '92px minmax(0, 1fr)', columnGap: 14 })
+const descriptionStyle = () => ({ margin: '2px 0 0', fontSize: 12, lineHeight: 1.55, color: palette.muted })
+const sectionTitleStyle = () => ({ margin: '0 0 2px', fontSize: 13, fontWeight: 600, color: palette.label })
 
-function Toggle(props) {
+function Section(props) {
+  return h(
+    'section',
+    {
+      style: {
+        marginTop: props.first ? 16 : 22,
+        paddingTop: props.first ? 0 : 14,
+        borderTop: props.first ? 'none' : `1px solid ${palette.line}`,
+      },
+    },
+    h('h4', { style: sectionTitleStyle() }, props.title),
+    props.description ? h('p', { style: descriptionStyle() }, props.description) : null,
+    h('div', { style: { marginTop: 6 } }, props.children),
+  )
+}
+
+function Row(props) {
+  return h(
+    'div',
+    {
+      style: {
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr) minmax(160px, 240px)',
+        columnGap: 24,
+        alignItems: 'start',
+        padding: '10px 0',
+        borderBottom: `1px solid ${palette.line}`,
+      },
+    },
+    h(
+      'div',
+      { style: { minWidth: 0 } },
+      h(
+        'div',
+        { style: { display: 'flex', alignItems: 'center', gap: 6, minHeight: 20 } },
+        props.modified
+          ? h('span', {
+              key: 'dot',
+              title: props.modifiedLabel,
+              'aria-label': props.modifiedLabel,
+              style: { width: 6, height: 6, borderRadius: '50%', background: palette.brand, flex: 'none' },
+            })
+          : null,
+        h('span', { style: { fontSize: 13, lineHeight: '20px', color: palette.label, fontFamily: props.mono ? palette.mono : 'inherit' } }, props.label),
+      ),
+      props.description ? h('p', { style: descriptionStyle() }, props.description) : null,
+    ),
+    h(
+      'div',
+      { style: { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, minHeight: 20 } },
+      props.control,
+    ),
+  )
+}
+
+function Checkbox(props) {
   return h(
     'button',
     {
       type: 'button',
-      role: 'switch',
+      role: 'checkbox',
       'aria-checked': Boolean(props.checked),
       'aria-label': props.label,
       disabled: Boolean(props.disabled),
       onClick: () => props.onChange(!props.checked),
       style: {
         flex: 'none',
-        width: 34,
-        height: 20,
-        padding: 0,
-        border: 0,
-        borderRadius: 999,
-        position: 'relative',
-        cursor: props.disabled ? 'default' : 'pointer',
-        opacity: props.disabled ? 0.5 : 1,
-        background: props.checked ? palette.brand : 'var(--dsw-alias-bg-layer-4, rgba(127, 127, 127, 0.35))',
-        transition: 'background-color 0.15s ease',
-      },
-    },
-    h('span', {
-      'aria-hidden': 'true',
-      style: {
-        position: 'absolute',
-        top: 2,
-        left: props.checked ? 16 : 2,
         width: 16,
         height: 16,
-        borderRadius: '50%',
-        background: '#fff',
-        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.25)',
-        transition: 'left 0.15s ease',
+        padding: 0,
+        borderRadius: 4,
+        border: `1px solid ${props.checked ? palette.brand : palette.line}`,
+        background: props.checked ? palette.brand : 'transparent',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: props.disabled ? 'default' : 'pointer',
+        opacity: props.disabled ? 0.55 : 1,
+        transition: 'background-color 0.12s ease, border-color 0.12s ease',
       },
-    }),
-  )
-}
-
-function TagRow(props) {
-  const s = props.strings
-  return [
-    h('div', { key: `${props.tag}-label`, style: labelCellStyle() }, props.label),
+    },
     h(
-      'div',
-      { key: `${props.tag}-control`, style: controlCellStyle() },
-      h(
-        'div',
-        { style: { display: 'flex', alignItems: 'center', gap: 10, minHeight: 22, flexWrap: 'wrap' } },
-        props.control,
-      ),
-      props.hint ? h('p', { style: hintStyle() }, props.hint) : null,
+      'svg',
+      { width: 11, height: 11, viewBox: '0 0 12 12', 'aria-hidden': 'true' },
+      h('path', {
+        d: 'M2.6 6.3 5 8.7l4.4-5.2',
+        fill: 'none',
+        stroke: '#fff',
+        strokeWidth: 1.7,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+        opacity: props.checked ? 1 : 0,
+      }),
     ),
-  ]
+  )
 }
 
 function ValueRow(props) {
   const s = props.strings
-  return h(TagRow, {
-    tag: props.tag,
+  const entry = props.entry
+  return h(Row, {
     label: TAG_LABEL[props.tag],
-    strings: s,
-    hint: props.hint,
+    mono: true,
+    description: props.hint,
+    modified: props.modified,
+    modifiedLabel: s.modified,
     control: [
-      h(Toggle, {
-        key: 'toggle',
-        label: props.label || TAG_LABEL[props.tag],
-        checked: props.entry.enabled,
+      h(Checkbox, {
+        key: 'check',
+        label: TAG_LABEL[props.tag],
+        checked: entry.enabled,
         disabled: props.disabled,
-        onChange: (enabled) => !props.disabled && props.onChange({ ...props.entry, enabled }),
+        onChange: (enabled) => props.onChange({ ...entry, enabled }),
       }),
       h('input', {
         key: 'input',
         type: 'text',
-        value: props.entry.value,
+        value: entry.value,
         placeholder: props.tag === 'brief' ? s.briefEmpty : s.emptyValue,
-        disabled: props.disabled || !props.entry.enabled,
+        disabled: props.disabled || !entry.enabled,
         'aria-label': TAG_LABEL[props.tag],
-        onChange: (event) => props.onChange({ ...props.entry, value: event.target.value }),
+        onChange: (event) => props.onChange({ ...entry, value: event.target.value }),
         style: {
-          flex: '1 1 180px',
+          width: '100%',
           minWidth: 0,
-          maxWidth: 320,
           fontSize: 13,
-          padding: '4px 8px',
-          borderRadius: 6,
+          lineHeight: '18px',
+          padding: '3px 7px',
+          borderRadius: 4,
           border: `1px solid ${palette.line}`,
-          background: props.entry.enabled && !props.disabled ? palette.field : 'transparent',
-          color: props.entry.enabled ? 'inherit' : palette.muted,
+          background: entry.enabled && !props.disabled ? palette.field : 'transparent',
+          color: entry.enabled ? 'inherit' : palette.muted,
           fontFamily: palette.mono,
+          boxSizing: 'border-box',
         },
       }),
     ],
@@ -214,16 +241,17 @@ function ValueRow(props) {
 }
 
 function FlagRow(props) {
-  return h(TagRow, {
-    tag: props.tag,
+  return h(Row, {
     label: TAG_LABEL[props.tag],
-    strings: props.strings,
-    hint: props.hint,
-    control: h(Toggle, {
+    mono: true,
+    description: props.hint,
+    modified: props.modified,
+    modifiedLabel: props.strings.modified,
+    control: h(Checkbox, {
       label: TAG_LABEL[props.tag],
       checked: Boolean(props.checked),
       disabled: props.disabled,
-      onChange: (value) => !props.disabled && props.onChange(value),
+      onChange: (value) => props.onChange(value),
     }),
   })
 }
@@ -232,16 +260,16 @@ function Preview(props) {
   const s = props.strings
   return h(
     'section',
-    { 'aria-label': s.preview, style: { marginTop: 20 } },
-    h('h4', { style: { margin: '0 0 4px', fontSize: 13, fontWeight: 600, color: palette.label } }, s.preview),
-    h('p', { style: hintStyle() }, s.previewHint),
+    { 'aria-label': s.preview, style: { marginTop: 22, paddingTop: 14, borderTop: `1px solid ${palette.line}` } },
+    h('h4', { style: sectionTitleStyle() }, s.preview),
+    h('p', { style: descriptionStyle() }, s.previewHint),
     h(
       'pre',
       {
         style: {
           margin: '8px 0 0',
           padding: '10px 12px',
-          borderRadius: 8,
+          borderRadius: 6,
           background: palette.surface,
           border: `1px solid ${palette.line}`,
           overflowX: 'auto',
@@ -252,7 +280,7 @@ function Preview(props) {
           color: palette.label,
         },
       },
-      previewText(props.config, SAMPLE_FILE),
+      previewText(props.config),
     ),
   )
 }
@@ -265,6 +293,10 @@ function diffOperations(draft, base) {
     if (next !== previous) operations.push({ op: 'set', path: [key], value: draft[key] })
   }
   return operations
+}
+
+function isModified(key, draft) {
+  return JSON.stringify(draft[key]) !== JSON.stringify(DEFAULT_CONFIG[key])
 }
 
 function ConfigPage(props) {
@@ -321,133 +353,97 @@ function ConfigPage(props) {
   }
 
   const editable = Boolean(form)
-  const editableReady = editable && ready
-  const header = [
-    { tag: 'brief', hint: s.briefHint },
-    { tag: 'author', hint: s.authorHint },
-    { tag: 'date', hint: s.dateHint },
-    { tag: 'copyright', hint: s.copyrightHint },
-    { tag: 'version', hint: s.versionHint },
-  ]
-  const contractHints = { param: TAG_TEXT.param, returns: TAG_TEXT.returns, throws: TAG_TEXT.throws }
-  const extraHints = { note: TAG_TEXT.note, see: TAG_TEXT.see, pre: TAG_TEXT.pre, post: TAG_TEXT.post, tparam: TAG_TEXT.tparam, retval: TAG_TEXT.retval }
+  const headerHints = {
+    brief: s.briefHint,
+    author: s.authorHint,
+    date: s.dateHint,
+    copyright: s.copyrightHint,
+    version: s.versionHint,
+  }
 
   return h(
     'div',
-    { style: { display: 'flex', flexDirection: 'column', padding: '4px 0 12px', maxWidth: 720, color: palette.label } },
-    h('h3', { style: { margin: '0 0 4px', fontSize: 15, fontWeight: 600 } }, s.title),
-    h('p', { style: hintStyle() }, s.intro),
+    { style: { display: 'flex', flexDirection: 'column', padding: '2px 0 8px', maxWidth: 760, color: palette.label } },
+    h('h3', { style: { margin: '0 0 2px', fontSize: 15, fontWeight: 600 } }, s.title),
+    h('p', { style: descriptionStyle() }, s.intro),
     !editable
       ? h(
           'div',
-          { style: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 8 } },
-          h('p', { role: 'status', style: { ...hintStyle(), margin: 0 } }, s.readOnly),
+          {
+            role: 'status',
+            style: {
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              flexWrap: 'wrap',
+              marginTop: 10,
+              padding: '8px 10px',
+              borderRadius: 6,
+              background: palette.surface,
+              border: `1px solid ${palette.line}`,
+            },
+          },
+          h('p', { style: { ...descriptionStyle(), margin: 0, flex: '1 1 200px' } }, s.readOnly),
           props.openPluginPage
             ? h('button', { type: 'button', onClick: props.openPluginPage, style: secondaryButton(true) }, s.openSettings)
             : null,
         )
       : null,
     editable && !ready && status !== 'missing'
-      ? h('p', { role: 'status', style: hintStyle() }, status === 'loading' ? s.loading : s.unreadable)
+      ? h('p', { role: 'status', style: descriptionStyle() }, status === 'loading' ? s.loading : s.unreadable)
       : null,
     h(
-      'section',
-      { style: { marginTop: 18 } },
-      h('h4', { style: { margin: '0 0 4px', fontSize: 13, fontWeight: 600 } }, s.header),
-      h('p', { style: hintStyle() }, s.headerHint),
-      h(
-        'div',
-        { role: 'group', 'aria-label': s.header, style: { ...gridStyle(), marginTop: 8 } },
-        h(
-          'div',
-          { key: 'file-label', style: labelCellStyle() },
-          s.file,
-        ),
-        h(
-          'div',
-          { key: 'file-control', style: controlCellStyle() },
-          h(
-            'div',
-            { style: { display: 'flex', alignItems: 'center', gap: 10, minHeight: 22 } },
-            h(
-              'span',
-              {
-                style: {
-                  fontSize: 12,
-                  lineHeight: '20px',
-                  padding: '0 8px',
-                  borderRadius: 999,
-                  border: `1px solid ${palette.line}`,
-                  color: palette.muted,
-                },
-              },
-              s.fixed,
-            ),
-            h('code', { style: { fontSize: 12.5, fontFamily: palette.mono, color: palette.muted } }, SAMPLE_FILE),
-          ),
-          h('p', { style: hintStyle() }, s.fileHint),
-        ),
-        ...header.flatMap(({ tag, hint }) =>
-          h(ValueRow, {
-            key: tag,
-            tag,
-            hint,
-            strings: s,
-            disabled: !editable,
-            entry: draft[tag],
-            onChange: (entry) => update({ [tag]: entry }),
-          }),
-        ),
+      Section,
+      { title: s.header, description: s.headerHint, first: true },
+      h(Row, {
+        label: s.file,
+        mono: true,
+        description: s.fileHint,
+        control: null,
+      }),
+      ...HEADER_TAGS.map((tag) =>
+        h(ValueRow, {
+          key: tag,
+          tag,
+          hint: headerHints[tag],
+          strings: s,
+          disabled: !editable,
+          modified: editable && isModified(tag, draft),
+          entry: draft[tag],
+          onChange: (entry) => update({ [tag]: entry }),
+        }),
       ),
     ),
     h(
-      'section',
-      { style: { marginTop: 20 } },
-      h('h4', { style: { margin: '0 0 4px', fontSize: 13, fontWeight: 600 } }, s.contract),
-      h('p', { style: hintStyle() }, s.contractHint),
-      h(
-        'div',
-        { role: 'group', 'aria-label': s.contract, style: { ...gridStyle(), marginTop: 8 } },
-        ...CONTRACT_TAGS.flatMap((tag) =>
-          h(FlagRow, {
-            key: tag,
-            tag,
-            hint: contractHints[tag],
-            strings: s,
-            disabled: !editable,
-            checked: draft[tag],
-            onChange: (value) => update({ [tag]: value }),
-          }),
-        ),
+      Section,
+      { title: s.contract, description: s.contractHint },
+      ...CONTRACT_TAGS.map((tag) =>
+        h(FlagRow, {
+          key: tag,
+          tag,
+          hint: TAG_TEXT[tag],
+          strings: s,
+          disabled: !editable,
+          modified: editable && isModified(tag, draft),
+          checked: draft[tag],
+          onChange: (value) => update({ [tag]: value }),
+        }),
       ),
     ),
     h(
-      'section',
-      { style: { marginTop: 20, paddingTop: 12, borderTop: `1px solid ${palette.line}` } },
-      h(
-        'details',
-        {},
-        h(
-          'summary',
-          { style: { cursor: 'pointer', fontSize: 13, fontWeight: 600, listStylePosition: 'inside' } },
-          s.extra,
-        ),
-        h('p', { style: hintStyle() }, s.extraHint),
-        h(
-          'div',
-          { role: 'group', 'aria-label': s.extra, style: { ...gridStyle(), marginTop: 8 } },
-          ...EXTRA_TAGS.flatMap((tag) =>
-            h(FlagRow, {
-              key: tag,
-              tag,
-              hint: extraHints[tag],
-              strings: s,
-              disabled: !editable,
-              checked: draft[tag],
-              onChange: (value) => update({ [tag]: value }),
-            }),
-          ),
-        ),
+      Section,
+      { title: s.extra, description: s.extraHint },
+      ...EXTRA_TAGS.map((tag) =>
+        h(FlagRow, {
+          key: tag,
+          tag,
+          hint: TAG_TEXT[tag],
+          strings: s,
+          disabled: !editable,
+          modified: editable && isModified(tag, draft),
+          checked: draft[tag],
+          onChange: (value) => update({ [tag]: value }),
+        }),
       ),
     ),
     h(Preview, { config: draft, strings: s }),
@@ -459,7 +455,7 @@ function ConfigPage(props) {
               display: 'flex',
               alignItems: 'center',
               gap: 10,
-              marginTop: 18,
+              marginTop: 20,
               paddingTop: 12,
               borderTop: `1px solid ${palette.line}`,
               flexWrap: 'wrap',
@@ -470,8 +466,8 @@ function ConfigPage(props) {
             {
               type: 'button',
               onClick: save,
-              disabled: busy || !editableReady || !dirty,
-              style: primaryButton(dirty && editableReady && !busy),
+              disabled: busy || !ready || !dirty,
+              style: primaryButton(dirty && ready && !busy),
             },
             s.save,
           ),
@@ -485,7 +481,7 @@ function ConfigPage(props) {
             },
             s.reset,
           ),
-          h('p', { role: 'status', style: { ...hintStyle(), margin: 0, flex: '1 1 220px' } }, message || (dirty ? s.unsaved : '')),
+          h('p', { role: 'status', style: { ...descriptionStyle(), margin: 0, flex: '1 1 200px' } }, message || (dirty ? s.unsaved : '')),
         )
       : null,
   )
@@ -495,8 +491,8 @@ function primaryButton(enabled) {
   return {
     fontSize: 13,
     lineHeight: '20px',
-    padding: '5px 14px',
-    borderRadius: 6,
+    padding: '4px 12px',
+    borderRadius: 4,
     border: '1px solid transparent',
     background: enabled ? palette.brand : 'var(--dsw-alias-bg-layer-3, rgba(127, 127, 127, 0.2))',
     color: enabled ? '#fff' : palette.muted,
@@ -508,8 +504,8 @@ function secondaryButton(enabled) {
   return {
     fontSize: 13,
     lineHeight: '20px',
-    padding: '5px 14px',
-    borderRadius: 6,
+    padding: '4px 12px',
+    borderRadius: 4,
     border: `1px solid ${palette.line}`,
     background: 'transparent',
     color: enabled ? palette.label : palette.muted,

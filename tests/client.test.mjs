@@ -106,12 +106,12 @@ test('设置页与插件页各注册一个挂点', () => {
 
 test('出厂设置的预览先写文件头，再写函数契约', () => {
   const { exported } = loadClient()
-  const lines = exported.previewText(undefined, 'board.h').split('\n')
-  assert.equal(lines[0], '/// @file board.h')
-  // @brief 开着但没填句子时，预览用示例文件的摘要，避免出现空标签。
-  assert.equal(lines[1], '/// @brief 定义井字棋棋盘、格子坐标与格子类型。')
-  assert.ok(lines.includes('/// @param position 目标行列坐标。'))
-  assert.ok(lines.at(-1).startsWith('[[nodiscard]] bool PlaceCell'))
+  const lines = exported.previewText(undefined, '<文件名>').split('\n')
+  assert.equal(lines[0], '/// @file <文件名>')
+  // @brief 开着但没填句子时，预览用占位句，避免出现空标签。
+  assert.equal(lines[1], '/// @brief <一句话说明本文件>')
+  assert.ok(lines.includes('/// @param row 目标行号。'))
+  assert.ok(lines.at(-1).startsWith('[[nodiscard]] bool Place('))
 })
 
 test('没有宿主表单时页面降级为只读出厂值，不抛异常', () => {
@@ -120,5 +120,5 @@ test('没有宿主表单时页面降级为只读出厂值，不抛异常', () =>
   const texts = flatten(tree)
   assert.ok(texts.includes('文档注释'))
   assert.ok(texts.some((text) => text.includes('出厂值')))
-  assert.ok(texts.some((text) => text.includes('/// @file board.h')))
+  assert.ok(texts.some((text) => text.includes('/// @file <文件名>')))
 })
