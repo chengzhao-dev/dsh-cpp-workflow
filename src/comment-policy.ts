@@ -65,6 +65,7 @@ export const TAG_TEXT: Record<string, string> = {
 
 /** 开关型标签在设置页的标题。 */
 export const TAG_LABEL: Record<string, string> = {
+  file: '@file',
   brief: '@brief',
   author: '@author',
   date: '@date',
