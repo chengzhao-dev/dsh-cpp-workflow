@@ -103,9 +103,11 @@ npm ci
 npm test              # build, three-skill structural check, gate/environment/schema/comment tests
 npm run test:matrix   # real build matrix: 4 templates x 5 standards
 npm run pack:check    # inspect the npm package contents
+npm run ci            # replay the Ubuntu CI job: install, test, package check
+npm run ci:full       # ci plus the standard matrix; needs a POSIX host
 ```
 
-Source lives in `src/`; `npm run build` writes `lib/`. The structural check is `scripts/checking-skill-links.mjs`. Tests do not invoke a local compiler; the environment checks use fixed version strings. The standard matrix needs `cmake`, `ninja`, `perl`, and `clang++` (or the compiler named by `CXX`) on a POSIX host such as WSL, Linux, or macOS.
+Source lives in `src/`; `npm run build` writes `lib/`. The structural check is `scripts/checking-skill-links.mjs`. Tests do not invoke a local compiler; the environment checks use fixed version strings. The standard matrix needs `cmake`, `ninja`, `perl`, and `clang++` (or the compiler named by `CXX`) on a POSIX host such as WSL, Linux, or macOS. On Windows, run `npm run ci` first, then run `npm run ci:full` from WSL inside the checkout.
 
 ## License
 

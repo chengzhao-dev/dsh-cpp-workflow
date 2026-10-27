@@ -43,6 +43,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && node scripts/checking-skill-links.mjs && node skills/building-cpp/scripts/checking-encoding.mjs --quiet && node scripts/checking-github-workflows.mjs && node --test tests/*.test.mjs",
+    "ci": "npm ci && npm test && npm run pack:check",
+    "ci:full": "npm run ci && npm run test:matrix",
     "check:encoding": "node skills/building-cpp/scripts/checking-encoding.mjs",
     "check:workflows": "node scripts/checking-github-workflows.mjs",
     "test:matrix": "bash scripts/checking-standard-matrix.sh",

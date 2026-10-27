@@ -103,9 +103,11 @@ npm ci
 npm test              # 构建、三技能结构检查、门禁/环境/schema/注释测试
 npm run test:matrix   # 四套模板 × 五档标准的真实构建矩阵
 npm run pack:check    # 核对 npm 包内容
+npm run ci            # 复现 Ubuntu CI：安装、测试、打包检查
+npm run ci:full       # 在 ci 之上再跑标准矩阵，需 POSIX 宿主
 ```
 
-源码在 `src/`，`npm run build` 生成 `lib/`。结构检查在 `scripts/checking-skill-links.mjs`；测试不调用本机编译器，环境检查用固定版本字符串。标准矩阵需要 POSIX 宿主上的 `cmake`、`ninja`、`perl` 和 `clang++`（或 `CXX` 指定的编译器），在 WSL/Linux/macOS 上运行。
+源码在 `src/`，`npm run build` 生成 `lib/`。结构检查在 `scripts/checking-skill-links.mjs`；测试不调用本机编译器，环境检查用固定版本字符串。标准矩阵需要 POSIX 宿主上的 `cmake`、`ninja`、`perl` 和 `clang++`（或 `CXX` 指定的编译器），在 WSL/Linux/macOS 上运行。Windows 上先跑 `npm run ci`，再从 WSL 进入仓库跑 `npm run ci:full`。
 
 ## 许可
 
