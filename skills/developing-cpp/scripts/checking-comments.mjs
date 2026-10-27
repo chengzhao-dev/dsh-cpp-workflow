@@ -25,8 +25,10 @@ const SKIP_DIR = new Set([
   '.tmp', 'temp', 'third_party', 'third-party', 'external', 'vendor', 'deps', 'cmake-build-debug',
   'cmake-build-release', '.vs', '.idea',
 ])
-const FORBIDDEN_TAGS = ['@returns', '@brief', '@details', '@author', '@since', '@todo', '@date', '@file', '@copyright', '@version']
+const FORBIDDEN_TAGS = ['@returns', '@details', '@author', '@since', '@todo', '@date', '@copyright', '@version']
 const BANNER = /^\/\/=+-+=+\/\/$/
+const DOXY_FILE = /^\/\/\/\s*@file\s+\S/
+const DOXY_BRIEF = /^\/\/\/\s*@brief\s+\S/
 const MEMBER_LIST = /提供[^。]{0,40}、[^。]{0,40}(的功能|的能力|的接口)|功能[:：]/
 const RATIONALE = /而不是|而非|代价.{0,4}忽略|只留一份|与其|比.{0,12}更|更(?:安全|快|清楚|直接|好写|难写)/
 const FORWARD_REF = /(?:留在|归|交给|由)\s*`?[A-Z][A-Za-z0-9_]*`?/
@@ -205,16 +207,29 @@ export function checkText(text, options = {}) {
   const inClass = classMemberLines(lines)
 
   const firstContent = lines.findIndex((line) => line.trim() !== '')
-  if (requireHeader && firstContent !== -1 && !BANNER.test(lines[firstContent].trim())) {
-    add(firstContent + 1, 'header-missing', '文件开头缺少文件头横幅（//===...===//）')
+  const firstTrimmed = firstContent === -1 ? '' : lines[firstContent].trim()
+  const hasDoxyHeader = DOXY_FILE.test(firstTrimmed)
+  let doxyHeaderEnd = -1
+  if (hasDoxyHeader) {
+    doxyHeaderEnd = firstContent
+    while (doxyHeaderEnd + 1 < lines.length && lines[doxyHeaderEnd + 1].trim().startsWith('///')) doxyHeaderEnd += 1
   }
-  if (firstContent !== -1 && BANNER.test(lines[firstContent].trim())) {
+  if (requireHeader && firstContent !== -1 && !BANNER.test(firstTrimmed) && !hasDoxyHeader) {
+    add(firstContent + 1, 'header-missing', '文件开头缺少文件头：写 /// @file <文件名>，下一行写 /// @brief')
+  }
+  if (firstContent !== -1 && (BANNER.test(firstTrimmed) || hasDoxyHeader)) {
     const own = options.fileName ? options.fileName.split(/[\\/]/).pop() : ''
+    const bannerHeader = BANNER.test(firstTrimmed)
+    if (hasDoxyHeader && !DOXY_BRIEF.test((lines[firstContent + 1] ?? '').trim())) {
+      add(firstContent + 2, 'header-brief', '文件头第二行缺少 /// @brief 一句话说明')
+    }
     for (let index = firstContent + 1; index < lines.length; index += 1) {
       const trimmed = lines[index].trim()
-      if (BANNER.test(trimmed) || !trimmed.startsWith('//')) break
+      if (bannerHeader ? BANNER.test(trimmed) || !trimmed.startsWith('//') : !trimmed.startsWith('///')) break
       const names = trimmed.match(/\b[A-Za-z0-9_-]+\.(?:h|hpp|cpp|cc)\b/g) ?? []
-      for (const name of names) {
+      const fileMatches = trimmed.match(/@file\s+(\S+)/)
+      const namesToCheck = fileMatches ? names.filter((name) => name !== fileMatches[1]) : names
+      for (const name of namesToCheck) {
         if (name !== own) add(index + 1, 'header-cross-file', `文件头提到了别的源文件 ${name}：只介绍本文件，删掉跨文件句子`)
       }
       if (/\bapps\//.test(trimmed)) add(index + 1, 'header-cross-file', '文件头指向了另一个目录：只介绍本文件')
@@ -238,6 +253,10 @@ export function checkText(text, options = {}) {
   }
 
   for (let index = 0; index < lines.length; index += 1) {
+    if (doxyHeaderEnd !== -1 && index <= doxyHeaderEnd) {
+      index = doxyHeaderEnd
+      continue
+    }
     if (!lines[index].trim().startsWith('///')) continue
     if (lines[index].trim().startsWith('///<')) continue
     const start = index

@@ -34,6 +34,15 @@ test('缺少文件头横幅时报错', () => {
   assert.deepEqual(rules('class Board {};\n', { requireHeader: false }), [])
 })
 
+test('文件头用 /// @file 与 @brief 收口', () => {
+  const doxy = ['/// @file board.h', '/// @brief 定义棋盘。', '', 'class Board {};', ''].join('\n')
+  assert.deepEqual(rules(doxy), [])
+  assert.deepEqual(rules('/// @file board.h\n\nclass Board {};\n'), ['header-brief'])
+  assert.ok(rules('/// @brief 定义棋盘。\n\nclass Board {};\n').includes('header-missing'))
+  const cross = ['/// @file board.h', '/// @brief 定义棋盘。', '///', '/// 对局在 game.h。', '', 'class Board {};', ''].join('\n')
+  assert.ok(rules(cross, { fileName: 'board.h' }).includes('header-cross-file'))
+})
+
 test('文件头提到别的源文件或目录时报错', () => {
   const cross = file(
     '// board.h - 定义棋盘。',
@@ -52,7 +61,7 @@ test('文件头提到别的源文件或目录时报错', () => {
 })
 
 test('禁止的 Doxygen 标签', () => {
-  for (const tag of ['@returns 结果', '@brief 简述', '@author 某人', '@details 细节']) {
+  for (const tag of ['@returns 结果', '@author 某人', '@details 细节']) {
     assert.deepEqual(rules(file(`/// 函数。`, `///`, `/// ${tag}`, `int F();`)), ['forbidden-tag'], tag)
   }
 })
