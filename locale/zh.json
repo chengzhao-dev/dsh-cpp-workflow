@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "C++ 工程流程",
-    "description": "用源码四步、CMake 三步与构建三步推进 C++11–C++23 工程（默认 C++23），并在项目声明的环境组合里核对构建与 clang 工具链。"
+    "description": "写 C++ 源码、配 CMake、用 Clang 构建；文档注释统一为 /// Doxygen，文件头标签可在设置里改。"
   }
 }

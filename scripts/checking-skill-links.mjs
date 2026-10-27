@@ -151,7 +151,11 @@ if (packageJson) {
   ok(!existsSync(join(ROOT, '.npmignore')), '不应保留与 files 白名单重复的 .npmignore')
   equal(packageJson.publishConfig?.provenance, true, 'publishConfig.provenance')
   ok(packageJson.repository?.url?.includes('github.com/chengzhao-dev/dsh-cpp-workflow'), 'repository 指向 GitHub')
-  equal(packageJson.scripts?.build, 'tsc -p tsconfig.json', 'build 脚本')
+  ok(
+    String(packageJson.scripts?.build ?? '').includes('tsc -p tsconfig.json') &&
+      String(packageJson.scripts?.build ?? '').includes('scripts/building-client.mjs'),
+    'build 脚本必须编译服务端并生成客户端半侧',
+  )
   equal(packageJson.scripts?.prepare, undefined, '不应有 prepare 安装脚本')
   for (const token of ['npm run build', 'checking-skill-links.mjs', 'node --test tests/*.test.mjs']) {
     ok(packageJson.scripts?.test?.includes(token), `npm test 缺少 ${token}`)
@@ -163,7 +167,17 @@ if (packageJson) {
   equal(packageJson.dsh?.catalog?.capabilities, ['skills'], 'dsh.catalog.capabilities')
   ok(Boolean(packageJson.dsh?.catalog?.summary?.zh), 'dsh.catalog.summary.zh 为空')
   ok(Boolean(packageJson.dsh?.catalog?.summary?.en), 'dsh.catalog.summary.en 为空')
-  ok(!('client' in (packageJson.dsh ?? {})), '本包不应声明 dsh.client')
+  // 0.6.0 起本包有设置页：客户端半侧挂在包名那一行，按包名装载。
+  if ('client' in (packageJson.dsh ?? {})) {
+    equal(packageJson.dsh.client?.platform, 'web', 'dsh.client.platform')
+    ok(
+      (packageJson.dsh.client?.inject ?? []).includes('@deepseek-ai/dsh-client-ui-slots'),
+      'dsh.client.inject 缺少 ui-slots',
+    )
+    equal(packageJson.exports?.['./client'], './lib/client.js', 'exports["./client"]')
+  } else {
+    ok(false, '0.6.0 起必须声明 dsh.client（设置页）')
+  }
 
   equal(packageJson.exports?.['.'], './lib/index.js', 'exports["."]')
   equal(packageJson.exports?.['./cordis.patch.yml'], './cordis.patch.yml', 'exports patch')
@@ -634,10 +648,21 @@ ok(publish.includes('--verify-tag'), 'publish.yml 创建 Release 时未校验标
 const libEntry = join(ROOT, 'lib', 'index.js')
 if (ok(existsSync(libEntry), '缺少 lib/index.js，先运行 npm run build')) {
   const mod = await import(pathToFileURL(libEntry).href)
-  equal(Object.keys(mod).sort(), ['apply', 'inject', 'name'], '入口运行时导出')
+  equal(Object.keys(mod).sort(), ['Config', 'apply', 'inject', 'name'], '入口运行时导出')
   equal(mod.name, 'dsh-cpp-workflow', '入口 name')
   equal(mod.inject, ['skills'], '入口 inject')
   ok(typeof mod.apply === 'function', '入口 apply 不是函数')
+  ok(typeof mod.Config === 'function', '入口 Config 不是 Schemastery schema')
+}
+
+const libClient = join(ROOT, 'lib', 'client.js')
+if (ok(existsSync(libClient), '缺少 lib/client.js，先运行 npm run build')) {
+  const client = read('lib/client.js')
+  ok(client.startsWith('// 由 scripts/building-client.mjs 生成'), 'lib/client.js 必须由构建脚本生成')
+  ok(client.includes('window.__ModuleLoader__.load({'), 'lib/client.js 缺少 Cordis 客户端外壳')
+  ok(client.includes("id: \"@chengzhao-dev/dsh-cpp-workflow\""), 'lib/client.js 的包名不对')
+  ok(client.includes("'settings.section'"), 'lib/client.js 未注册设置页')
+  ok(client.includes("'plugins.bundle.config'"), 'lib/client.js 未注册插件页配置卡片')
 }
 ok(existsSync(join(ROOT, 'lib', 'workspace.js')), '缺少 lib/workspace.js，先运行 npm run build')
 

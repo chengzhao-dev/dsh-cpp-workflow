@@ -25,7 +25,9 @@ const SKIP_DIR = new Set([
   '.tmp', 'temp', 'third_party', 'third-party', 'external', 'vendor', 'deps', 'cmake-build-debug',
   'cmake-build-release', '.vs', '.idea',
 ])
-const FORBIDDEN_TAGS = ['@returns', '@details', '@author', '@since', '@todo', '@date', '@copyright', '@version']
+const STATIC_FORBIDDEN_TAGS = ['@returns', '@details', '@since', '@todo']
+const PRIVACY_TAGS = ['@author', '@date', '@copyright', '@version']
+const FORBIDDEN_TAGS = [...STATIC_FORBIDDEN_TAGS, ...PRIVACY_TAGS]
 const BANNER = /^\/\/=+-+=+\/\/$/
 const DOXY_FILE = /^\/\/\/\s*@file\s+\S/
 const DOXY_BRIEF = /^\/\/\/\s*@brief\s+\S/
@@ -40,12 +42,12 @@ const DECL_KEYWORDS = /^(class|struct|union|enum|namespace|using|typedef|templat
 
 function usage(message) {
   if (message) process.stderr.write(`错误：${message}\n`)
-  process.stderr.write('用法：node checking-comments.mjs [--root DIR] [--width N] [--banner-width N] [--no-header] [--json] [--quiet]\n')
+  process.stderr.write('用法：node checking-comments.mjs [--root DIR] [--width N] [--banner-width N] [--no-header] [--no-brief] [--allow-tag TAG] [--json] [--quiet]\n')
   return EXIT.usage
 }
 
 function parseArgs(argv) {
-  const options = { root: undefined, width: 80, bannerWidth: 80, widthExplicit: false, bannerWidthExplicit: false, requireHeader: true, json: false, quiet: false }
+  const options = { root: undefined, width: 80, bannerWidth: 80, widthExplicit: false, bannerWidthExplicit: false, requireHeader: true, requireBrief: true, allowTags: new Set(), json: false, quiet: false }
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index]
     if (arg === '--root') {
@@ -61,6 +63,13 @@ function parseArgs(argv) {
       index += 1
     } else if (arg === '--no-header') {
       options.requireHeader = false
+    } else if (arg === '--no-brief') {
+      options.requireBrief = false
+    } else if (arg === '--allow-tag') {
+      const value = argv[index + 1]
+      if (!value) throw new Error('--allow-tag 需要标签名，例如 author')
+      options.allowTags.add(value.replace(/^@/, ''))
+      index += 1
     } else if (arg === '--json') {
       options.json = true
     } else if (arg === '--quiet') {
@@ -220,7 +229,13 @@ export function checkText(text, options = {}) {
   if (firstContent !== -1 && (BANNER.test(firstTrimmed) || hasDoxyHeader)) {
     const own = options.fileName ? options.fileName.split(/[\\/]/).pop() : ''
     const bannerHeader = BANNER.test(firstTrimmed)
-    if (hasDoxyHeader && !DOXY_BRIEF.test((lines[firstContent + 1] ?? '').trim())) {
+    if (hasDoxyHeader && own) {
+      const declared = /@file\s+(\S+)/.exec(lines[firstContent].trim())
+      if (declared && declared[1] !== own) {
+        add(firstContent + 1, 'header-file-name', `文件头写的是 ${declared[1]}，本文件是 ${own}：@file 必须等于文件名`)
+      }
+    }
+    if (hasDoxyHeader && options.requireBrief !== false && !DOXY_BRIEF.test((lines[firstContent + 1] ?? '').trim())) {
       add(firstContent + 2, 'header-brief', '文件头第二行缺少 /// @brief 一句话说明')
     }
     for (let index = firstContent + 1; index < lines.length; index += 1) {
@@ -247,6 +262,7 @@ export function checkText(text, options = {}) {
     if (trimmed.startsWith('///') || (trimmed.startsWith('//') && !trimmed.startsWith('//!'))) {
       if (displayWidth(trimmed) > width) add(index + 1, 'comment-width', `注释行 ${displayWidth(trimmed)} 列，超过 ${width} 列`)
       for (const tag of FORBIDDEN_TAGS) {
+        if (options.allowTags?.has(tag.slice(1))) continue
         if (trimmed.includes(tag)) add(index + 1, 'forbidden-tag', `禁止使用 ${tag}，按 references/comments.md 的标签表改写`)
       }
     }
@@ -429,6 +445,11 @@ function main(argv) {
   }
   if (options.help) return usage()
   const root = options.root ? path.resolve(options.root) : process.cwd()
+  try {
+    statSync(root)
+  } catch {
+    return usage(`根目录不存在或无法读取：${root}`)
+  }
   const columnLimit = readColumnLimit(root)
   if (columnLimit !== undefined) {
     if (!options.widthExplicit) options.width = columnLimit

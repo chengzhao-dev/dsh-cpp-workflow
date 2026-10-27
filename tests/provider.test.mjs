@@ -13,15 +13,18 @@ import {
   isCppWorkflowWorkspace,
 } from '../lib/workspace.js'
 
-function makeProvider() {
+function makeProvider(config) {
   let provider
-  apply({
-    skills: {
-      registerProvider(factory) {
-        provider = factory()
+  apply(
+    {
+      skills: {
+        registerProvider(factory) {
+          provider = factory()
+        },
       },
     },
-  })
+    config,
+  )
   assert.ok(provider, 'apply() must register a provider')
   return provider
 }
@@ -234,6 +237,19 @@ test('all three skills expose rank 550, bundled source and a directory resource 
   const loaded = await provider.get(candidates[0])
   assert.equal(loaded.name, 'building-cpp')
   assert.match(loaded.content, /^# /)
+  await rm(root, { recursive: true, force: true })
+})
+
+test('the tag snapshot rides only on developing-cpp and follows the config', async () => {
+  const root = await makeRepo({ cpp: true })
+  const provider = makeProvider({ author: { enabled: true, value: 'chengzhao-dev' } })
+  const candidates = await provider.list({ cwd: root })
+  const developing = candidates.find((candidate) => candidate.name === 'developing-cpp')
+  const building = candidates.find((candidate) => candidate.name === 'building-cpp')
+  const loaded = await provider.get(developing)
+  assert.match(loaded.content, /当前注释配置/)
+  assert.match(loaded.content, /@author chengzhao-dev/)
+  assert.doesNotMatch(building ? (await provider.get(building)).content : '', /当前注释配置/)
   await rm(root, { recursive: true, force: true })
 })
 

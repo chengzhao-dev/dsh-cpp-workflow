@@ -1,6 +1,6 @@
 # 插件流程
 
-这个包只做一件事：在已经声明 C++ 工作流的仓库里，提供 `developing-cpp`、`configuring-cmake` 与 `building-cpp` 三个技能。它不注册工具，不编译，不写项目文件，也不改系统提示词。
+这个包只做一件事：在已经声明 C++ 工作流的仓库里，提供 `developing-cpp`、`configuring-cmake` 与 `building-cpp` 三个技能。它不注册工具，不编译，不写项目文件，也不改系统提示词；唯一的浏览器半侧是一个设置页，用来调整注释标签的默认值。
 
 ## 第一层：安装
 
@@ -42,3 +42,11 @@ node "<skill-dir>/scripts/checking-environment.mjs" --project . --live
 第一条只验证三个环境轴、`standard` 和组合，任何机器都能跑。第二条在当前 PATH 上核对构建宿主、命令和版本。通过后才运行项目入口命令；入口内部依次 configure、build、format、tidy、ctest、run。
 
 环境脚本不安装、不下载、不改 PATH。缺命令时打印缺的名字并非零退出。
+
+## 第五层：设置
+
+设置页在两个位置出现同一个组件：「设置 → C++ 工程流程」与「插件 → dsh-cpp-workflow → 配置」。它只编辑文件头标签：`@file` 固定为文件名，`@brief` 默认写，`@author`、`@date`、`@copyright`、`@version` 默认不写且值空着就不写出，`@param`、`@return`、`@throws` 默认必写，`@note`、`@see`、`@pre`、`@post`、`@tparam`、`@retval` 默认关闭。预览用示例文件名 `board.h`，不扫工程、不写文件。
+
+保存走宿主表单，配置留在 profile 的 `cordis.yml`；下次技能列表或 `get()` 读取时把当前开关附在技能正文末尾，检查器按同一开关生成 `--no-brief` 与 `--allow-tag` 参数。设置页、快照与检查器读同一份策略，改一处不会出现三种默认值。
+
+浏览器半侧是手写 CJS，构建时把 `comment-policy` 内联进去，不引入打包器；它只依赖宿主的 `react` 与 `@deepseek-ai/dsh-client-ui-slots`，没有各自的版本副本。

@@ -305,6 +305,46 @@ test('CLI 从 .clang-format 读取 ColumnLimit', () => {
   }
 })
 
+test('不存在的根目录返回用法错误而不是堆栈', () => {
+  const missing = path.join(tmpdir(), `comments-missing-${process.pid}-${Date.now()}`)
+  const result = runCli(['--root', missing])
+  assert.equal(result.status, EXIT.usage)
+  assert.match(result.stdout + result.stderr, /根目录不存在或无法读取/)
+  assert.doesNotMatch(result.stdout + result.stderr, /ENOENT|readColumnLimit/)
+})
+
+test('@file 必须等于实际文件名', () => {
+  const text = ['/// @file board.h', '/// @brief 定义棋盘。', '', 'class Board {};', ''].join('\n')
+  assert.deepEqual(rules(text, { fileName: 'board.h' }), [])
+  assert.ok(rules(text, { fileName: 'game.h' }).includes('header-file-name'))
+})
+
+test('@brief 可以按配置关掉', () => {
+  const text = ['/// @file board.h', '', 'class Board {};', ''].join('\n')
+  assert.ok(rules(text, { fileName: 'board.h' }).includes('header-brief'))
+  assert.ok(!rules(text, { fileName: 'board.h', requireBrief: false }).includes('header-brief'))
+})
+
+test('隐私标签只有显式放行才通过', () => {
+  const text = ['/// @file board.h', '/// @brief 定义棋盘。', '/// @author chengzhao-dev', '', 'class Board {};', ''].join('\n')
+  assert.ok(rules(text, { fileName: 'board.h' }).includes('forbidden-tag'))
+  assert.ok(!rules(text, { fileName: 'board.h', allowTags: new Set(['author']) }).includes('forbidden-tag'))
+  const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
+  try {
+    writeFileSync(path.join(dir, 'board.h'), text)
+    assert.equal(runCli(['--root', dir]).status, 1)
+    assert.equal(runCli(['--root', dir, '--allow-tag', 'author']).status, 0)
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('--allow-tag 缺值时返回用法错误', () => {
+  const result = runCli(['--root', '.', '--allow-tag'])
+  assert.equal(result.status, EXIT.usage)
+  assert.match(result.stderr, /--allow-tag 需要标签名/)
+})
+
 function runCli(args) {
   try {
     const stdout = execFileSync(process.execPath, [SCRIPT, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })

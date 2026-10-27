@@ -21,10 +21,38 @@
 import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import Schema from '@deepseek-ai/schemastery'
 import { isCppWorkflowWorkspace } from './workspace.js'
+import { normalizeConfig, snapshotText } from './comment-policy.js'
 
 export const name = 'dsh-cpp-workflow'
 export const inject = ['skills']
+
+// 设置页保存的标签开关；字段即时生效，改配置不必重装插件。
+const HeaderTag = Schema.object({
+  enabled: Schema.boolean().default(false).volatile(),
+  value: Schema.string().default('').volatile(),
+})
+
+export const Config = Schema.object({
+  brief: Schema.object({
+    enabled: Schema.boolean().default(true).volatile(),
+    value: Schema.string().default('').volatile(),
+  }),
+  author: HeaderTag,
+  date: HeaderTag,
+  copyright: HeaderTag,
+  version: HeaderTag,
+  param: Schema.boolean().default(true).volatile(),
+  returns: Schema.boolean().default(true).volatile(),
+  throws: Schema.boolean().default(true).volatile(),
+  note: Schema.boolean().default(false).volatile(),
+  see: Schema.boolean().default(false).volatile(),
+  pre: Schema.boolean().default(false).volatile(),
+  post: Schema.boolean().default(false).volatile(),
+  tparam: Schema.boolean().default(false).volatile(),
+  retval: Schema.boolean().default(false).volatile(),
+})
 
 const PROVIDER = 'dsh-cpp-workflow'
 const RANK = 550
@@ -173,7 +201,11 @@ async function listSkills(options: ListOptions = {}): Promise<SkillCandidate[]> 
   return candidates
 }
 
-async function getSkill(candidate: SkillCandidate | undefined, options: ListOptions = {}) {
+async function getSkill(
+  candidate: SkillCandidate | undefined,
+  options: ListOptions = {},
+  commentConfig: unknown = undefined,
+) {
   if (options.signal?.aborted) return undefined
   if (!candidate || candidate.provider !== PROVIDER) return undefined
   // A candidate can outlive a directory change in the same session. Re-check
@@ -206,14 +238,21 @@ async function getSkill(candidate: SkillCandidate | undefined, options: ListOpti
     resourceBase: { kind: 'directory', path: resolved },
     path: path.join(resolved, 'SKILL.md'),
     ...(candidate.metadata ? { metadata: candidate.metadata } : {}),
-    content: body.trim(),
+    // 标签开关只跟注释技能有关，另两个技能的正文保持原样。
+    content:
+      candidate.name === 'developing-cpp'
+        ? `${body.trim()}\n\n${snapshotText(commentConfig)}`
+        : body.trim(),
   }
 }
 
-export function apply(ctx: DshContext): void {
+export function apply(ctx: DshContext, config: unknown = undefined): void {
+  // 配置决定注释标签的默认集合；快照随每次 get() 读出，改配置立即生效。
+  const resolved = normalizeConfig(config)
   ctx.skills.registerProvider(() => ({
     name: PROVIDER,
     list: listSkills,
-    get: getSkill,
+    get: (candidate: SkillCandidate | undefined, options?: ListOptions) =>
+      getSkill(candidate, options, resolved),
   }))
 }

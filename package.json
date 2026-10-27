@@ -1,11 +1,12 @@
 {
   "name": "@chengzhao-dev/dsh-cpp-workflow",
-  "version": "0.5.5",
-  "description": "C++11–C++23 工程流程技能包：源码四步、CMake 三步与构建三步，按项目声明的环境组合校验 · C++11–C++23 workflow skills for DeepSeek Harness",
+  "version": "0.6.0",
+  "description": "写 C++ 源码、配 CMake、用 Clang 构建；文档注释统一为 /// Doxygen，文件头标签可在设置里改。 · Write C++ sources, configure CMake, and build with Clang; /// Doxygen comments, with file-header tags you can change in Settings.",
   "type": "module",
   "main": "./lib/index.js",
   "exports": {
     ".": "./lib/index.js",
+    "./client": "./lib/client.js",
     "./package.json": "./package.json",
     "./cordis.patch.yml": "./cordis.patch.yml"
   },
@@ -28,11 +29,17 @@
     "bundle": {
       "patch": "./cordis.patch.yml"
     },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-slots"
+      ]
+    },
     "catalog": {
       "category": "skill",
       "summary": {
-        "zh": "按项目声明的环境组合，推进 C++11–C++23 源码与构建流程",
-        "en": "Advance C++11–C++23 source and build work with a project-declared environment"
+        "zh": "写 C++ 源码、配 CMake、用 Clang 构建；文档注释统一为 /// Doxygen，文件头标签可在设置里改。",
+        "en": "Write C++ sources, configure CMake, and build with Clang; /// Doxygen comments, with file-header tags you can set in Settings."
       },
       "capabilities": [
         "skills"
@@ -41,8 +48,8 @@
   },
   "icon": "./icon.svg",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "test": "npm run build && node scripts/checking-skill-links.mjs && node skills/building-cpp/scripts/checking-encoding.mjs --quiet && node scripts/checking-github-workflows.mjs && node --test tests/*.test.mjs",
+    "build": "tsc -p tsconfig.json && node scripts/building-client.mjs",
+    "test": "npm run build && node scripts/building-client.mjs --check && node scripts/checking-skill-links.mjs && node skills/building-cpp/scripts/checking-encoding.mjs --quiet && node scripts/checking-github-workflows.mjs && node --test tests/*.test.mjs",
     "ci": "npm ci && npm test && npm run pack:check",
     "ci:full": "npm run ci && npm run test:matrix",
     "check:encoding": "node skills/building-cpp/scripts/checking-encoding.mjs",
@@ -78,6 +85,9 @@
   },
   "peerDependencies": {
     "@deepseek-ai/dsh-skill": ">=0.2.0-rc.1 <0.3.0-0"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "^3.18.5"
   },
   "devDependencies": {
     "@deepseek-ai/dsh-skill": ">=0.2.0-rc.1 <0.3.0-0",
