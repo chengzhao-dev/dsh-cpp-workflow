@@ -108,7 +108,8 @@ test('出厂设置的预览先写文件头，再写函数契约', () => {
   const { exported } = loadClient()
   const lines = exported.previewText(undefined, 'board.h').split('\n')
   assert.equal(lines[0], '/// @file board.h')
-  assert.equal(lines[1], '/// @brief')
+  // @brief 开着但没填句子时，预览用示例文件的摘要，避免出现空标签。
+  assert.equal(lines[1], '/// @brief 定义井字棋棋盘、格子坐标与格子类型。')
   assert.ok(lines.includes('/// @param position 目标行列坐标。'))
   assert.ok(lines.at(-1).startsWith('[[nodiscard]] bool PlaceCell'))
 })

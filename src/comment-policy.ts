@@ -81,6 +81,9 @@ export const TAG_LABEL: Record<string, string> = {
   retval: '@retval',
 }
 
+/** 预览里的示例摘要：用户没填 @brief 时用它，避免预览出现空标签。 */
+export const SAMPLE_BRIEF = '定义井字棋棋盘、格子坐标与格子类型。'
+
 /** 出厂配置：文件头只留 @file 与 @brief，契约标签全开，隐私标签全关。 */
 export const DEFAULT_CONFIG: CommentConfig = {
   brief: { enabled: true, value: '' },
@@ -151,6 +154,9 @@ export function previewParts(
 ): { header: string[]; contract: string[]; declaration: string } {
   const config = normalizeConfig(raw)
   const header = renderFileHeader(config, sampleName || 'board.h')
+  // 预览是示例：@brief 开着但用户没填句子时，用示例文件自己的摘要顶替。
+  const briefIndex = header.indexOf('/// @brief')
+  if (briefIndex !== -1) header[briefIndex] = `/// @brief ${SAMPLE_BRIEF}`
   const contract: string[] = []
   if (config.param) contract.push('/// @param position 目标行列坐标。')
   if (config.returns) contract.push('/// @return 放置成功时为 true。')
