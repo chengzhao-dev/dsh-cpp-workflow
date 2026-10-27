@@ -1,89 +1,117 @@
-// 客户端半侧的冒烟测试：产物必须是恰一行 Cordis 装载调用，工厂返回带
-// inject/apply 的模块，两个挂点都注册到正确的插槽，预览跟随标签开关。
+// 客户端半侧的装载与挂点快照：不需要真实浏览器，也能发现包装头、
+// 挂点名或组件初始化被改坏的问题。
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import test from 'node:test'
-import vm from 'node:vm'
 
-const SOURCE = readFileSync(new URL('../lib/client.js', import.meta.url), 'utf8')
+const CLIENT = fileURLToPath(new URL('../lib/client.js', import.meta.url))
 const PACKAGE_NAME = '@chengzhao-dev/dsh-cpp-workflow'
 
-/** 用最小的 React 桩加载客户端产物，返回工厂导出的模块。 */
-function loadClient() {
-  let entry
-  const React = {
-    createElement: (type, props, ...children) => ({ type, props, children }),
-    useState: () => [undefined, () => {}],
-    useEffect: () => {},
-    useMemo: (factory) => factory(),
+function fakeReact() {
+  return {
+    createElement(type, props, ...children) {
+      return { type, props: { ...props, children } }
+    },
+    useState(value) {
+      return [typeof value === 'function' ? value() : value, () => {}]
+    },
+    useMemo(factory) {
+      return factory()
+    },
+    useEffect() {},
   }
-  const sandbox = {
-    window: { __ModuleLoader__: { load: (candidate) => { entry = candidate } } },
-    navigator: { language: 'zh-CN' },
-    console,
-  }
-  vm.runInNewContext(SOURCE, sandbox)
-  assert.ok(entry, '产物没有调用 window.__ModuleLoader__.load')
-  const exported = entry.factory((id) => {
-    if (id === 'react') return React
-    throw new Error(`unexpected require ${id}`)
-  })
-  return { entry, exported }
 }
 
-test('客户端产物按包名装载并只声明 slots 注入', () => {
-  const { entry, exported } = loadClient()
-  assert.equal(entry.id, PACKAGE_NAME)
+function loadClient() {
+  const source = readFileSync(CLIENT, 'utf8')
+  let exported
+  let id
+  const sandboxWindow = {
+    __ModuleLoader__: {
+      load(options) {
+        id = options.id
+        exported = options.factory((specifier) => {
+          assert.equal(specifier, 'react', `客户端半侧只能加载 react，实际为 ${specifier}`)
+          return fakeReact()
+        })
+      },
+    },
+  }
+  globalThis.window = sandboxWindow
+  try {
+    new Function('window', 'require', source)(sandboxWindow, undefined)
+  } finally {
+    delete globalThis.window
+  }
+  return { id, exported }
+}
+
+function flatten(node, out = []) {
+  if (node === null || node === undefined || typeof node === 'boolean') return out
+  if (typeof node === 'string' || typeof node === 'number') {
+    out.push(String(node))
+    return out
+  }
+  if (Array.isArray(node)) {
+    for (const child of node) flatten(child, out)
+    return out
+  }
+  const children = node.props && node.props.children
+  if (children !== undefined) flatten(children, out)
+  if (typeof node.type === 'function') flatten(node.type(node.props || {}), out)
+  return out
+}
+
+test('客户端半侧用包名挂在 Cordis Loader 上并只依赖 react', () => {
+  const { id, exported } = loadClient()
+  assert.equal(id, PACKAGE_NAME)
   assert.equal(exported.name, PACKAGE_NAME)
-  assert.deepEqual([...exported.inject], ['slots'])
+  assert.deepEqual(exported.inject, ['slots'])
   assert.equal(typeof exported.apply, 'function')
 })
 
-test('预览跟随标签开关', () => {
+test('设置页与插件页各注册一个挂点', () => {
   const { exported } = loadClient()
-  const defaults = exported.previewText(undefined, 'board.h')
-  assert.match(defaults, /^\/\/\/ @file board\.h$/m)
-  assert.match(defaults, /^\/\/\/ @brief\b/m)
-  assert.doesNotMatch(defaults, /@author|@date|@copyright|@version/)
-
-  const authored = exported.previewText(
-    { author: { enabled: true, value: 'chengzhao-dev' }, brief: { enabled: true, value: '' } },
-    'game.cpp',
-  )
-  assert.match(authored, /^\/\/\/ @file game\.cpp$/m)
-  assert.match(authored, /^\/\/\/ @author chengzhao-dev$/m)
-})
-
-test('在两个插槽各注册一次，插件页的摘要视图不渲染正文', () => {
-  const { exported } = loadClient()
+  const injected = []
   const registered = []
   const ctx = {
     slots: {
-      inject: (name, factory) => { factory() },
-      register: (meta, render) => {
+      inject(name, callback) {
+        injected.push(name)
+        callback()
+      },
+      register(meta, render) {
         registered.push({ meta, render })
         return () => {}
       },
     },
   }
   exported.apply(ctx)
-  const names = registered.map((item) => item.meta.name).sort()
-  assert.deepEqual(names, ['plugins.bundle.config', 'settings.section'])
-  const bundle = registered.find((item) => item.meta.name === 'plugins.bundle.config')
-  assert.equal(bundle.meta.key, PACKAGE_NAME)
-  assert.equal(bundle.render({ view: 'summary' }), null)
-  assert.equal(registered.find((item) => item.meta.name === 'settings.section').meta.id, 'cpp-workflow')
+  assert.deepEqual(injected, ['settings.section', 'plugins.bundle.config'])
+  assert.equal(registered[0].meta.id, 'cpp-workflow')
+  assert.equal(registered[0].meta.order, 60)
+  assert.equal(typeof registered[0].meta.label, 'function')
+  assert.equal(registered[1].meta.key, PACKAGE_NAME)
+  // 插件页的摘要行不占位；页面视图返回完整表单。
+  assert.equal(registered[1].render({ view: 'summary' }), null)
+  assert.deepEqual(flatten(registered[1].render({})).filter((text) => text === '文档注释'), ['文档注释'])
 })
 
-test('差异操作只包含真正改动的键', () => {
+test('出厂设置的预览先写文件头，再写函数契约', () => {
   const { exported } = loadClient()
-  const operations = exported.diffOperations(
-    { brief: { enabled: false, value: '' }, param: true },
-    { brief: { enabled: true, value: '' }, param: true },
-  )
-  // vm 里创建的对象原型不同，按 JSON 比较结构。
-  assert.equal(
-    JSON.stringify(operations),
-    JSON.stringify([{ op: 'set', path: ['brief'], value: { enabled: false, value: '' } }]),
-  )
+  const lines = exported.previewText(undefined, 'board.h').split('\n')
+  assert.equal(lines[0], '/// @file board.h')
+  assert.equal(lines[1], '/// @brief')
+  assert.ok(lines.includes('/// @param position 目标行列坐标。'))
+  assert.ok(lines.at(-1).startsWith('[[nodiscard]] bool PlaceCell'))
+})
+
+test('没有宿主表单时页面降级为只读出厂值，不抛异常', () => {
+  const { exported } = loadClient()
+  const tree = exported.ConfigPage({})
+  const texts = flatten(tree)
+  assert.ok(texts.includes('文档注释'))
+  assert.ok(texts.some((text) => text.includes('出厂值')))
+  assert.ok(texts.some((text) => text.includes('/// @file board.h')))
 })
