@@ -8,6 +8,12 @@ import test from 'node:test'
 const CLIENT = fileURLToPath(new URL('../lib/client.js', import.meta.url))
 const PACKAGE_NAME = '@chengzhao-dev/dsh-cpp-workflow'
 
+// 界面文案跟随 navigator.language；测试固定中文，避免在英文机器上断言失败。
+Object.defineProperty(globalThis, 'navigator', {
+  value: { language: 'zh-CN' },
+  configurable: true,
+})
+
 function fakeReact() {
   return {
     createElement(type, props, ...children) {
