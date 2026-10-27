@@ -38,29 +38,22 @@
 | `0.5.3` | 随 `v0.5.3` 标签发布 | 有 | 注释归位：文件头只写本文件，类数据成员改为上一行 `///`，实现按空行阶段写 `//`；`Board` 增加 `Clear`，测试增至 14 条；章节把实现解说移回源码。 |
 | `0.5.4` | 随 `v0.5.4` 标签发布 | 有 | 插件流程加入 GitHub Actions 工作流结构检查；`npm test` 同时校验 npm 包与 workflow。 |
 
-从 `0.1.1` 起，版本只由标签触发的 `publish.yml` 发布，并带 provenance。`0.1.0` 不重发，也不为了重跑它改版本号。
+从 `0.1.1` 起，`publish.yml` 负责发布并带 provenance。现在它在 `main` 推送、`v*` 标签推送或手动触发时运行：`package.json` 的版本还没进 registry 就自动跑测试并发布，已经存在就跳过发布、只补 GitHub Release。`0.1.0` 不重发，也不为了重跑它改版本号。
 
 ## 发布流程
 
 1. 改 `package.json` 与 `package-lock.json` 的版本，提交并推送 `main`。
-2. 等 `ci` 在 `main` 上通过。
-3. 在要发布的那个提交上打 annotated 标签，推送标签：
+2. `ci` 与 `publish.yml` 都会在 `main` 上运行。`publish.yml` 读 `package.json` 的版本，再查 npm：版本不存在，就 `npm ci`、`npm test`、`npm publish`；版本已存在，就跳过发布。测试失败时整条发布链停在发布前。
+3. 发布成功后，同一个 workflow 在同一个提交上建 annotated 标签 `v<版本>`，再用 `gh release create --verify-tag --generate-notes` 建 GitHub Release。标签已存在就复用，不重复创建。
+4. 需要手动补发时，也可以推送 `v<版本>` 标签；workflow 发现 npm 上已有同版本时只补 Release。
+5. 读回两边的 commit，必须相同：
 
    ```bash
-   git tag -a v0.5.0 -m "v0.5.0"
-   git push origin v0.5.0
+   npm view @chengzhao-dev/dsh-cpp-workflow@0.5.4 version gitHead
+   git rev-parse v0.5.4^{commit}
    ```
 
-4. `publish.yml` 校验标签与 `package.json` 同号，跑 `npm ci` 和 `npm test`，再 `npm publish`。`publishConfig.provenance` 打开 provenance。
-5. 发布成功后，同一个 workflow 用 `gh release create --verify-tag --generate-notes` 建 GitHub Release。
-6. 读回两边的 commit，必须相同：
-
-   ```bash
-   npm view @chengzhao-dev/dsh-cpp-workflow@0.5.0 version gitHead
-   git rev-parse v0.5.0^{commit}
-   ```
-
-   `npm view @chengzhao-dev/dsh-cpp-workflow@0.5.0 dist.attestations` 应能看到 provenance 记录。
+   `npm view @chengzhao-dev/dsh-cpp-workflow@0.5.4 dist.attestations` 应能看到 provenance 记录。
 
 ## 标签约束
 
