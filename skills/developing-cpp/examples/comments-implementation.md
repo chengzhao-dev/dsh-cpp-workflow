@@ -24,15 +24,15 @@ for (const auto& position : empty_cells) {
 **好**：
 
 ```cpp
-// 先找能立刻赢的格子：启发式只在「马上赢」和「马上挡」之间做选择，
-// 不在这里做更深的前瞻，深搜留给 MinimaxAi。
+/// 先找能立刻赢的格子：启发式只在「马上赢」和「马上挡」之间做选择，
+/// 不在这里做更深的前瞻，深搜留给 MinimaxAi。
 for (const auto& position : empty_cells) {
   if (game.CompletesLine(position, CellType::kX)) {
     return position;
   }
 }
 
-// 没有必胜格，交给下一层策略；这里不猜后续几步。
+/// 没有必胜格，交给下一层策略；这里不猜后续几步。
 return std::nullopt;
 ```
 

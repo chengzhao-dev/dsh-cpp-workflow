@@ -115,7 +115,7 @@ constexpr std::array<std::array<CellPosition, 3>, 8> kLines{{
 
 ## 推演一步读原数据
 
-**差**：先复制整盘，再在副本上落子，最后判断成线；调用方看不出副本只是中间量。
+**差**：先复制整个棋盘，再在副本上落子，最后判断成线；调用方看不出副本只是中间量。
 
 ```cpp
 Board hypothetical = *this;
