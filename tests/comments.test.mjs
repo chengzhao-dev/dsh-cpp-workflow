@@ -1,4 +1,4 @@
-// 注释检查器锁定 references/comments.md 的硬规则：横幅、标签、注释与声明的贴合、
+// 注释检查器锁定 references/comments.md 的硬规则：文件头、标签、注释与声明的贴合、
 // 成员清单、设计论证、跨类分工、类型系统复述、否定式边界、领域尺寸、谓词首句、
 // @param 完整性与枚举行尾注释。规则改动时必须同步这里的用例。
 import assert from 'node:assert/strict'
@@ -13,23 +13,23 @@ import { checkText, displayWidth, functionParams, EXIT } from '../skills/develop
 
 const SCRIPT = fileURLToPath(new URL('../skills/developing-cpp/scripts/checking-comments.mjs', import.meta.url))
 
-const BANNER = `//===${'-'.repeat(70)}===//`
-
 function rules(text, options = {}) {
   return checkText(text, options).map((issue) => issue.rule)
 }
 
 function file(...lines) {
-  return [`${BANNER}`, ...lines, ''].join('\n')
+  return ['/// @file board.h', '/// @brief 定义棋盘。', '', ...lines, ''].join('\n')
 }
 
-test('横幅宽度默认 80 列', () => {
+test('注释行超过 80 列时报错', () => {
   assert.deepEqual(rules(file()), [])
-  const wide = `//===${'-'.repeat(100)}===//\nclass Board {};\n`
-  assert.deepEqual(rules(wide, { requireHeader: false }), ['banner-width'])
+  const wide = `/// ${'中'.repeat(40)}
+int f();
+`
+  assert.deepEqual(rules(file(wide), { width: 80 }), ['comment-width'])
 })
 
-test('缺少文件头横幅时报错', () => {
+test('缺少文件头时报错', () => {
   assert.deepEqual(rules('class Board {};\n'), ['header-missing'])
   assert.deepEqual(rules('class Board {};\n', { requireHeader: false }), [])
 })
@@ -44,19 +44,11 @@ test('文件头用 /// @file 与 @brief 收口', () => {
 })
 
 test('文件头提到别的源文件或目录时报错', () => {
-  const cross = file(
-    '// board.h - 定义棋盘。',
-    '//',
-    '// 对局流程在 game.h。',
-    'class Board {};',
-  )
+  const cross = ['/// @file board.h', '/// @brief 定义棋盘。', '///', '/// 对局流程在 game.h。', '', 'class Board {};', ''].join('\n')
   assert.ok(rules(cross, { fileName: 'board.h' }).includes('header-cross-file'))
-  const own = file(
-    '// board.h - 定义棋盘。',
-    'class Board {};',
-  )
+  const own = ['/// @file board.h', '/// @brief 定义棋盘。', '///', '/// 棋盘状态。', '', 'class Board {};', ''].join('\n')
   assert.ok(!rules(own, { fileName: 'board.h' }).includes('header-cross-file'))
-  const apps = file('// board.h - 定义棋盘。', '//', '// 输入输出在 apps/。', 'class Board {};')
+  const apps = ['/// @file board.h', '/// @brief 定义棋盘。', '///', '/// 输入输出在 apps/。', '', 'class Board {};', ''].join('\n')
   assert.ok(rules(apps, { fileName: 'board.h' }).includes('header-cross-file'))
 })
 
@@ -196,7 +188,7 @@ test('CLI 在干净目录上返回 0', () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
   try {
     mkdirSync(path.join(dir, 'src'))
-    writeFileSync(path.join(dir, 'src', 'main.cpp'), file('#include <iostream>', 'int main() { return 0; }'))
+    writeFileSync(path.join(dir, 'src', 'main.cpp'), '/// @file main.cpp\n/// @brief 入口。\n\n#include <iostream>\nint main() { return 0; }\n')
     const proc = runCli(['--root', dir, '--quiet'])
     assert.equal(proc.status, 0)
     assert.equal(proc.stdout, '')

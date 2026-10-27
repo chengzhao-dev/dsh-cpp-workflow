@@ -9,7 +9,7 @@ metadata:
 
 ## 适用场景
 
-管 `environment.json`、`running-build.sh`、`.clang-format`、`.clang-tidy`、`.clangd`、`.vscode/`、构建命令、编译数据库、CTest 和运行。`CMakeLists.txt` 与 `cmake/` 下的 target、属性、标准和模块由 `configuring-cmake` 负责；本技能只读它们来配置和检查，不在这一步改 target 图。函数体、类型、命名、异常和源码注释只开 `developing-cpp`。
+本技能处理环境声明、构建入口与工具配置：`environment.json`、`running-build.sh`、`.clang-format`、`.clang-tidy`、`.clangd`、`.vscode/`、构建命令、编译数据库、CTest 和运行。`CMakeLists.txt` 与 `cmake/` 下的 target、属性、标准和模块由 `configuring-cmake` 负责；本技能只读它们来配置和检查，不在这一步改 target 图。函数体、类型、命名、异常和源码注释只开 `developing-cpp`。
 
 一次改动同时碰到源码和构建文件时，先打开 `developing-cpp` 定行为、边界与实现；需要新增或移动源文件、改库与程序的边界、补测试 target 时，转到 `configuring-cmake` 把文件写进 CMake；最后回到本技能做定工具配置与通过检查。只改函数体、命名、异常或注释且入口命令可运行时，定实现后只开本技能的「通过检查」。
 
@@ -26,7 +26,7 @@ metadata:
 | 增量修正 | 用户点了一条工具配置、一条诊断或一个入口脚本错误 | 先判断属于定构建还是定工具配置，只改那一处，不动无关 target 和配置 |
 | 整段重构 | 新工程、新阶段、换环境组合，或第一次接构建 | 同样三步；先确认 target 与标准已由 configuring-cmake 写好，再改工具文件，最后跑完整检查 |
 
-共同不变量：不发明项目没有声明的环境轴、命令和 target；只改格式或配置时不改可观察行为；不覆盖已有源码、`CMakeLists.txt` 和 `.clang-*`；不安装工具链；代理侧不写 `wsl` 或 `bash -lc`。后一步发现前一步没做完，退回那一步。拿不准先用增量修正；发现环境轴、编译器、构建目录或 target 契约需要改，退回整段，并转 `configuring-cmake`。
+两种走法共用这些约束：不发明项目没有声明的环境轴、命令和 target；只改格式或配置时不改可观察行为；不覆盖已有源码、`CMakeLists.txt` 和 `.clang-*`；不安装工具链；代理侧不写 `wsl` 或 `bash -lc`。后一步发现前一步没做完，退回那一步。拿不准先用增量修正；发现环境轴、编译器、构建目录或 target 契约需要改，退回整段，并转 `configuring-cmake`。
 
 ## 步骤
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 // 只读注释审计：按 references/comments.md 的硬规则检查 C/C++ 源文件。
 //
-// 检查项：文件头横幅、横幅宽度、注释行宽度、Doxygen 标签、注释与声明的贴合、
+// 检查项：Doxygen 文件头、注释行宽度、标签、注释与声明的贴合、
 // 类型注释存在性、成员功能清单、设计论证（方案对比）、否定式边界、领域尺寸、谓词首句、@param 完整性、枚举成员注释一致性、数据成员主注释位置。
 // 不重写任何文件。
 //
 // 用法：
-//   node checking-comments.mjs [--root DIR] [--width N] [--banner-width N] [--no-header] [--json] [--quiet]
+//   node checking-comments.mjs [--root DIR] [--width N] [--no-header] [--json] [--quiet]
 //
 // 退出码：0 无问题，1 发现问题，2 用法或读取错误。
 import { readdirSync, readFileSync, statSync } from 'node:fs'
@@ -28,7 +28,6 @@ const SKIP_DIR = new Set([
 const STATIC_FORBIDDEN_TAGS = ['@returns', '@details', '@since', '@todo']
 const PRIVACY_TAGS = ['@author', '@date', '@copyright', '@version']
 const FORBIDDEN_TAGS = [...STATIC_FORBIDDEN_TAGS, ...PRIVACY_TAGS]
-const BANNER = /^\/\/=+-+=+\/\/$/
 const DOXY_FILE = /^\/\/\/\s*@file\s+\S/
 const DOXY_BRIEF = /^\/\/\/\s*@brief\s+\S/
 const MEMBER_LIST = /提供[^。]{0,40}、[^。]{0,40}(的功能|的能力|的接口)|功能[:：]/
@@ -42,12 +41,12 @@ const DECL_KEYWORDS = /^(class|struct|union|enum|namespace|using|typedef|templat
 
 function usage(message) {
   if (message) process.stderr.write(`错误：${message}\n`)
-  process.stderr.write('用法：node checking-comments.mjs [--root DIR] [--width N] [--banner-width N] [--no-header] [--no-brief] [--allow-tag TAG] [--json] [--quiet]\n')
+  process.stderr.write('用法：node checking-comments.mjs [--root DIR] [--width N] [--no-header] [--no-brief] [--allow-tag TAG] [--json] [--quiet]\n')
   return EXIT.usage
 }
 
 function parseArgs(argv) {
-  const options = { root: undefined, width: 80, bannerWidth: 80, widthExplicit: false, bannerWidthExplicit: false, requireHeader: true, requireBrief: true, allowTags: new Set(), json: false, quiet: false }
+  const options = { root: undefined, width: 80, widthExplicit: false, requireHeader: true, requireBrief: true, allowTags: new Set(), json: false, quiet: false }
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index]
     if (arg === '--root') {
@@ -56,10 +55,6 @@ function parseArgs(argv) {
     } else if (arg === '--width') {
       options.width = Number(argv[index + 1])
       options.widthExplicit = true
-      index += 1
-    } else if (arg === '--banner-width') {
-      options.bannerWidth = Number(argv[index + 1])
-      options.bannerWidthExplicit = true
       index += 1
     } else if (arg === '--no-header') {
       options.requireHeader = false
@@ -80,10 +75,8 @@ function parseArgs(argv) {
       throw new Error(`未知参数 ${arg}`)
     }
   }
-  for (const key of ['width', 'bannerWidth']) {
-    if (!Number.isInteger(options[key]) || options[key] < 40) {
-      throw new Error(`--${key} 需要不小于 40 的整数`)
-    }
+  if (!Number.isInteger(options.width) || options.width < 40) {
+    throw new Error('--width 需要不小于 40 的整数')
   }
   return options
 }
@@ -208,7 +201,6 @@ function classMemberLines(lines) {
 /** 检查一段文本，返回问题列表；每个问题带 1 起始的行号。 */
 export function checkText(text, options = {}) {
   const width = options.width ?? 80
-  const bannerWidth = options.bannerWidth ?? 80
   const requireHeader = options.requireHeader ?? true
   const lines = text.split(/\r?\n/)
   const issues = []
@@ -223,13 +215,12 @@ export function checkText(text, options = {}) {
     doxyHeaderEnd = firstContent
     while (doxyHeaderEnd + 1 < lines.length && lines[doxyHeaderEnd + 1].trim().startsWith('///')) doxyHeaderEnd += 1
   }
-  if (requireHeader && firstContent !== -1 && !BANNER.test(firstTrimmed) && !hasDoxyHeader) {
+  if (requireHeader && firstContent !== -1 && !hasDoxyHeader) {
     add(firstContent + 1, 'header-missing', '文件开头缺少文件头：写 /// @file <文件名>，下一行写 /// @brief')
   }
-  if (firstContent !== -1 && (BANNER.test(firstTrimmed) || hasDoxyHeader)) {
+  if (firstContent !== -1 && hasDoxyHeader) {
     const own = options.fileName ? options.fileName.split(/[\\/]/).pop() : ''
-    const bannerHeader = BANNER.test(firstTrimmed)
-    if (hasDoxyHeader && own) {
+    if (own) {
       const declared = /@file\s+(\S+)/.exec(lines[firstContent].trim())
       if (declared && declared[1] !== own) {
         add(firstContent + 1, 'header-file-name', `文件头写的是 ${declared[1]}，本文件是 ${own}：@file 必须等于文件名`)
@@ -240,7 +231,7 @@ export function checkText(text, options = {}) {
     }
     for (let index = firstContent + 1; index < lines.length; index += 1) {
       const trimmed = lines[index].trim()
-      if (bannerHeader ? BANNER.test(trimmed) || !trimmed.startsWith('//') : !trimmed.startsWith('///')) break
+      if (!trimmed.startsWith('///')) break
       const names = trimmed.match(/\b[A-Za-z0-9_-]+\.(?:h|hpp|cpp|cc)\b/g) ?? []
       const fileMatches = trimmed.match(/@file\s+(\S+)/)
       const namesToCheck = fileMatches ? names.filter((name) => name !== fileMatches[1]) : names
@@ -254,11 +245,6 @@ export function checkText(text, options = {}) {
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index]
     const trimmed = line.trim()
-    if (BANNER.test(trimmed)) {
-      const actual = displayWidth(trimmed)
-      if (actual !== bannerWidth) add(index + 1, 'banner-width', `横幅宽度 ${actual} 列，应为 ${bannerWidth} 列`)
-      continue
-    }
     if (trimmed.startsWith('///') || (trimmed.startsWith('//') && !trimmed.startsWith('//!'))) {
       if (displayWidth(trimmed) > width) add(index + 1, 'comment-width', `注释行 ${displayWidth(trimmed)} 列，超过 ${width} 列`)
       for (const tag of FORBIDDEN_TAGS) {
@@ -453,7 +439,6 @@ function main(argv) {
   const columnLimit = readColumnLimit(root)
   if (columnLimit !== undefined) {
     if (!options.widthExplicit) options.width = columnLimit
-    if (!options.bannerWidthExplicit) options.bannerWidth = columnLimit
   }
   let files
   try {

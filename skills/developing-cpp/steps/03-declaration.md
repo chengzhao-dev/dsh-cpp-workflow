@@ -24,7 +24,7 @@
 
 **异常声明**：构造函数、`Get` 类查询、解析函数最容易抛；在声明注释里写「当……时抛出 `std::out_of_range`」这样的具体类型，不要只写「可能抛异常」，也不要给每个参数错误都新建类型。类型选择见 `references/exceptions.md`。
 
-**注释**：声明注释用 `///` 写中文散文，只写调用方需要知道的；实现细节留给 `.cpp`。`@param`、`@return`、`@throws` 要么全写要么全不写，标识符和标签保持英文。文件头默认写 `@file` 与 `@brief` 两行，`@file` 必须与文件名相同；作者、日期、版权、版本默认不写。标签开关在插件设置页，技能正文末尾附带当前配置的快照。写完运行 `node "<skill-dir>/scripts/checking-comments.mjs" --root <项目根>`；关闭 `@brief` 时加 `--no-brief`，配置里打开了隐私标签并填了值时加 `--allow-tag <标签>`。横幅、标签、参数完整性、成员清单与设计论证由脚本兜底。文件头、章节横幅和 TODO 的格式见 `references/comments.md`。
+**注释**：声明注释用 `///` 写中文散文，只写调用方需要知道的；实现细节留给 `.cpp`。`@param`、`@return`、`@throws` 要么全写要么全不写，标识符和标签保持英文。文件头默认写 `@file` 与 `@brief` 两行，`@file` 必须与文件名相同；作者、日期、版权、版本默认不写。标签开关在插件设置页，技能正文末尾附带当前配置的快照。写完运行 `node "<skill-dir>/scripts/checking-comments.mjs" --root <项目根>`；关闭 `@brief` 时加 `--no-brief`，配置里打开了隐私标签并填了值时加 `--allow-tag <标签>`。文件头、标签、参数完整性、成员清单与设计论证由脚本兜底。文件头与 TODO 的格式见 `references/comments.md`。
 
 ## 正反例指针
 

@@ -9,7 +9,7 @@ metadata:
 
 ## 适用场景
 
-管 `.h` / `.hpp` / `.cpp` / `.cc` 里换一台机器也不会改的内容：可观察行为、库与程序的边界、声明、命名、异常和源码注释。文件槽位与守卫以 `references/file-template.md` 为准；排版、命名、头文件与包含顺序以 `references/google-cpp-style.md` 的 Google 基线为准。异常条文采用 C++ Core Guidelines 的 Error handling，作为开发阶段的源码指导；它不进入插件运行时。`CMakeLists.txt` 与 `cmake/` 开 `configuring-cmake`；`running-build.sh`、`.clang-*`、`.vscode/` 和 `environment.json` 开 `building-cpp`。只改函数体、命名、异常或注释且入口命令可运行时，定实现后只开 `building-cpp` 的「通过检查」；新增或移动源文件、改库与程序的边界、补测试 target 时，声明和实现可以先写，但完成前必须开 `configuring-cmake` 把文件写进 CMake，再开 `building-cpp` 定工具配置并通过检查。`.qmd`、仓库 README、Python 和非 C++ 文档不打开本技能。
+本技能处理换一台机器也不会改的源码内容：可观察行为、库与程序的边界、声明、命名、异常和源码注释。文件槽位与守卫以 `references/file-template.md` 为准；排版、命名、头文件与包含顺序以 `references/google-cpp-style.md` 的 Google 基线为准。异常条文取自 C++ Core Guidelines 的 Error handling，只约束开发期的源码，不进入插件运行时。`CMakeLists.txt` 与 `cmake/` 开 `configuring-cmake`；`running-build.sh`、`.clang-*`、`.vscode/` 和 `environment.json` 开 `building-cpp`。只改函数体、命名、异常或注释且入口命令可运行时，定实现后只开 `building-cpp` 的「通过检查」；新增或移动源文件、改库与程序的边界、补测试 target 时，声明和实现可以先写，但完成前必须开 `configuring-cmake` 把文件写进 CMake，再开 `building-cpp` 定工具配置并通过检查。`.qmd`、仓库 README、Python 和非 C++ 文档不打开本技能。
 
 存在项目技能 `cpp-workflow-project` 时先读它的 `SKILL.md`：工程名、库与程序的边界、阶段表、术语增补、入口命令。没有项目技能时门禁不会放出本技能，不要猜项目约定。
 
@@ -22,7 +22,7 @@ metadata:
 | 增量修正 | 用户点了一个函数、一条诊断或一个文件 | 沿本技能步骤走，只改判为不合格的那一处，其余保持原样 |
 | 整段重构 | 新工程、新阶段、用户没点名范围，或改动跨过库与程序的边界 | 同样四步；第 1、2 步先定删留，不动函数体；第 3、4 步才改代码 |
 
-共同不变量：不发明阶段表和用户请求里没有的行为、类型和命令；只改注释或格式时不改可观察行为；不覆盖已有源码；不安装工具链；代理侧不写 `wsl` 或 `bash -lc`。后一步发现前一步没做完，退回那一步，不在当前步补结构。拿不准先用增量修正；做到一半发现边界被打破，退回整段重构，从被打破的那一步重走。
+两种走法共用这些约束：不发明阶段表和用户请求里没有的行为、类型和命令；只改注释或格式时不改可观察行为；不覆盖已有源码；不安装工具链；代理侧不写 `wsl` 或 `bash -lc`。后一步发现前一步没做完，退回那一步，不在当前步补结构。拿不准先用增量修正；做到一半发现边界被打破，退回整段重构，从被打破的那一步重走。
 
 ## 步骤
 
