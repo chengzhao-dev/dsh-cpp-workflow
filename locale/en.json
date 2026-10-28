@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "C++ Workflow",
-    "description": "Write C++ sources, configure CMake, and build with Clang; /// Doxygen comments, with file-header tags you can set in Settings."
+    "description": "Write C++ sources, configure CMake, and build with Clang; /// Doxygen on declarations, // section notes in bodies, and configurable file-header tags."
   }
 }

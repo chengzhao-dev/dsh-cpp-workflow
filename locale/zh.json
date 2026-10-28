@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "C++ 工程流程",
-    "description": "写 C++ 源码、配 CMake、用 Clang 构建；文档注释统一为 /// Doxygen，文件头标签可在设置里改。"
+    "description": "写 C++ 源码、配 CMake、用 Clang 构建；头文件用 /// Doxygen 文档注释，函数体用 // 分段说明，文件头标签可在设置里改。"
   }
 }

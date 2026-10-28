@@ -1,7 +1,7 @@
 {
   "name": "@chengzhao-dev/dsh-cpp-workflow",
   "version": "0.0.1",
-  "description": "写 C++ 源码、配 CMake、用 Clang 构建；文档注释统一为 /// Doxygen，文件头标签可在设置里改。 · Write C++ sources, configure CMake, and build with Clang; /// Doxygen comments, with file-header tags you can change in Settings.",
+  "description": "写 C++ 源码、配 CMake、用 Clang 构建；头文件用 /// Doxygen 文档注释，函数体用 // 分段说明，文件头标签可在设置里改。 · Write C++ sources, configure CMake, and build with Clang; /// Doxygen on declarations, // section notes in bodies, and configurable file-header tags.",
   "type": "module",
   "main": "./lib/index.js",
   "exports": {
@@ -38,8 +38,8 @@
     "catalog": {
       "category": "skill",
       "summary": {
-        "zh": "写 C++ 源码、配 CMake、用 Clang 构建；文档注释统一为 /// Doxygen，文件头标签可在设置里改。",
-        "en": "Write C++ sources, configure CMake, and build with Clang; /// Doxygen comments, with file-header tags you can set in Settings."
+        "zh": "写 C++ 源码、配 CMake、用 Clang 构建；头文件用 /// Doxygen 文档注释，函数体用 // 分段说明，文件头标签可在设置里改。",
+        "en": "Write C++ sources, configure CMake, and build with Clang; /// Doxygen on declarations, // section notes in bodies, and configurable file-header tags."
       },
       "capabilities": [
         "skills"
