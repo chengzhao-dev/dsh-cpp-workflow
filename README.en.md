@@ -2,7 +2,7 @@
 
 [中文](README.md)
 
-Three skills for C++11–C++23 source, CMake, and build work; new projects default to C++23. The plugin registers a skill provider only; it does not register tools, compile, download a toolchain, or write project files.
+Three skills for C++11–C++23 source, CMake, and build work; new projects default to C++23. The plugin registers a skill provider and a settings form; it does not register tools, compile, download a toolchain, or write project files.
 
 ## What it provides
 
