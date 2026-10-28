@@ -1,6 +1,6 @@
 'use strict'
 
-// 客户端半侧：设置导航里的「C++ 工程流程」页与插件页的配置卡片共用同一个组件。
+// 客户端半侧：插件页的配置卡片（plugins.bundle.config），只此一个入口。
 // 标签策略在本文件上方内联（由 scripts/building-client.mjs 从 src/comment-policy.js
 // 拼进来），所以预览、默认值与服务端快照永远同源；这里只做表单与外观。
 const React = require('react')
@@ -35,9 +35,9 @@ const STRINGS = {
     rejected: '保存被拒绝：配置可能已在别处修改，请恢复出厂值后再试。',
     unsaved: '有未保存的改动',
     loading: '正在读取配置…',
+    unavailable: '这个部署没有提供这份配置。',
     unreadable: '当前账户不能修改这份配置。',
-    readOnly: '这里显示出厂值。要改，请到「插件」页打开 dsh-cpp-workflow 的配置卡片。',
-    openSettings: '打开插件配置',
+    readOnly: '当前部署没有把可编辑配置传给这个页面，下面显示的是出厂值。',
     fixed: '跟随文件名',
     fixedHint: '值由实际文件决定，不写进配置。',
     emptyValue: '留空则由文件自己写',
@@ -71,9 +71,9 @@ const STRINGS = {
     rejected: 'The host rejected the save: the config changed elsewhere. Restore defaults and try again.',
     unsaved: 'Unsaved changes',
     loading: 'Reading configuration…',
+    unavailable: 'This deployment does not serve this configuration.',
     unreadable: 'This account cannot edit the configuration.',
-    readOnly: 'Showing factory defaults. Edit the dsh-cpp-workflow card on the Plugins page.',
-    openSettings: 'Open plugin settings',
+    readOnly: 'This deployment does not pass an editable form to this page; the values below are defaults.',
     fixed: 'Follows the file name',
     fixedHint: 'Derived from the file itself, never stored in the config.',
     emptyValue: 'Leave empty and each file writes its own',
@@ -294,9 +294,9 @@ function ConfigPage(props) {
   const [message, setMessage] = React.useState('')
   const [tone, setTone] = React.useState('')
   const revision = form && form.state ? form.state.revision : undefined
-  const ready = Boolean(
-    form && form.state && form.state.status === 'ready' && form.state.writable && form.state.mode === 'host',
-  )
+  // 快照只有 status / writable / revision；旧版本多出来的 mode 字段已不存在，
+  // 再按它判断会把所有可写表单误判成只读。
+  const ready = Boolean(form && form.state && form.state.status === 'ready' && form.state.writable)
   const status = form && form.state ? form.state.status : 'missing'
 
   React.useEffect(() => {
@@ -346,7 +346,6 @@ function ConfigPage(props) {
 
   const editable = Boolean(form)
   const disabled = !ready
-  const navigation = props.pluginNavigation
 
   return h(
     'div',
@@ -364,17 +363,6 @@ function ConfigPage(props) {
           { className: 'dcw-note', role: 'status' },
           h('span', { className: 'dcw-note-dot' }),
           h('span', null, s.readOnly),
-          navigation && typeof navigation.openBundle === 'function'
-            ? h(
-                'button',
-                {
-                  type: 'button',
-                  className: 'dcw-btn',
-                  onClick: () => navigation.openBundle(PACKAGE_NAME),
-                },
-                s.openSettings,
-              )
-            : null,
         )
       : null,
     editable && !ready && status !== 'missing'
@@ -382,7 +370,7 @@ function ConfigPage(props) {
           'div',
           { className: 'dcw-note', role: 'status' },
           h('span', { className: 'dcw-note-dot' }),
-          h('span', null, status === 'loading' ? s.loading : s.unreadable),
+          h('span', null, status === 'loading' ? s.loading : status === 'unavailable' ? s.unavailable : s.unreadable),
         )
       : null,
     h(
@@ -485,24 +473,11 @@ function ConfigPage(props) {
   )
 }
 
-function page(ownerProps, pluginNavigation) {
-  const props = ownerProps || {}
-  return h(ConfigPage, { ...props, pluginNavigation })
+function page(ownerProps) {
+  return h(ConfigPage, ownerProps || {})
 }
 
 function apply(ctx) {
-  const navigation = typeof ctx.get === 'function' ? ctx.get('pluginNavigation') : undefined
-  ctx.slots.inject('settings.section', () =>
-    ctx.slots.register(
-      {
-        name: 'settings.section',
-        id: 'cpp-workflow',
-        order: 60,
-        label: () => t().nav,
-      },
-      (ownerProps) => page(ownerProps, navigation),
-    ),
-  )
   ctx.slots.inject('plugins.bundle.config', () =>
     ctx.slots.register(
       {
@@ -510,7 +485,7 @@ function apply(ctx) {
         key: PACKAGE_NAME,
         label: () => t().nav,
       },
-      (ownerProps) => (ownerProps && ownerProps.view === 'summary' ? null : page(ownerProps, navigation)),
+      (ownerProps) => (ownerProps && ownerProps.view === 'summary' ? null : page(ownerProps)),
     ),
   )
 }

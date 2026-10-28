@@ -69,6 +69,20 @@ function flatten(node, out = []) {
   return out
 }
 
+function collect(node, predicate, out = []) {
+  if (node === null || node === undefined || typeof node === 'boolean') return out
+  if (Array.isArray(node)) {
+    for (const child of node) collect(child, predicate, out)
+    return out
+  }
+  if (typeof node !== 'object') return out
+  if (predicate(node)) out.push(node)
+  const children = node.props && node.props.children
+  if (children !== undefined) collect(children, predicate, out)
+  if (typeof node.type === 'function') collect(node.type(node.props || {}), predicate, out)
+  return out
+}
+
 test('客户端半侧用包名挂在 Cordis Loader 上并只依赖 react', () => {
   const { id, exported } = loadClient()
   assert.equal(id, PACKAGE_NAME)
@@ -77,7 +91,7 @@ test('客户端半侧用包名挂在 Cordis Loader 上并只依赖 react', () =>
   assert.equal(typeof exported.apply, 'function')
 })
 
-test('设置页与插件页各注册一个挂点', () => {
+test('只向插件页注册一个配置挂点', () => {
   const { exported } = loadClient()
   const injected = []
   const registered = []
@@ -94,14 +108,11 @@ test('设置页与插件页各注册一个挂点', () => {
     },
   }
   exported.apply(ctx)
-  assert.deepEqual(injected, ['settings.section', 'plugins.bundle.config'])
-  assert.equal(registered[0].meta.id, 'cpp-workflow')
-  assert.equal(registered[0].meta.order, 60)
-  assert.equal(typeof registered[0].meta.label, 'function')
-  assert.equal(registered[1].meta.key, PACKAGE_NAME)
+  assert.deepEqual(injected, ['plugins.bundle.config'])
+  assert.equal(registered[0].meta.key, PACKAGE_NAME)
   // 插件页的摘要行不占位；页面视图返回完整表单。
-  assert.equal(registered[1].render({ view: 'summary' }), null)
-  assert.deepEqual(flatten(registered[1].render({})).filter((text) => text === '文档注释'), ['文档注释'])
+  assert.equal(registered[0].render({ view: 'summary' }), null)
+  assert.deepEqual(flatten(registered[0].render({})).filter((text) => text === '文档注释'), ['文档注释'])
 })
 
 test('出厂设置的预览先写文件头，再写函数契约', () => {
@@ -121,4 +132,34 @@ test('没有宿主表单时页面降级为只读出厂值，不抛异常', () =>
   assert.ok(texts.includes('文档注释'))
   assert.ok(texts.some((text) => text.includes('出厂值')))
   assert.ok(texts.some((text) => text.includes('/// @file <文件名>')))
+})
+
+function readyForm(writable = true) {
+  return {
+    state: { status: 'ready', writable, revision: 7, value: {} },
+    mutate: async () => true,
+  }
+}
+
+test('可写的配置快照打开编辑，不再按已移除的 mode 判成只读', () => {
+  const { exported } = loadClient()
+  const tree = exported.ConfigPage({ form: readyForm(true) })
+  const texts = flatten(tree)
+  assert.ok(!texts.some((text) => text.includes('当前账户不能修改')))
+  assert.ok(!texts.some((text) => text.includes('这里显示出厂值')))
+  const switches = collect(tree, (node) => node.type === 'input' && node.props.type === 'checkbox')
+  assert.ok(switches.length > 0)
+  assert.ok(switches.every((node) => node.props.disabled === false))
+  const save = collect(
+    tree,
+    (node) => node.type === 'button' && flatten(node).includes('保存'),
+  )
+  assert.equal(save.length, 1)
+  assert.equal(save[0].props.disabled, true, '没有改动时保存保持禁用')
+})
+
+test('不可写的配置快照给出账户提示，而不是可编辑表单', () => {
+  const { exported } = loadClient()
+  const texts = flatten(exported.ConfigPage({ form: readyForm(false) }))
+  assert.ok(texts.some((text) => text.includes('当前账户不能修改')))
 })
