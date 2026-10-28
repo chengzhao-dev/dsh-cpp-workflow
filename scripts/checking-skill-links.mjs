@@ -167,7 +167,7 @@ if (packageJson) {
   equal(packageJson.dsh?.catalog?.capabilities, ['skills'], 'dsh.catalog.capabilities')
   ok(Boolean(packageJson.dsh?.catalog?.summary?.zh), 'dsh.catalog.summary.zh 为空')
   ok(Boolean(packageJson.dsh?.catalog?.summary?.en), 'dsh.catalog.summary.en 为空')
-  // 0.6.0 起本包有设置页：客户端半侧挂在包名那一行，按包名装载。
+  // 0.6.0 起本包带客户端半侧：只注册插件页配置卡片，挂在包名那一行。
   if ('client' in (packageJson.dsh ?? {})) {
     equal(packageJson.dsh.client?.platform, 'web', 'dsh.client.platform')
     ok(
@@ -176,7 +176,7 @@ if (packageJson) {
     )
     equal(packageJson.exports?.['./client'], './lib/client.js', 'exports["./client"]')
   } else {
-    ok(false, '0.6.0 起必须声明 dsh.client（设置页）')
+    ok(false, '0.6.0 起必须声明 dsh.client（插件页配置卡片）')
   }
 
   equal(packageJson.exports?.['.'], './lib/index.js', 'exports["."]')
@@ -661,7 +661,7 @@ if (ok(existsSync(libClient), '缺少 lib/client.js，先运行 npm run build'))
   ok(client.startsWith('// 由 scripts/building-client.mjs 生成'), 'lib/client.js 必须由构建脚本生成')
   ok(client.includes('window.__ModuleLoader__.load({'), 'lib/client.js 缺少 Cordis 客户端外壳')
   ok(client.includes("id: \"@chengzhao-dev/dsh-cpp-workflow\""), 'lib/client.js 的包名不对')
-  ok(client.includes("'settings.section'"), 'lib/client.js 未注册设置页')
+  ok(!client.includes("'settings.section'"), 'lib/client.js 不应再注册设置页；插件页是唯一入口')
   ok(client.includes("'plugins.bundle.config'"), 'lib/client.js 未注册插件页配置卡片')
 }
 ok(existsSync(join(ROOT, 'lib', 'workspace.js')), '缺少 lib/workspace.js，先运行 npm run build')

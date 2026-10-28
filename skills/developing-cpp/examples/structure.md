@@ -95,7 +95,7 @@ std::vector<std::vector<CellPosition>> BuildLines() {
 }
 ```
 
-**好**：固定坐标写成具名命名空间里的 `constexpr` 常量表，`HasLine` 与 `IsLineComplete` 共用，所以不放进任何一个函数体；格子用 `at()`，整条线 `all_of`、八条线 `any_of`，函数不标 `noexcept`。
+**好**：固定坐标写成具名命名空间里的 `constexpr` 常量表，`HasLine` 与 `PreviewWin` 共用，所以不放进任何一个函数体；格子用 `at()`，整条线 `all_of`、八条线 `any_of`，函数不标 `noexcept`。
 
 ```cpp
 // board.cpp 的 namespace tictactoe：行、列、对角线三组，坐标固定。
@@ -115,23 +115,24 @@ constexpr std::array<std::array<CellPosition, 3>, 8> kLines{{
 
 ## 推演一步读原数据
 
-**差**：先复制整个棋盘，再在副本上落子，最后判断成线；调用方看不出副本只是中间量。
+**差**：先复制整个棋盘，再在副本上落子，最后判断成线；调用方看不出副本只是中间量，还要重复处理落子失败。
 
 ```cpp
 Board hypothetical = *this;
-hypothetical.PlaceCell(position, cell_type);
-return hypothetical.HasLine(cell_type);
+const PlaceCellResult placed = hypothetical.PlaceCell(position, cell_type);
+if (placed != PlaceCellResult::kSuccess) {
+  return WinPreviewResult::kInvalidPlace;
+}
+return hypothetical.HasLine(cell_type) ? WinPreviewResult::kWouldWin
+                                       : WinPreviewResult::kWouldNotWin;
 ```
 
-**好**：判断「这一格换成某种棋子后会不会成线」不需要第二份棋盘。越界、空格、已占用仍按 `PlaceCell` 的拒绝条件返回 `false`；通过之后只在包含该坐标的线上把这一格算作 `cell_type`，其余格子读原棋盘。
+**好**：判断「这一格换成某种棋子后会不会成线」不需要第二份棋盘。越界、空格、已占用交给 `CheckPlaceable` 统一返回原因；通过之后只在包含该坐标的线上把这一格算作 `cell_type`，其余格子读原棋盘。
 
 ```cpp
-bool Board::IsLineComplete(CellPosition position, CellType cell_type) const {
-  if (!IsInRange(position) || cell_type == CellType::kEmpty) {
-    return false;
-  }
-  if (cells_.at(position.row).at(position.col) != CellType::kEmpty) {
-    return false;
+WinPreviewResult Board::PreviewWin(CellPosition position, CellType cell_type) const {
+  if (CheckPlaceable(position, cell_type) != PlaceCellResult::kSuccess) {
+    return WinPreviewResult::kInvalidPlace;
   }
 
   const auto matches = [&](CellPosition cell) {
@@ -141,12 +142,13 @@ bool Board::IsLineComplete(CellPosition position, CellType cell_type) const {
     return cells_.at(cell.row).at(cell.col) == cell_type;
   };
 
-  return std::ranges::any_of(kLines, [&](const auto& line) {
+  const bool completes = std::ranges::any_of(kLines, [&](const auto& line) {
     const bool contains = std::ranges::find_if(line, [&](CellPosition cell) {
                             return cell.row == position.row && cell.col == position.col;
                           }) != line.end();
     return contains && std::ranges::all_of(line, matches);
   });
+  return completes ? WinPreviewResult::kWouldWin : WinPreviewResult::kWouldNotWin;
 }
 ```
 

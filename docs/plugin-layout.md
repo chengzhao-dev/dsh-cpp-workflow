@@ -57,7 +57,7 @@ dsh-cpp-workflow/
 
 ## 入口与补丁
 
-`main` 指向 `lib/index.js`。入口导出 `name`、`inject: ['skills']`、`Config` 与 `apply(ctx, config)`：`apply()` 注册技能 provider，并把当前标签配置附在每次 `get()` 的技能正文末尾；`Config` 用 Schemastery 声明文件头标签开关，字段都是 `volatile()`，设置页保存后即时生效。浏览器半侧在 `exports["./client"]`（`lib/client.js`），`package.json` 的 `dsh.client` 声明平台 `web` 与 `inject: ['slots']`，只注册 `settings.section` 与 `plugins.bundle.config` 两个插槽贡献。
+`main` 指向 `lib/index.js`。入口导出 `name`、`inject: ['skills']`、`Config` 与 `apply(ctx, config)`：`apply()` 注册技能 provider，并把当前标签配置附在每次 `get()` 的技能正文末尾；`Config` 用 Schemastery 声明文件头标签开关，字段都是 `volatile()`，设置页保存后即时生效。浏览器半侧在 `exports["./client"]`（`lib/client.js`），`package.json` 的 `dsh.client` 声明平台 `web` 与 `inject: ['slots']`，只注册 `plugins.bundle.config` 一个插槽贡献。
 
 `cordis.patch.yml` 只有一条 `insert`，`id` 是 `cpp-workflow`，`name` 与 npm 包名逐字相同；浏览器半侧仍挂在同一行，补丁不拆行。
 

@@ -36,11 +36,11 @@ metadata:
 | 2 | 定工具配置 | `steps/02-tooling.md` | 格式化、静态检查、clangd 各管一段，互不越界 |
 | 3 | 通过检查 | `steps/03-check.md` | 按编码 → 声明校验 → 活动校验 → 项目入口的次序跑，前一步失败就停 |
 
-每步只打开同号的一个步骤文件。判不准才打开 `examples/` 里与该步对应的案例；`references/` 保存完整条文，只在排错、整目录重构，或步骤里明确指向某一条文时按需打开。链接、rpath 与产物布局读 `references/linking.md`；CMake 的 target、标准和函数写法读 `../configuring-cmake/references/`，可复用片段在 `../configuring-cmake/assets/cmake/`。
+每步只打开同号的一个步骤文件。判不准才打开 `examples/` 里与该步对应的案例；`references/` 保存完整条文，只在排错、整目录重构，或步骤里明确指向某一条文时按需打开。链接、rpath 与产物布局读 `references/linking.md`；测试设计、断言与 CTest 注册读 `references/testing.md`；CMake 的 target、标准和函数写法读 `../configuring-cmake/references/`，可复用片段在 `../configuring-cmake/assets/cmake/`。
 
 本轮激活按三条上限走：
 
-- 只开当前步对应的一个步骤文件；本轮已经开了别的技能，就不再开第二个技能的步骤。
+- 只开当前步对应的一个步骤文件；同一改动域内不同时展开两个技能的步骤。跨域按 `developing-cpp` 的交接顺序（源码 → `configuring-cmake` → `building-cpp`）逐段进入，前一段结论落下再开下一段。
 - 条文只开该步点名的一份；同号案例留到下一次激活。
 - 标准档只打开项目技能声明的那一档，没有声明时用本技能已有的新工程默认，不把其余标准档读进来。
 
@@ -63,5 +63,5 @@ metadata:
 - 配置命令固定 Ninja 和单一编译器，`build/<compiler>/compile_commands.json` 存在，根 `build/compile_commands.json` 指向当前编译器。
 - target 契约已经成立：程序 `app`、库 target、公共 include、标准与输出目录都已由 `configuring-cmake` 写好；本技能没有偷偷改 CMake 来绕过失败。
 - `clang-format --dry-run --Werror` 与 `clang-tidy` 在项目源码上零告警；只扫描项目源码和项目头。
-- CTest 全绿，程序从该编译器的构建目录启动；失败时报告的是具体角色和原因。
+- CTest 全绿，程序从该编译器的构建目录启动；有测试时注册用 `gtest_discover_tests` 或项目既有机制，运行带 `--output-on-failure --no-tests=error`，失败时报告的是具体角色和原因。
 - 没有改源码语义，没有覆盖已有工程文件，也没有安装或下载任何工具。

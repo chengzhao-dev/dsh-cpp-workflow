@@ -101,7 +101,7 @@ flowchart TD
 | `skills/building-cpp/SKILL.md` | 触发描述、构建边界、三步路由、完成判据 |
 | `skills/building-cpp/steps/01-build.md`、`02-tooling.md`、`03-check.md` | 单步操作与退出条件 |
 | `skills/building-cpp/examples/environment.md`、`tooling.md` | 对应步骤的正反例 |
-| `skills/building-cpp/references/linking.md`、`static-analysis.md`、`encoding.md`、`environment.md`、`build-script.md` | 链接、工具、编码、环境轴与入口脚本 |
+| `skills/building-cpp/references/linking.md`、`static-analysis.md`、`encoding.md`、`environment.md`、`build-script.md`、`testing.md` | 链接、工具、编码、环境轴、入口脚本与测试 |
 | `skills/building-cpp/references/standards/` | 五档 `README.md` 与 `cmake-snippet.cmake`：设施、工具、降档与验证 |
 | `skills/building-cpp/scripts/checking-environment.mjs`、`checking-encoding.mjs` | 环境声明、构建产物 `compile_commands.json` 与编码的行检查 |
 | `skills/building-cpp/assets/` | 工具配置、四套工程模板；只复制，不注册为技能 |

@@ -46,7 +46,7 @@ node "<skill-dir>/scripts/checking-environment.mjs" --project . --live   # 活�
 
 **只改配置**：至少跑一次完整构建 + CTest；配置错误常常在链接或测试阶段才暴露。
 
-**没有测试**：CTest 显示没有测试是合法结果；不要为了「全绿」造空测试。行为验收由定行为的验收句负责。
+**没有测试**：项目确实还没有测试时，CTest 显示 0 条不算构建失败；不要为了「全绿」造空测试。已有公开行为却没有任何用例时，按 `references/testing.md` 的「先决定测什么」补成功与拒绝各一条，再跑 `--no-tests=error` 确认它真的被注册。
 
 **Windows 原生**：本版本不支持 `host=windows` + `build_host=native`。声明校验会返回 `ok: false`，`issues` 只有一句「本版本不能在 Windows 原生壳里构建」。停在这里，不要伪造 PowerShell 脚本，不要建议改 WSL 来绕过，也不要让代理改 `environment.json` 过关。
 

@@ -10,7 +10,7 @@
 // 遍历所有空格
 for (const auto& position : empty_cells) {
   // 尝试落子
-  const bool wins = game.Board().CompletesLine(position, cell_type);
+  const bool wins = game.PreviewWin(position, cell_type) == WinPreviewResult::kWouldWin;
   // 如果能赢
   if (wins) {
     // 返回这一手
@@ -24,19 +24,24 @@ for (const auto& position : empty_cells) {
 **好**：
 
 ```cpp
-/// 先找能立刻赢的格子：启发式只在「马上赢」和「马上挡」之间做选择，
-/// 不在这里做更深的前瞻，深搜留给 MinimaxAi。
+// 先找能立刻赢的格子：启发式只在「马上赢」和「马上挡」之间做选择，
+// 不在这里做更深的前瞻，深搜留给 MinimaxAi。
 for (const auto& position : empty_cells) {
-  if (game.CompletesLine(position, CellType::kX)) {
+  if (game.PreviewWin(position, CellType::kX) == WinPreviewResult::kWouldWin) {
     return position;
   }
 }
 
-/// 没有必胜格，交给下一层策略；这里不猜后续几步。
+// 没有必胜格，交给下一层策略；这里不猜后续几步。
 return std::nullopt;
 ```
 
-空行分开的阶段各一句，写这一阶段为什么停在这里；不给每个分支单独配注释。
+空行分开的阶段各一句，写这一阶段为什么停在这里。空行与注释的边界：
+
+- 多条独立拒绝：每个 `if` 上一行一句，写拒绝后棋盘怎样。
+- 成功写入：上一行一句，写为什么到这里才改棋盘。
+- 次序依赖的一对 `if`：第一组上方一句说明次序不能反，第二个不复制。
+- 循环上方已有阶段说明时，循环里的 `if` 不再加；单表达式谓词不加。
 
 ## TODO
 

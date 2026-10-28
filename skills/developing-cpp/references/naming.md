@@ -26,10 +26,10 @@
 | 角色 | 前缀 / 动词 | 例子 | 说明 |
 | --- | --- | --- | --- |
 | 查询 | `Get` 或访问器风格 | `GetCurrentOrder()`、`CurrentOrder()` | 只读、不改变状态；同一 API 选一种 |
-| 判断 | `Is` / `Has` / `Can`；成对规则用 `Completes` 等限定式 | `IsEmpty()`、`HasStock()`、`CompletesLine()` | 返回 `bool`，不抛异常 |
+| 判断 | `Is` / `Has` / `Can` | `IsEmpty()`、`HasStock()`、`HasLine()` | 返回 `bool`，不抛异常 |
 | 查找 | `Find` | `FindTask()` | 找不到是正常结果，返回 `optional` 或迭代器，不抛 |
 | 计数 | `Count` | `CountPendingTasks()` | 返回数量，不修改状态 |
-| 尝试 | `Try` | `TryReserve()` | 可能失败但不抛异常，返回结果类型 |
+| 尝试 | `Try` / 领域动词 | `TryReserve()`、`PlaceCell()` | 可能因多个前置条件失败但不抛异常，返回 `enum class` 结果；调用方按名区分失败原因 |
 | 确定性动作 | 领域动词 | `CompleteTask()`, `Reset()` | 前置条件满足时一定成功；无法完成任务时抛 |
 | 计算 | 动词开头 | `ScoreOrder()` | 从输入算出结果，不修改外部状态 |
 | 映射 | `<来源>To<目标>` | `OrderToReceipt()` | 名字必须含两端角色 |
@@ -46,11 +46,12 @@
 
 ## 谓词与查询命名
 
-- 返回 `bool` 的查询用肯定式，读起来像一句断言：`IsEmpty()`、`HasStock()`、`CanReserve()`、`CompletesLine()`。
+- 返回 `bool` 的查询用肯定式，读起来像一句断言：`IsEmpty()`、`HasStock()`、`CanReserve()`、`HasLine()`。
 - 前缀集就是这四类：`Is` / `Has` / `Can`，外加与成对规则一一对应的 `Completes`、`Would` 这类限定式；`Contains` 只保留给容器成员（`std::vector::empty` 一类已有标准名），不拿它当一般谓词。
 - `Get` 只用于取值，`Set` 只用于设值；不要用 `CheckLine()` 当布尔 getter。
 - `Check` / `Validate` 留给会报告错误、产生诊断或可能失败的操作；它们不返回纯 `bool` 查询。
-- 假设性查询在名字里写明条件：`CompletesLine(position, cell)` 读作「这一手会成线吗」；需要更强语气时用 `WouldCompleteLine()`。同一 API 只选一种，改名时同步声明、定义、调用点、测试和注释。
+- 动作可能因为多个前置条件失败、而调用方需要区分原因时，返回 `enum class`（`PlaceCellResult`、`WinPreviewResult`），不要用 `bool` 加输出参数，也不要拆成一串 `IsXxx` 判断再重复检查。
+- 假设性查询在名字里写明条件：`PreviewWin(position, cell)` 读作「这一手会成线吗」，返回 `WinPreviewResult` 区分「不能落子」与「能落但不赢」；只有成功与不报错的纯判断才用 `bool`。同一 API 只选一种，改名时同步声明、定义、调用点、测试和注释。
 - 私有谓词同样用肯定式；不要用 `flag`、`status` 或 `check` 这类不说明判据的名字。
 
 ## 类型命名的判断顺序

@@ -45,7 +45,7 @@ node "<skill-dir>/scripts/checking-environment.mjs" --project . --live
 
 ## 第五层：设置
 
-设置页在两个位置出现同一个组件：「设置 → C++ 工程流程」与「插件 → dsh-cpp-workflow → 配置」。它只编辑文件头标签：`@file` 固定为文件名，`@brief` 默认写，`@author`、`@date`、`@copyright`、`@version` 默认不写且值空着就不写出，`@param`、`@return`、`@throws` 默认必写，`@note`、`@see`、`@pre`、`@post`、`@tparam`、`@retval` 默认关闭。预览用示例文件名 `board.h`，不扫工程、不写文件。
+设置只有一个入口：「插件 → dsh-cpp-workflow → 配置」。它通过宿主 `configForms` 服务读取 `cpp-workflow` 命名空间，插件页不再替它转发表单；浏览器半侧拿不到这个命名空间时才退回只读出厂值，并说明这份部署没有提供配置。它只编辑文件头标签：`@file` 固定为文件名，`@brief` 默认写，`@author`、`@date`、`@copyright`、`@version` 默认不写且值空着就不写出，有参数就要求 `@param`，有返回值就要求 `@return`，会抛才要求 `@throws`，`@note`、`@see`、`@pre`、`@post`、`@tparam`、`@retval` 默认关闭。预览用示例文件名 `board.h`，不扫工程、不写文件。
 
 保存走宿主表单，配置留在 profile 的 `cordis.yml`；下次技能列表或 `get()` 读取时把当前开关附在技能正文末尾，检查器按同一开关生成 `--no-brief` 与 `--allow-tag` 参数。设置页、快照与检查器读同一份策略，改一处不会出现三种默认值。
 
