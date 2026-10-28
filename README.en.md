@@ -19,20 +19,20 @@ The exception material follows the C++ Core Guidelines' Error handling section a
 Pinned npm install:
 
 ```bash
-dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.6.5
+dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.6.6
 ```
 
 The matching Git tag:
 
 ```bash
-dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.6.5
+dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.6.6
 ```
 
 The desktop app owns the `desktop` profile. If the command-line `add` is rejected, add the plugin in the app settings and use the same pinned npm version. A Git tag install uses the prebuilt `lib/` committed in the repository and runs no build on the target machine; the package has no install script that needs approval.
 
 ### Settings
 
-The plugin page's "C++ Workflow" card is the only entry point and manages file-header tags only: `@file` is always the file name, `@brief` is written by default, and `@author`, `@date`, `@copyright`, `@version` stay off and are written only when they hold a non-empty value; `@param`, `@return`, `@throws` are required by default. The preview follows the switches, saving takes effect on the next skill read, and existing sources are never rewritten. Settings navigation no longer duplicates the form.
+The plugin page's "C++ Workflow" card is the only entry point and manages file-header tags only: `@file` is always the file name, `@brief` is written by default, and `@author`, `@date`, `@copyright`, `@version` stay off and are written only when they hold a non-empty value; `@param` is required for every parameter; `@return` is written by default but may be omitted when the condition is self-evident; `@throws` only when the function throws. The preview follows the switches, saving takes effect on the next skill read, and existing sources are never rewritten. Settings navigation no longer duplicates the form.
 
 ## Workspace gate
 
