@@ -247,12 +247,12 @@ async function getSkill(
 }
 
 export function apply(ctx: DshContext, config: unknown = undefined): void {
-  // 配置决定注释标签的默认集合；快照随每次 get() 读出，改配置立即生效。
-  const resolved = normalizeConfig(config)
+  // 配置对象由宿主在 volatile 保存时原地更新，所以每次 get() 都重新读取，
+  // 不能在这里缓存成一份快照，否则设置页改了标签开关，技能正文仍是旧值。
   ctx.skills.registerProvider(() => ({
     name: PROVIDER,
     list: listSkills,
     get: (candidate: SkillCandidate | undefined, options?: ListOptions) =>
-      getSkill(candidate, options, resolved),
+      getSkill(candidate, options, normalizeConfig(config)),
   }))
 }

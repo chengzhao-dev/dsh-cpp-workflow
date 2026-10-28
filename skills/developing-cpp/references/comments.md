@@ -67,7 +67,7 @@ GameResult result_ = GameResult::kInProgress;
 有参数或有返回值的函数写两段：第一段写结果、失败方式或检查项；第二段按签名把标签写齐。
 
 1. 第一段：普通函数写正常返回什么、失败时返回什么或抛什么；布尔查询与 `operator==` 写「检查…是否…」。
-2. 第二段：每个参数一条 `@param`；有返回值就写 `@return`；会抛才写 `@throws`。
+2. 第二段：每个参数一条 `@param`；有返回值默认写 `@return`，成立条件已由函数名与返回类型说清时可省略；会抛才写 `@throws`。
 
 ```cpp
 /// 检查坐标能否落子，不修改棋盘。
@@ -78,9 +78,9 @@ GameResult result_ = GameResult::kInProgress;
 [[nodiscard]] PlaceCellResult CheckPlaceable(CellPosition position, CellType cell_type) const;
 ```
 
-- 布尔查询与 `operator==`：第一句写「检查…是否…」；`@return` 只写「什么情况下为 true」，再补一句「不检查什么」。条件简单也要写，「名字已经说明」不构成省略理由。
+- 布尔查询与 `operator==`：第一句写「检查…是否…」；`@return` 只写「什么情况下为 true」，再补一句「不检查什么」。`Is`、`Has` 开头的名字与 `bool` 返回类型已经把成立条件说清时可省略 `@return`，不为了形式补一句同义反复。
 - `@param` 每个参数都写，写范围、单位或所有权，不写「索引」这类同义反复；没有参数就不写空的 `@param`。
-- `@return` 每个非 `void`、非构造、非析构的函数都写，写返回值怎么读或失败时返回什么；不要用「见上」或重复第一段。
+- `@return` 默认写，写返回值怎么读或失败时返回什么；返回类型与函数名已把条件说清时可省略，不要用「见上」或重复第一段。
 - `@throws` 必须与 `references/exceptions.md` 一致；不抛异常的函数不写。
 - 私有函数同样写契约，不能默认调用者知道前置条件；输出参数标 `[out]`，既读又写标 `[in,out]`。
 

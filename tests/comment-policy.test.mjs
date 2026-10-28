@@ -15,6 +15,7 @@ import {
   renderFileHeader,
   snapshotText,
 } from '../lib/comment-policy.js'
+import { Config } from '../lib/index.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -58,6 +59,19 @@ test('非法配置回落到出厂值', () => {
   assert.deepEqual(config.brief, DEFAULT_CONFIG.brief)
   assert.equal(config.param, true)
   assert.deepEqual(config.author, { enabled: false, value: '' })
+})
+
+test('宿主 volatile 单元按实际值读取，设置保存后技能快照跟着变', () => {
+  const instance = Config({
+    param: false,
+    brief: { enabled: true, value: '棋盘状态' },
+    author: { enabled: true, value: 'chengzhao-dev' },
+  })
+  const config = normalizeConfig(instance)
+  assert.equal(config.param, false)
+  assert.deepEqual(config.brief, { enabled: true, value: '棋盘状态' })
+  assert.deepEqual(config.author, { enabled: true, value: 'chengzhao-dev' })
+  assert.doesNotMatch(snapshotText(config), /@param /)
 })
 
 test('检查器只放行填了非空值的隐私标签', () => {

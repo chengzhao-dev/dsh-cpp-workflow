@@ -57,7 +57,7 @@ dsh-cpp-workflow/
 
 ## 入口与补丁
 
-`main` 指向 `lib/index.js`。入口导出 `name`、`inject: ['skills']`、`Config` 与 `apply(ctx, config)`：`apply()` 注册技能 provider，并把当前标签配置附在每次 `get()` 的技能正文末尾；`Config` 用 Schemastery 声明文件头标签开关，字段都是 `volatile()`，设置页保存后即时生效。浏览器半侧在 `exports["./client"]`（`lib/client.js`），`package.json` 的 `dsh.client` 声明平台 `web` 与 `inject: ['slots']`，只注册 `plugins.bundle.config` 一个插槽贡献。
+`main` 指向 `lib/index.js`。入口导出 `name`、`inject: ['skills']`、`Config` 与 `apply(ctx, config)`：`apply()` 注册技能 provider，并在每次 `get()` 时从宿主原地更新的 config 对象重新归一化，文件头标签配置附在技能正文末尾；`Config` 用 Schemastery 声明文件头标签开关，字段都是 `volatile()`，设置页保存后即时生效。浏览器半侧在 `exports["./client"]`（`lib/client.js`），模块导出 `inject: ['slots', 'configForms']`；`package.json` 的 `dsh.client` 声明平台 `web`，并依赖宿主的 slots、settings 与 plugin-manager 包。`apply()` 用 `ctx.configForms.get('cpp-workflow')` 自建表单（profile 条目 id，不是 npm 包名），在 `configForms.whileServed(['cpp-workflow'], ...)` 内注册唯一的 `plugins.bundle.config` 贡献，宿主不再通过 `form` 属性转发表单。
 
 `cordis.patch.yml` 只有一条 `insert`，`id` 是 `cpp-workflow`，`name` 与 npm 包名逐字相同；浏览器半侧仍挂在同一行，补丁不拆行。
 

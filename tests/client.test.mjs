@@ -87,15 +87,49 @@ test('客户端半侧用包名挂在 Cordis Loader 上并只依赖 react', () =>
   const { id, exported } = loadClient()
   assert.equal(id, PACKAGE_NAME)
   assert.equal(exported.name, PACKAGE_NAME)
-  assert.deepEqual(exported.inject, ['slots'])
+  assert.deepEqual(exported.inject, ['slots', 'configForms'])
   assert.equal(typeof exported.apply, 'function')
 })
 
-test('只向插件页注册一个配置挂点', () => {
+function readyForm(writable = true) {
+  return {
+    state: { status: 'ready', writable, revision: 7, value: {} },
+    mutate: async () => true,
+  }
+}
+
+function controllerForm(writable = true) {
+  return {
+    getSnapshot() {
+      return { status: 'ready', writable, revision: 7, value: {} }
+    },
+    subscribe() {
+      return () => {}
+    },
+    mutate: async () => true,
+  }
+}
+
+test('只向插件页注册一个配置挂点，并用组合包条目 id 取表单', () => {
   const { exported } = loadClient()
   const injected = []
   const registered = []
+  const requested = []
+  const form = controllerForm(true)
   const ctx = {
+    effect(run) {
+      return run()
+    },
+    configForms: {
+      get(entryId) {
+        requested.push(entryId)
+        return form
+      },
+      whileServed(namespaces, register) {
+        assert.deepEqual(namespaces, ['cpp-workflow'])
+        return register(new Set(namespaces))
+      },
+    },
     slots: {
       inject(name, callback) {
         injected.push(name)
@@ -108,11 +142,14 @@ test('只向插件页注册一个配置挂点', () => {
     },
   }
   exported.apply(ctx)
+  assert.deepEqual(requested, ['cpp-workflow'])
   assert.deepEqual(injected, ['plugins.bundle.config'])
   assert.equal(registered[0].meta.key, PACKAGE_NAME)
-  // 插件页的摘要行不占位；页面视图返回完整表单。
+  // 插件页的摘要行不占位；页面视图返回完整表单，且拿到的是可编辑表单。
   assert.equal(registered[0].render({ view: 'summary' }), null)
-  assert.deepEqual(flatten(registered[0].render({})).filter((text) => text === '文档注释'), ['文档注释'])
+  const tree = registered[0].render({})
+  assert.ok(!flatten(tree).some((text) => text.includes('当前部署没有把可编辑配置传给这个页面')))
+  assert.deepEqual(flatten(tree).filter((text) => text === '文档注释'), ['文档注释'])
 })
 
 test('出厂设置的预览先写文件头，再写函数契约', () => {
@@ -125,6 +162,39 @@ test('出厂设置的预览先写文件头，再写函数契约', () => {
   assert.ok(lines.at(-1).startsWith('[[nodiscard]] bool Place('))
 })
 
+test('文件头字段按叶子路径写入，避免整对象路径被宿主拒绝', () => {
+  const { exported } = loadClient()
+  const header = (enabled, value) => ({ enabled, value })
+  const base = {
+    brief: header(true, ''),
+    author: header(false, ''),
+    date: header(false, ''),
+    copyright: header(false, ''),
+    version: header(false, ''),
+    param: true,
+    returns: true,
+    throws: true,
+    note: false,
+    see: false,
+    pre: false,
+    post: false,
+    tparam: false,
+    retval: false,
+  }
+  const draft = {
+    ...base,
+    brief: header(true, '棋盘状态'),
+    author: header(true, 'chengzhao-dev'),
+    param: false,
+  }
+  assert.deepEqual(exported.diffOperations(draft, base), [
+    { op: 'set', path: ['brief', 'value'], value: '棋盘状态' },
+    { op: 'set', path: ['author', 'enabled'], value: true },
+    { op: 'set', path: ['author', 'value'], value: 'chengzhao-dev' },
+    { op: 'set', path: ['param'], value: false },
+  ])
+})
+
 test('没有宿主表单时页面降级为只读出厂值，不抛异常', () => {
   const { exported } = loadClient()
   const tree = exported.ConfigPage({})
@@ -133,13 +203,6 @@ test('没有宿主表单时页面降级为只读出厂值，不抛异常', () =>
   assert.ok(texts.some((text) => text.includes('出厂值')))
   assert.ok(texts.some((text) => text.includes('/// @file <文件名>')))
 })
-
-function readyForm(writable = true) {
-  return {
-    state: { status: 'ready', writable, revision: 7, value: {} },
-    mutate: async () => true,
-  }
-}
 
 test('可写的配置快照打开编辑，不再按已移除的 mode 判成只读', () => {
   const { exported } = loadClient()
@@ -162,4 +225,15 @@ test('不可写的配置快照给出账户提示，而不是可编辑表单', ()
   const { exported } = loadClient()
   const texts = flatten(exported.ConfigPage({ form: readyForm(false) }))
   assert.ok(texts.some((text) => text.includes('当前账户不能修改')))
+})
+
+test('ConfigFormController 的 getSnapshot 快照也能打开编辑', () => {
+  const { exported } = loadClient()
+  const tree = exported.ConfigPage({ form: controllerForm(true) })
+  const texts = flatten(tree)
+  assert.ok(!texts.some((text) => text.includes('当前部署没有把可编辑配置传给这个页面')))
+  assert.ok(!texts.some((text) => text.includes('当前账户不能修改')))
+  const switches = collect(tree, (node) => node.type === 'input' && node.props.type === 'checkbox')
+  assert.ok(switches.length > 0)
+  assert.ok(switches.every((node) => node.props.disabled === false))
 })

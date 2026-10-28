@@ -106,12 +106,29 @@ export const DEFAULT_CONFIG: CommentConfig = {
   retval: false,
 }
 
+/**
+ * 宿主把 volatile 字段交给插件时给的是可读写单元（`.get()`），设置页快照给的是普通值；
+ * 两种形状都要按同一个值读取。
+ */
+function unwrap(value: unknown): unknown {
+  if (
+    value !== null &&
+    typeof value === 'object' &&
+    typeof (value as { get?: unknown }).get === 'function'
+  ) {
+    return (value as { get: () => unknown }).get()
+  }
+  return value
+}
+
 function text(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : ''
+  const plain = unwrap(value)
+  return typeof plain === 'string' ? plain.trim() : ''
 }
 
 function flag(value: unknown, fallback: boolean): boolean {
-  return typeof value === 'boolean' ? value : fallback
+  const plain = unwrap(value)
+  return typeof plain === 'boolean' ? plain : fallback
 }
 
 /**

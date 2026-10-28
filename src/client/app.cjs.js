@@ -275,36 +275,69 @@ function Preview(props) {
 function diffOperations(draft, base) {
   const operations = []
   for (const key of Object.keys(DEFAULT_CONFIG)) {
-    const next = JSON.stringify(draft[key])
-    const previous = JSON.stringify(base[key])
-    if (next !== previous) operations.push({ op: 'set', path: [key], value: draft[key] })
+    const next = draft[key]
+    const previous = base[key]
+    if (next !== null && typeof next === 'object') {
+      // 文件头字段整体不是 volatile，宿主只接受叶子路径（brief.enabled / brief.value）。
+      const before = previous !== null && typeof previous === 'object' ? previous : {}
+      for (const field of Object.keys(next)) {
+        if (JSON.stringify(next[field]) !== JSON.stringify(before[field])) {
+          operations.push({ op: 'set', path: [key, field], value: next[field] })
+        }
+      }
+      continue
+    }
+    if (JSON.stringify(next) !== JSON.stringify(previous)) {
+      operations.push({ op: 'set', path: [key], value: next })
+    }
   }
   return operations
+}
+
+function snapshotOf(form) {
+  if (!form) return { status: 'missing', writable: false }
+  if (typeof form.getSnapshot === 'function') return form.getSnapshot()
+  return form.state || { status: 'missing', writable: false }
+}
+
+// 宿主的 ConfigFormController 是可订阅的外部存储；旧调用方仍可能直接给 form.state。
+function useFormSnapshot(form) {
+  const [snapshot, setSnapshot] = React.useState(() => snapshotOf(form))
+  React.useEffect(() => {
+    if (!form || typeof form.subscribe !== 'function' || typeof form.getSnapshot !== 'function') {
+      setSnapshot(snapshotOf(form))
+      return undefined
+    }
+    setSnapshot(form.getSnapshot())
+    return form.subscribe(() => setSnapshot(form.getSnapshot()))
+  }, [form])
+  return snapshot
 }
 
 function ConfigPage(props) {
   const s = t()
   ensureStyles()
   const form = props.form
-  const initial = React.useMemo(() => normalizeConfig(form && form.state ? form.state.value : undefined), [])
+  const state = useFormSnapshot(form)
+  const initial = React.useMemo(() => normalizeConfig(state.value), [])
   const [draft, setDraft] = React.useState(initial)
   const [base, setBase] = React.useState(initial)
   const [dirty, setDirty] = React.useState(false)
   const [busy, setBusy] = React.useState(false)
   const [message, setMessage] = React.useState('')
   const [tone, setTone] = React.useState('')
-  const revision = form && form.state ? form.state.revision : undefined
+  const revision = state.revision
   // 快照只有 status / writable / revision；旧版本多出来的 mode 字段已不存在，
   // 再按它判断会把所有可写表单误判成只读。
-  const ready = Boolean(form && form.state && form.state.status === 'ready' && form.state.writable)
-  const status = form && form.state ? form.state.status : 'missing'
+  const ready = Boolean(state.status === 'ready' && state.writable)
+  const status = state.status
 
   React.useEffect(() => {
-    if (dirty || !form || !form.state || form.state.status !== 'ready') return
-    const next = normalizeConfig(form.state.value)
+    if (dirty || state.status !== 'ready') return
+    const next = normalizeConfig(state.value)
     setBase(next)
     setDraft(next)
-  }, [revision, status, dirty, form])
+  }, [revision, status, dirty, form, state.value])
 
   const update = (patch) => {
     setDraft((current) => ({ ...current, ...patch }))
@@ -473,26 +506,36 @@ function ConfigPage(props) {
   )
 }
 
-function page(ownerProps) {
-  return h(ConfigPage, ownerProps || {})
+// 组合包 cordis.patch.yml 插入的 profile 条目 id；设置服务按它定位表单。
+const ENTRY_ID = 'cpp-workflow'
+
+function page(ownerProps, form) {
+  return h(ConfigPage, { ...(ownerProps || {}), form })
 }
 
 function apply(ctx) {
-  ctx.slots.inject('plugins.bundle.config', () =>
-    ctx.slots.register(
-      {
-        name: 'plugins.bundle.config',
-        key: PACKAGE_NAME,
-        label: () => t().nav,
-      },
-      (ownerProps) => (ownerProps && ownerProps.view === 'summary' ? null : page(ownerProps)),
-    ),
-  )
+  const form = ctx.configForms ? ctx.configForms.get(ENTRY_ID) : undefined
+  const mount = () =>
+    ctx.slots.inject('plugins.bundle.config', () =>
+      ctx.slots.register(
+        {
+          name: 'plugins.bundle.config',
+          key: PACKAGE_NAME,
+          label: () => t().nav,
+        },
+        (ownerProps) => (ownerProps && ownerProps.view === 'summary' ? null : page(ownerProps, form)),
+      ),
+    )
+  if (ctx.configForms && typeof ctx.configForms.whileServed === 'function') {
+    ctx.effect(() => ctx.configForms.whileServed([ENTRY_ID], mount), 'dsh-cpp-workflow: 配置挂点')
+  } else {
+    mount()
+  }
 }
 
 module.exports = {
   name: PACKAGE_NAME,
-  inject: ['slots'],
+  inject: ['slots', 'configForms'],
   apply,
   ConfigPage,
   diffOperations,
