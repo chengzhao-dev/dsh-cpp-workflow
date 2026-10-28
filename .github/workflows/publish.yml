@@ -76,3 +76,37 @@ jobs:
             git push origin "$TAG"
           fi
           gh release create "$TAG" --verify-tag --generate-notes --title "$TAG"
+
+  cleanup-001:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - name: Remove 0.0.1 from npm
+        run: |
+          set -euo pipefail
+          package="$(node -p "require('./package.json').name")"
+          if ! npm view "${package}@0.0.1" version >/dev/null 2>&1; then
+            echo "::notice::${package}@0.0.1 is already absent"
+            exit 0
+          fi
+          escaped="${package/\//%2F}"
+          id_token="$(curl --fail --silent --show-error             -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}"             "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npm:registry.npmjs.org"             | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.parse(s).value))")"
+          npm_token="$(curl --fail --silent --show-error             -X POST -H "Authorization: Bearer ${id_token}"             "https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/${escaped}"             | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const b=JSON.parse(s);if(!b.token)throw new Error(JSON.stringify(b));process.stdout.write(b.token)})")"
+          npm config set "//registry.npmjs.org/:_authToken" "${npm_token}" --location=user
+          npm unpublish "${package}@0.0.1" --force
+      - name: Remove 0.0.1 tag and release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view v0.0.1 >/dev/null 2>&1; then
+            gh release delete v0.0.1 --yes --cleanup-tag
+          fi
+          git push origin :refs/tags/v0.0.1 || true
