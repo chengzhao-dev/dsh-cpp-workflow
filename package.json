@@ -1,6 +1,6 @@
 {
   "name": "@chengzhao-dev/dsh-cpp-workflow",
-  "version": "0.6.6",
+  "version": "0.6.7",
   "description": "写 C++ 源码、配 CMake、用 Clang 构建；头文件用 /// Doxygen 文档注释，函数体用 // 分段说明，文件头标签可在设置里改。 · Write C++ sources, configure CMake, and build with Clang; /// Doxygen on declarations, // section notes in bodies, and configurable file-header tags.",
   "type": "module",
   "main": "./lib/index.js",

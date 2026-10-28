@@ -4,11 +4,11 @@
 
 ## 当前版本
 
-`dsh-cpp-workflow` 为 **0.6.6**，`dsh-quarto-book` 为 **0.6.16**。两个插件各自在上一条发布线（0.6.4 / 0.6.14）上做补丁递增，不再共用版本号。误发的 `0.0.1` 已从 npm 撤回，并删除 GitHub 标签与 Release；该号作废，不再复用。
+`dsh-cpp-workflow` 为 **0.6.7**，`dsh-quarto-book` 为 **0.6.16**。两个插件各自在上一条发布线（0.6.4 / 0.6.14）上做补丁递增，不再共用版本号。误发的 `0.0.1` 已从 npm 撤回，并删除 GitHub 标签与 Release；该号作废，不再复用。
 
 ## 修订号
 
-只改措辞、文档、示例、注释、测试、内部实现或检查词表时，补丁号加一：`0.6.5` 之后是 `0.6.6`，`0.6.15` 之后是 `0.6.16`。新检查让旧工程报出新问题，也只加补丁号。
+只改措辞、文档、示例、注释、测试、内部实现或检查词表时，补丁号加一：`0.6.5` 之后是 `0.6.6`，`0.6.6` 之后是 `0.6.7`，`0.6.15` 之后是 `0.6.16`。新检查让旧工程报出新问题，也只加补丁号。
 
 ## 次版本
 
@@ -31,15 +31,15 @@
 5. 读回两边的 commit，必须相同：
 
    ```bash
-   npm view @chengzhao-dev/dsh-cpp-workflow@0.6.6 version gitHead
-   git rev-parse v0.6.6^{commit}
+   npm view @chengzhao-dev/dsh-cpp-workflow@0.6.7 version gitHead
+   git rev-parse v0.6.7^{commit}
    ```
 
    `npm view ... dist.attestations` 应能看到 provenance 记录。
 
 ## 标签约束
 
-- annotated 标签与 `package.json` 同号，例如 `v0.6.6`。
+- annotated 标签与 `package.json` 同号，例如 `v0.6.7`。
 - 标签打在发布提交上；标签之后再补文档提交，会让 npm 的 `gitHead` 与标签指向的 commit 不一致。
 - 同一个版本不重复发布，也不把版本改回旧号重推同一个标签。
 - 版本还没进 registry 时，修好问题后可以删除本地与远端标签，重打在修正后的提交上；版本一旦可安装，只升版本号。

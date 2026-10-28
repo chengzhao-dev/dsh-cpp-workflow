@@ -19,13 +19,13 @@
 npm 安装钉死版本：
 
 ```bash
-dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.6.6
+dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.6.7
 ```
 
 同版本的 Git 标签：
 
 ```bash
-dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.6.6
+dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.6.7
 ```
 
 桌面应用独占 `desktop` profile。命令行 `add` 被拒绝时，在应用设置里添加插件，地址填同一个 npm 版本。Git 标签安装使用仓库内已构建的 `lib/`，不在目标机器上重新构建；包内也不含需要授权执行的安装脚本。
@@ -33,6 +33,8 @@ dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.6.6
 ### 设置
 
 插件页的「C++ 工程流程」是唯一入口，只管文件头标签：`@file` 固定为文件名，`@brief` 默认写出，`@author`、`@date`、`@copyright`、`@version` 默认关闭且只在填了非空值时才写出；有参数就要求 `@param`，有返回值默认要求 `@return`（成立条件自明时可省），会抛才要求 `@throws`。预览随开关即时更新，保存后下一次读取技能即生效，已有源码不会被改写。设置导航不再重复放一份。
+
+升级插件后如果这一页仍显示“暂时没有连到配置表单”，说明当前窗口还挂着旧的前端产物：重启 DeepSeek Harness，或在插件页点“重新载入页面”。页面会在打开后自动重试连接，拿到表单就切换为可编辑，不需要重装插件。保存、撤销修改与恢复默认值分三个按钮：撤销只回到最近一次读到的值，恢复默认值只填草稿，点保存才写盘。
 
 ## 工作区门禁
 

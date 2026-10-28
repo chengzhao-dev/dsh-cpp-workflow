@@ -142,14 +142,54 @@ test('只向插件页注册一个配置挂点，并用组合包条目 id 取表�
     },
   }
   exported.apply(ctx)
-  assert.deepEqual(requested, ['cpp-workflow'])
+  // 表单延迟到页面渲染时再取：宿主服务晚到时，挂点已存在也能接上。
+  assert.deepEqual(requested, [])
   assert.deepEqual(injected, ['plugins.bundle.config'])
   assert.equal(registered[0].meta.key, PACKAGE_NAME)
   // 插件页的摘要行不占位；页面视图返回完整表单，且拿到的是可编辑表单。
   assert.equal(registered[0].render({ view: 'summary' }), null)
   const tree = registered[0].render({})
-  assert.ok(!flatten(tree).some((text) => text.includes('当前部署没有把可编辑配置传给这个页面')))
-  assert.deepEqual(flatten(tree).filter((text) => text === '文档注释'), ['文档注释'])
+  const texts = flatten(tree)
+  assert.deepEqual(requested, ['cpp-workflow'])
+  assert.ok(!texts.some((text) => text.includes('暂时没有连到配置表单')))
+  assert.deepEqual(texts.filter((text) => text === '文档注释'), ['文档注释'])
+})
+
+test('表单服务晚到时页面重新取表单，不再冻结只读', () => {
+  const { exported } = loadClient()
+  let form
+  let registered
+  const ctx = {
+    effect(run) {
+      return run()
+    },
+    configForms: {
+      get() {
+        return form
+      },
+      whileServed(namespaces, register) {
+        return register(new Set(namespaces))
+      },
+    },
+    slots: {
+      inject(name, callback) {
+        callback()
+      },
+      register(meta, render) {
+        registered = { meta, render }
+        return () => {}
+      },
+    },
+  }
+  exported.apply(ctx)
+  let texts = flatten(registered.render({}))
+  assert.ok(texts.some((text) => text.includes('暂时没有连到配置表单')))
+  form = readyForm(true)
+  texts = flatten(registered.render({}))
+  assert.ok(!texts.some((text) => text.includes('暂时没有连到配置表单')))
+  const switches = collect(registered.render({}), (node) => node.type === 'input' && node.props.type === 'checkbox')
+  assert.ok(switches.length > 0)
+  assert.ok(switches.every((node) => node.props.disabled === false))
 })
 
 test('出厂设置的预览先写文件头，再写函数契约', () => {
@@ -195,12 +235,13 @@ test('文件头字段按叶子路径写入，避免整对象路径被宿主拒�
   ])
 })
 
-test('没有宿主表单时页面降级为只读出厂值，不抛异常', () => {
+test('没有宿主表单时给出恢复入口，不抛异常', () => {
   const { exported } = loadClient()
   const tree = exported.ConfigPage({})
   const texts = flatten(tree)
   assert.ok(texts.includes('文档注释'))
-  assert.ok(texts.some((text) => text.includes('出厂值')))
+  assert.ok(texts.some((text) => text.includes('内置默认值')))
+  assert.ok(texts.some((text) => text.includes('重新载入页面')))
   assert.ok(texts.some((text) => text.includes('/// @file <文件名>')))
 })
 

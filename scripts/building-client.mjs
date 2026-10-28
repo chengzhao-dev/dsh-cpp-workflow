@@ -14,7 +14,9 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const POLICY = path.join(ROOT, 'lib', 'comment-policy.js')
-const APP = path.join(ROOT, 'src', 'client', 'app.cjs.js')
+const CLIENT = path.join(ROOT, 'src', 'client')
+// 分片按依赖顺序拼接；同一工厂作用域里共享 React、h、PACKAGE_NAME 与策略内联常量。
+const PARTS = ['shell.js', 'text.js', 'styles.js', 'widgets.js', 'form-state.js', 'app.cjs.js']
 const OUT = path.join(ROOT, 'lib', 'client.js')
 const PACKAGE_NAME = '@chengzhao-dev/dsh-cpp-workflow'
 
@@ -36,9 +38,9 @@ function appBody(source) {
 
 function build() {
   const policy = policyBody(readFileSync(POLICY, 'utf8'))
-  const app = appBody(readFileSync(APP, 'utf8'))
+  const app = PARTS.map((part) => appBody(readFileSync(path.join(CLIENT, part), 'utf8'))).join('\n\n')
   return [
-    '// 由 scripts/building-client.mjs 生成，请改 src/comment-policy.ts 与 src/client/app.cjs.js。',
+    '// 由 scripts/building-client.mjs 生成，请改 src/comment-policy.ts 与 src/client/*.js。',
     'window.__ModuleLoader__.load({',
     `  id: ${JSON.stringify(PACKAGE_NAME)},`,
     '  factory: (require) => {',
