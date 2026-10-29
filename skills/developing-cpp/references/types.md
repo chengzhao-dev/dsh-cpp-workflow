@@ -68,7 +68,7 @@ std::array<TaskState, kItemCount> items_{};
 
 - 新代码用 `enum class`；unscoped `enum` 只用于兼容 C 接口，不作为默认写法。
 - 封闭状态码默认写 `: std::uint8_t`；普通枚举用默认底层类型。
-- 枚举值的行尾注释要么全写要么全不写；语义结果写在最前，`///<` 对齐。
+- 枚举值的行尾注释要么全写要么全不写；两种句式与禁止项见 `references/comments.md`「枚举项与 `struct` 短字段：两种句式」。
 - 需要“编号”与“名字”两套表示时，写显式映射函数，例如 `TaskStateToName` / `TaskStateFromName`，不要在枚举和整数之间来回隐式转换。
 
 ## 强类型包装

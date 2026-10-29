@@ -184,6 +184,37 @@ test('枚举成员注释全写或全不写', () => {
   assert.deepEqual(rules(full), [])
 })
 
+test('枚举行尾两种句式与禁止项', () => {
+  const ok = file(
+    '/// 落子结果。',
+    'enum class PlaceResult {',
+    '  kSuccess = 0,  ///< 落子成功。',
+    '  kEmptyType = 2,  ///< 非法参数：传入空棋盘格子类型。',
+    '};',
+  )
+  assert.deepEqual(rules(ok), [])
+  const comma = file(
+    '/// 落子结果。',
+    'enum class PlaceResult {',
+    '  kEmptyType = 2,  ///< 传入空棋盘格子类型，非法参数。',
+    '};',
+  )
+  assert.ok(rules(comma).includes('enum-trailing-comma'))
+  const empty = file(
+    '/// 落子结果。',
+    'enum class PlaceResult {',
+    '  kSuccess = 0,  ///< 落子成功：。',
+    '};',
+  )
+  assert.ok(rules(empty).includes('enum-trailing-empty'))
+  const field = file(
+    'struct CellPosition {',
+    '  std::int32_t row{};  ///< 行坐标，0 表示最上面一行。',
+    '};',
+  )
+  assert.ok(rules(field).includes('enum-trailing-comma'))
+})
+
 test('声明宽度与注释行宽按中文两列计算', () => {
   assert.equal(displayWidth('/// 中文'), 8)
   assert.equal(displayWidth('/// abc'), 7)

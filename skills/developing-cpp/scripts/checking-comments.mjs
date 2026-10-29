@@ -2,7 +2,7 @@
 // 只读注释审计：按 references/comments.md 的硬规则检查 C/C++ 源文件。
 //
 // 检查项：Doxygen 文件头、注释行宽度、标签、注释与声明的贴合、
-// 类型注释存在性、成员功能清单、设计论证（方案对比）、否定式边界、领域尺寸、谓词首句、@param 完整性、枚举成员注释一致性、数据成员主注释位置。
+// 类型注释存在性、成员功能清单、设计论证（方案对比）、否定式边界、领域尺寸、谓词首句、@param 完整性、枚举成员注释一致性、枚举行尾句式、数据成员主注释位置。
 // 不重写任何文件。
 //
 // 用法：
@@ -480,6 +480,22 @@ export function checkText(text, options = {}) {
       add(index + 1, 'enum-partial', '枚举成员注释需全写或全不写，当前只有部分成员有 ///<')
     }
     index = body
+  }
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const marker = lines[index].indexOf('///<')
+    if (marker === -1) continue
+    const content = lines[index].slice(marker + 4).trim().replace(/。$/, '').trim()
+    const colon = content.indexOf('：')
+    if (colon !== -1) {
+      if (content.slice(colon + 1).trim() === '') {
+        add(index + 1, 'enum-trailing-empty', '行尾注释冒号后为空：写「类别：说明」，冒号两侧都不能为空')
+      }
+      continue
+    }
+    if (/[，,]/.test(content)) {
+      add(index + 1, 'enum-trailing-comma', '行尾注释用逗号连接类别与说明：改成「类别：说明」，类别在前')
+    }
   }
 
   for (let index = 0; index < lines.length; index += 1) {
