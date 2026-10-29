@@ -235,6 +235,24 @@ test('文件头字段按叶子路径写入，避免整对象路径被宿主拒�
   ])
 })
 
+test('出厂设置除锁定项外全部开关为开', () => {
+  const { exported } = loadClient()
+  const tree = exported.ConfigPage({ form: readyForm(true) })
+  const switches = collect(tree, (node) => node.type === 'input' && node.props.type === 'checkbox')
+  const labels = new Set(switches.map((node) => node.props['aria-label']))
+  assert.equal(labels.size, 14)
+  assert.ok(switches.every((node) => node.props.checked === true))
+})
+
+test('关闭文件头标签只提交开关，值留在草稿里', () => {
+  const { exported } = loadClient()
+  const base = { author: { enabled: true, value: 'chengzhao-dev' } }
+  const draft = { author: { enabled: false, value: 'chengzhao-dev' } }
+  assert.deepEqual(exported.diffOperations(draft, base), [
+    { op: 'set', path: ['author', 'enabled'], value: false },
+  ])
+})
+
 test('没有宿主表单时给出恢复入口，不抛异常', () => {
   const { exported } = loadClient()
   const tree = exported.ConfigPage({})

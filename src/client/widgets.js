@@ -1,6 +1,6 @@
 function Switch(props) {
   return h(
-    'span',
+    'label',
     { className: 'dcw-switch' },
     h('input', {
       type: 'checkbox',
@@ -13,131 +13,123 @@ function Switch(props) {
   )
 }
 
-function LockIcon() {
-  return h(
-    'svg',
-    { width: 12, height: 12, viewBox: '0 0 16 16', 'aria-hidden': 'true', focusable: 'false' },
-    h('path', {
-      fill: 'currentColor',
-      d: 'M8 1a3 3 0 0 0-3 3v2H4.5A1.5 1.5 0 0 0 3 7.5v5A1.5 1.5 0 0 0 4.5 14h7a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 11.5 6H11V4a3 3 0 0 0-3-3Zm2 5H6V4a2 2 0 1 1 4 0v2Z',
-    }),
-  )
-}
-
-function Chevron() {
-  return h(
-    'svg',
-    { className: 'dcw-chevron', width: 12, height: 12, viewBox: '0 0 16 16', 'aria-hidden': 'true', focusable: 'false' },
-    h('path', { fill: 'currentColor', d: 'M6 3.5 10.5 8 6 12.5 4.9 11.4 8.3 8 4.9 4.6Z' }),
-  )
-}
-
-/** 五个区块统一用默认展开的 details，标题在摘要行。 */
+/** 设置页的分组卡片：标题下一句说明，正文按行排控件。 */
 function Section(props) {
   return h(
-    'details',
-    { className: 'dcw-card', open: true },
-    h('summary', null, h('span', { className: 'dcw-card-title' }, props.title), h(Chevron)),
-    props.children,
+    'section',
+    { className: 'dcw-card' },
+    h(
+      'div',
+      { className: 'dcw-card-head' },
+      h('h4', { className: 'dcw-card-title' }, props.title),
+      props.hint ? h('p', { className: 'dcw-card-hint' }, props.hint) : null,
+    ),
+    h('div', { className: 'dcw-card-body' }, props.children),
   )
 }
 
-/** 文件头可填写的一行：标签、开关、文本框。 */
+/** 文件头可填写的一行：标题与开关一行，输入框整行在下；关闭时收起输入框。 */
 function ValueRow(props) {
   const entry = props.entry
   return h(
     'div',
-    { className: 'dcw-row' },
-    h('div', { className: 'dcw-row-label' }, TAG_LABEL[props.tag]),
+    {
+      className: 'dcw-row dcw-row-value',
+      onClick: (event) => {
+        if (props.disabled) return
+        if (event.target.closest('.dcw-switch, .dcw-input')) return
+        props.onChange({ ...entry, enabled: !entry.enabled })
+      },
+    },
+    h(
+      'div',
+      { className: 'dcw-row-main' },
+      h('span', { className: 'dcw-row-label' }, TAG_LABEL[props.tag]),
+    ),
     h(Switch, {
       label: TAG_LABEL[props.tag],
       checked: entry.enabled,
       disabled: props.disabled,
       onChange: (enabled) => props.onChange({ ...entry, enabled }),
     }),
-    h('input', {
-      className: 'dcw-input',
-      type: 'text',
-      value: entry.value,
-      placeholder: props.placeholder,
-      disabled: props.disabled || !entry.enabled,
-      'aria-label': `${TAG_LABEL[props.tag]} 的值`,
-      onChange: (event) => props.onChange({ ...entry, value: event.target.value }),
-    }),
+    entry.enabled
+      ? h('input', {
+          className: 'dcw-input',
+          type: 'text',
+          value: entry.value,
+          placeholder: props.placeholder,
+          disabled: props.disabled,
+          'aria-label': `${TAG_LABEL[props.tag]} 的值`,
+          onChange: (event) => props.onChange({ ...entry, value: event.target.value }),
+        })
+      : null,
   )
 }
 
-/** 只有开关的标签行；右侧框显示该标签的作用，不进入配置。 */
+/** 只有开关的标签行；说明放在标题下面，不再放一个不可用的假输入框。 */
 function FlagRow(props) {
   return h(
     'div',
-    { className: 'dcw-row' },
-    h('div', { className: 'dcw-row-label' }, TAG_LABEL[props.tag]),
+    {
+      className: 'dcw-row dcw-row-flag',
+      onClick: (event) => {
+        if (props.disabled) return
+        if (event.target.closest('.dcw-switch, .dcw-input')) return
+        props.onChange(!props.checked)
+      },
+    },
+    h(
+      'div',
+      { className: 'dcw-row-main' },
+      h('span', { className: 'dcw-row-label' }, TAG_LABEL[props.tag]),
+      props.hint ? h('span', { className: 'dcw-row-hint' }, props.hint) : null,
+    ),
     h(Switch, {
       label: TAG_LABEL[props.tag],
       checked: props.checked,
       disabled: props.disabled,
       onChange: props.onChange,
     }),
-    h('input', {
-      className: 'dcw-input',
-      type: 'text',
-      value: '',
-      placeholder: props.placeholder,
-      disabled: true,
-      readOnly: true,
-      tabIndex: -1,
-      'aria-label': props.placeholder,
-    }),
   )
 }
 
-/** 值由文件或语法固定的行：中间锁，右侧框给出固定值。 */
+/** 值由文件或语法固定的行：右侧写成普通文本，不放锁图标。 */
 function LockRow(props) {
   return h(
     'div',
-    { className: 'dcw-row dcw-row-lock' },
-    h('div', { className: 'dcw-row-label' }, props.label),
-    h('span', { className: 'dcw-lock', title: props.placeholder }, h(LockIcon)),
-    h('input', {
-      className: 'dcw-input',
-      type: 'text',
-      value: '',
-      placeholder: props.placeholder,
-      disabled: true,
-      readOnly: true,
-      tabIndex: -1,
-      'aria-label': props.placeholder,
-    }),
+    { className: 'dcw-row dcw-row-fixed' },
+    h(
+      'div',
+      { className: 'dcw-row-main' },
+      h('span', { className: 'dcw-row-label' }, props.label),
+    ),
+    h('span', { className: 'dcw-fixed-value' }, props.value),
   )
 }
 
-/** 两种声明注释符号；按钮本身可用键盘切换。 */
+/** 两种声明注释符号：两张等宽卡片，上面符号、下面示例。 */
 function StyleRow(props) {
   const options = [
-    { value: 'slash', label: '///' },
-    { value: 'block', label: '/** */' },
+    { value: 'slash', symbol: '///', example: props.slashExample },
+    { value: 'block', symbol: '/** */', example: props.blockExample },
   ]
   return h(
     'div',
-    { className: 'dcw-row dcw-row-style' },
-    h('div', { className: 'dcw-row-label' }, props.label),
-    h(
-      'div',
-      { className: 'dcw-segmented', role: 'group', 'aria-label': props.label },
-      options.map((option) =>
-        h(
-          'button',
-          {
-            key: option.value,
-            type: 'button',
-            className: 'dcw-segment',
-            'aria-pressed': props.value === option.value ? 'true' : 'false',
-            disabled: props.disabled,
-            onClick: () => props.onChange(option.value),
-          },
-          option.label,
-        ),
+    { className: 'dcw-style-options', role: 'radiogroup', 'aria-label': props.label },
+    options.map((option) =>
+      h(
+        'button',
+        {
+          key: option.value,
+          type: 'button',
+          role: 'radio',
+          'aria-checked': props.value === option.value ? 'true' : 'false',
+          className: 'dcw-style-option',
+          disabled: props.disabled,
+          onClick: () => props.onChange(option.value),
+        },
+        h('span', { className: 'dcw-style-symbol' }, option.symbol),
+        h('span', { className: 'dcw-style-example' }, option.example),
       ),
     ),
   )
@@ -147,7 +139,12 @@ function Preview(props) {
   const s = props.strings
   return h(
     Section,
-    { title: s.preview },
-    h('pre', { className: 'dcw-preview' }, previewText(props.config, SAMPLE_FILE)),
+    { title: s.preview, hint: s.previewHint },
+    h(
+      'div',
+      { className: 'dcw-preview' },
+      h('div', { className: 'dcw-preview-head' }, h('span', { className: 'dcw-preview-dot' }), SAMPLE_FILE),
+      h('pre', { className: 'dcw-preview-body' }, previewText(props.config, SAMPLE_FILE)),
+    ),
   )
 }

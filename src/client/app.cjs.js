@@ -64,9 +64,11 @@ function ConfigPage(props) {
     return () => clearTimeout(timer)
   }, [form, attempt])
 
+  // 脏标记按与已保存值的差集算：把开关关了又开回原值时，页面不该再说“有未保存的改动”。
   const update = (patch) => {
-    setDraft((current) => ({ ...current, ...patch }))
-    setDirty(true)
+    const next = { ...draft, ...patch }
+    setDraft(next)
+    setDirty(diffOperations(next, base).length > 0)
     setMessage('')
     setTone('')
   }
@@ -81,8 +83,9 @@ function ConfigPage(props) {
 
   // 恢复默认值：只填进草稿，点“保存”后才写盘，避免误触直接覆盖已保存的配置。
   const restoreDefaults = () => {
-    setDraft(normalizeConfig(DEFAULT_CONFIG))
-    setDirty(true)
+    const next = normalizeConfig(DEFAULT_CONFIG)
+    setDraft(next)
+    setDirty(diffOperations(next, base).length > 0)
     setMessage(s.restored)
     setTone('')
   }
@@ -123,21 +126,26 @@ function ConfigPage(props) {
   const editable = Boolean(form)
   const disabled = !ready
 
-  /** 一个标签一行：中间开关，右侧框给默认值或占位说明。 */
+  /** 一个标签一行：标题与说明，右侧开关。 */
   const flag = (tag, checked) =>
     h(FlagRow, {
       key: tag,
       tag,
       checked,
       disabled,
-      placeholder: s[FLAG_PLACEHOLDER[tag]],
+      hint: s[FLAG_PLACEHOLDER[tag]],
       onChange: (value) => update({ [tag]: value }),
     })
 
   return h(
     'div',
     { className: 'dcw-page' },
-    h('header', { className: 'dcw-head' }, h('h3', { className: 'dcw-title' }, s.heading)),
+    h(
+      'header',
+      { className: 'dcw-head' },
+      h('h3', { className: 'dcw-title' }, s.heading),
+      h('p', { className: 'dcw-lede' }, s.lede),
+    ),
     missing
       ? h(
           'div',
@@ -162,19 +170,21 @@ function ConfigPage(props) {
       : null,
     h(
       Section,
-      { title: s.style },
+      { title: s.style, hint: s.styleHint },
       h(StyleRow, {
         label: s.style,
         value: draft.commentStyle,
         disabled,
+        slashExample: s.styleSlashExample,
+        blockExample: s.styleBlockExample,
         onChange: (value) => update({ commentStyle: value }),
       }),
-      h(LockRow, { label: s.bodyRow, placeholder: s.bodyPlaceholder }),
+      h(LockRow, { label: s.bodyRow, value: s.bodyPlaceholder }),
     ),
     h(
       Section,
-      { title: s.header },
-      h(LockRow, { label: TAG_LABEL.file, placeholder: s.filePlaceholder }),
+      { title: s.header, hint: s.headerHint },
+      h(LockRow, { label: TAG_LABEL.file, value: s.filePlaceholder }),
       ...HEADER_TAGS.map((tag) =>
         h(ValueRow, {
           key: tag,
@@ -186,10 +196,10 @@ function ConfigPage(props) {
         }),
       ),
     ),
-    h(Section, { title: s.type }, ...TYPE_TAGS.map((tag) => flag(tag, draft[tag]))),
+    h(Section, { title: s.type, hint: s.typeHint }, ...TYPE_TAGS.map((tag) => flag(tag, draft[tag]))),
     h(
       Section,
-      { title: s.declaration },
+      { title: s.declaration, hint: s.declarationHint },
       ...[...CONTRACT_TAGS, ...FUNCTION_EXTRA_TAGS].map((tag) => flag(tag, draft[tag])),
     ),
     h(Preview, { config: draft, strings: s }),

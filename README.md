@@ -19,20 +19,20 @@
 npm 安装钉死版本：
 
 ```bash
-dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.6.8
+dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.6.9
 ```
 
 同版本的 Git 标签：
 
 ```bash
-dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.6.8
+dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.6.9
 ```
 
 桌面应用独占 `desktop` profile。命令行 `add` 被拒绝时，在应用设置里添加插件，地址填同一个 npm 版本。Git 标签安装使用仓库内已构建的 `lib/`，不在目标机器上重新构建；包内也不含需要授权执行的安装脚本。
 
 ### 设置
 
-插件页的「C++ 工程流程」是唯一入口：注释符号可选 `///` 或 `/** ... */`，页面按注释符号、文件头、类型、函数声明与只读预览分块。`@file` 固定为文件名；`@brief` 默认开启；`@author`、`@date`、`@copyright`、`@version` 默认关闭，空值跳过。函数参数默认要求 `@param`，返回值默认要求 `@return`（成立条件自明时可省），会抛才要求 `@throws`；`@pre`、`@post`、`@retval` 与类型块的 `@tparam`、`@note`、`@see` 默认关闭。函数体固定用 `//`。预览随改动即时更新，保存后下一次读取技能即生效，已有源码不会被改写。设置导航不再重复放一份。
+插件页的「C++ 工程流程」是唯一入口：注释符号可选 `///` 或 `/** ... */`，页面按注释符号、文件头、类型、函数声明与只读预览分块。`@file` 固定为文件名；除它和函数体 `//` 外，文件头、类型与函数声明标签的开关出厂全开，空值跳过。函数参数要求 `@param`，返回值要求 `@return`（成立条件自明时可省），会抛才要求 `@throws`；`@pre`、`@post`、`@retval` 与类型块的 `@tparam`、`@note`、`@see` 也出厂开启，需要时可逐项关掉。函数体固定用 `//`。预览随改动即时更新，保存后下一次读取技能即生效，已有源码不会被改写。设置导航不再重复放一份。
 
 升级插件后如果这一页暂时只显示出厂值，说明当前窗口还挂着旧的前端产物：页脚会显示写入的 `~/.dsh/profiles/<profile>/cordis.patch.yml`，并提示重载；重启 DeepSeek Harness，或在插件页点“重新载入页面”即可编辑，不需要重装插件。页面会在打开后自动重试连接，拿到表单就切换为可编辑。保存、撤销修改与恢复默认值分三个按钮：撤销只回到最近一次读到的值，恢复默认值只填草稿，点保存才写盘。
 

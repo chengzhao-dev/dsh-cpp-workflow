@@ -43,10 +43,10 @@ export const HEADER_TAGS = ['brief', 'author', 'date', 'copyright', 'version'] a
 /** 函数声明标签：开关决定是否要求写出。 */
 export const CONTRACT_TAGS = ['param', 'returns', 'throws'] as const
 
-/** 函数声明里默认关闭的补充标签。 */
+/** 函数声明里出厂开启的补充标签。 */
 export const FUNCTION_EXTRA_TAGS = ['pre', 'post', 'retval'] as const
 
-/** 类型标签：默认关闭，函数模板共用同一组键。 */
+/** 类型标签：出厂开启，函数模板共用同一组键。 */
 export const TYPE_TAGS = ['tparam', 'note', 'see'] as const
 
 /** 全部可选标签，快照与测试按它排序。 */
@@ -80,23 +80,25 @@ export const SAMPLE_BRIEF = '<一句话说明本文件>'
 /** 预览里的示例文件名：只是占位符，不对应任何工程的真实文件。 */
 export const SAMPLE_FILE = '<文件名>'
 
-/** 出厂配置：声明用 `///`，文件头只留 @file 与 @brief，契约标签全开，其余关闭。 */
+/**
+ * 出厂配置：声明用 `///`，除 @file 与函数体 // 外全部开启；空值仍不写文件头。
+ */
 export const DEFAULT_CONFIG: CommentConfig = {
   commentStyle: 'slash',
   brief: { enabled: true, value: '' },
-  author: { enabled: false, value: '' },
-  date: { enabled: false, value: '' },
-  copyright: { enabled: false, value: '' },
-  version: { enabled: false, value: '' },
+  author: { enabled: true, value: '' },
+  date: { enabled: true, value: '' },
+  copyright: { enabled: true, value: '' },
+  version: { enabled: true, value: '' },
   param: true,
   returns: true,
   throws: true,
-  note: false,
-  see: false,
-  pre: false,
-  post: false,
-  tparam: false,
-  retval: false,
+  note: true,
+  see: true,
+  pre: true,
+  post: true,
+  tparam: true,
+  retval: true,
 }
 
 /**

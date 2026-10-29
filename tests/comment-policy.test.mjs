@@ -34,14 +34,15 @@ test('注释符号可切到块注释', () => {
   assert.doesNotMatch(block, /^\/\/\//m)
 })
 
-test('隐私标签默认关闭，填了非空值才写出', () => {
-  const off = previewText(DEFAULT_CONFIG, 'board.h')
-  assert.doesNotMatch(off, /@author/)
-  const enabled = previewText(
-    { ...DEFAULT_CONFIG, author: { enabled: true, value: '' } },
+test('隐私标签出厂开启，空值不写出，填了值才出现', () => {
+  assert.equal(DEFAULT_CONFIG.author.enabled, true)
+  const empty = previewText(DEFAULT_CONFIG, 'board.h')
+  assert.doesNotMatch(empty, /@author/)
+  const disabled = previewText(
+    { ...DEFAULT_CONFIG, author: { enabled: false, value: 'chengzhao-dev' } },
     'board.h',
   )
-  assert.doesNotMatch(enabled, /@author/)
+  assert.doesNotMatch(disabled, /@author/)
   const filled = previewText(
     { ...DEFAULT_CONFIG, author: { enabled: true, value: 'chengzhao-dev' } },
     'board.h',
@@ -66,7 +67,7 @@ test('非法配置回落到出厂值', () => {
   const config = normalizeConfig({ brief: 'yes', param: 1, author: null, commentStyle: 'star' })
   assert.deepEqual(config.brief, DEFAULT_CONFIG.brief)
   assert.equal(config.param, true)
-  assert.deepEqual(config.author, { enabled: false, value: '' })
+  assert.deepEqual(config.author, { enabled: true, value: '' })
   assert.equal(config.commentStyle, 'slash')
   assert.equal(normalizeConfig({ commentStyle: 'block' }).commentStyle, 'block')
 })

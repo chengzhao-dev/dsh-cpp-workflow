@@ -77,7 +77,7 @@
 - 混合优先级算术加显式括号，消除 `readability-math-missing-parentheses`。
 - 内建整数默认用 `int`；需要确定宽度时用 `<cstdint>` 的 `std::int32_t`、`std::int64_t` 等（可省略 `std::` 前缀），可能到 2^31 的值用 64 位；`std::size_t` / `std::ptrdiff_t` 只用于大小和指针差。不要用无符号类型表达「这个值不会为负」。
 - 封闭状态码用 `enum class`；底层类型默认 `int`，只有确实需要缩小存储时才写固定底层类型并说明理由。枚举值总是带作用域：`OrderResult::kSuccess`。
-- 枚举的尾随注释要么全写要么全不写；语义结果写在最前，`///<` 对齐。
+- 枚举的尾随注释要么全写要么全不写；两种句式与禁止项见 `references/comments.md`「枚举项与 `struct` 短字段：两种句式」。
 - 浮点不用 `==` 比较计算结果；按量纲给容差，金额用最小货币单位的整数。
 - 数值宽度、符号、枚举、强类型、`const` 成员和下标访问的完整规则见 `references/types.md`；初始化、RAII、移动和模板见 `references/language.md`。
 
