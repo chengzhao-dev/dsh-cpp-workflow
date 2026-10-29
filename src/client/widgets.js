@@ -32,78 +32,122 @@ function Chevron() {
   )
 }
 
-const HINT_KEY = {
-  brief: 'briefHint',
-  author: 'authorHint',
-  date: 'dateHint',
-  copyright: 'copyrightHint',
-  version: 'versionHint',
-  param: 'paramHint',
-  returns: 'returnHint',
-  throws: 'throwsHint',
+/** 五个区块统一用默认展开的 details，标题在摘要行。 */
+function Section(props) {
+  return h(
+    'details',
+    { className: 'dcw-card', open: true },
+    h('summary', null, h('span', { className: 'dcw-card-title' }, props.title), h(Chevron)),
+    props.children,
+  )
 }
 
+/** 文件头可填写的一行：标签、开关、文本框。 */
 function ValueRow(props) {
-  const s = props.strings
   const entry = props.entry
   return h(
     'div',
     { className: 'dcw-row' },
     h('div', { className: 'dcw-row-label' }, TAG_LABEL[props.tag]),
-    h(
-      'div',
-      { className: 'dcw-row-control' },
-      h(Switch, {
-        label: TAG_LABEL[props.tag],
-        checked: entry.enabled,
-        disabled: props.disabled,
-        onChange: (enabled) => props.onChange({ ...entry, enabled }),
-      }),
-      h('span', { className: 'dcw-state', 'aria-hidden': 'true' }, entry.enabled ? s.on : s.off),
-      h('input', {
-        className: 'dcw-input',
-        type: 'text',
-        value: entry.value,
-        placeholder: props.tag === 'brief' ? s.blankBrief : s.emptyValue,
-        disabled: props.disabled || !entry.enabled,
-        'aria-label': `${TAG_LABEL[props.tag]} 的值`,
-        onChange: (event) => props.onChange({ ...entry, value: event.target.value }),
-      }),
-      h('p', { className: 'dcw-row-hint' }, s[HINT_KEY[props.tag]] || ''),
-    ),
+    h(Switch, {
+      label: TAG_LABEL[props.tag],
+      checked: entry.enabled,
+      disabled: props.disabled,
+      onChange: (enabled) => props.onChange({ ...entry, enabled }),
+    }),
+    h('input', {
+      className: 'dcw-input',
+      type: 'text',
+      value: entry.value,
+      placeholder: props.placeholder,
+      disabled: props.disabled || !entry.enabled,
+      'aria-label': `${TAG_LABEL[props.tag]} 的值`,
+      onChange: (event) => props.onChange({ ...entry, value: event.target.value }),
+    }),
   )
 }
 
-function Flag(props) {
+/** 只有开关的标签行；右侧框显示该标签的作用，不进入配置。 */
+function FlagRow(props) {
   return h(
     'div',
-    { className: 'dcw-flag' },
+    { className: 'dcw-row' },
+    h('div', { className: 'dcw-row-label' }, TAG_LABEL[props.tag]),
+    h(Switch, {
+      label: TAG_LABEL[props.tag],
+      checked: props.checked,
+      disabled: props.disabled,
+      onChange: props.onChange,
+    }),
+    h('input', {
+      className: 'dcw-input',
+      type: 'text',
+      value: '',
+      placeholder: props.placeholder,
+      disabled: true,
+      readOnly: true,
+      tabIndex: -1,
+      'aria-label': props.placeholder,
+    }),
+  )
+}
+
+/** 值由文件或语法固定的行：中间锁，右侧框给出固定值。 */
+function LockRow(props) {
+  return h(
+    'div',
+    { className: 'dcw-row dcw-row-lock' },
+    h('div', { className: 'dcw-row-label' }, props.label),
+    h('span', { className: 'dcw-lock', title: props.placeholder }, h(LockIcon)),
+    h('input', {
+      className: 'dcw-input',
+      type: 'text',
+      value: '',
+      placeholder: props.placeholder,
+      disabled: true,
+      readOnly: true,
+      tabIndex: -1,
+      'aria-label': props.placeholder,
+    }),
+  )
+}
+
+/** 两种声明注释符号；按钮本身可用键盘切换。 */
+function StyleRow(props) {
+  const options = [
+    { value: 'slash', label: '///' },
+    { value: 'block', label: '/** */' },
+  ]
+  return h(
+    'div',
+    { className: 'dcw-row dcw-row-style' },
+    h('div', { className: 'dcw-row-label' }, props.label),
     h(
       'div',
-      { className: 'dcw-row-label' },
-      TAG_LABEL[props.tag],
-      h(Switch, {
-        label: TAG_LABEL[props.tag],
-        checked: props.checked,
-        disabled: props.disabled,
-        onChange: props.onChange,
-      }),
+      { className: 'dcw-segmented', role: 'group', 'aria-label': props.label },
+      options.map((option) =>
+        h(
+          'button',
+          {
+            key: option.value,
+            type: 'button',
+            className: 'dcw-segment',
+            'aria-pressed': props.value === option.value ? 'true' : 'false',
+            disabled: props.disabled,
+            onClick: () => props.onChange(option.value),
+          },
+          option.label,
+        ),
+      ),
     ),
-    h('p', { className: 'dcw-row-hint' }, props.hint || ''),
   )
 }
 
 function Preview(props) {
   const s = props.strings
   return h(
-    'section',
-    { className: 'dcw-card', 'aria-label': s.preview },
-    h(
-      'div',
-      { className: 'dcw-card-head' },
-      h('h4', { className: 'dcw-card-title' }, s.preview),
-      h('p', { className: 'dcw-card-hint' }, s.previewHint),
-    ),
+    Section,
+    { title: s.preview },
     h('pre', { className: 'dcw-preview' }, previewText(props.config, SAMPLE_FILE)),
   )
 }

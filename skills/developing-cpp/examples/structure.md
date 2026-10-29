@@ -99,7 +99,7 @@ std::vector<std::vector<CellPosition>> BuildLines() {
 
 ```cpp
 // board.cpp 的 namespace tictactoe：行、列、对角线三组，坐标固定。
-constexpr std::array<std::array<CellPosition, 3>, 8> kLines{{
+constexpr std::array<std::array<CellPosition, 3>, 8> kLines = {{
     {{{0, 0}, {0, 1}, {0, 2}}},  // 行 0
     {{{1, 0}, {1, 1}, {1, 2}}},  // 行 1
     {{{2, 0}, {2, 1}, {2, 2}}},  // 行 2

@@ -1,6 +1,6 @@
 # 插件流程
 
-这个包只做一件事：在已经声明 C++ 工作流的仓库里，提供 `developing-cpp`、`configuring-cmake` 与 `building-cpp` 三个技能。它不注册工具，不编译，不写项目文件，也不改系统提示词；唯一的浏览器半侧是一个设置页，用来调整注释标签的默认值。
+这个包只做一件事：在已经声明 C++ 工作流的仓库里，提供 `developing-cpp`、`configuring-cmake` 与 `building-cpp` 三个技能。它不注册工具，不编译，不写项目文件，也不改系统提示词；唯一的浏览器半侧是一个设置页，用来调整注释写法与标签的默认值。
 
 ## 第一层：安装
 
@@ -45,8 +45,8 @@ node "<skill-dir>/scripts/checking-environment.mjs" --project . --live
 
 ## 第五层：设置
 
-设置只有一个入口：「插件 → dsh-cpp-workflow → 配置」。它通过宿主 `configForms` 服务读取 `cpp-workflow` 命名空间（profile 条目 id），插件页不再替它转发表单；浏览器半侧拿不到这个命名空间时才退回只读出厂值，并说明这份部署没有提供配置。表单订阅 `ConfigFormController` 的快照，写入用 `mutate(ops, revision)`；文件头字段按叶子路径 `['brief','value']` 提交，因为宿主只把叶子上的 `volatile()` 字段当作可写项。它只编辑文件头标签：`@file` 固定为文件名，`@brief` 默认写，`@author`、`@date`、`@copyright`、`@version` 默认不写且值空着就不写出，有参数就要求 `@param`，有返回值默认要求 `@return`（成立条件由函数名与返回类型说清时可省），会抛才要求 `@throws`，`@note`、`@see`、`@pre`、`@post`、`@tparam`、`@retval` 默认关闭。预览用示例文件名 `board.h`，不扫工程、不写文件。
+设置只有一个入口：「插件 → dsh-cpp-workflow → 配置」。它通过宿主 `configForms` 服务读取 `cpp-workflow` 命名空间（profile 条目 id），插件页不再替它转发表单；浏览器半侧拿不到这个命名空间时才退回只读出厂值，并说明这份部署没有提供配置。表单订阅 `ConfigFormController` 的快照，写入用 `mutate(ops, revision)`；字段按叶子路径 `['brief','value']` 提交，因为宿主只把叶子上的 `volatile()` 字段当作可写项。页面分五个区块：注释符号（`///` 或 `/** ... */`）、文件头、类型、函数声明与只读预览；`@file` 固定为文件名，`@brief` 默认开启，`@author`、`@date`、`@copyright`、`@version` 默认关闭且空值跳过；函数参数默认要求 `@param`，返回值默认要求 `@return`（成立条件由函数名与返回类型说清时可省），会抛才要求 `@throws`；`@pre`、`@post`、`@retval` 与类型块的 `@tparam`、`@note`、`@see` 默认关闭；函数体固定用 `//`。预览用示例文件名 `board.h`，不扫工程、不写文件；页脚显示写入的 `cordis.patch.yml` 路径并提示重载后生效。
 
-保存走宿主表单，配置留在 profile 的 `cordis.yml`；下次技能列表或 `get()` 读取时把当前开关附在技能正文末尾，检查器按同一开关生成 `--no-brief` 与 `--allow-tag` 参数。设置页、快照与检查器读同一份策略，改一处不会出现三种默认值。
+保存走宿主表单，配置留在 profile 的 `cordis.patch.yml`；下次技能列表或 `get()` 读取时把当前开关附在技能正文末尾，检查器按同一开关生成 `--comment-style block`、`--no-brief` 与 `--allow-tag` 参数。设置页、快照与检查器读同一份策略，改一处不会出现三种默认值。
 
 浏览器半侧是手写 CJS，构建时把 `comment-policy` 内联进去，不引入打包器；它只依赖宿主的 `react` 与 `@deepseek-ai/dsh-client-ui-slots`，没有各自的版本副本。

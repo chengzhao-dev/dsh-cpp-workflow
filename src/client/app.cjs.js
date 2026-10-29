@@ -8,6 +8,28 @@ const ENTRY_ID = 'cpp-workflow'
 const FORM_RETRY_MS = 500
 const MAX_FORM_RETRIES = 20
 
+/** 文件头可填写标签的占位文字；顺序与 HEADER_TAGS 一致。 */
+const HEADER_PLACEHOLDER = {
+  brief: 'briefPlaceholder',
+  author: 'authorPlaceholder',
+  date: 'datePlaceholder',
+  copyright: 'copyrightPlaceholder',
+  version: 'versionPlaceholder',
+}
+
+/** 只有开关的标签按区块取占位文字。 */
+const FLAG_PLACEHOLDER = {
+  param: 'paramPlaceholder',
+  returns: 'returnPlaceholder',
+  throws: 'throwsPlaceholder',
+  pre: 'prePlaceholder',
+  post: 'postPlaceholder',
+  retval: 'retvalPlaceholder',
+  tparam: 'tparamPlaceholder',
+  note: 'notePlaceholder',
+  see: 'seePlaceholder',
+}
+
 function ConfigPage(props) {
   const s = t()
   ensureStyles()
@@ -101,16 +123,21 @@ function ConfigPage(props) {
   const editable = Boolean(form)
   const disabled = !ready
 
+  /** 一个标签一行：中间开关，右侧框给默认值或占位说明。 */
+  const flag = (tag, checked) =>
+    h(FlagRow, {
+      key: tag,
+      tag,
+      checked,
+      disabled,
+      placeholder: s[FLAG_PLACEHOLDER[tag]],
+      onChange: (value) => update({ [tag]: value }),
+    })
+
   return h(
     'div',
     { className: 'dcw-page' },
-    h(
-      'header',
-      { className: 'dcw-head' },
-      h('p', { className: 'dcw-eyebrow' }, s.eyebrow),
-      h('h3', { className: 'dcw-title' }, s.title),
-      h('p', { className: 'dcw-lede' }, s.intro),
-    ),
+    h('header', { className: 'dcw-head' }, h('h3', { className: 'dcw-title' }, s.heading)),
     missing
       ? h(
           'div',
@@ -122,11 +149,7 @@ function ConfigPage(props) {
             s.readOnly,
             props.hasService === false ? h('span', { className: 'dcw-note-code' }, s.noService) : null,
           ),
-          h(
-            'button',
-            { type: 'button', className: 'dcw-note-action', onClick: reload },
-            s.reload,
-          ),
+          h('button', { type: 'button', className: 'dcw-note-action', onClick: reload }, s.reload),
         )
       : null,
     editable && !ready && status !== 'missing'
@@ -138,78 +161,36 @@ function ConfigPage(props) {
         )
       : null,
     h(
-      'section',
-      { className: 'dcw-card', 'aria-labelledby': 'dcw-header-title' },
-      h(
-        'div',
-        { className: 'dcw-card-head' },
-        h('h4', { className: 'dcw-card-title', id: 'dcw-header-title' }, s.header),
-        h('p', { className: 'dcw-card-hint' }, s.headerHint),
-      ),
-      h(
-        'div',
-        { className: 'dcw-row dcw-row-fixed' },
-        h('div', { className: 'dcw-row-label' }, TAG_LABEL.file),
-        h(
-          'div',
-          { className: 'dcw-row-control' },
-          h('span', { className: 'dcw-static' }, h(LockIcon), s.fixed),
-          h('p', { className: 'dcw-row-hint' }, s.fixedHint),
-        ),
-      ),
+      Section,
+      { title: s.style },
+      h(StyleRow, {
+        label: s.style,
+        value: draft.commentStyle,
+        disabled,
+        onChange: (value) => update({ commentStyle: value }),
+      }),
+      h(LockRow, { label: s.bodyRow, placeholder: s.bodyPlaceholder }),
+    ),
+    h(
+      Section,
+      { title: s.header },
+      h(LockRow, { label: TAG_LABEL.file, placeholder: s.filePlaceholder }),
       ...HEADER_TAGS.map((tag) =>
         h(ValueRow, {
           key: tag,
           tag,
-          strings: s,
           entry: draft[tag],
           disabled,
+          placeholder: s[HEADER_PLACEHOLDER[tag]],
           onChange: (entry) => update({ [tag]: entry }),
         }),
       ),
     ),
+    h(Section, { title: s.type }, ...TYPE_TAGS.map((tag) => flag(tag, draft[tag]))),
     h(
-      'section',
-      { className: 'dcw-card', 'aria-labelledby': 'dcw-contract-title' },
-      h(
-        'div',
-        { className: 'dcw-card-head' },
-        h('h4', { className: 'dcw-card-title', id: 'dcw-contract-title' }, s.contract),
-        h('p', { className: 'dcw-card-hint' }, s.contractHint),
-      ),
-      h(
-        'div',
-        { className: 'dcw-flags' },
-        ...CONTRACT_TAGS.map((tag) =>
-          h(Flag, {
-            key: tag,
-            tag,
-            checked: draft[tag],
-            disabled,
-            hint: s[HINT_KEY[tag]],
-            onChange: (value) => update({ [tag]: value }),
-          }),
-        ),
-      ),
-    ),
-    h(
-      'details',
-      { className: 'dcw-card' },
-      h('summary', null, h('span', { className: 'dcw-card-title' }, s.extra), h(Chevron)),
-      h('p', { className: 'dcw-card-hint', style: { margin: '0 14px 2px' } }, s.extraHint),
-      h(
-        'div',
-        { className: 'dcw-flags' },
-        ...EXTRA_TAGS.map((tag) =>
-          h(Flag, {
-            key: tag,
-            tag,
-            checked: draft[tag],
-            disabled,
-            onChange: (value) => update({ [tag]: value }),
-          }),
-        ),
-      ),
+      Section,
+      { title: s.declaration },
+      ...[...CONTRACT_TAGS, ...FUNCTION_EXTRA_TAGS].map((tag) => flag(tag, draft[tag])),
     ),
     h(Preview, { config: draft, strings: s }),
     editable

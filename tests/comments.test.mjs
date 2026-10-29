@@ -43,6 +43,36 @@ test('文件头用 /// @file 与 @brief 收口', () => {
   assert.ok(rules(cross, { fileName: 'board.h' }).includes('header-cross-file'))
 })
 
+test('块注释在 --comment-style block 下收口', () => {
+  const block = [
+    '/**',
+    ' * @file board.h',
+    ' * @brief 定义棋盘。',
+    ' *',
+    ' * 棋盘状态。',
+    ' */',
+    '',
+    '/**',
+    ' * 棋盘。',
+    ' */',
+    'class Board {};',
+    '',
+  ].join('\n')
+  assert.deepEqual(rules(block, { commentStyle: 'block', fileName: 'board.h' }), [])
+  assert.ok(rules(block, { fileName: 'board.h' }).includes('header-missing'))
+  const wrong = block.replace('@file board.h', '@file game.h')
+  assert.ok(rules(wrong, { commentStyle: 'block', fileName: 'board.h' }).includes('header-file-name'))
+  const missingBrief = block.replace(' * @brief 定义棋盘。\n', '')
+  assert.ok(rules(missingBrief, { commentStyle: 'block' }).includes('header-brief'))
+})
+
+test('块注释同样检查禁止标签与行宽', () => {
+  const block = ['/**', ' * @file board.h', ' * @brief 定义棋盘。', ' */', '', '/**', ' * 函数。', ' * @returns 结果', ' */', 'int F();', ''].join('\n')
+  assert.ok(rules(block, { commentStyle: 'block' }).includes('forbidden-tag'))
+  const wide = ['/**', ` * @file board.h`, ` * @brief ${'中'.repeat(45)}`, ' */', ''].join('\n')
+  assert.ok(rules(wide, { commentStyle: 'block' }).includes('comment-width'))
+})
+
 test('文件头提到别的源文件或目录时报错', () => {
   const cross = ['/// @file board.h', '/// @brief 定义棋盘。', '///', '/// 对局流程在 game.h。', '', 'class Board {};', ''].join('\n')
   assert.ok(rules(cross, { fileName: 'board.h' }).includes('header-cross-file'))

@@ -136,10 +136,12 @@ if (packageJson) {
   }
 
   const description = packageJson.description ?? ''
-  const descriptionParts = description.split(' · ')
-  ok(descriptionParts.length === 2, 'description 必须是「中文 · 英文」两段')
-  ok(/[\u4e00-\u9fff]/.test(descriptionParts[0] ?? ''), 'description 前半段必须是中文')
-  ok(!/[\u4e00-\u9fff]/.test(descriptionParts[1] ?? ''), 'description 后半段不应含中文')
+  ok(/[\u4e00-\u9fff]/.test(description), 'description 必须以中文为主')
+  if (description.includes(' · ')) {
+    const descriptionParts = description.split(' · ')
+    ok(descriptionParts.length === 2, 'description 用「 · 」分隔时只能分两段')
+    ok(!/[\u4e00-\u9fff]/.test(descriptionParts[1] ?? ''), 'description 后半段不应含中文')
+  }
 
   equal(packageJson.engines?.node, '>=22', 'engines.node')
   equal(packageJson.engines?.dsh, '>=0.2.0-rc.1 <0.3.0-0', 'engines.dsh')

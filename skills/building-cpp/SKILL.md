@@ -1,6 +1,6 @@
 ---
 name: building-cpp
-description: 在已经写好 CMake 的 C++11–C++23 工程上配置、构建和检查时使用：Ninja、compile_commands.json、clang-format、clang-tidy、clangd、environment.json 与 running-build.sh；按定构建、定工具配置、通过检查三步推进。要编写或重构 CMakeLists.txt / cmake 模块时先开 configuring-cmake。一次改动同时碰到源码和构建文件时，先打开 developing-cpp。不用于只改源码语义、文档、Python 或与 C++ 无关的文件。
+description: 在已写好 CMake 的 C++11–C++23 工程上配置、构建和检查时使用：Ninja、compile_commands.json、clang-format、clang-tidy、clangd、environment.json 与 running-build.sh。不用于只改源码语义、文档、Python 或与 C++ 无关的文件。
 metadata:
   short-description: C++11–C++23 构建三步
 ---

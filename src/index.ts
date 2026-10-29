@@ -35,6 +35,8 @@ const HeaderTag = Schema.object({
 })
 
 export const Config = Schema.object({
+  // 声明注释符号：`///` 或 Doxygen 块注释；缺省值由 comment-policy 兜底。
+  commentStyle: Schema.string().default('slash').volatile(),
   brief: Schema.object({
     enabled: Schema.boolean().default(true).volatile(),
     value: Schema.string().default('').volatile(),

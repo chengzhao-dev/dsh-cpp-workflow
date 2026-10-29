@@ -26,6 +26,14 @@ test('默认预览只有 @file 与 @brief', () => {
   assert.doesNotMatch(text, /@author|@date|@copyright|@version/)
 })
 
+test('注释符号可切到块注释', () => {
+  const block = previewText({ ...DEFAULT_CONFIG, commentStyle: 'block' }, 'board.h')
+  assert.match(block, /^\/\*\*$/m)
+  assert.match(block, /^ \* @file board\.h$/m)
+  assert.match(block, /^ \*\/$/m)
+  assert.doesNotMatch(block, /^\/\/\//m)
+})
+
 test('隐私标签默认关闭，填了非空值才写出', () => {
   const off = previewText(DEFAULT_CONFIG, 'board.h')
   assert.doesNotMatch(off, /@author/)
@@ -55,10 +63,12 @@ test('函数契约段跟随开关', () => {
 })
 
 test('非法配置回落到出厂值', () => {
-  const config = normalizeConfig({ brief: 'yes', param: 1, author: null })
+  const config = normalizeConfig({ brief: 'yes', param: 1, author: null, commentStyle: 'star' })
   assert.deepEqual(config.brief, DEFAULT_CONFIG.brief)
   assert.equal(config.param, true)
   assert.deepEqual(config.author, { enabled: false, value: '' })
+  assert.equal(config.commentStyle, 'slash')
+  assert.equal(normalizeConfig({ commentStyle: 'block' }).commentStyle, 'block')
 })
 
 test('宿主 volatile 单元按实际值读取，设置保存后技能快照跟着变', () => {
@@ -82,15 +92,18 @@ test('检查器只放行填了非空值的隐私标签', () => {
     date: { enabled: true, value: '' },
   })
   assert.deepEqual(args, ['--allow-tag', 'author'])
+  assert.deepEqual(checkerArgs({ ...DEFAULT_CONFIG, commentStyle: 'block' }), ['--comment-style', 'block'])
 })
 
-test('技能快照写出开关与放行项', () => {
+test('技能快照写出符号、开关与放行项', () => {
   const text = snapshotText({
     ...DEFAULT_CONFIG,
+    commentStyle: 'block',
     author: { enabled: true, value: 'chengzhao-dev' },
     note: true,
   })
   assert.match(text, /## 当前注释配置/)
+  assert.match(text, /符号：\/\*\* \.\.\. \*\//)
   assert.match(text, /@author chengzhao-dev/)
   assert.match(text, /@note/)
 })

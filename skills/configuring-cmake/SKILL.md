@@ -1,6 +1,6 @@
 ---
 name: configuring-cmake
-description: 在 C++11–C++23 工程里编写或重构 CMake 时使用：CMakeLists.txt、cmake 模块、target 与属性、依赖与输出目录、语言标准与编译选项、2 空格排版；新工程默认 C++23。改 .h/.cpp 源码先开 developing-cpp；只配置、构建或跑工具链时开 building-cpp。不用于 Quarto、Python 或非 C++ 文档。
+description: 编写或重构 C++11–C++23 工程的 CMake 时使用：CMakeLists.txt、cmake 模块、target 属性、依赖与输出目录、语言标准；新工程默认 C++23。不用于 Quarto、Python 或非 C++ 文档。
 metadata:
   short-description: CMake 配置三步
 ---

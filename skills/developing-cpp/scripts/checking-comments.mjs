@@ -6,7 +6,7 @@
 // 不重写任何文件。
 //
 // 用法：
-//   node checking-comments.mjs [--root DIR] [--width N] [--no-header] [--json] [--quiet]
+//   node checking-comments.mjs [--root DIR] [--width N] [--comment-style slash|block] [--no-header] [--json] [--quiet]
 //
 // 退出码：0 无问题，1 发现问题，2 用法或读取错误。
 import { readdirSync, readFileSync, statSync } from 'node:fs'
@@ -30,6 +30,8 @@ const PRIVACY_TAGS = ['@author', '@date', '@copyright', '@version']
 const FORBIDDEN_TAGS = [...STATIC_FORBIDDEN_TAGS, ...PRIVACY_TAGS]
 const DOXY_FILE = /^\/\/\/\s*@file\s+\S/
 const DOXY_BRIEF = /^\/\/\/\s*@brief\s+\S/
+const BLOCK_FILE = /^@file\s+\S/
+const BLOCK_BRIEF = /^@brief\s+\S/
 const MEMBER_LIST = /提供[^。]{0,40}、[^。]{0,40}(的功能|的能力|的接口)|功能[:：]/
 const RATIONALE = /而不是|而非|代价.{0,4}忽略|只留一份|与其|比.{0,12}更|更(?:安全|快|清楚|直接|好写|难写)/
 const FORWARD_REF = /(?:留在|归|交给|由)\s*`?[A-Z][A-Za-z0-9_]*`?/
@@ -41,12 +43,12 @@ const DECL_KEYWORDS = /^(class|struct|union|enum|namespace|using|typedef|templat
 
 function usage(message) {
   if (message) process.stderr.write(`错误：${message}\n`)
-  process.stderr.write('用法：node checking-comments.mjs [--root DIR] [--width N] [--no-header] [--no-brief] [--allow-tag TAG] [--json] [--quiet]\n')
+  process.stderr.write('用法：node checking-comments.mjs [--root DIR] [--width N] [--comment-style slash|block] [--no-header] [--no-brief] [--allow-tag TAG] [--json] [--quiet]\n')
   return EXIT.usage
 }
 
 function parseArgs(argv) {
-  const options = { root: undefined, width: 80, widthExplicit: false, requireHeader: true, requireBrief: true, allowTags: new Set(), json: false, quiet: false }
+  const options = { root: undefined, width: 80, widthExplicit: false, commentStyle: 'slash', requireHeader: true, requireBrief: true, allowTags: new Set(), json: false, quiet: false }
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index]
     if (arg === '--root') {
@@ -55,6 +57,11 @@ function parseArgs(argv) {
     } else if (arg === '--width') {
       options.width = Number(argv[index + 1])
       options.widthExplicit = true
+      index += 1
+    } else if (arg === '--comment-style') {
+      const value = argv[index + 1]
+      if (value !== 'slash' && value !== 'block') throw new Error('--comment-style 只接受 slash 或 block')
+      options.commentStyle = value
       index += 1
     } else if (arg === '--no-header') {
       options.requireHeader = false
@@ -198,6 +205,34 @@ function classMemberLines(lines) {
   return flags
 }
 
+/**
+ * 取从 `index` 开始的 Doxygen 块注释；不是块注释或没有收尾时返回 undefined。
+ * `contents` 去掉开头标记、结尾标记与每行的 `*` 前缀，空行保留为空串。
+ */
+export function blockDocAt(lines, index) {
+  const first = lines[index]?.trim() ?? ''
+  if (!first.startsWith('/**') || first.startsWith('/**<')) return undefined
+  const contents = []
+  if (first.includes('*/')) {
+    const inner = first.slice(first.indexOf('/**') + 3, first.lastIndexOf('*/')).trim()
+    if (inner) contents.push(inner.replace(/^\*\s?/, '').trim())
+    return { start: index, end: index, contents }
+  }
+  const opening = first.slice(first.indexOf('/**') + 3).trim().replace(/^\*\s?/, '')
+  if (opening) contents.push(opening)
+  for (let cursor = index + 1; cursor < lines.length; cursor += 1) {
+    const line = lines[cursor]
+    const trimmed = line.trim()
+    if (trimmed.includes('*/')) {
+      const before = trimmed.slice(0, trimmed.indexOf('*/')).replace(/^\*\s?/, '').trim()
+      if (before) contents.push(before)
+      return { start: index, end: cursor, contents }
+    }
+    contents.push(trimmed.replace(/^\*\s?/, '').trim())
+  }
+  return undefined
+}
+
 /** 检查一段文本，返回问题列表；每个问题带 1 起始的行号。 */
 export function checkText(text, options = {}) {
   const width = options.width ?? 80
@@ -207,38 +242,52 @@ export function checkText(text, options = {}) {
   const add = (line, rule, message) => issues.push({ line, rule, message })
   const inClass = classMemberLines(lines)
 
+  const style = options.commentStyle === 'block' ? 'block' : 'slash'
   const firstContent = lines.findIndex((line) => line.trim() !== '')
   const firstTrimmed = firstContent === -1 ? '' : lines[firstContent].trim()
-  const hasDoxyHeader = DOXY_FILE.test(firstTrimmed)
+  const headerBlock = style === 'block' && firstContent !== -1 ? blockDocAt(lines, firstContent) : undefined
+  const hasDoxyHeader = style === 'block'
+    ? Boolean(headerBlock && BLOCK_FILE.test(headerBlock.contents[0] ?? ''))
+    : DOXY_FILE.test(firstTrimmed)
   let doxyHeaderEnd = -1
-  if (hasDoxyHeader) {
+  if (hasDoxyHeader && style === 'block') {
+    doxyHeaderEnd = headerBlock.end
+  } else if (hasDoxyHeader) {
     doxyHeaderEnd = firstContent
     while (doxyHeaderEnd + 1 < lines.length && lines[doxyHeaderEnd + 1].trim().startsWith('///')) doxyHeaderEnd += 1
   }
   if (requireHeader && firstContent !== -1 && !hasDoxyHeader) {
-    add(firstContent + 1, 'header-missing', '文件开头缺少文件头：写 /// @file <文件名>，下一行写 /// @brief')
+    if (style === 'block') add(firstContent + 1, 'header-missing', '文件开头缺少文件头：写 /** ... */，第一行 @file <文件名>，下一行 @brief')
+    else add(firstContent + 1, 'header-missing', '文件开头缺少文件头：写 /// @file <文件名>，下一行写 /// @brief')
   }
   if (firstContent !== -1 && hasDoxyHeader) {
     const own = options.fileName ? options.fileName.split(/[\\/]/).pop() : ''
+    const declaredText = style === 'block' ? (headerBlock.contents[0] ?? '') : lines[firstContent].trim()
     if (own) {
-      const declared = /@file\s+(\S+)/.exec(lines[firstContent].trim())
+      const declared = /@file\s+(\S+)/.exec(declaredText)
       if (declared && declared[1] !== own) {
         add(firstContent + 1, 'header-file-name', `文件头写的是 ${declared[1]}，本文件是 ${own}：@file 必须等于文件名`)
       }
     }
-    if (hasDoxyHeader && options.requireBrief !== false && !DOXY_BRIEF.test((lines[firstContent + 1] ?? '').trim())) {
-      add(firstContent + 2, 'header-brief', '文件头第二行缺少 /// @brief 一句话说明')
+    if (options.requireBrief !== false) {
+      const hasBrief = style === 'block'
+        ? BLOCK_BRIEF.test(headerBlock.contents[1] ?? '')
+        : DOXY_BRIEF.test((lines[firstContent + 1] ?? '').trim())
+      if (!hasBrief) {
+        add(style === 'block' ? headerBlock.start + 3 : firstContent + 2, 'header-brief', '文件头第二行缺少 @brief 一句话说明')
+      }
     }
-    for (let index = firstContent + 1; index < lines.length; index += 1) {
-      const trimmed = lines[index].trim()
-      if (!trimmed.startsWith('///')) break
-      const names = trimmed.match(/\b[A-Za-z0-9_-]+\.(?:h|hpp|cpp|cc)\b/g) ?? []
-      const fileMatches = trimmed.match(/@file\s+(\S+)/)
+    const headerLines = style === 'block'
+      ? headerBlock.contents.slice(1).map((content, offset) => ({ line: headerBlock.start + offset + 2, text: content }))
+      : lines.slice(firstContent + 1, doxyHeaderEnd + 1).map((content, offset) => ({ line: firstContent + offset + 2, text: content.trim() }))
+    for (const { line: headerLine, text } of headerLines) {
+      const names = text.match(/\b[A-Za-z0-9_-]+\.(?:h|hpp|cpp|cc)\b/g) ?? []
+      const fileMatches = text.match(/@file\s+(\S+)/)
       const namesToCheck = fileMatches ? names.filter((name) => name !== fileMatches[1]) : names
       for (const name of namesToCheck) {
-        if (name !== own) add(index + 1, 'header-cross-file', `文件头提到了别的源文件 ${name}：只介绍本文件，删掉跨文件句子`)
+        if (name !== own) add(headerLine, 'header-cross-file', `文件头提到了别的源文件 ${name}：只介绍本文件，删掉跨文件句子`)
       }
-      if (/\bapps\//.test(trimmed)) add(index + 1, 'header-cross-file', '文件头指向了另一个目录：只介绍本文件')
+      if (/\bapps\//.test(text)) add(headerLine, 'header-cross-file', '文件头指向了另一个目录：只介绍本文件')
     }
   }
 
@@ -251,6 +300,22 @@ export function checkText(text, options = {}) {
         if (options.allowTags?.has(tag.slice(1))) continue
         if (trimmed.includes(tag)) add(index + 1, 'forbidden-tag', `禁止使用 ${tag}，按 references/comments.md 的标签表改写`)
       }
+    }
+  }
+
+  if (style === 'block') {
+    for (let index = 0; index < lines.length; index += 1) {
+      const doc = blockDocAt(lines, index)
+      if (!doc) continue
+      for (const content of doc.contents) {
+        const rendered = ` * ${content}`.trimEnd()
+        if (displayWidth(rendered) > width) add(doc.start + 1, 'comment-width', `注释行 ${displayWidth(rendered)} 列，超过 ${width} 列`)
+        for (const tag of FORBIDDEN_TAGS) {
+          if (options.allowTags?.has(tag.slice(1))) continue
+          if (content.includes(tag)) add(doc.start + 1, 'forbidden-tag', `禁止使用 ${tag}，按 references/comments.md 的标签表改写`)
+        }
+      }
+      index = doc.end
     }
   }
 
@@ -307,6 +372,47 @@ export function checkText(text, options = {}) {
     }
     for (const name of documented) {
       if (!params.includes(name)) add(start + 1, 'param-extra', `@param ${name} 在声明里不存在`)
+    }
+  }
+
+  if (style === 'block') {
+    for (let index = 0; index < lines.length; index += 1) {
+      if (doxyHeaderEnd !== -1 && index <= doxyHeaderEnd) {
+        index = doxyHeaderEnd
+        continue
+      }
+      const doc = blockDocAt(lines, index)
+      if (!doc) continue
+      index = doc.end
+      let next = doc.end + 1
+      if (next < lines.length && lines[next].trim() === '') {
+        add(doc.end + 1, 'doc-gap', '注释与声明之间有空行：注释会挂到下一个声明，请删掉空行')
+        while (next < lines.length && lines[next].trim() === '') next += 1
+      }
+      if (next >= lines.length) continue
+      const declaration = lines[next].trim()
+      const block = doc.contents.join('\n')
+      const isType = /^(template\s*<[^>]*>\s*)?(class|struct|union|enum)\b/.test(declaration)
+      if (RATIONALE.test(block)) add(doc.start + 1, 'rationale', '注释在写设计取舍：方案对比与理由移到正文或实现注释，接口注释只留契约')
+      if (isType && MEMBER_LIST.test(block)) add(doc.start + 1, 'member-list', '类型注释在罗列成员功能，应改写为概念与使用约定')
+      if (isType && FORWARD_REF.test(block)) add(doc.start + 1, 'forward-ref', '类型注释在交代别的类型负责什么：只写本类型的契约，删掉这句，不要挪到文件头')
+      if (isType && TYPE_SYSTEM.test(block)) add(doc.start + 1, 'type-system', '类型注释在复述类型系统已表达的性质：可拷贝与 const 查询由声明给出，删掉这句')
+      if (isType && NEGATED_BOUNDARY.test(block)) add(doc.start + 1, 'negated-boundary', '类型注释用「只保存/不拥有/不含」写否定式边界：改成名词短语，边界交给成员类型表达')
+      if (isType && DOMAIN_SIZE.test(block)) add(doc.start + 1, 'domain-size', '类型注释在写领域尺寸：格子数由 cells_ 之类成员声明表达，删掉这句')
+      const firstDocLine = doc.contents[0] ?? ''
+      if (!isType && PREDICATE_DECL.test(declaration) && !firstDocLine.startsWith('检查')) {
+        add(doc.start + 1, 'predicate-first', '布尔查询或 operator== 的第一句应写「检查…是否…」')
+      }
+      const params = functionParams(declaration)
+      if (!params) continue
+      const documented = [...block.matchAll(/@param(?:\[[^\]]*\])?\s+(\w+)/g)].map((match) => match[1])
+      if (documented.length === 0) continue
+      for (const name of params) {
+        if (!documented.includes(name)) add(doc.start + 1, 'param-missing', `参数 ${name} 没有 @param 说明`)
+      }
+      for (const name of documented) {
+        if (!params.includes(name)) add(doc.start + 1, 'param-extra', `@param ${name} 在声明里不存在`)
+      }
     }
   }
 
