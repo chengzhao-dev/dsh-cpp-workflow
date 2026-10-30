@@ -62,7 +62,7 @@ std::array<TaskState, kItemCount> items_{};
 - 枚举值只在类型作用域内可见：`TaskState::kPending`，不写 `kPending`。
 - 与整数之间不发生隐式转换；需要编号时写 `static_cast<int>(state)`，只用于输出或既有接口。
 - 同类型值可以比较和赋值；不能参与算术。
-- 需要固定布局时写底层类型：`enum class TaskState : std::uint8_t { kPending, kActive, kDone };`
+- 需要固定布局时写底层类型。编号要在头文件里直接读到，就逐个写出来，不靠第一项默认为 0：`enum class TaskState : std::uint8_t { kPending = 0, kActive = 1, kDone = 2 };`
 
 约定：
 
@@ -70,6 +70,8 @@ std::array<TaskState, kItemCount> items_{};
 - 封闭状态码默认写 `: std::uint8_t`；普通枚举用默认底层类型。
 - 枚举值的行尾注释要么全写要么全不写；两种句式与禁止项见 `references/comments.md`「枚举项与 `struct` 短字段：两种句式」。
 - 需要“编号”与“名字”两套表示时，写显式映射函数，例如 `TaskStateToName` / `TaskStateFromName`，不要在枚举和整数之间来回隐式转换。
+- 编号按“失败优先”排：空状态或前置条件失败为 0，业务失败随后，成功放在最后。读取端因此可以先判 0，再决定是否继续。
+- 编号只用于输出和既有接口；要从编号找回名字，仍走显式映射函数，不拿编号做算术。
 
 ## 强类型包装
 
@@ -111,6 +113,8 @@ class TaskBoard {
 
 - 只给“结果携带信息、忽略会出错”的函数：查询型 `const` 成员与返回结果对象的 API。
 - 不给所有非 `void` 函数机械添加；标注的价值来自稀缺。
+- 写法位置：`[[nodiscard]]` 在返回类型前面，然后才是 `static` 或 `constexpr`；参数列表之后才是 `const`、`override`、`noexcept`。
+- 类内 `friend` 不加 `[[nodiscard]]`：Clang 拒绝 `[[nodiscard]] friend`、`friend [[nodiscard]]` 和参数列表后的 `[[nodiscard]]`。不要再猜下一种写法。
 - 有意丢弃时写 `static_cast<void>(result)`，不要为此全局关闭警告。
 - 测试里验证“必须处理结果”时，同时验证忽略能被编译器发现。
 

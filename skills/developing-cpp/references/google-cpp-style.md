@@ -54,7 +54,7 @@
 - 默认用花括号初始化：`int count{};`、`std::vector<int> values{1, 2, 3};`。只有需要对比、`auto` 推导或赋值语义时用 `=`；`name = {{` 只用于多行聚合常量表，单个对象和空初始化仍写 `count{}`；不要用 `()` 初始化普通对象。
 - 类声明顺序：public → protected → private；类型与别名 → 静态常量 → 工厂 → 构造/赋值/析构 → 其他函数 → 数据成员。
 - 用户声明的拷贝/移动/析构函数在头文件声明、在 `.cpp` 定义；只有零参数且默认实现足够时才写 `= default`。
-- 查询成员函数标尾部 `const`；返回结果对象的 API 加 `[[nodiscard]]`，不要给所有非 `void` 函数机械添加。
+- 查询成员函数标尾部 `const`；返回结果对象的 API 加 `[[nodiscard]]`，不要给所有非 `void` 函数机械添加。标注位置与 `friend` 的例外见 `references/types.md`「`[[nodiscard]]`」。
 - 所有权优先 `std::unique_ptr`；没有共享所有权的理由时不用 `std::shared_ptr`。禁止裸 `new` / `delete`。
 - 禁止 C 风格强制转换；用 `static_cast`、`const_cast`、`reinterpret_cast`、`std::bit_cast`，并让 `clang-tidy` 的 `google-readability-casting` 兜底。
 - `.cpp` 里不需要外部引用的 `constexpr` 直接放具名命名空间；仅一个函数使用时才用函数内 `static constexpr`；函数和类型仍放匿名命名空间。
