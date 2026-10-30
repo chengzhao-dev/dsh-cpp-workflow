@@ -28,6 +28,7 @@
 
 - 没有 concepts、ranges、`std::format`、`std::span`、`std::bit_cast`。
 - 没有 `std::print`、`std::expected`、`std::stacktrace`。
+- 没有 `= default` 的比较运算符。
 - `std::filesystem` 在 GCC 8 需要额外链接 `stdc++fs`，GCC 9 起才稳定；不要把“语言核心达标”当成文件系统库也达标。
 
 ## CMake
@@ -42,7 +43,7 @@
 
 ## 降档/升级
 
-从 C++20 降到这里时，把 concepts 改成 `enable_if`/重载，把 ranges 改成迭代器算法，把 `std::format` 改成 `std::ostringstream`。升级到 C++20 后先确认 `std::format` 的库门槛（libstdc++ 13+ / libc++ 14+），不要只看编译器版本。
+从 C++20 降到这里时，把 concepts 改成 `enable_if`/重载，把 ranges 改成迭代器算法，把 `std::format` 改成 `std::ostringstream`，把 `= default` 的比较运算符改回结构体外的手写自由函数。升级到 C++20 后先确认 `std::format` 的库门槛（libstdc++ 13+ / libc++ 14+），不要只看编译器版本。
 
 ## 验证
 

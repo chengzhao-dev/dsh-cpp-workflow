@@ -54,12 +54,12 @@ target_link_libraries(app PRIVATE greeting)
 ```cmake
 # greeting/CMakeLists.txt
 add_library(greeting STATIC src/greeting.cpp)
-target_include_directories(greeting PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
+target_include_directories(greeting PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 CompileSettings_SetCxxStandard(greeting PUBLIC c++23)
 CompileSettings_SetWarnings(greeting PRIVATE LEVEL standard)
 ```
 
-- 库的 `PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..` 让程序能从仓库根写 `#include "greeting/include/greeting.h"`，不需要程序再写 include 路径。
+- 库的 `PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include` 让程序与链接它的测试写 `#include "greeting.h"` 就能找到公共头，不需要各自再写 include 路径。
 - 标准用 `CompileSettings_SetCxxStandard`：库用 `PUBLIC` 传播，程序用 `PRIVATE`；函数内部同时写 `target_compile_features` 与 `CXX_STANDARD` 三属性。
 - `CXX_STANDARD_REQUIRED ON` 防止 CMake 在编译器不支持时静默 decay；`CXX_EXTENSIONS OFF` 把 `-std=gnu++NN` 收成 `-std=c++NN`。configure 后检查 `compile_commands.json` 的最后一条 `-std=`。
 - 程序 target 固定 `app`；库 target 用组件名。

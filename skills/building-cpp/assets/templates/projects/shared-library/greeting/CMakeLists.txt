@@ -1,5 +1,5 @@
 add_library(greeting SHARED src/greeting.cpp)
-target_include_directories(greeting PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
+target_include_directories(greeting PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_features(greeting PUBLIC cxx_std_23)
 set_target_properties(greeting PROPERTIES
   CXX_STANDARD 23

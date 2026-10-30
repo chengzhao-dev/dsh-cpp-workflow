@@ -54,9 +54,11 @@ CheckOptions:
     value: CamelCase
   - key: readability-identifier-naming.GlobalConstantPrefix
     value: 'k'
+  # 局部常量按变量命名：Google 只给静态存储期的常量加 k 前缀。
   - key: readability-identifier-naming.LocalConstantCase
-    value: CamelCase
-  - key: readability-identifier-naming.LocalConstantPrefix
-    value: 'k'
+    value: lower_case
   - key: readability-identifier-naming.MacroDefinitionCase
     value: UPPER_CASE
+  # 包含守卫按 Google 规则以 _H_ 结尾，UPPER_CASE 会把它判成多余下划线。
+  - key: readability-identifier-naming.MacroDefinitionIgnoredRegexp
+    value: '^[A-Z][A-Z0-9_]*_H_$'

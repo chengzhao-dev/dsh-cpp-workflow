@@ -45,8 +45,9 @@ class TaskTable {
 
 Google、LLVM、OpenCV 都没有规定这一组内部的次序；本工作流补上：
 
-- 谓词 `Is` / `Has` / `Can`，然后 `Get`，然后普通函数按使用先后，最后是 `friend` 函数。
-- `friend` 不放在这一组开头，也不单放在类的最前面，不强制放进 `private`。
+- 开头是 `operator==`：成员默认比较和 `friend` 都放这里，然后才是谓词 `Is` / `Has` / `Can`、`Get`、普通函数按使用先后。`friend` 不再放到这一组末尾。
+- 比较运算符的签名与 `[[nodiscard]]` 规则见 `references/types.md`，这里不另写一套。
+- 同一类型上的谓词留在类内，不因为实现只转调公开函数就拆成类外自由函数。
 - `friend` 类型仍跟其他类型放在一起，和 `friend` 函数不是同一组。
 
 ## 命名空间作用域的头文件

@@ -22,6 +22,7 @@
 - C++17 的全部内容。
 - concepts、requires、ranges、`std::span`、`std::bit_cast`、`std::source_location`。
 - `std::format`、协程、`std::jthread`、三路比较。
+- 按成员逐项比较时写成 `bool operator==(const T&) const = default`。C++23 沿用，不另写一遍。
 - 模块语法（工具链支持不完整，模板不使用）。
 
 ## 本档不能假设

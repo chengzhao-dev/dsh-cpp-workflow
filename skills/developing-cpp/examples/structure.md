@@ -68,7 +68,7 @@ task_list/src/detail.h           // 私有头，只被本组件包含
 ```
 
 ```cpp
-#include "task_list/include/task_list.h"  // 从源码根写公共头的完整路径
+#include "task_list.h"            // 公共头按裸文件名包含
 ```
 
 构建时把仓库根加入 include 搜索路径；不要用 `#include "../task_list/include/task_list.h"` 这种随文件位置漂移的写法。

@@ -1,4 +1,4 @@
-#include "greeting/include/greeting.h"
+#include "greeting.h"
 
 #include <string>
 #if __cplusplus >= 202002L

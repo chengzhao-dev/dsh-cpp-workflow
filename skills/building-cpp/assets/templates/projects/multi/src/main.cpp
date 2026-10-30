@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "include/greeting.h"
+#include "greeting.h"
 
 int main() {
   std::cout << greeting::MakeGreeting("C++23") << '\n';

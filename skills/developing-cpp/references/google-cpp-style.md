@@ -16,7 +16,7 @@
 - 头文件必须自包含：自己用到的类型、宏、标准库头都直接包含，不依赖调用方的包含顺序。
 - `.cpp` 第一个包含自己的配对头，然后按下面的顺序包含。
 - 包含顺序：配对头 → C 系统头 → C++ 标准库头 → 其他库头 → 本项目头。每组之间空一行，组内按字母序；不要依赖 `clang-format` 的 `IncludeCategories` 自定义分组，本项目不再覆盖 Google 预设。
-- 本项目头用引号，路径从项目源码根开始，例如 `#include "base/logging.h"`。构建时把源码根加入 include 搜索路径，不要只把组件的 `include/` 设为根再写裸文件名。
+- 本项目头用引号写裸文件名，例如 `#include "logging.h"`。构建时把该组件的 `include/` 加入 include 搜索路径（`target_include_directories(<target> PUBLIC .../include)`），不要写 `"base/logging.h"` 这种从源码根起的长路径。
 - 公共头文件直接放在组件的 `include/` 下；不要为了「整齐」再加一层命名空间目录。
 - 跨文件共享的常量用 `inline constexpr`，放在命名空间里并带 `k` 前缀；头文件里不要定义非 inline 的普通全局变量。
 - 头文件里只放模板、`constexpr`、类内联小函数和声明；普通函数的函数体放 `.cpp`。

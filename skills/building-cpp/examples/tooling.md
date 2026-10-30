@@ -168,3 +168,21 @@ clang++ 18.1.8, clang-format 18.1.8, clang-tidy 18.1.8, clangd 18.1.8
 ```
 
 同主版本；`--live` 会核对。Apple Clang 与 Homebrew 工具不同版本时，仍按同一 LLVM 主版本要求处理，不要强行降级或改声明绕过。
+
+## 把标准差异当成检查项
+
+**差**：
+
+```yaml
+# .clang-tidy
+Checks: 'google-*,misc-*'
+```
+
+**好**：
+
+```yaml
+# .clang-tidy
+Checks: '-*,google-*,readability-identifier-naming'
+```
+
+能不能写 `= default` 的比较运算符由语言标准决定，不是检查项的问题。`misc-non-private-member-variables-in-classes` 只在打开 `misc-*` 时出现；工作流基线不开这一族，工程配置要与基线相同，而不是给这条检查加忽略选项。

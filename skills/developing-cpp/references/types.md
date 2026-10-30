@@ -31,23 +31,25 @@ int CountWide(const std::vector<int>& values) {
 }
 ```
 
-循环下标与容器大小都用 `std::size_t`，避免混合比较。业务编号另按下面的定宽约定。
+循环下标与容器大小都用 `std::size_t`，避免混合比较。业务编号与坐标另按下面的约定。
 
 ## 项目对整型角色的约定
 
 | 角色 | 类型 | 理由 |
 | --- | --- | --- |
-| 业务编号、尺寸、参与边界判定的下标 | `std::int32_t` | 能表达负值，避开 `size_t` 与负数比较的陷阱 |
-| 容器长度、`std::array` 长度、由编号换算的索引 | `std::size_t` | 与 STL 和 NTTP 一致 |
-| 封闭状态码的底层类型 | `std::uint8_t` | 只表达取值集合和布局，不参与算术 |
+| 不能为负的尺寸、容器长度、`std::array` 长度 | `std::size_t` | 与 STL 和 NTTP 一致 |
+| 坐标等允许表示范围外取值的下标 | `int` | 能表达负值；越界判断交给持有尺寸的类型 |
+| 没有上面两种理由的整数 | `int` | 宽度足够，写起来最短 |
+| 取值很少的 `enum class` 的底层类型 | `std::uint8_t` | 只表达取值集合和布局，不参与算术 |
 
+- 协议、文件格式与跨平台布局仍用 `<cstdint>` 的定宽整数（如 `std::int32_t`）；工程内普通代码不必写定宽类型。
 - 不用裸 `int` 承担跨平台协议或布局；它的宽度不可预测。
 - 不用 `std::uint8_t` / `std::uint16_t` 当业务编号；负值无法表达，整数提升还会制造意外。
 - 有符号乘法进入容器长度前先显式拓宽，否则会触发 `bugprone-implicit-widening-of-multiplication-result`：
 
 ```cpp
-inline constexpr std::int32_t kBatchSize = 3;
-inline constexpr std::int32_t kItemsPerBatch = 3;
+inline constexpr int kBatchSize = 3;
+inline constexpr int kItemsPerBatch = 3;
 inline constexpr std::size_t kItemCount =
     static_cast<std::size_t>(kBatchSize) * static_cast<std::size_t>(kItemsPerBatch);
 std::array<TaskState, kItemCount> items_{};
@@ -115,6 +117,7 @@ class TaskBoard {
 - 不给所有非 `void` 函数机械添加；标注的价值来自稀缺。
 - 写法位置：`[[nodiscard]]` 在返回类型前面，然后才是 `static` 或 `constexpr`；参数列表之后才是 `const`、`override`、`noexcept`。
 - 类内 `friend` 不加 `[[nodiscard]]`：Clang 拒绝 `[[nodiscard]] friend`、`friend [[nodiscard]]` 和参数列表后的 `[[nodiscard]]`。不要再猜下一种写法。
+- 运算符不加 `[[nodiscard]]`，成员与 `friend` 都一样。比较的参数不具名：成员写 `bool operator==(const T&) const = default`，`friend` 写 `friend bool operator==(const T&, const T&);`；注释不给这个不具名参数写 `@param`。
 - 有意丢弃时写 `static_cast<void>(result)`，不要为此全局关闭警告。
 - 测试里验证“必须处理结果”时，同时验证忽略能被编译器发现。
 

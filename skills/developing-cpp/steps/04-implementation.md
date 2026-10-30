@@ -17,7 +17,7 @@
 - 不写 C 风格强制转换；用 `static_cast` / `std::bit_cast` 等具名转换。
 - 所有权用 `std::unique_ptr`；没有共享所有权的理由时不用 `std::shared_ptr`。
 - 只改注释时，不改可观察行为；只改实现时，不改公共声明。两者同时需要时，先改声明，再改实现。
-- 清空成员数组：标准支持 ranges 时用 `std::ranges::fill(cells_ | std::views::join, CellType::kEmpty)`；不支持时用 `for` 循环逐格赋 `kEmpty`。两种都不写 `cells_ = {}`，那依赖枚举零值恰好是 `kEmpty`。
+- 清空成员数组：标准支持 ranges 时用 `std::ranges::fill(cells_ | std::views::join, CellState::kEmpty)`；不支持时用 `for` 循环逐格赋 `kEmpty`。两种都不写 `cells_ = {}`，那依赖枚举零值恰好是 `kEmpty`。
 - 默认构造只做「建立初值」且与 `Clear()` 同义时，构造函数调用 `Clear()`，不另设 `Init()`；类内 `cells_{}` 仍保留，让成员先有确定初值。
 
 ## 情况

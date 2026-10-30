@@ -57,7 +57,7 @@
 #include <cstdint>
 #include <vector>
 
-#include "project/path/dependency.h"
+#include "dependency.h"
 
 namespace project {
 
@@ -101,11 +101,11 @@ class ThingTable {
 /// @file thing_table.cpp
 /// @brief 实现 ThingTable 的添加与查询。
 
-#include "project/path/thing.h"
+#include "thing.h"
 
 #include <algorithm>
 
-#include "project/path/other.h"
+#include "other.h"
 
 namespace project {
 
