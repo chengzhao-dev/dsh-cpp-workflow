@@ -246,17 +246,17 @@ const SKILL_SPECS = {
   'developing-cpp': {
     title: 'developing-cpp',
     steps: ['01-behavior.md', '02-boundary.md', '03-declaration.md', '04-implementation.md'],
-    h2: ['适用场景', '两种走法', '步骤', '完成判据'],
+    h2: ['适用场景', '三种操作', '步骤', '完成判据'],
   },
   'configuring-cmake': {
     title: 'configuring-cmake',
     steps: ['01-targets.md', '02-modules.md', '03-check.md'],
-    h2: ['适用场景', '两种走法', '步骤', '完成判据'],
+    h2: ['适用场景', '三种操作', '步骤', '完成判据'],
   },
   'building-cpp': {
     title: 'building-cpp',
     steps: ['01-build.md', '02-tooling.md', '03-check.md'],
-    h2: ['适用场景', '两种走法', '步骤', '完成判据'],
+    h2: ['适用场景', '三种操作', '步骤', '完成判据'],
   },
 }
 
@@ -585,19 +585,26 @@ const domainRowLines = (text, heading) => {
   return rows
 }
 const domainNames = (lines) => lines.map((line) => line.split('|')[1].trim())
-const domainFiles = (lines) =>
-  lines.map((line) => [...new Set(line.match(/`[a-z0-9-]+\.md`/g) ?? [])].sort())
-for (const [skill, heading] of [
-  ['developing-cpp', '### developing-cpp'],
-  ['configuring-cmake', '### configuring-cmake'],
-  ['building-cpp', '### building-cpp'],
-]) {
-  const skillRows = domainRowLines(read(`skills/${skill}/SKILL.md`), '### 四类改动')
-  const architectureRows = domainRowLines(read('docs/architecture.md'), heading)
-  equal(domainNames(skillRows), domains, `${skill} SKILL.md 四类改动的域名与顺序`)
-  equal(domainNames(architectureRows), domains, `${skill} architecture.md 四类改动的域名与顺序`)
-  equal(domainFiles(skillRows), domainFiles(architectureRows), `${skill} 两处四类改动的权威条文`)
+const skillNames = ['developing-cpp', 'configuring-cmake', 'building-cpp']
+for (const skill of skillNames) {
+  const rows = domainRowLines(read(`skills/${skill}/SKILL.md`), '### 四类改动')
+  equal(domainNames(rows), domains, `${skill} SKILL.md 四类改动的域名与顺序`)
+  ok(rows.length === 4, `${skill} SKILL.md 四类改动的行数`)
+  ok(
+    rows.every((line) => line.includes('`steps/') && line.includes('.md`')),
+    `${skill} SKILL.md 四类改动缺少步骤入口`,
+  )
 }
+
+const architectureText = read('docs/architecture.md')
+ok(architectureText.includes('## 三个技能的四类改动'), 'architecture.md 缺少四类改动说明节')
+for (const skill of skillNames) {
+  ok(architectureText.includes(`skills/${skill}/SKILL.md`), `architecture.md 缺少 ${skill} 的 SKILL.md 指针`)
+}
+const copiedDomainTable = ['写作', '布局', '排版', '润色'].some((domain) =>
+  architectureText.includes(`| ${domain} |`),
+)
+ok(!copiedDomainTable, 'architecture.md 不应复制四类改动表')
 
 const readmeZh = read('README.md')
 const readmeEn = read('README.en.md')

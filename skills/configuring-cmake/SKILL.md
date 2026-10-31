@@ -11,18 +11,21 @@ metadata:
 
 本技能处理 CMake 文件与 target 契约：`CMakeLists.txt`、`cmake/` 模块、`target_*` 命令、目标属性、include 与链接边界、输出目录、共享库运行时路径、`FetchContent`、preset 与安装导出。函数体、类型、命名、异常和源码注释只开 `developing-cpp`；配置完成后要跑构建、格式化、静态检查或入口脚本时开 `building-cpp`。
 
-一次改动同时碰到源码和 CMake 时先开 `developing-cpp` 定行为与边界，再用本技能把源文件、库和程序写进 target，最后到 `building-cpp` 跑检查。只改一个 target 的 include、链接或标准时走增量修正；新工程、新组件、换语言标准或抽公共函数时走整段重构。
+一次改动同时碰到源码和 CMake 时先开 `developing-cpp` 定行为与边界，再用本技能把源文件、库和程序写进 target，最后到 `building-cpp` 跑检查。只改一个 target 的 include、链接或标准时走单点修正；新工程、新组件、换语言标准或抽公共函数时走整段重构。
 
 存在项目技能 `cpp-workflow-project` 时先读它的 `SKILL.md`、`environment.json` 和 `stages/stage-table.md`。`environment.json` 的 `standard` 是 target 标准的唯一来源；缺失、非法或与现有 target 不一致时停在定 target，不猜标准。构建目录、编译器和工具版本由 `building-cpp` 的定构建负责，本技能只写 target 契约。
 
-## 两种走法
+## 三种操作
 
-| 走法 | 什么时候用 | 怎么做 |
+| 操作 | 什么时候用 | 从哪步进 |
 | --- | --- | --- |
-| 增量修正 | 一个 target 的 include、链接、标准、输出目录或一条属性不对 | 先读现有 `CMakeLists.txt`，只改这一处，不动无关 target 和全局设置 |
-| 整段重构 | 新工程、新组件、抽公共函数、换语言标准或整理目录 | 同样三步；先定 target 图与标准，再定模块与函数，最后跑完整检查 |
+| 写作（起稿） | 新增 target、改公共 include 或链接边界、换语言标准 | 第 1 步；新工程走到第 3 步 |
+| 改写 | target 图与标准不变，模块、函数或目录结构不对 | 从第 2 步重走，可到第 3 步 |
+| 润色 | 只改函数名、注释措辞或错误消息 | 第 2 步 |
 
-两种走法共用这些约束：不发明项目没有声明的 target、标准、编译器或目录；不覆盖已有 `CMakeLists.txt`；不用全局 `include_directories()`、`add_definitions()`、`CMAKE_CXX_FLAGS` 给所有 target 加料；不写 `file(GLOB ...)`；不把 `main()` 编进库；库与程序不下载依赖，只有测试需要时调用 `LinkSettings_FetchGoogleTest`。后一步发现前一步没做完，退回那一步。
+范围随任务定：单点修正只改一个 target 的一处；整段重构先定 target 图与标准，再定模块与函数，最后跑完整检查。
+
+三种操作共用这些约束：不发明项目没有声明的 target、标准、编译器或目录；不覆盖已有 `CMakeLists.txt`；不用全局 `include_directories()`、`add_definitions()`、`CMAKE_CXX_FLAGS` 给所有 target 加料；不写 `file(GLOB ...)`；不把 `main()` 编进库；库与程序不下载依赖，只有测试需要时调用 `LinkSettings_FetchGoogleTest`。后一步发现前一步没做完，退回那一步。
 
 ## 步骤
 
@@ -46,14 +49,14 @@ metadata:
 
 ### 四类改动
 
-先认这次改的是哪一类，再决定从哪一步进；一次改动混了两类时，按「写作 → 布局 → 排版 → 润色」的次序拆开做。
+四类改动是操作内部的域，不是独立的操作：写作域定 target 与边界，布局与排版改模块与形态，润色只改措辞。一次改动混了两类时，按「写作 → 布局 → 排版 → 润色」的次序拆开做。
 
 | 类型 | 典型请求 | 从哪进 | 先读哪份条文 |
 | --- | --- | --- | --- |
 | 写作 | 新增 target、改公共 include 或链接边界、换语言标准 | 第 1 步 | `steps/01-targets.md`、`references/cxx-standard.md` |
 | 布局 | 抽函数、拆模块、调导入位置 | 第 2 步 | `steps/02-modules.md`、`references/modules.md` |
-| 排版 | 只改 2 空格、行宽或注释形态 | 第 2 步的契约写法 | `references/cmake.md`、`references/modules.md` |
-| 润色 | 只改函数名、注释措辞或错误消息 | 第 2 步 | `references/modules.md` |
+| 排版 | 只改 2 空格、行宽或注释形态 | 第 2 步的契约写法 | `steps/02-modules.md`、`references/cmake.md`、`references/modules.md` |
+| 润色 | 只改函数名、注释措辞或错误消息 | 第 2 步 | `steps/02-modules.md`、`references/modules.md` |
 
 ## 完成判据
 

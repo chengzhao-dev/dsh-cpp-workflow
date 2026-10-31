@@ -30,36 +30,9 @@ flowchart TD
 
 ## 三个技能的四类改动
 
-`steps/` 是做法，`references/` 是事实，`examples/` 是例子，`docs/` 是原因；这是 Diátaxis 的文档轴。四类改动是另一条轴，只决定从哪一步进，不新增目录，也不改加载顺序。三个技能各有一张同序表，都是 `SKILL.md`「四类改动」的维护镜像，`scripts/checking-skill-links.mjs` 会按技能分别比对域名、顺序与权威条文。
+`steps/` 是做法，`references/` 是事实，`examples/` 是例子，`docs/` 是原因；这是 Diátaxis 的文档轴。四类改动是操作内部的域，只决定这次改的是哪一层，不新增目录，也不改加载顺序。三个技能各有一张同序表，权威条文在 `skills/developing-cpp/SKILL.md`、`skills/configuring-cmake/SKILL.md`、`skills/building-cpp/SKILL.md` 的「四类改动」；本页不复制，避免同一事实出现两份。
 
-### developing-cpp
-
-| 域 | 内容 | 入口步骤 |
-| --- | --- | --- |
-| 写作 | 可观察行为、库与程序的边界、声明与实现、构造后置条件与成员事实 | `steps/01-behavior.md` |
-| 布局 | 文件槽位与命名、头文件拆合、声明顺序、测试 target、注释位置与行尾形态 | `steps/03-declaration.md` |
-| 排版 | 缩进、行宽、包含顺序、格式基线与偏差点、注释符号 | `steps/03-declaration.md` |
-| 润色 | 命名措辞、注释四节与长度预算 | `steps/03-declaration.md` |
-
-### configuring-cmake
-
-| 域 | 内容 | 入口 | 权威条文 |
-| --- | --- | --- | --- |
-| 写作 | target 图、公共 include、链接边界、语言标准 | 第 1 步 | `steps/01-targets.md`、`references/cxx-standard.md` |
-| 布局 | 抽函数、拆模块、调导入位置 | 第 2 步 | `steps/02-modules.md`、`references/modules.md` |
-| 排版 | 2 空格、行宽、中文 `#` 契约注释 | 第 2 步的契约写法 | `references/cmake.md`、`references/modules.md` |
-| 润色 | 函数名、注释措辞、错误消息 | 第 2 步 | `references/modules.md` |
-
-### building-cpp
-
-| 域 | 内容 | 入口 | 权威条文 |
-| --- | --- | --- | --- |
-| 写作 | 环境轴、入口脚本、构建流程 | 第 1 步 | `steps/01-build.md`、`references/environment.md`、`references/build-script.md` |
-| 布局 | 工具配置文件位置、`.vscode/` | 第 2 步 | `steps/02-tooling.md`、`examples/tooling.md` |
-| 排版 | 编码、行尾、clang-format | 第 2 步 | `references/encoding.md`、`steps/02-tooling.md` |
-| 润色 | 诊断措辞、失败分流说明 | 第 3 步 | `steps/03-check.md`、`references/build-script.md` |
-
-域只决定入口，不新增加载层：每域仍落到现有的步骤文件与条文，`references/` 不按域建子目录，避免同一事实出现两份路径。写作域先落定行为与边界，布局与排版只改变形状，润色只改措辞。`comments.md` 按四类改动分节：写作定构造后置条件与成员事实，布局定注释位置与行尾形态，排版定符号、宽度与标签，润色删复述、统一句式；`scripts/checking-comments.mjs` 逐条检查。`exceptions.md` 的「消息」节定 `what()` 的来源、条件、实际值与限度，语言由项目约定，消息不在抛出点做本地化。同一处命中多条规则时，按 `priority.md` 的五级次序判：行为与契约 > 结构 > 清晰 > 一致 > 形式。
+域只决定这一层做什么，不新增加载层：每域仍落到现有的步骤文件与条文，`references/` 不按域建子目录，避免同一事实出现两份路径。写作域先落定行为与边界，布局与排版只改变形状，润色只改措辞。`comments.md` 按四类改动分节：写作定构造后置条件与成员事实，布局定注释位置与行尾形态，排版定符号、宽度与标签，润色删复述、统一句式；`scripts/checking-comments.mjs` 逐条检查。`exceptions.md` 的「消息」节定 `what()` 的来源、条件、实际值与限度，语言由项目约定，消息不在抛出点做本地化。同一处命中多条规则时，按 `priority.md` 的五级次序判：行为与契约 > 结构 > 清晰 > 一致 > 形式。
 
 ## 为什么没有 shared/
 
