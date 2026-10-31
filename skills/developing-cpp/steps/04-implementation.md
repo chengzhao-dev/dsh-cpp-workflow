@@ -9,7 +9,7 @@
 - 函数保持短小；一个函数只做一件事。超过约 40 行时先找可以命名的中间步骤，不要用注释把长函数切成几段。
 - 按「准备 → 操作 → 收尾」排列语句，用空行分组；组与组之间的空行表达阶段，不用大段叙述。
 - `.cpp` 的第一个 include 是自己的配对头，然后直接包含本文件用到的标准库头；不要依赖公共头替本文件转发声明。包含顺序见 `references/google-cpp-style.md`；文件槽位见 `references/file-template.md`。
-- `.cpp` / `.cc` 的函数体用 `//`，不用 `///`：体内 `///` 会接到该函数的 Doxygen 详细说明后面。重要函数按空行分阶段，每个阶段上方写一句 `//`，写边界、失败后果或为什么停在这里，不把下一行的条件翻译一遍。`IsFull` 这种单表达式函数不配注释；只写删掉会让下一次修改得到错误结果、而代码本身看不出的内容，变更史留给提交说明。
+- `.cpp` / `.cc` 的函数体用 `//`，不用 `///`：体内 `///` 会接到该函数的 Doxygen 详细说明后面。重要函数按空行分阶段，每个阶段上方写一句 `//`，写这一支的后果，可以点明分支处理了哪些枚举值，不把下一行的条件逐词翻译一遍；`//` 里的枚举值不包反引号。`IsFull` 这种单表达式函数不配注释；只写删掉会让下一次修改得到错误结果、而代码本身看不出的内容，变更史留给提交说明。
 - 什么时候在 `if` 上方加一句：多条独立拒绝（`CheckPlaceable`）每个 `if` 一句；成功写入前一句；只有次序依赖的一对 `if` 在第一个上方说明；循环上方已有阶段说明时，循环里的 `if` 不再加，单表达式谓词不加。
 - 错误处理：失败是调用方正常结果时返回结果类型、`bool` 或 `std::optional`；函数无法完成自己的任务时抛异常，不拿异常做正常分支。Debug 与 Release 用同一套返回值与抛出条件，只有诊断详略不同。两种模式都要守的 invariant 用 `Check`（项目保留时），只在开发期做的自检用 `DebugCheck`；没有这两个宏就分别用 `assert` 与 `std::terminate`。捕获时按 `const` 引用，只处理能处理的类型，其余继续抛。消息按 `Type::Function: 条件 (值); 限度` 组织，见 `references/exceptions.md` 的「消息」节。
 - 声明 `noexcept` 前核对函数体：出现 `at()` 或其他可能抛出的调用就去掉。越界用 `at()` 抛 `std::out_of_range`，这个函数就不能标 `noexcept`。
@@ -17,8 +17,8 @@
 - 不写 C 风格强制转换；用 `static_cast` / `std::bit_cast` 等具名转换。
 - 所有权用 `std::unique_ptr`；没有共享所有权的理由时不用 `std::shared_ptr`。
 - 只改注释时，不改可观察行为；只改实现时，不改公共声明。两者同时需要时，先改声明，再改实现。
-- 清空成员数组：标准支持 ranges 时用 `std::ranges::fill(cells_ | std::views::join, CellState::kEmpty)`；不支持时用 `for` 循环逐格赋 `kEmpty`。两种都不写 `cells_ = {}`，那依赖枚举零值恰好是 `kEmpty`。
-- 默认构造只做「建立初值」且与 `Clear()` 同义时，构造函数调用 `Clear()`，不另设 `Init()`；类内 `cells_{}` 仍保留，让成员先有确定初值。
+- 清空成员数组：元素类型提供收回空取值的函数时（如 `Cell::Clear`），容器的 `Clear` 逐个调用它；没有这种函数时才用 `std::ranges::fill(cells_ | std::views::join, kEmpty)` 或 `for` 循环逐格赋空值。两种都不写 `cells_ = {}`，也不从外面把枚举赋成空值。
+- 默认构造只做「建立初值」时用成员初值（如 `cells_{}`），不在构造函数里再调一遍 `Clear()`；`Clear()` 只负责把已经写入的元素收回空。
 
 ## 情况
 
@@ -37,6 +37,8 @@
 ## 正反例指针
 
 - 实现注释复述代码、分组混乱：`examples/comments-implementation.md`「实现注释」。
+- 已经证明非负的坐标把下标收成 `std::size_t` 再 `[]`，不要转成 `int`：`references/types.md`「下标与越界」。
+- 越界消息的标签取自调用点：`references/exceptions.md`「消息」的 `std::source_location` 一句。
 - 为了保住 `noexcept` 再包一层只转发下标的私有函数：`references/exceptions.md`「不抛的边界」。
 - 异常类型与结果类型混用：`examples/exceptions.md`「什么时候抛」。
 - `std::format` 与流输出混用得当：`examples/exceptions.md`「异常类型与消息」。

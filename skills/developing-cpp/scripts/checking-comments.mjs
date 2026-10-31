@@ -487,14 +487,8 @@ export function checkText(text, options = {}) {
     if (marker === -1) continue
     const content = lines[index].slice(marker + 4).trim().replace(/。$/, '').trim()
     const colon = content.indexOf('：')
-    if (colon !== -1) {
-      if (content.slice(colon + 1).trim() === '') {
-        add(index + 1, 'enum-trailing-empty', '行尾注释冒号后为空：写「类别：说明」，冒号两侧都不能为空')
-      }
-      continue
-    }
-    if (/[，,]/.test(content)) {
-      add(index + 1, 'enum-trailing-comma', '行尾注释用逗号连接类别与说明：改成「类别：说明」，类别在前')
+    if (colon !== -1 && content.slice(colon + 1).trim() === '') {
+      add(index + 1, 'enum-trailing-empty', '行尾注释冒号后为空：写「类别：说明」，冒号两侧都不能为空')
     }
   }
 

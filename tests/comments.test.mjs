@@ -184,7 +184,7 @@ test('枚举成员注释全写或全不写', () => {
   assert.deepEqual(rules(full), [])
 })
 
-test('枚举行尾两种句式与禁止项', () => {
+test('枚举行尾两种句式与冒号约束', () => {
   const ok = file(
     '/// 落子结果。',
     'enum class PlaceResult {',
@@ -193,13 +193,13 @@ test('枚举行尾两种句式与禁止项', () => {
     '};',
   )
   assert.deepEqual(rules(ok), [])
-  const comma = file(
+  const noColonComma = file(
     '/// 落子结果。',
     'enum class PlaceResult {',
     '  kEmptyType = 2,  ///< 传入空棋盘格子类型，非法参数。',
     '};',
   )
-  assert.ok(rules(comma).includes('enum-trailing-comma'))
+  assert.deepEqual(rules(noColonComma), [])
   const empty = file(
     '/// 落子结果。',
     'enum class PlaceResult {',
@@ -212,7 +212,27 @@ test('枚举行尾两种句式与禁止项', () => {
     '  std::int32_t row{};  ///< 行坐标，0 表示最上面一行。',
     '};',
   )
-  assert.ok(rules(field).includes('enum-trailing-comma'))
+  assert.deepEqual(rules(field), [])
+  const final = file(
+    '/// 格子的状态。',
+    'enum class CellState : std::uint8_t {',
+    '  kEmpty = 0,  ///< 状态为空，尚未设置',
+    '  kX = 1,      ///< 状态为 X',
+    '  kO = 2,      ///< 状态为 O',
+    '};',
+    '',
+    '/// 格子。',
+    'class Cell {',
+    ' public:',
+    '  /// 表示格子状态的变更结果。',
+    '  enum class PlaceResult : std::uint8_t {',
+    '    kEmptyState = 0,  ///< 未变更：传入状态为 `kEmpty`，格子状态保持不变',
+    '    kOccupied = 1,    ///< 未变更：格子已有状态，格子状态保持不变',
+    '    kPlaced = 2,      ///< 已变更：状态成功更新空白格子',
+    '  };',
+    '};',
+  )
+  assert.deepEqual(rules(final), [])
 })
 
 test('声明宽度与注释行宽按中文两列计算', () => {

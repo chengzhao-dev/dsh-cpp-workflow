@@ -132,6 +132,7 @@ class TaskBoard {
 | 无下标 | `set`、`unordered_set`、`multimap` | 无 `operator[]` / `at` | — |
 
 - 只在调用点已经证明下标合法时用 `[]`；否则用 `at` 或先做边界检查。坐标类型不拥有容器区间；区间判断属于持有尺寸的类型（如 `Board::IsInRange`）。`std::span` 在 C++20 没有 `at`，`span::at` 到 C++26 才进入标准。
+- 已经证明非负的坐标在 `[]` 前收成 `std::size_t`：写 `static_cast<std::size_t>(index)`，不要先转成 `int`，也不要改用 `at()`。
 - `map::operator[]` 会插入，不是“读取可能缺失的键”；只读查询用 `find` / `contains` / `at`。
 - 契约失败的消息用 `std::format`，见 `references/exceptions.md`。
 
