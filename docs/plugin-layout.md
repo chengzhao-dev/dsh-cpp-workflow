@@ -12,6 +12,7 @@ dsh-cpp-workflow/
 ├── cordis.patch.yml
 ├── docs/
 │   ├── architecture.md
+│   ├── comment-sources.md
 │   ├── plugin-boundaries.md
 │   ├── plugin-flow.md
 │   ├── plugin-layout.md

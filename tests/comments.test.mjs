@@ -1,4 +1,4 @@
-// 注释检查器锁定 references/comments.md 的硬规则：文件头、标签、注释与声明的贴合、
+// 注释检查器锁定 references/comments.md 的硬规则：文件头、标签、标签间空行、注释与声明的贴合、
 // 成员清单、设计论证、跨类分工、类型系统复述、否定式边界、领域尺寸、谓词首句、
 // @param 完整性与枚举行尾注释。规则改动时必须同步这里的用例。
 import assert from 'node:assert/strict'
@@ -138,6 +138,26 @@ test('注释不写否定式能力边界', () => {
   assert.deepEqual(rules(text), ['negative-scope'])
   const state = file('/// 清空棋盘。', '///', '/// 未变更时保持原值，不做修改。', 'void Clear();')
   assert.deepEqual(rules(state), [])
+})
+
+test('Doxygen 标签之间不空行', () => {
+  const bad = file(
+    '/// 检查标志。',
+    '///',
+    '/// @param flag 待检查的标志。',
+    '///',
+    '/// @return 标志有效时返回 true。',
+    'bool Check(bool flag);',
+  )
+  assert.deepEqual(rules(bad), ['tag-gap'])
+  const ok = file(
+    '/// 检查标志。',
+    '///',
+    '/// @param flag 待检查的标志。',
+    '/// @return 标志有效时返回 true。',
+    'bool Check(bool flag);',
+  )
+  assert.deepEqual(rules(ok), [])
 })
 
 test('类型注释不写领域尺寸', () => {

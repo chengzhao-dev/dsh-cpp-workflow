@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 只读注释审计：按 references/comments.md 的硬规则检查 C/C++ 源文件。
 //
-// 检查项：Doxygen 文件头、注释行宽度、标签、注释与声明的贴合、
+// 检查项：Doxygen 文件头、注释行宽度、标签、标签间空行、注释与声明的贴合、
 // 类型注释存在性、成员功能清单、设计论证（方案对比）、否定式边界、领域尺寸、谓词首句、@param 完整性、枚举成员注释一致性、枚举行尾句式、数据成员主注释位置。
 // 不重写任何文件。
 //
@@ -119,6 +119,20 @@ export function displayWidth(text) {
     width += wide ? 2 : 1
   }
   return width
+}
+
+/** 标签块开始后是否出现空行；描述与首个标签之间的空行不算。 */
+function hasTagGap(contents) {
+  let seenTag = false
+  for (const content of contents) {
+    const trimmed = content.trim()
+    if (trimmed.startsWith('@')) {
+      seenTag = true
+      continue
+    }
+    if (seenTag && trimmed === '') return true
+  }
+  return false
 }
 
 /** 取出顶层逗号分隔的参数段，忽略模板与括号内的逗号。 */
@@ -316,6 +330,9 @@ export function checkText(text, options = {}) {
           if (content.includes(tag)) add(doc.start + 1, 'forbidden-tag', `禁止使用 ${tag}，按 references/comments.md 的标签表改写`)
         }
       }
+      if (!doc.contents.some((content) => content.includes('@file')) && hasTagGap(doc.contents)) {
+        add(doc.start + 1, 'tag-gap', 'Doxygen 标签之间有空行：描述与标签组之间空一行，标签之间不空行')
+      }
       index = doc.end
     }
   }
@@ -341,6 +358,10 @@ export function checkText(text, options = {}) {
     if (next >= lines.length) continue
     const declaration = lines[next].trim()
     const block = lines.slice(start, end + 1).join('\n')
+    const docContents = lines.slice(start, end + 1).map((line) => line.trim().replace(/^\/\/\/\s?/, ''))
+    if (hasTagGap(docContents)) {
+      add(start + 1, 'tag-gap', 'Doxygen 标签之间有空行：描述与标签组之间空一行，标签之间不空行')
+    }
     const isType = /^(template\s*<[^>]*>\s*)?(class|struct|union|enum)\b/.test(declaration)
     if (RATIONALE.test(block)) {
       add(start + 1, 'rationale', '注释在写设计取舍：方案对比与理由移到正文或实现注释，接口注释只留契约')

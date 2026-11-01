@@ -193,7 +193,7 @@ friend bool operator==(const Position&, const Position&) = default;
 /// 检查指定坐标上的棋盘格子是否为空。
 ///
 /// @param position 待检查的坐标。
-/// @return 坐标在棋盘内且该格为空时返回 true；越界或该格已有棋子时返回 false。
+/// @return 坐标在棋盘内且该格为空时返回 true；越界或该格已有状态时返回 false。
 [[nodiscard]] bool IsCellEmpty(Position position) const;
 ```
 
@@ -215,14 +215,14 @@ enum class Player : std::uint8_t {
 ```cpp
 /// 对局结果。
 enum class GameResult : std::uint8_t {
-  kInProgress = 0,  ///< 游戏进行中：还可以落子。
-  kCrossWin = 1,    ///< X 获胜：达成三连。
-  kNoughtWin = 2,   ///< O 获胜：达成三连。
-  kDraw = 3,        ///< 平局：棋盘已满，双方都没有三连。
+  kInProgress = 0,  ///< 对局尚未结束
+  kCrossWin = 1,    ///< 对局由 X 获胜
+  kNoughtWin = 2,   ///< 对局由 O 获胜
+  kDraw = 3,        ///< 对局以平局结束
 };
 ```
 
-行尾注释先写语义，需要时用冒号补一句能核实的条件或结果，两段都短；不重复名字，不写嵌套子句，同一枚举要么全写要么全不写。
+行尾注释必须以枚举主体的同一个词开头，写成完整的状态或结果；需要补原因时用「主体 + 结果：原因」，冒号前后都不能空。不写「X 成线」「尚未结束」这种只有谓语的片段，同一枚举要么全写要么全不写。
 
 ## 数据成员
 

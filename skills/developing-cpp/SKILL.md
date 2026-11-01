@@ -36,7 +36,7 @@ metadata:
 | 3 | 定声明 | `steps/03-declaration.md` | 写命名、声明顺序、头文件契约和声明注释 |
 | 4 | 定实现 | `steps/04-implementation.md` | 写 `.cpp` 函数体的操作顺序、分组和实现注释 |
 
-每步只打开同号的一个步骤文件。判不准才打开 `examples/` 里与该步对应的案例；`references/` 保存完整条文，只在排错、整目录重构，或步骤里明确指向某一条文时按需打开。性能问题读 `references/performance.md`，标准库设施选型读 `references/standard-library.md`，链接与产物的细节读 `building-cpp` 的 `references/linking.md`。
+每步只打开同号的一个步骤文件。判不准才打开 `examples/` 里与该步对应的案例；`references/` 保存完整条文，只在排错、整目录重构，或步骤里明确指向某一条文时按需打开。性能问题读 `references/performance.md`，标准库设施选型读 `references/standard-library.md`，注释术语判不准读 `references/comment-terms.md`，链接与产物的细节读 `building-cpp` 的 `references/linking.md`。
 
 本轮激活按三条上限走：
 

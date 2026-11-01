@@ -63,6 +63,7 @@ flowchart TD
 | `skills/developing-cpp/steps/01-behavior.md`、`02-boundary.md`、`03-declaration.md`、`04-implementation.md` | 单步操作与退出条件 |
 | `skills/developing-cpp/examples/comments-declaration.md`、`comments-implementation.md`、`exceptions.md`、`naming.md`、`structure.md` | 对应步骤的正反例 |
 | `skills/developing-cpp/references/comments.md` | 注释四节（写作、布局、排版、润色）与长度预算 |
+| `skills/developing-cpp/references/comment-terms.md` | 注释术语表：位置、格子、更新、副本等首选词与禁用词 |
 | `skills/developing-cpp/references/change-model.md` | 三种操作、四个域、次序、交接与写作边界；三技能共用 |
 | `skills/developing-cpp/references/priority.md` | 规则冲突时的五级次序与常见冲突 |
 | `skills/developing-cpp/references/file-template.md` | 文件槽位、守卫、扩展名 |
@@ -88,6 +89,7 @@ flowchart TD
 | `docs/triggering.md` | 触发矩阵与描述维护规则 |
 | `docs/plugin-layout.md` | 目录与进包白名单 |
 | `docs/versioning.md` | 版本号与发布顺序 |
+| `docs/comment-sources.md` | 注释规范的 100 份参考书目（维护资料，不进 npm 包） |
 
 同一事实只留一份权威：命名总则在 `references/naming.md`，注释在 `references/comments.md`，术语在 `references/glossary.md`，标准档位在 `references/standards/`。步骤文件只写「这一步做什么、何时退出」，条文细节一律指向 references；三个技能不互相复制正文，只互相指向对方的入口。
 

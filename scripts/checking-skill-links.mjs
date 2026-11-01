@@ -548,6 +548,7 @@ for (const file of [
 
 const docs = [
   'architecture.md',
+  'comment-sources.md',
   'plugin-boundaries.md',
   'plugin-flow.md',
   'plugin-layout.md',
