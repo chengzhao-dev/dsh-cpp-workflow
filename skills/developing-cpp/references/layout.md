@@ -1,6 +1,6 @@
 # 源码布局
 
-布局服务于边界：库是纯的，程序是薄的，测试从公共接口进入。这里只定目录和文件职责；CMake target 在 `building-cpp` 的定构建。
+布局服务于边界：库是纯的，程序是薄的，测试从公共接口进入。这里只定目录和文件职责；CMake target 由 `configuring-cmake` 的 `steps/01-targets.md` 定。
 
 ## 组件
 
@@ -49,20 +49,11 @@ app/
 
 ## 文件扩展名与归属
 
-- `.h`：公共或私有头文件；公共头放 `include/`，私有头放 `src/`。
-- `.hpp`：与 `.h` 同一套槽位；一个工程只选一种头扩展名，不因扩展名换结构。
-- `.cpp`：实现文件；新工程与示例一律使用。已有工程沿用它原本的实现后缀，不批量改名。
-- `.cc`：已有工程常见的实现后缀；本工作流的示例不选它，但审阅这类工程时按 `.cpp` 同一套规则处理。
-- `.inc`：稀有文本包含；本工作流不新写。
-- 头文件、实现文件的槽位与守卫名以 `references/file-template.md` 为准；本文只定位置，不重复守卫模板。
+扩展名、槽位与守卫名以 `references/file-template.md` 为准；本文只定位置：公共头放 `include/`，私有头放 `src/`，实现文件放 `src/`，测试放 `tests/`。
 
 ## 头文件契约
 
-- 公共头自包含：单独编译一个只包含它的 `.cpp` 必须通过。
-- 头文件不定义非 inline 的普通全局变量；共享常量用 `inline constexpr`。
-- 头文件不写 `using namespace`；不污染全局命名空间。
-- 模板和 `constexpr` 的实现可以留在头文件；普通函数体放 `.cpp`。
-- 头文件不包含 `<iostream>`；需要流时在 `.cpp` 或程序层包含。
+自包含、共享常量、`using namespace`、模板实现与 `<iostream>` 的规则见 `references/google-cpp-style.md`「头文件」和 `references/file-template.md`。本文只强调一条边界：公共头只暴露稳定契约，测试只包含公共头。
 
 ## 测试
 
@@ -77,6 +68,6 @@ app/
 
 1. 先定边界（第 2 步），列出公共头。
 2. 移动文件，不改行为；测试保持绿色。
-3. 再改 CMake target（`building-cpp` 的定构建），最后跑 `building-cpp` 的通过检查。
+3. 再改 CMake target（`configuring-cmake` 的 `steps/01-targets.md`），最后跑 `building-cpp` 的 `steps/03-check.md`。
 
 一次只做一种迁移；不要把「拆库 + 改名 + 改行为」混在一起。

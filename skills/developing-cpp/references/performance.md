@@ -2,6 +2,8 @@
 
 先证明慢在哪里，再改代码。没有测量的“优化”通常只是把复杂度搬了个位置。
 
+本文件只管性能判断与测量；语言规则见 `references/language.md`，容器与算法选择见 `references/standard-library.md`，静态检查开关见 `building-cpp` 的 `references/static-analysis.md`。
+
 ## 测量顺序
 
 1. 写清可观察的性能目标：延迟、吞吐、内存上限，或“输入规模翻倍时耗时如何增长”。
@@ -69,7 +71,6 @@ ASan/UBSan 有运行期开销，只在测试和排查时开；发布构建仍要
 - 不要用全局可变状态换速度；正确性和可测试性先于常数因子。
 - 不要为未测量的热点写复杂的手工内存管理。
 - 不要用 `reinterpret_cast` 绕过类型系统；需要二进制布局时用 `std::bit_cast` 并确认可平凡复制。
-- 不要关闭整类 clang-tidy 检查来让构建通过；修代码或局部 `NOLINT` 并写理由。
 - 不要把 `std::endl` 当换行符；它每次都会 flush。
 
 ## 检查清单

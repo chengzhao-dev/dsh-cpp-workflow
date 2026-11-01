@@ -87,8 +87,8 @@ task_list/src/detail.h           // 私有头，只被本组件包含
 
 ```cpp
 // 差：用循环现写八条线，坐标藏在控制流里。
-std::vector<std::vector<CellPosition>> BuildLines() {
-  std::vector<std::vector<CellPosition>> lines;
+std::vector<std::vector<Position>> BuildLines() {
+  std::vector<std::vector<Position>> lines;
   for (int row = 0; row < kRows; ++row) { /* ... */ }
   // 列与两条对角线再各写一段
   return lines;
@@ -99,7 +99,7 @@ std::vector<std::vector<CellPosition>> BuildLines() {
 
 ```cpp
 // board.cpp 的 namespace tictactoe：行、列、对角线三组，坐标固定。
-constexpr std::array<std::array<CellPosition, 3>, 8> kLines = {{
+constexpr std::array<std::array<Position, 3>, 8> kLines = {{
     {{{0, 0}, {0, 1}, {0, 2}}},  // 行 0
     {{{1, 0}, {1, 1}, {1, 2}}},  // 行 1
     {{{2, 0}, {2, 1}, {2, 2}}},  // 行 2
@@ -119,31 +119,31 @@ constexpr std::array<std::array<CellPosition, 3>, 8> kLines = {{
 
 ```cpp
 Board hypothetical = *this;
-const PlaceCellResult placed = hypothetical.PlaceCell(position, cell_type);
-if (placed != PlaceCellResult::kSuccess) {
+const Cell::PlaceResult placed = hypothetical.Place(position, state);
+if (placed != Cell::PlaceResult::kPlaced) {
   return WinPreviewResult::kInvalidPlace;
 }
-return hypothetical.HasLine(cell_type) ? WinPreviewResult::kWouldWin
+return hypothetical.HasLine(state) ? WinPreviewResult::kWouldWin
                                        : WinPreviewResult::kWouldNotWin;
 ```
 
-**好**：判断「这一格换成某种棋子后会不会成线」不需要第二份棋盘。越界、空格、已占用交给 `CheckPlaceable` 统一返回原因；通过之后只在包含该坐标的线上把这一格算作 `cell_type`，其余格子读原棋盘。
+**好**：判断「这一格换成某种棋子后会不会成线」不需要第二份棋盘。越界、空格、已占用交给 `CheckPlaceable` 统一返回原因；通过之后只在包含该坐标的线上把这一格算作 `state`，其余格子读原棋盘。
 
 ```cpp
-WinPreviewResult Board::PreviewWin(CellPosition position, CellType cell_type) const {
-  if (CheckPlaceable(position, cell_type) != PlaceCellResult::kSuccess) {
+WinPreviewResult Board::PreviewWin(Position position, CellState state) const {
+  if (CheckPlaceable(position, state) != Cell::PlaceResult::kPlaced) {
     return WinPreviewResult::kInvalidPlace;
   }
 
-  const auto matches = [&](CellPosition cell) {
+  const auto matches = [&](Position cell) {
     if (cell.row == position.row && cell.col == position.col) {
       return true;
     }
-    return cells_.at(cell.row).at(cell.col) == cell_type;
+    return cells_.at(cell.row).at(cell.col) == state;
   };
 
   const bool completes = std::ranges::any_of(kLines, [&](const auto& line) {
-    const bool contains = std::ranges::find_if(line, [&](CellPosition cell) {
+    const bool contains = std::ranges::find_if(line, [&](Position cell) {
                             return cell.row == position.row && cell.col == position.col;
                           }) != line.end();
     return contains && std::ranges::all_of(line, matches);

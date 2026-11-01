@@ -39,7 +39,7 @@ node "<skill-dir>/scripts/checking-environment.mjs" --project .
 node "<skill-dir>/scripts/checking-environment.mjs" --project . --live
 ```
 
-第一条只验证三个环境轴、`standard` 和组合，任何机器都能跑。第二条在当前 PATH 上核对构建宿主、命令和版本。通过后才运行项目入口命令；入口内部依次 configure、build、format、tidy、ctest、run。
+第一条只验证三个环境轴、`standard` 和组合，任何机器都能跑。第二条在当前 PATH 上核对构建宿主、命令和版本。通过后才运行项目入口命令；入口内部依次 configure、build、ctest、run，format 与 tidy 由工具配置单独执行，不塞进入口脚本。
 
 环境脚本不安装、不下载、不改 PATH。缺命令时打印缺的名字并非零退出。
 

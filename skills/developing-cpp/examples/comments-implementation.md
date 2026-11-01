@@ -10,7 +10,7 @@
 // 遍历所有空格
 for (const auto& position : empty_cells) {
   // 尝试落子
-  const bool wins = game.PreviewWin(position, cell_type) == WinPreviewResult::kWouldWin;
+  const bool wins = game.PreviewWin(position, state) == WinPreviewResult::kWouldWin;
   // 如果能赢
   if (wins) {
     // 返回这一手

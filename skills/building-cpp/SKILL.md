@@ -21,13 +21,13 @@ metadata:
 
 ## 三种操作
 
+一次只选一种，范围（单点、整段）是任务属性。操作与域的判据、边界和交接见 `../developing-cpp/references/change-model.md`；四类改动是域，不是操作。
+
 | 操作 | 什么时候用 | 从哪步进 |
 | --- | --- | --- |
 | 写作（起稿） | 改环境轴、入口脚本或构建流程 | 第 1 步；新工程走到第 3 步 |
 | 改写 | 环境轴与 target 契约不变，工具配置位置或流程顺序不对 | 从第 2 步重走，可到第 3 步 |
 | 润色 | 只改诊断措辞或失败分流说明 | 第 3 步 |
-
-范围随任务定：单点修正只改一条配置或诊断；整段重构先确认 target 与标准已由 configuring-cmake 写好，再改工具文件，最后跑完整检查。
 
 三种操作共用这些约束：不发明项目没有声明的环境轴、命令和 target；只改格式或配置时不改可观察行为；不覆盖已有源码、`CMakeLists.txt` 和 `.clang-*`；不安装工具链；代理侧不写 `wsl` 或 `bash -lc`。后一步发现前一步没做完，退回那一步。拿不准先用单点修正；发现环境轴、编译器、构建目录或 target 契约需要改，退回整段，并转 `configuring-cmake`。
 
@@ -41,9 +41,11 @@ metadata:
 
 每步只打开同号的一个步骤文件。判不准才打开 `examples/` 里与该步对应的案例；`references/` 保存完整条文，只在排错、整目录重构，或步骤里明确指向某一条文时按需打开。链接、rpath 与产物布局读 `references/linking.md`；测试设计、断言与 CTest 注册读 `references/testing.md`；CMake 的 target、标准和函数写法读 `../configuring-cmake/references/`，可复用片段在 `../configuring-cmake/assets/cmake/`。
 
+入口脚本只做配置、构建、CTest 与最小运行；`clang-format` 与 `clang-tidy` 的手动检查留在定工具配置，不塞进入口脚本。`environment.json` 的三个环境轴与 `standard` 是唯一来源，缺项就停。
+
 本轮激活按三条上限走：
 
-- 只开当前步对应的一个步骤文件；同一改动域内不同时展开两个技能的步骤。跨域按 `developing-cpp` 的交接顺序（源码 → `configuring-cmake` → `building-cpp`）逐段进入，前一段结论落下再开下一段。
+- 只开当前步对应的一个步骤文件；同一改动域内不同时展开两个技能的步骤。跨域按 `源码 → configuring-cmake → building-cpp` 的顺序逐段进入，前一段结论落下再开下一段。
 - 条文只开该步点名的一份；同号案例留到下一次激活。
 - 标准档只打开项目技能声明的那一档，没有声明时用本技能已有的新工程默认，不把其余标准档读进来。
 
@@ -51,20 +53,20 @@ metadata:
 
 ### 四类改动
 
-四类改动是操作内部的域，不是独立的操作：写作域定环境与流程，布局与排版改配置与形态，润色只改措辞。一次改动混了两类时，按「写作 → 布局 → 排版 → 润色」的次序拆开做。
+四类改动是操作内部的域：操作定入口，域定层次。四域的定义、边界与次序见 `../developing-cpp/references/change-model.md`；一次改动混了两类时，按「写作 → 布局 → 排版 → 润色」拆开做，前一类落定并经检查再进下一类。
 
-| 类型 | 典型请求 | 从哪进 | 先读哪份条文 |
-| --- | --- | --- | --- |
-| 写作 | 改环境轴、入口脚本或构建流程 | 第 1 步 | `steps/01-build.md`、`references/environment.md`、`references/build-script.md` |
-| 布局 | 移动工具配置文件、补 `.vscode/` | 第 2 步 | `steps/02-tooling.md`、`examples/tooling.md` |
-| 排版 | 只改编码、行尾或 clang-format | 第 2 步 | `references/encoding.md`、`steps/02-tooling.md` |
-| 润色 | 只改诊断措辞、失败分流说明 | 第 3 步 | `steps/03-check.md`、`references/build-script.md` |
+| 类型 | 典型请求 | 入口步骤 |
+| --- | --- | --- |
+| 写作 | 改环境轴、入口脚本或构建流程 | `steps/01-build.md` |
+| 布局 | 移动工具配置文件、补 `.vscode/` | `steps/02-tooling.md` |
+| 排版 | 只改编码、行尾或 clang-format | `steps/02-tooling.md` |
+| 润色 | 只改诊断措辞、失败分流说明 | `steps/03-check.md` |
 
 ## 完成判据
 
-- 项目 `environment.json` 的三个环境轴齐全且是合法组合，`standard` 在 `c++11`–`c++23` 内；新工程默认 `c++23`，没有靠猜。
-- 配置命令固定 Ninja 和单一编译器，`build/<compiler>/compile_commands.json` 存在，根 `build/compile_commands.json` 指向当前编译器。
-- target 契约已经成立：程序 `app`、库 target、公共 include、标准与输出目录都已由 `configuring-cmake` 写好；本技能没有偷偷改 CMake 来绕过失败。
-- `clang-format --dry-run --Werror` 与 `clang-tidy` 在项目源码上零告警；只扫描项目源码和项目头。
-- CTest 全绿，程序从该编译器的构建目录启动；有测试时注册用 `gtest_discover_tests` 或项目既有机制，运行带 `--output-on-failure --no-tests=error`，失败时报告的是具体角色和原因。
-- 没有改源码语义，没有覆盖已有工程文件，也没有安装或下载任何工具。
+- [ ] 项目 `environment.json` 的三个环境轴齐全且是合法组合，`standard` 在 `c++11`–`c++23` 内；新工程默认 `c++23`，没有靠猜。
+- [ ] 配置命令固定 Ninja 和单一编译器，`build/<compiler>/compile_commands.json` 存在，根 `build/compile_commands.json` 指向当前编译器。
+- [ ] target 契约已经成立：程序 `app`、库 target、公共 include、标准与输出目录都已由 `configuring-cmake` 写好；本技能没有偷偷改 CMake 来绕过失败。
+- [ ] `clang-format --dry-run --Werror` 与 `clang-tidy` 在项目源码上零告警；只扫描项目源码和项目头。
+- [ ] CTest 全绿，程序从该编译器的构建目录启动；有测试时注册用 `gtest_discover_tests` 或项目既有机制，运行带 `--output-on-failure --no-tests=error`，失败时报告的是具体角色和原因。
+- [ ] 没有改源码语义，没有覆盖已有工程文件，也没有安装或下载任何工具。

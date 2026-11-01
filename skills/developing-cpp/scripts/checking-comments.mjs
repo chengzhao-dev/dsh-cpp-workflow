@@ -37,6 +37,7 @@ const RATIONALE = /而不是|而非|代价.{0,4}忽略|只留一份|与其|比.{
 const FORWARD_REF = /(?:留在|归|交给|由)\s*`?[A-Z][A-Za-z0-9_]*`?/
 const TYPE_SYSTEM = /值语义|自由拷贝/
 const NEGATED_BOUNDARY = /只保存|不拥有|不含/
+const NEGATIVE_SCOPE = /不(?:检查|校验|验证|负责|判断)/
 const DOMAIN_SIZE = /\d+\s*[×xX]\s*\d+|九格|九个格子/
 const PREDICATE_DECL = /^(?:\[\[nodiscard\]\]\s*)?(?:static\s+)?bool\s+(?:Is|Has|Can|Completes)[A-Za-z0-9_]*\s*\(|operator==/
 const DECL_KEYWORDS = /^(class|struct|union|enum|namespace|using|typedef|template|#|if|else|for|while|switch|return|case|default)\b/
@@ -356,6 +357,9 @@ export function checkText(text, options = {}) {
     if (isType && NEGATED_BOUNDARY.test(block)) {
       add(start + 1, 'negated-boundary', '类型注释用「只保存/不拥有/不含」写否定式边界：改成名词短语，边界交给成员类型表达')
     }
+    if (NEGATIVE_SCOPE.test(block)) {
+      add(start + 1, 'negative-scope', '注释用「不检查/不校验/不负责/不判断」写能力边界：改成正向限定，前置条件写「调用方保证…」或 @pre')
+    }
     if (isType && DOMAIN_SIZE.test(block)) {
       add(start + 1, 'domain-size', '类型注释在写领域尺寸：格子数由 cells_ 之类成员声明表达，删掉这句')
     }
@@ -398,6 +402,7 @@ export function checkText(text, options = {}) {
       if (isType && FORWARD_REF.test(block)) add(doc.start + 1, 'forward-ref', '类型注释在交代别的类型负责什么：只写本类型的契约，删掉这句，不要挪到文件头')
       if (isType && TYPE_SYSTEM.test(block)) add(doc.start + 1, 'type-system', '类型注释在复述类型系统已表达的性质：可拷贝与 const 查询由声明给出，删掉这句')
       if (isType && NEGATED_BOUNDARY.test(block)) add(doc.start + 1, 'negated-boundary', '类型注释用「只保存/不拥有/不含」写否定式边界：改成名词短语，边界交给成员类型表达')
+      if (NEGATIVE_SCOPE.test(block)) add(doc.start + 1, 'negative-scope', '注释用「不检查/不校验/不负责/不判断」写能力边界：改成正向限定，前置条件写「调用方保证…」或 @pre')
       if (isType && DOMAIN_SIZE.test(block)) add(doc.start + 1, 'domain-size', '类型注释在写领域尺寸：格子数由 cells_ 之类成员声明表达，删掉这句')
       const firstDocLine = doc.contents[0] ?? ''
       if (!isType && PREDICATE_DECL.test(declaration) && !firstDocLine.startsWith('检查')) {

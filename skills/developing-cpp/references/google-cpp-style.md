@@ -24,26 +24,9 @@
 
 ## 命名
 
-| 种类 | 规则 | 例子 |
-| --- | --- | --- |
-| 类型、类、结构、枚举、别名、模板参数 | PascalCase | `TaskTable`, `OrderResult`, `TaskState` |
-| 函数、成员函数 | PascalCase | `Contains`, `GetCurrentOrder` |
-| 访问器、修改器 | Google 允许 PascalCase 或 snake_case | `Count()` / `count()`、`SetCount()` / `set_count()`；同一 API 只选一种，不要混用 |
-| 变量、参数、局部变量 | snake_case | `task_count`, `current_order` |
-| 类数据成员 | snake_case + 尾随 `_` | `tasks_`, `orders_` |
-| 结构体数据成员 | snake_case，无尾随下划线 | `name`, `priority` |
-| 常量、枚举子 | `k` + PascalCase | `kTaskCount`, `Order::kDraft` |
-| 命名空间 | snake_case | `taskflow`, `warehouse` |
-| 宏 | 尽量不用；必须用时全大写并带项目前缀 | `CPP_WORKFLOW_ASSERT` |
+大小写、前缀、成员尾随 `_`、常量与枚举子的 `k` 前缀、命名空间与文件名的完整规则表，以及访问器、谓词、`Try`、映射函数、`current_` 前缀的语义角色，见 `references/naming.md`。本文只保留两处 Google 原文允许选择、而本项目需要统一的点：
 
-- 一个 API 不混用两套命名。对外函数用 PascalCase，成员变量用 snake_case，不要出现 `get_task` 与 `GetTask` 并存。
-- 查询函数遵循同一 API 选定的访问器约定：Google 允许 `Count()` 或 `count()`，也允许 `GetCurrentOrder()`；同一 API 内不要混用两套。
-- 谓词用 `Is` / `Has` / `Can`，成对规则可用 `Completes` 这类限定式；唯一前缀集与 `Contains` 例外见 `references/naming.md`。返回 `bool` 但语义不是判断的函数，换成领域动词。
-- 尝试用 `Try`：`TryReserve()` 返回结果类型；确定性动作直接用领域动词：`CompleteTask()`、`Reset()`。
-- 映射函数的名字要含来源与目标角色：`OrderToReceipt()`、`TaskTableToString()`；禁止裸 `To()` / `Of()`。
-- 计算函数用动词开头：`ScoreOrder()`、`CollectPendingTasks()`。
-- `current_` 前缀只在有多个候选、且「当前」确实可能混淆时使用；只有一个当前对象时不要加。
-- 避免 `Manager`、`Helper`、`Util` 这类不说明职责的后缀；名字要能回答「它负责什么」。
+- 访问器、修改器 Google 允许 PascalCase 或 snake_case；本项目统一 PascalCase，同一 API 不混用两套。
 - 测试名用 PascalCase 描述行为，例如 `RejectsOutOfRangeTask`；测试文件用 snake_case。
 
 ## 类型与声明

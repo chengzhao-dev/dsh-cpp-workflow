@@ -34,6 +34,6 @@ GCC 模式把目录和编译器换成 `build/gcc`、`g++`。每次检查都重�
 | 函数参数没校验、模块重复导入、旧模块残留 | 第 2 步 |
 | 只是 CTest 或运行失败 | 转 `building-cpp` 的通过检查 |
 
-## 边界
+## 交回构建
 
-本步不替代 `building-cpp`：不安装工具链，不改 `running-build.sh`，不跑 `clang-tidy` 或 CTest。检查通过的判据是 configure 与构建成功、数据库标准正确、结构规则无命中；完整的构建、测试与运行检查仍由 `building-cpp` 的通过检查给出。
+本步的判据是 configure 与构建成功、数据库标准正确、结构规则无命中；工具链、入口脚本、`clang-tidy` 与 CTest 的完整检查见 `building-cpp` 的 `steps/03-check.md`。

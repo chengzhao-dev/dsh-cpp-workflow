@@ -2,14 +2,7 @@
 
 ## 基本规则
 
-| 差 | 好 | 原因 |
-| --- | --- | --- |
-| `class task_list` | `class TaskList` | 类型 PascalCase |
-| `void add_task()` | `void AddTask()` | 函数 PascalCase |
-| `int TaskCount` | `int task_count` | 变量 snake_case |
-| `std::vector<Task> Tasks` | `std::vector<Task> tasks_` | 成员 snake_case + `_` |
-| `constexpr int MAX = 10` | `constexpr int kMaxTasks = 10` | 常量 `k` 前缀 |
-| `enum class Color { Red }` | `enum class Color { kRed }` | 枚举子 `k` 前缀 |
+大小写、前缀与成员尾随 `_` 的规则表见 `references/naming.md`；下面只收需要语境才能判断的例子。
 
 ## 访问器
 

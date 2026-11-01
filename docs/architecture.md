@@ -1,6 +1,6 @@
 # 技能架构
 
-这个包有三个技能和五份维护说明，没有共享层，也没有按域拆分的工具。架构只回答三个问题：会话里谁先出现、技能内部按什么顺序加载、同一事实写在哪一份文件里。
+这个包有三个技能、五份维护说明和一份跨技能变更模型，没有共享技能层，也没有按域拆分的工具。架构只回答三个问题：会话里谁先出现、技能内部按什么顺序加载、同一事实写在哪一份文件里。
 
 ## 数据流
 
@@ -30,7 +30,7 @@ flowchart TD
 
 ## 三个技能的四类改动
 
-`steps/` 是做法，`references/` 是事实，`examples/` 是例子，`docs/` 是原因；这是 Diátaxis 的文档轴。四类改动是操作内部的域，只决定这次改的是哪一层，不新增目录，也不改加载顺序。三个技能各有一张同序表，权威条文在 `skills/developing-cpp/SKILL.md`、`skills/configuring-cmake/SKILL.md`、`skills/building-cpp/SKILL.md` 的「四类改动」；本页不复制，避免同一事实出现两份。
+`steps/` 是做法，`references/` 是事实，`examples/` 是例子，`docs/` 是原因；这是 Diátaxis 的文档轴。四类改动是操作内部的域，只决定这次改的是哪一层，不新增目录，也不改加载顺序。三个技能各有一张同序表，表的权威在本技能的 `SKILL.md` 的「四类改动」；三种操作与四个域的定义、边界和次序在 `skills/developing-cpp/references/change-model.md`，另外两个技能只链接，不复制。本页不复制表，避免同一事实出现两份。
 
 域只决定这一层做什么，不新增加载层：每域仍落到现有的步骤文件与条文，`references/` 不按域建子目录，避免同一事实出现两份路径。写作域先落定行为与边界，布局与排版只改变形状，润色只改措辞。`comments.md` 按四类改动分节：写作定构造后置条件与成员事实，布局定注释位置与行尾形态，排版定符号、宽度与标签，润色删复述、统一句式；`scripts/checking-comments.mjs` 逐条检查。`exceptions.md` 的「消息」节定 `what()` 的来源、条件、实际值与限度，语言由项目约定，消息不在抛出点做本地化。同一处命中多条规则时，按 `priority.md` 的五级次序判：行为与契约 > 结构 > 清晰 > 一致 > 形式。
 
@@ -39,6 +39,8 @@ flowchart TD
 三个技能分开加载：源码工作不进构建文件的上下文，CMake 契约不进源码条文，构建与工具链也不进 CMake 写法。真正被三方同时需要的内容只有 C++ 标准档位：语言设施、工具映射与降档在 `skills/building-cpp/references/standards/`，CMake 两层声明在 `skills/configuring-cmake/references/cxx-standard.md`，源码侧需要时用链接指向那里，不复制正文。
 
 再加一层 `shared/` 会多出一条第三条加载路径：加载时机、结构检查和链接检查都要为它单独定义，而它省下的只是几行交叉引用。当前规模下，直接把入口写进三个 `SKILL.md` 更短，也更容易在评审时查清「这句话只有一份」。
+
+`change-model.md` 不是 `shared/`：它是 `developing-cpp` 的一份普通 reference，另外两个技能用相对路径链接；加载仍走各自的技能目录，没有新增注册路径。只有三方同时需要、且会反复漂移的模型才放这里，单域细节仍留在各自的 `references/`。
 
 ## 四层加载
 
@@ -61,6 +63,7 @@ flowchart TD
 | `skills/developing-cpp/steps/01-behavior.md`、`02-boundary.md`、`03-declaration.md`、`04-implementation.md` | 单步操作与退出条件 |
 | `skills/developing-cpp/examples/comments-declaration.md`、`comments-implementation.md`、`exceptions.md`、`naming.md`、`structure.md` | 对应步骤的正反例 |
 | `skills/developing-cpp/references/comments.md` | 注释四节（写作、布局、排版、润色）与长度预算 |
+| `skills/developing-cpp/references/change-model.md` | 三种操作、四个域、次序、交接与写作边界；三技能共用 |
 | `skills/developing-cpp/references/priority.md` | 规则冲突时的五级次序与常见冲突 |
 | `skills/developing-cpp/references/file-template.md` | 文件槽位、守卫、扩展名 |
 | `skills/developing-cpp/references/google-cpp-style.md` | Google 基线与本仓偏差点 |

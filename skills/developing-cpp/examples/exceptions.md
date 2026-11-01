@@ -62,10 +62,10 @@ throw std::out_of_range{row, col};
 
 ```cpp
 // 返回值：失败是可恢复结果，两种模式都返回 false。
-[[nodiscard]] bool TryPlace(CellPosition position, Player player) noexcept;
+[[nodiscard]] bool TryPlace(Position position, Player player) noexcept;
 
 // 越界：两种模式都抛 std::out_of_range；Debug 消息可带 file:line。
-void Place(CellPosition position, Player player);
+void Place(Position position, Player player);
 ```
 
 越界用标准库已有的 `std::out_of_range`，调用方不需要认识项目私有类型；只有调用方必须把它和其它 `out_of_range` 区分开时，才定义派生类并在 `what()` 里补位置信息。

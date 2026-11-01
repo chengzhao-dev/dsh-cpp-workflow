@@ -15,9 +15,9 @@
 
 ```cpp
 /// @file cell.h
-/// @brief 定义格子状态与格子。
+/// @brief 格子相关类型定义。
 ///
-/// 包含格子状态 `CellState` 与格子 `Cell`。
+/// 封装了格子的状态枚举 `CellState` 以及格子实体 `Cell`。
 ```
 
 文件头只介绍这个文件里有什么，不写作者和变更史，也不把读者指去另一个文件。
@@ -65,7 +65,7 @@ class Board {
 class Game {
 ```
 
-纯数据结构和枚举只写一句名词短语；类有不变量，且第二段不是重复 `cells_`、`kBoardRows` 这类领域尺寸时，才保留第二段。第二段直接写不变量，不加「限制：」这类标签。函数各自的契约下沉到函数注释，设计理由与分层写进书稿。
+纯数据结构和枚举只写一句名词短语；类有不变量，且第二段不是重复 `cells_`、`kRowCount` 这类领域尺寸时，才保留第二段。第二段直接写不变量，不加「限制：」这类标签。函数各自的契约下沉到函数注释，设计理由与分层写进书稿。
 
 ## 构造函数与析构函数：标签 + 职责
 
@@ -88,7 +88,7 @@ Board() = default;
 virtual ~Ai();
 ```
 
-`= default` 本身不说明成员被初始化成什么；`cells_{}` 把每个 `CellType` 初始化成 `kEmpty`，这条后置条件从签名上看不出来。标签说明这是哪一类特殊成员，冒号后写它建立的状态或承担的职责。
+`= default` 本身不说明成员被初始化成什么；`cells_{}` 把每个 `CellState` 初始化成 `kEmpty`，这条后置条件从签名上看不出来。标签说明这是哪一类特殊成员，冒号后写它建立的状态或承担的职责。
 
 ## 风格理由不进注释
 
@@ -96,31 +96,29 @@ virtual ~Ai();
 
 ```cpp
 /// 检查坐标是否在范围内。函数名用 UpperCamel 而不是 snake_case，与标准库区分。
-[[nodiscard]] static bool IsInRange(CellPosition position) noexcept;
+[[nodiscard]] static bool IsInRange(Position position) noexcept;
 
 /// 检查格子是否为空。函数名用 UpperCamel 而不是 snake_case，与标准库区分。
-[[nodiscard]] bool IsCellEmpty(CellPosition position) const;
+[[nodiscard]] bool IsCellEmpty(Position position) const;
 ```
 
 **好**（只写契约）：
 
 ```cpp
 /// 检查坐标是否落在棋盘下标区间内。
-///
-/// 只判断几何边界，不检查格子是否为空、对局是否已经结束。
-[[nodiscard]] static bool IsInRange(CellPosition position) noexcept;
+[[nodiscard]] static bool IsInRange(Position position) noexcept;
 ```
 
 命名与风格约定写进项目文档和读者正文，注释里不解释「为什么用这种命名」。
 
-## 第一句：结果、限制或检查项
+## 第一句：结果、保证或检查项
 
 **差**：
 
 ```cpp
 /// 检查坐标。
 /// 返回格子类型；越界会抛异常。
-CellType GetCellType(CellPosition position) const;
+CellState GetState(Position position) const;
 ```
 
 前两句都没有直接回答“合法时拿到什么、越界时发生什么”，读者要读完三句才拼出合同。
@@ -132,7 +130,7 @@ CellType GetCellType(CellPosition position) const;
 ///
 /// @param position 行列坐标。
 /// @throws std::out_of_range 坐标不在棋盘范围内。
-CellType GetCellType(CellPosition position) const;
+CellState GetState(Position position) const;
 ```
 
 第一句就是结果、失败方式或检查项；后面的标签只补参数与异常细节，不再重复这句话。
@@ -141,14 +139,14 @@ CellType GetCellType(CellPosition position) const;
 
 ```cpp
 /// 比较两个坐标。
-friend bool operator==(const CellPosition&, const CellPosition&) = default;
+friend bool operator==(const Position&, const Position&) = default;
 ```
 
 **好**：
 
 ```cpp
 /// 检查两个坐标的行与列是否都相同。
-friend bool operator==(const CellPosition&, const CellPosition&) = default;
+friend bool operator==(const Position&, const Position&) = default;
 ```
 
 布尔查询和 `operator==` 的第一句都用「检查…是否…」，让读者先看到被检查的条件，而不是一个同义反复的动词。
@@ -161,7 +159,7 @@ friend bool operator==(const CellPosition&, const CellPosition&) = default;
 /// 尝试执行一次落子。
 ///
 /// @param move 落子。
-/// @returns 落子执行成功返回 kPlaced，被拒绝返回 kRejected。
+/// @returns 落子执行成功返回 kPlaced，被拒绝返回 kOccupied。
 [[nodiscard]] PlaceResult TryPlace(const Move& move);
 ```
 
@@ -175,18 +173,18 @@ friend bool operator==(const CellPosition&, const CellPosition&) = default;
 /// 只有本局仍在进行、且落子玩家正是当前玩家时才继续，棋盘、轮次、历史三者一起更新。
 ///
 /// @param move 待执行的落子，玩家必须是当前轮到的玩家。
-/// @return 落子写入棋盘并换手时返回 kPlaced；对局已结束或上述任一条件不满足时返回 kRejected，
+/// @return 落子写入棋盘并换手时返回 kPlaced；对局已结束或上述任一条件不满足时返回 kOccupied，
 ///         棋盘和轮次都不变。
 [[nodiscard]] PlaceResult TryPlace(const Move& move);
 ```
 
-## 布尔查询要写「不检查什么」
+## 布尔查询只写检查什么
 
 **差**：
 
 ```cpp
 /// 检查指定坐标上的棋盘格子是否为空。
-[[nodiscard]] bool IsCellEmpty(CellPosition position) const;
+[[nodiscard]] bool IsCellEmpty(Position position) const;
 ```
 
 **好**：
@@ -194,15 +192,12 @@ friend bool operator==(const CellPosition&, const CellPosition&) = default;
 ```cpp
 /// 检查指定坐标上的棋盘格子是否为空。
 ///
-/// 只回答「这一格能不能落子」，不判断对局是否已经结束：对局结束后格子仍是空的，
-/// 但再落子没有意义。是否需要先看对局状态由调用方决定，棋盘不替它下结论。
-///
 /// @param position 待检查的坐标。
 /// @return 坐标在棋盘内且该格为空时返回 true；越界或该格已有棋子时返回 false。
-[[nodiscard]] bool IsCellEmpty(CellPosition position) const;
+[[nodiscard]] bool IsCellEmpty(Position position) const;
 ```
 
-布尔函数最容易被误用；把「不检查什么」写出来，比多写一个参数说明有用。
+布尔查询的第一句写「检查…是否…」，`@return` 写成立与不成立的条件；能力边界不写成否定清单，调用方要满足的条件用正向限定或 `@pre`。
 
 ## 枚举
 
@@ -235,7 +230,7 @@ enum class GameResult : std::uint8_t {
 
 ```cpp
 Board board_;  // 对局棋盘。
-std::array<std::array<CellType, kBoardCols>, kBoardRows> cells_{};  // 存储棋盘格子。
+std::array<std::array<CellState, kColumnCount>, kRowCount> cells_{};  // 存储棋盘格子。
 ```
 
 前一句把名字翻译了一遍；后一句只复述声明，没有说清两层下标各是什么。
@@ -244,7 +239,7 @@ std::array<std::array<CellType, kBoardCols>, kBoardRows> cells_{};  // 存储棋
 
 ```cpp
 /// 棋盘格子数组：外层下标是行，内层下标是列。
-std::array<std::array<CellType, kBoardCols>, kBoardRows> cells_{};
+std::array<std::array<CellState, kColumnCount>, kRowCount> cells_{};
 /// 当前玩家：开局由 X 先手。
 Player current_player_ = Player::kCross;
 /// 对局结果：落子被拒时保持原值。
@@ -253,7 +248,7 @@ GameResult result_ = GameResult::kInProgress;
 std::vector<Move> history_;
 ```
 
-主注释写在声明上一行，类数据成员（含私有）统一用 `///`；第一句先说是哪个成员，再用全角冒号补名字和类型看不出的范围、初值含义、轴向、哨兵与改写时机。行尾不写补充；`///<` 只给枚举项和 `struct` 短字段。名字已经说明存放对象的 `board_` 不写「对局棋盘」。
+主注释写在声明上一行，类数据成员（含私有）统一用 `///`；第一句先说是哪个成员，再用全角冒号补名字和类型看不出、只属于该成员的范围、轴向、哨兵与所有权。类级初值与状态迁移写在类注释，成员注释不重复。行尾不写补充；`///<` 只给枚举项和 `struct` 短字段。名字已经说明存放对象的 `board_` 不写「对局棋盘」。
 
 ## 完整声明：后置条件与轴向
 
@@ -268,7 +263,7 @@ class Board {
 
  private:
   /// 棋盘格子数组：外层下标是行，内层下标是列。
-  std::array<std::array<CellType, kBoardCols>, kBoardRows> cells_{};
+  std::array<std::array<CellState, kColumnCount>, kRowCount> cells_{};
 };
 ```
 

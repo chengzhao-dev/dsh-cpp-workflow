@@ -133,6 +133,13 @@ test('类型注释不写否定式边界', () => {
   assert.deepEqual(rules(ok), [])
 })
 
+test('注释不写否定式能力边界', () => {
+  const text = file('/// 清空棋盘。', '///', '/// 不检查棋盘是否为空。', 'void Clear();')
+  assert.deepEqual(rules(text), ['negative-scope'])
+  const state = file('/// 清空棋盘。', '///', '/// 未变更时保持原值，不做修改。', 'void Clear();')
+  assert.deepEqual(rules(state), [])
+})
+
 test('类型注释不写领域尺寸', () => {
   const text = file('/// 井字棋棋盘。', '///', '/// 3×3 个格子。', 'class Board {};')
   assert.deepEqual(rules(text), ['domain-size'])

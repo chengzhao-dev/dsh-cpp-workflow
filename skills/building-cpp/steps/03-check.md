@@ -30,11 +30,12 @@ node "<skill-dir>/scripts/checking-environment.mjs" --project . --live   # 活�
 | 现象 | 先看 | 回到 |
 | --- | --- | --- |
 | 轴为空、组合非法、版本不匹配 | `environment.json`、`--live` 输出 | 定构建，先修声明 |
-| 找不到头文件、链接失败、target 不存在 | `CMakeLists.txt`、`target_include_directories`、`target_link_libraries` | 定构建 |
-| 没有 `compile_commands.json`、clangd 跳转失败 | 生成器、`CMAKE_EXPORT_COMPILE_COMMANDS`、`.clangd` 路径 | 定构建 / 定工具配置 |
+| 找不到头文件、链接失败、target 不存在 | `CMakeLists.txt`、`target_include_directories`、`target_link_libraries` | `configuring-cmake` 的定 target；修完回定构建 |
+| 没有 `compile_commands.json` | 顶层 `CMAKE_EXPORT_COMPILE_COMMANDS` 是否由 target 图声明 | `configuring-cmake` 的定 target；生成器与目录回定构建 |
+| clangd 跳转失败、数据库指向旧编译器 | `.clangd` 的 `CompilationDatabase`、`build/compile_commands.json` 链接 | 定工具配置 |
 | 编译错误指向函数体 | 实现 | `developing-cpp` 的定实现；先修语义，再重跑 |
 | CTest 失败 | 测试断言、行为句 | `developing-cpp` 的定行为 / 定实现 |
-| `app` 启动失败、找不到共享库 | 输出目录、RPATH / 运行时库路径 | 定构建 |
+| `app` 启动失败、找不到共享库 | 输出目录、RPATH / 运行时库路径 | `configuring-cmake` 的定 target（输出目录与 RPATH） |
 
 分诊只定位，不自动改。一次只改一类问题；改完从失败的那一步重跑，只有行为或边界也变了才回到定行为。
 

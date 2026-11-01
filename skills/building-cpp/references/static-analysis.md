@@ -12,7 +12,7 @@ clang-format --dry-run --Werror src/*.cpp include/*.h tests/*.cpp
 - 工程必须有根 `.clang-format`；缺失时先复制配置，不要回退到内置风格，回退会掩盖配置缺失。
 - 只扫描项目源码：`src/`、`include/`、`apps/`、`tests/` 等实际存在的目录；不扫描 `build/`、第三方、生成文件。
 - 配置文件在工程根 `.clang-format`；不要依赖用户主目录或编辑器内置配置。
-- `BasedOnStyle: Google`、`Standard: Latest`；clang-format 21/22 不接受 `c++23`，`Latest` 按工具支持的最高标准解析。列宽 80、2 空格、包含顺序都取 Google 预设，不另写 `ColumnLimit` 或 `IncludeCategories`。
+- `BasedOnStyle: Google`、`Standard: Latest`；clang-format 21/22 不接受 `c++23`，`Latest` 按工具支持的最高标准解析。列宽、缩进与包含顺序以工程根 `.clang-format` 为准；工程显式写 `ColumnLimit` 时按工程值执行，模板资产不写 `ColumnLimit`。
 - 格式化失败就是失败，不要用 `// clang-format off` 绕过；确需关闭时只包住无法排版的宏或表格，并写一句理由。
 
 ## clang-tidy

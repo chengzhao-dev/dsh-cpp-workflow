@@ -113,6 +113,6 @@ class TaskTable {
 ### 函数体内的空行
 
 - 以 `return` / `throw` 结束的 `if` 守卫，与下一组语句之间空 1 行。
-- 同一组语句不拆：三个校验之后的赋值与 `return kSuccess` 之间不空行。
+- 同一组语句不拆：三个校验之后的赋值与 `return kPlaced` 之间不空行。
 - 只有次序依赖的一对 `if`（`GetWinner`、`JudgeAfterPlace`）之间空 1 行。
 - 最多 1 行，不连续空两行。

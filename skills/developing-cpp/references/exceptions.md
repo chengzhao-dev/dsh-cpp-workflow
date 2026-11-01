@@ -15,7 +15,7 @@ E.1 要求尽早决定错误处理策略：先问调用方还能不能继续、�
 
 策略一旦定下，声明、实现、测试和入口都用同一套；不要在同一层里一半返回错误码、一半抛异常。
 
-判断是否算「混用」，看函数合同而不是看返回类型：查询必须产出一个值、失败时产不出（如 `GetCellType` 越界），就抛；写入操作把「这次不写」当作正常结果、调用方本来就要分支（如 `PlaceCell` 返回 `PlaceCellResult::kRejected`，`CheckPlaceable` 返回具体原因），就用返回值。动作可能因为多个前置条件失败、而调用方需要区分原因时，返回 `enum class` 而不是 `bool` 加输出参数。两者并存时，公共头必须把「拒绝」与「抛」的边界各写一行；没有这行注释才算混用。
+判断是否算「混用」，看函数合同而不是看返回类型：查询必须产出一个值、失败时产不出（如 `GetState` 越界），就抛；写入操作把「这次不写」当作正常结果、调用方本来就要分支（如 `Place` 返回 `Cell::PlaceResult::kOccupied`，`CheckPlaceable` 返回具体原因），就用返回值。动作可能因为多个前置条件失败、而调用方需要区分原因时，返回 `enum class` 而不是 `bool` 加输出参数。两者并存时，公共头必须把「拒绝」与「抛」的边界各写一行；没有这行注释才算混用。
 
 ## 什么时候抛
 
@@ -58,7 +58,7 @@ E.31：`catch` 子句从派生到基类、从具体到通用排序，`catch (...
 
 ## 不抛的边界
 
-E.12：在不可能或不可接受抛异常的地方用 `noexcept`。声明前先读实现：函数体里出现 `at()` 或其他可能抛出的调用，就去掉 `noexcept`；不要再包一层只转发下标的私有函数来维持 `noexcept`，直接写 `cells_.at(row).at(col)` 并去掉 `noexcept`。正例是只比较两个整数的 `IsInRange`；反例是用 `at()` 读取并会抛 `std::out_of_range` 的 `GetCellType`。E.13：直接拥有资源的函数不要抛，资源释放应交给 RAII。E.16：析构、`deallocate`、`swap` 以及异常类型的拷贝/移动构造不得失败；析构和 `swap` 应当是 `noexcept`。
+E.12：在不可能或不可接受抛异常的地方用 `noexcept`。声明前先读实现：函数体里出现 `at()` 或其他可能抛出的调用，就去掉 `noexcept`；不要再包一层只转发下标的私有函数来维持 `noexcept`，直接写 `cells_.at(row).at(col)` 并去掉 `noexcept`。正例是只比较两个整数的 `IsInRange`；反例是用 `at()` 读取并会抛 `std::out_of_range` 的 `GetState`。E.13：直接拥有资源的函数不要抛，资源释放应交给 RAII。E.16：析构、`deallocate`、`swap` 以及异常类型的拷贝/移动构造不得失败；析构和 `swap` 应当是 `noexcept`。
 
 E.30：不要写异常规范（`throw(...)` 之类）；C++11 之后用 `noexcept` 表达「不抛」。需要无异常构建时，由项目单独决定，不要把这套异常指导改写成两面都对的模糊话。
 
@@ -91,8 +91,8 @@ int main() {
 
 ```cpp
 throw std::out_of_range{std::format(
-    "Board::GetCellType: board position is out of range (row={}, col={}); board is {}x{}",
-    position.row, position.col, kBoardRows, kBoardCols)};
+    "Board::GetState: board position is out of range (row={}, col={}); board is {}x{}",
+    position.row, position.col, kRowCount, kColumnCount)};
 throw std::logic_error{"Ai::Choose: game is already over"};
 throw std::logic_error{"EmptyCellsOrThrow: no empty cell left to place"};
 ```
