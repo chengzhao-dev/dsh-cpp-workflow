@@ -75,7 +75,7 @@ Google 原文不使用 C++ 异常；本工作流只在开发阶段的源码指�
 - 组合消息以 `std::format` 为主：`std::format("任务 {} 进入状态 {}", task, state)`。
 - `std::print` 只在 C++23 且标准库支持时使用，通常放在程序边界；库代码仍用 `std::format` 组合消息。C++20 及更早把格式化结果写到 `std::cout` / `std::cerr` / `std::ostringstream`。
 - 简单字面量输出可以直接用 `std::cout << "..."`；需要拼接变量、对齐、数值格式时用 `std::format`。
-- 列宽上限 80，每级缩进 2 个空格，代码不用 tab；这些都来自 Google 预设，不要在 `.clang-format` 里覆盖。
+- 列宽跟工程根 `.clang-format` 的 `ColumnLimit` 走；项目已声明 100 时按 100，模板资产不写 `ColumnLimit`。每级缩进 2 个空格，代码不用 tab；缩进与对齐由 `.clang-format` 统一，不在条文里另定一套。
 - 浮点输出固定精度，整数不依赖隐式格式；`std::format` 的格式串写全。
 
 ## 注释

@@ -65,11 +65,11 @@ clang-format --dry-run --Werror src/*.cpp include/*.h
 | 输出 | 先看 | 回到 |
 | --- | --- | --- |
 | `CMake Error ... CXX compiler` | `environment.json`、`--live` | `building-cpp` 的定构建 / 通过检查 |
-| `ninja: error: ... missing and no known rule` | 源文件是否在 CMake 中列出 | 定构建 |
-| `fatal error: ... No such file` | `target_include_directories` | 定构建 |
-| `undefined reference` | `target_link_libraries`、库 target 名 | 定构建 |
+| `ninja: error: ... missing and no known rule` | 源文件是否在 CMake 中列出 | `configuring-cmake` 的 target 源文件清单 |
+| `fatal error: ... No such file` | `target_include_directories` | `configuring-cmake` 的包含边界 |
+| `undefined reference` | `target_link_libraries`、库 target 名 | `configuring-cmake` 的链接边界 |
 | `CTest` 失败 | 测试断言、行为句 | `developing-cpp` 的定行为 / 定实现 |
-| 运行时报找不到 `.so` | RPATH / `LD_LIBRARY_PATH` | 定构建 |
+| 运行时报找不到 `.so` | RPATH / `LD_LIBRARY_PATH` | `configuring-cmake` 的链接边界与 RPATH |
 
 ## 验收
 
