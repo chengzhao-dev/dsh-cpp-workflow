@@ -1,5 +1,5 @@
 // 注释检查器锁定 references/comments.md 的硬规则：文件头、标签、标签间空行、注释与声明的贴合、
-// 成员清单、设计论证、跨类分工、类型系统复述、否定式边界、领域尺寸、谓词首句、
+// 列表缩进、成员清单、设计论证、跨类分工、类型系统复述、否定式边界、领域尺寸、谓词首句、
 // @param 完整性与枚举行尾注释。规则改动时必须同步这里的用例。
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
@@ -27,6 +27,17 @@ test('注释行超过 80 列时报错', () => {
 int f();
 `
   assert.deepEqual(rules(file(wide), { width: 80 }), ['comment-width'])
+})
+
+test('列表项在注释符号后空三格', () => {
+  const flat = file('/// 三档共用入口：', '/// - 简单：随机。', 'int F();')
+  assert.deepEqual(rules(flat), ['list-indent'])
+  const indented = file('/// 三档共用入口：', '///   - 简单：随机。', 'int F();')
+  assert.deepEqual(rules(indented), [])
+  const block = ['/**', ' * @file board.h', ' * @brief 定义棋盘。', ' */', '', '/**', ' * 分派：', ' * - 简单：随机。', ' */', 'int F();', ''].join('\n')
+  assert.ok(rules(block, { commentStyle: 'block' }).includes('list-indent'))
+  const blockIndented = block.replace(' * - 简单', ' *   - 简单')
+  assert.ok(!rules(blockIndented, { commentStyle: 'block' }).includes('list-indent'))
 })
 
 test('缺少文件头时报错', () => {

@@ -118,7 +118,7 @@ class TaskBoard {
 - 写法位置：`[[nodiscard]]` 在返回类型前面，然后才是 `static` 或 `constexpr`；参数列表之后才是 `const`、`override`、`noexcept`。
 - 类内 `friend` 不加 `[[nodiscard]]`：Clang 拒绝 `[[nodiscard]] friend`、`friend [[nodiscard]]` 和参数列表后的 `[[nodiscard]]`。不要再猜下一种写法。
 - 运算符不加 `[[nodiscard]]`，成员与 `friend` 都一样。比较的参数不具名：成员写 `bool operator==(const T&) const = default`，`friend` 写 `friend bool operator==(const T&, const T&);`；注释不给这个不具名参数写 `@param`。
-- 有意丢弃时写 `static_cast<void>(result)`，不要为此全局关闭警告。
+- 不要用 `static_cast<void>` 丢弃 `[[nodiscard]]` 的结果：先接住返回值并分支，把失败分支写出来；不能处理的失败说明接口或合同有问题，不是转换能解决的。测试里验证抛异常时，用 `[[maybe_unused]]` 的局部变量接住，不要用 `static_cast<void>` 跳过约定。
 - 测试里验证“必须处理结果”时，同时验证忽略能被编译器发现。
 
 ## 下标与 `at`
@@ -149,6 +149,6 @@ class TaskBoard {
 - [ ] 参与协议、布局或跨平台边界的整数有明确宽度。
 - [ ] 业务编号与容器下标没有混用有符号和无符号。
 - [ ] 封闭状态集合用 `enum class`，没有裸整数状态码。
-- [ ] 查询成员标了尾部 `const`；`[[nodiscard]]` 只出现在结果型 API。
+- [ ] 查询成员标了尾部 `const`；`[[nodiscard]]` 只出现在结果型 API，结果都有分支处理。
 - [ ] 下标访问前有边界证明，或使用 `at`。
 - [ ] 浮点比较有容差，金额没有用 `double` 结算。

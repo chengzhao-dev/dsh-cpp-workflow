@@ -113,6 +113,41 @@ constexpr std::array<std::array<Position, 3>, 8> kLines = {{
 
 每个格子要分别处理时仍写 `row` / `col` 循环，例如收集空格、终端打印。
 
+## 落子结果不能丢，也不要重建一手
+
+**差**：调用方已经拿着一手，`Game` 又用 `GetCurrentPlayer()` 按位置重建一手；`Board::Place` 的 `[[nodiscard]]` 结果还被 `static_cast<void>` 丢掉。重建的玩家与调用方给的不一致时，历史会记下棋盘没有接受的落子。
+
+```cpp
+if (!board_.GetCell(move.position).IsEmpty()) {
+  return MoveResult::kOccupied;
+}
+const Move rebuilt{move.position, GetCurrentPlayer()};
+static_cast<void>(board_.Place(rebuilt.position, PlayerToCellState(rebuilt.player)));
+history_.push_back(rebuilt);
+return MoveResult::kPlaced;
+```
+
+**好**：`Game::Place` 直接接收一手，判完终局就交给 `Board::Place`，按 `Cell::PlaceResult` 分支写历史并换方。`kEmptyState` 说明棋盘拒绝了这一手，抛 `std::logic_error`；`kFinished` 仍由 `Game` 判，因为棋盘不知道整局已经结束。
+
+```cpp
+Game::MoveResult Game::Place(Move move) {
+  if (board_.GetGameResult() != GameResult::kInProgress) {
+    return MoveResult::kFinished;
+  }
+  switch (board_.Place(move.position, PlayerToCellState(move.player))) {
+    case Cell::PlaceResult::kPlaced:
+      history_.push_back(move);
+      current_player_ = GetOpponent(current_player_);
+      return MoveResult::kPlaced;
+    case Cell::PlaceResult::kOccupied:
+      return MoveResult::kOccupied;
+    case Cell::PlaceResult::kEmptyState:
+      throw std::logic_error{"Game::Place: board rejected the move"};
+  }
+  throw std::logic_error{"Game::Place: unhandled Cell::PlaceResult"};
+}
+```
+
 ## 推演一步读原数据
 
 **差**：先复制整个棋盘，再在副本上落子，最后判断成线；调用方看不出副本只是中间量，还要重复处理落子失败。

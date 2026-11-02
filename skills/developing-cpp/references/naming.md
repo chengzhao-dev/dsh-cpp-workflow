@@ -16,6 +16,8 @@
 | 宏 | 全大写 + 项目前缀，尽量不用 | `CPP_WORKFLOW_ASSERT` | `ASSERT` |
 
 - 文件名用 snake_case：`order_result.h`、`task_table.cpp`；测试文件 `task_table_test.cpp`。
+- 查询名与返回类型一致：返回标记时写 `GetCurrentMark`，返回玩家时写 `GetCurrentPlayer`；不写项目里没有对应类型的 `GetPlayer`。
+- 玩家互换用 `GetOpponent`，不写 `OtherPlayer`；玩家换成格子取值用 `PlayerToCellState`，不写 `CellStateOf`。名字要点明两端角色。
 - 布尔变量用 `is_` / `has_` / `can_` 开头：`is_valid`、`has_stock`；不要用 `flag`、`status`。
 - 容器用复数：`tasks`、`orders`；单个元素用单数。
 - 缩写按单词处理：`url`、`id`、`http`，不要写 `URL` 混进 snake_case；类型名里可以 `HttpClient`。
@@ -51,7 +53,7 @@
 - `Get` 只用于取值，`Set` 只用于设值；不要用 `CheckLine()` 当布尔 getter。
 - `Check` / `Validate` 留给会报告错误、产生诊断或可能失败的操作；它们不返回纯 `bool` 查询。
 - 动作可能因为多个前置条件失败、而调用方需要区分原因时，返回 `enum class`（`Cell::PlaceResult`、`WinPreviewResult`），不要用 `bool` 加输出参数，也不要拆成一串 `IsXxx` 判断再重复检查。
-- 假设性查询在名字里写明条件：`PreviewWin(position, cell)` 读作「这一手会成线吗」，返回 `WinPreviewResult` 区分「不能落子」与「能落但不赢」；只有成功与不报错的纯判断才用 `bool`。同一 API 只选一种，改名时同步声明、定义、调用点、测试和注释。
+- 假设性查询在名字里写明条件：`PreviewWin(position, cell)` 读作「这一次落子会成线吗」，返回 `WinPreviewResult` 区分「不能落子」与「能落但不赢」；只有成功与不报错的纯判断才用 `bool`。同一 API 只选一种，改名时同步声明、定义、调用点、测试和注释。
 - 私有谓词同样用肯定式；不要用 `flag`、`status` 或 `check` 这类不说明判据的名字。
 
 ## 类型命名的判断顺序

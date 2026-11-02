@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 只读注释审计：按 references/comments.md 的硬规则检查 C/C++ 源文件。
 //
-// 检查项：Doxygen 文件头、注释行宽度、标签、标签间空行、注释与声明的贴合、
+// 检查项：Doxygen 文件头、注释行宽度、列表缩进、标签、标签间空行、注释与声明的贴合、
 // 类型注释存在性、成员功能清单、设计论证（方案对比）、否定式边界、领域尺寸、谓词首句、@param 完整性、枚举成员注释一致性、枚举行尾句式、数据成员主注释位置。
 // 不重写任何文件。
 //
@@ -311,6 +311,9 @@ export function checkText(text, options = {}) {
     const trimmed = line.trim()
     if (trimmed.startsWith('///') || (trimmed.startsWith('//') && !trimmed.startsWith('//!'))) {
       if (displayWidth(trimmed) > width) add(index + 1, 'comment-width', `注释行 ${displayWidth(trimmed)} 列，超过 ${width} 列`)
+      if (/^\/\/\/ {0,2}- /.test(trimmed)) {
+        add(index + 1, 'list-indent', '注释列表项要在 /// 后空三格再写 -：`///   - `，与总起句拉开层级')
+      }
       for (const tag of FORBIDDEN_TAGS) {
         if (options.allowTags?.has(tag.slice(1))) continue
         if (trimmed.includes(tag)) add(index + 1, 'forbidden-tag', `禁止使用 ${tag}，按 references/comments.md 的标签表改写`)
@@ -328,6 +331,11 @@ export function checkText(text, options = {}) {
         for (const tag of FORBIDDEN_TAGS) {
           if (options.allowTags?.has(tag.slice(1))) continue
           if (content.includes(tag)) add(doc.start + 1, 'forbidden-tag', `禁止使用 ${tag}，按 references/comments.md 的标签表改写`)
+        }
+      }
+      for (let raw = doc.start; raw <= doc.end; raw += 1) {
+        if (/^\s*\* {0,2}- /.test(lines[raw])) {
+          add(raw + 1, 'list-indent', '块注释列表项要在 * 后空三格再写 -：` *   - `，与总起句拉开层级')
         }
       }
       if (!doc.contents.some((content) => content.includes('@file')) && hasTagGap(doc.contents)) {

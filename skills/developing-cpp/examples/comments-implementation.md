@@ -13,7 +13,7 @@ for (const auto& position : empty_cells) {
   const bool wins = game.PreviewWin(position, state) == WinPreviewResult::kWouldWin;
   // 如果能赢
   if (wins) {
-    // 返回这一手
+    // 返回这次落子的位置
     return position;
   }
 }

@@ -58,7 +58,7 @@ E.31：`catch` 子句从派生到基类、从具体到通用排序，`catch (...
 
 ## 不抛的边界
 
-E.12：在不可能或不可接受抛异常的地方用 `noexcept`。声明前先读实现：函数体里出现 `at()` 或其他可能抛出的调用，就去掉 `noexcept`；不要再包一层只转发下标的私有函数来维持 `noexcept`，直接写 `cells_.at(row).at(col)` 并去掉 `noexcept`。正例是只比较两个整数的 `IsInRange`；反例是用 `at()` 读取并会抛 `std::out_of_range` 的 `GetState`。E.13：直接拥有资源的函数不要抛，资源释放应交给 RAII。E.16：析构、`deallocate`、`swap` 以及异常类型的拷贝/移动构造不得失败；析构和 `swap` 应当是 `noexcept`。
+E.12：在不可能或不可接受抛异常的地方用 `noexcept`。声明前先读实现：函数体里出现 `at()` 或其他可能抛出的调用，就去掉 `noexcept`；不要再包一层只转发下标的私有函数来维持 `noexcept`，直接写 `cells_.at(row).at(col)` 并去掉 `noexcept`。正例是只比较两个整数的 `IsInRange`；反例是用 `at()` 读取并会抛 `std::out_of_range` 的 `GetState`。普通查询和返回结果枚举的函数，不因为当前函数体不抛就补 `noexcept`；`noexcept` 留给移动、交换、析构，以及已经标上的纯谓词。E.13：直接拥有资源的函数不要抛，资源释放应交给 RAII。E.16：析构、`deallocate`、`swap` 以及异常类型的拷贝/移动构造不得失败；析构和 `swap` 应当是 `noexcept`。
 
 E.30：不要写异常规范（`throw(...)` 之类）；C++11 之后用 `noexcept` 表达「不抛」。需要无异常构建时，由项目单独决定，不要把这套异常指导改写成两面都对的模糊话。
 
@@ -85,14 +85,18 @@ int main() {
 
 下面的英文示例只用 `:`、`()`、`,`、`=`、`;` 五个 ASCII 符号：冒号紧贴标签、后接一个空格；左括号前一个空格、内侧不空；逗号前不空、后一个空格；等号两侧不空；分号写在右括号外、前不空、后一个空格。不用第二个冒号、句号、问号、感叹号、破折号或 `×`；尺寸写 `3x3`，`out of range` 不加连字符。中文消息按中文标点，但槽位顺序和「值只放实际值」不变。
 
+值对象已有 `std::formatter` 时，格式串直接写 `{}`，不要拆成多个字段；例如 `position={}` 会输出 `position=(-1, 0)`。没有格式化器的类型才拆字段。
+
 有插值才用 `std::format`，没有洞的消息用字符串字面量。`std::out_of_range` 与 `std::logic_error` 在构造时复制消息，不能把格式化推迟到 `what()`。格式串只填手头的整数和短文本；格式化若抛出，调用方看到 `std::format_error` 或 `std::bad_alloc`，所以不在抛出表达式里做 I/O。自有异常类型才在 `what()` 里惰性格式化并兜底，本仓库不为此新增类型。
 
 `what()` 不是分支接口；调用方要数字就放进类型成员，不解析字符串。入口可以在消息前加面向用户的前缀，库代码不打印日志。
 
 ```cpp
 throw std::out_of_range{std::format(
-    "Board::GetState: board position is out of range (row={}, col={}); board is {}x{}",
-    position.row, position.col, kRowCount, kColumnCount)};
+    "Board::GetCell: board position is out of range (position={}); board is {}x{}",
+    position, kRowCount, kColumnCount)};
+throw std::logic_error{std::format(
+    "Game::Place: board rejected a move with empty state (position={})", move.position)};
 throw std::logic_error{"Ai::Choose: game is already over"};
 throw std::logic_error{"EmptyCellsOrThrow: no empty cell left to place"};
 ```

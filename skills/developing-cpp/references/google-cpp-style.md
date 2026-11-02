@@ -34,13 +34,14 @@
 - 纯数据聚合用 `struct`；有不变量的类型用 `class`，不变量在构造函数和公共成员函数里维持。
 - 单参数构造函数写 `explicit`；零参数构造函数不写。
 - 默认成员初始化写在声明处（NSDMI），不要在构造函数初始化列表里重复。
-- 默认用花括号初始化：`int count{};`、`std::vector<int> values{1, 2, 3};`。只有需要对比、`auto` 推导或赋值语义时用 `=`；`name = {{` 只用于多行聚合常量表，单个对象和空初始化仍写 `count{}`；不要用 `()` 初始化普通对象。
+- 默认用花括号初始化：`int count{};`、`std::vector<int> values{1, 2, 3};`。成员声明处一律写 `{}`；只有需要拷贝初始化或 `auto` 推导时用 `=`；`name = {{` 只用于多行聚合常量表，单个对象和空初始化仍写 `count{}`；成员写 `=` 的例外见 `references/language.md`「初始化与列表初始化」；不要用 `()` 初始化普通对象。
 - 类声明顺序：public → protected → private；类型与别名 → 静态常量 → 工厂 → 构造/赋值/析构 → 其他函数 → 数据成员。
 - 用户声明的拷贝/移动/析构函数在头文件声明、在 `.cpp` 定义；只有零参数且默认实现足够时才写 `= default`。
 - 查询成员函数标尾部 `const`；返回结果对象的 API 加 `[[nodiscard]]`，不要给所有非 `void` 函数机械添加。标注位置与 `friend` 的例外见 `references/types.md`「`[[nodiscard]]`」。
 - 所有权优先 `std::unique_ptr`；没有共享所有权的理由时不用 `std::shared_ptr`。禁止裸 `new` / `delete`。
 - 禁止 C 风格强制转换；用 `static_cast`、`const_cast`、`reinterpret_cast`、`std::bit_cast`，并让 `clang-tidy` 的 `google-readability-casting` 兜底。
 - `.cpp` 里不需要外部引用的 `constexpr` 直接放具名命名空间；仅一个函数使用时才用函数内 `static constexpr`；函数和类型仍放匿名命名空间。
+- 一个 `.cpp` 只写一个匿名命名空间，公开函数的定义放在它后面。
 - 常量要出 `.cpp` 时按四步升：1) 其他翻译单元要的是算出来的答案，给类加查询、表留 `.cpp`；2) 要同一份坐标但仍不是公开契约，放组件 `src/` 的私有头；3) 对方必须写 `Board::kLines` 且这是类型的稳定事实，才用类内 `public static constexpr`；不依赖某个对象的公开常量则用命名空间 `inline constexpr`；4) 第二使用方复用同一套坐标时再抽共享组件。
 
 ## 函数
