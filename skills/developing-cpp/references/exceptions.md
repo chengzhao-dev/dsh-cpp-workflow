@@ -15,13 +15,44 @@ E.1 要求尽早决定错误处理策略：先问调用方还能不能继续、�
 
 策略一旦定下，声明、实现、测试和入口都用同一套；不要在同一层里一半返回错误码、一半抛异常。
 
-判断是否算「混用」，看函数合同而不是看返回类型：查询必须产出一个值、失败时产不出（如 `GetState` 越界），就抛；写入操作把「这次不写」当作正常结果、调用方本来就要分支（如 `Place` 返回 `Cell::PlaceResult::kOccupied`，`CheckPlaceable` 返回具体原因），就用返回值。动作可能因为多个前置条件失败、而调用方需要区分原因时，返回 `enum class` 而不是 `bool` 加输出参数。两者并存时，公共头必须把「拒绝」与「抛」的边界各写一行；没有这行注释才算混用。
+判断是否算「混用」，看函数合同而不是看返回类型：查询必须产出一个值、失败时产不出（如 `GetState` 越界），就抛；写入操作把「这次不写」当作正常结果、调用方本来就要分支（如 `Board::Place` 返回 `Cell::SetStateResult::kOccupied`，`CheckPlaceable` 返回具体原因），就用返回值。动作可能因为多个前置条件失败、而调用方需要区分原因时，返回 `enum class` 而不是 `bool` 加输出参数。两者并存时，公共头必须把「拒绝」与「抛」的边界各写一行；没有这行注释才算混用。
 
 ## 什么时候抛
 
 E.2：函数不能完成它被分配的任务时，就抛异常；构造函数无法建立 invariant 时也抛，而不是留下半初始化对象。E.3：异常只用于错误处理，不能拿 `throw` 当返回值或正常分支。E.4：错误处理围绕 invariant 设计，而不是围绕「哪一行可能失败」。E.5：构造函数负责建立 invariant，失败就抛。E.6：用 RAII 防止泄漏，优先局部对象而不是裸 `new`。
 
 判断句可以写成：**调用方是否还能履行自己的合同？** 不能，就让异常向上传播；能，并且失败是接口的正常结果，就用返回值、`std::optional` 或项目自己的结果类型表达。不要为了「统一」把可恢复的业务分支包成异常，也不要把已经无法维持 invariant 的状态压成错误码继续跑。
+
+## 检查次序
+
+同一个函数既有前置条件、又有正常结果时，先处理本层负责的前置条件，再返回正常结果，最后把能交给下层的工作交给下层。次序按「这一层是否拥有这个判断」排：
+
+1. 本层状态的前置条件：这一步是否轮到该玩家、对象是否已初始化。前置条件不成立是调用方的程序错误，抛 `std::logic_error`。
+2. 正常业务结果：对局已结束、目标格已占用。它们是函数要返回的结果，不是异常。
+3. 下层自己的检查：坐标范围、格子是否为空由 `Board::Place` 判断；不要为了提前抛出而在 `Game` 里重复 `Board::IsInRange`。
+4. 执行操作并返回结果。
+
+本层负责的抛出检查必须排在「返回正常失败」之前。否则终局会先返回 `kFinished`，把「不是当前玩家」一起吞掉，调用方拿不到真正的调用错误。属于下层的检查不在此列：对局已结束时 `Game` 不再进入棋盘，越界坐标随 `kFinished` 一起返回，这是正常的短路，不是遗漏。
+
+参数之间按固定的语义顺序排，不要求与声明顺序一致；关键是同一函数内不来回换，注释、测试和消息都按这个次序。
+
+```cpp
+Game::MoveResult Game::Place(Move move) {
+  if (move.player != current_player_) {
+    throw std::logic_error{std::format(
+        "Game::Place: move player is not the current player (move={}, current={})",
+        move, current_player_)};
+  }
+  if (board_.GetGameResult() != GameResult::kInProgress) {
+    return MoveResult::kFinished;
+  }
+  // 坐标范围与占用由 Board::Place 检查。
+  const Cell::SetStateResult result = board_.Place(move.position, PlayerToCellState(move.player));
+  // 按 result 写历史、返回占用或抛出棋盘拒绝。
+}
+```
+
+依据：[Core Guidelines I.5](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Ri-pre)、[I.6](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Ri-expects) 把前置条件写进接口；标准库的 `vector::at` 与 `std::stoi` 在访问前检查边界，.NET 的 [CA1062](https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/ca1062) 也要求先验证再使用。[P2053R0](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2053r0.pdf) 区分输入校验与防御性检查：外部输入必须校验，内部前置条件可用断言或 contract 表达。这里只把 `Game` 自己拥有的状态前置条件写成异常；`Player` 的取值由适配层保证，坐标范围由 `Board` 拥有，重复检查会让同一规则出现两份，消息与异常类型还可能分叉。参数非法时返回一个业务结果，会让调用方以为「只是不能下这里」，而不是「这手棋本身不成立」。
 
 ## 异常类型
 
@@ -120,6 +151,7 @@ Config ReadConfig(const std::filesystem::path& path);
 - [ ] 按值抛出、按 `const` 引用捕获；重抛用 `throw;`。
 - [ ] 析构、`swap`、异常类型的拷贝/移动不抛。
 - [ ] 没有用异常做正常分支，也没有在每个函数里捕获所有异常。
+- [ ] 本层负责的参数校验与状态检查排在正常结果返回之前；非法参数没有被 `kFinished` 之类的业务结果掩盖。
 - [ ] 入口有统一捕获，消息可定位，退出码符合项目合同。
 - [ ] 公共声明的 `@throws` 与实际抛出类型一致，且 Debug/Release 的抛出条件相同。
 - [ ] 每个 `noexcept` 函数的函数体不调用 `at()` 或其他会抛的接口。

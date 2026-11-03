@@ -127,24 +127,28 @@ history_.push_back(rebuilt);
 return MoveResult::kPlaced;
 ```
 
-**好**：`Game::Place` 直接接收一手，判完终局就交给 `Board::Place`，按 `Cell::PlaceResult` 分支写历史并换方。`kEmptyState` 说明棋盘拒绝了这一手，抛 `std::logic_error`；`kFinished` 仍由 `Game` 判，因为棋盘不知道整局已经结束。
+**好**：`Game::Place` 直接接收一手，先确认是否轮到该玩家，然后判终局，最后交给 `Board::Place`；坐标范围由棋盘检查。按 `Cell::SetStateResult` 分支写历史并换方。`kNoInput` 说明棋盘收到了空取值，抛 `std::logic_error`；`kFinished` 仍由 `Game` 判，因为棋盘不知道整局已经结束。
 
 ```cpp
 Game::MoveResult Game::Place(Move move) {
+  // 先确认轮到谁，再判终局；坐标范围由 Board::Place 检查。
+  if (move.player != current_player_) {
+    throw std::logic_error{"Game::Place: move player is not the current player"};
+  }
   if (board_.GetGameResult() != GameResult::kInProgress) {
     return MoveResult::kFinished;
   }
   switch (board_.Place(move.position, PlayerToCellState(move.player))) {
-    case Cell::PlaceResult::kPlaced:
+    case Cell::SetStateResult::kUpdated:
       history_.push_back(move);
       current_player_ = GetOpponent(current_player_);
       return MoveResult::kPlaced;
-    case Cell::PlaceResult::kOccupied:
+    case Cell::SetStateResult::kOccupied:
       return MoveResult::kOccupied;
-    case Cell::PlaceResult::kEmptyState:
+    case Cell::SetStateResult::kNoInput:
       throw std::logic_error{"Game::Place: board rejected the move"};
   }
-  throw std::logic_error{"Game::Place: unhandled Cell::PlaceResult"};
+  throw std::logic_error{"Game::Place: unhandled Cell::SetStateResult"};
 }
 ```
 
@@ -154,8 +158,8 @@ Game::MoveResult Game::Place(Move move) {
 
 ```cpp
 Board hypothetical = *this;
-const Cell::PlaceResult placed = hypothetical.Place(position, state);
-if (placed != Cell::PlaceResult::kPlaced) {
+const Cell::SetStateResult placed = hypothetical.Place(position, state);
+if (placed != Cell::SetStateResult::kUpdated) {
   return WinPreviewResult::kInvalidPlace;
 }
 return hypothetical.HasLine(state) ? WinPreviewResult::kWouldWin
@@ -166,7 +170,7 @@ return hypothetical.HasLine(state) ? WinPreviewResult::kWouldWin
 
 ```cpp
 WinPreviewResult Board::PreviewWin(Position position, CellState state) const {
-  if (CheckPlaceable(position, state) != Cell::PlaceResult::kPlaced) {
+  if (CheckPlaceable(position, state) != Cell::SetStateResult::kUpdated) {
     return WinPreviewResult::kInvalidPlace;
   }
 

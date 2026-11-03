@@ -16,6 +16,7 @@
 - 失败是调用方的正常结果时，用结果类型、`bool` + 输出参数或 `std::optional` 表达；函数无法完成自己的任务、或构造函数无法建立不变量时才抛，异常类型的选择与消息见 `references/exceptions.md`。
 - 一次操作有多种必须区分的正常结果时用 `enum class` 返回（如落子：成功、越界、类型非法、已占），不用 `bool` 把原因压掉；成功还要附带数据时再考虑 `std::expected` 或结果结构。纯查询谓词仍用 `bool`。
 - 声明注释按 `references/comments.md` 的四节写：类型注释、特殊成员、函数注释、数据成员。本步只决定「写哪些事实」：结果、失败方式、检查项、参数与返回值契约；句式、标签、宽度和示例由该文件定。判不准用词时再开 `references/comment-terms.md`，它只列词表，不重复句式。
+- 自定义类型的 `std::formatter` 特化放在类型头文件；`parse` 的默认格式限制、`format` 的复用与非法值回退见 `references/standard-library.md` 的「自定义类型的格式化」。
 - 组合消息用 `std::format`；声明里只承诺 `std::format`，`std::print` 是 C++23 的程序边界设施。
 
 ## 情况

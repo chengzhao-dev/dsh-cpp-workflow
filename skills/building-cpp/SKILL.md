@@ -53,14 +53,14 @@ metadata:
 
 ### 四类改动
 
-四类改动是操作内部的域：操作定入口，域定层次。四域的定义、边界与次序见 `../developing-cpp/references/change-model.md`；一次改动混了两类时，按「写作 → 布局 → 排版 → 润色」拆开做，前一类落定并经检查再进下一类。
+四类改动是操作内部的域：操作定入口，域定层次。四域的定义、边界与次序见 `../developing-cpp/references/change-model.md`；一次改动混了两类时，按「内容 → 结构 → 版式 → 措辞」拆开做，前一类落定并经检查再进下一类。
 
 | 类型 | 典型请求 | 入口步骤 |
 | --- | --- | --- |
-| 写作 | 改环境轴、入口脚本或构建流程 | `steps/01-build.md` |
-| 布局 | 移动工具配置文件、补 `.vscode/` | `steps/02-tooling.md` |
-| 排版 | 只改编码、行尾或 clang-format | `steps/02-tooling.md` |
-| 润色 | 只改诊断措辞、失败分流说明 | `steps/03-check.md` |
+| 内容 | 改环境轴、入口脚本或构建流程 | `steps/01-build.md` |
+| 结构 | 移动工具配置文件、补 `.vscode/` | `steps/02-tooling.md` |
+| 版式 | 只改编码、行尾或 clang-format | `steps/02-tooling.md` |
+| 措辞 | 只改诊断措辞、失败分流说明 | `steps/03-check.md` |
 
 ## 完成判据
 

@@ -49,14 +49,14 @@ metadata:
 
 ### 四类改动
 
-四类改动是操作内部的域：操作定入口，域定层次。四域的定义、边界与次序见 `../developing-cpp/references/change-model.md`；一次改动混了两类时，按「写作 → 布局 → 排版 → 润色」拆开做，前一类落定并经检查再进下一类。
+四类改动是操作内部的域：操作定入口，域定层次。四域的定义、边界与次序见 `../developing-cpp/references/change-model.md`；一次改动混了两类时，按「内容 → 结构 → 版式 → 措辞」拆开做，前一类落定并经检查再进下一类。
 
 | 类型 | 典型请求 | 入口步骤 |
 | --- | --- | --- |
-| 写作 | 新增 target、改公共 include 或链接边界、换语言标准 | `steps/01-targets.md` |
-| 布局 | 抽函数、拆模块、调导入位置 | `steps/02-modules.md` |
-| 排版 | 只改 2 空格、行宽或注释形态 | `steps/02-modules.md` |
-| 润色 | 只改函数名、注释措辞或错误消息 | `steps/02-modules.md` |
+| 内容 | 新增 target、改公共 include 或链接边界、换语言标准 | `steps/01-targets.md` |
+| 结构 | 抽函数、拆模块、调导入位置 | `steps/02-modules.md` |
+| 版式 | 只改 2 空格、行宽或注释形态 | `steps/02-modules.md` |
+| 措辞 | 只改函数名、注释措辞或错误消息 | `steps/02-modules.md` |
 
 ## 完成判据
 

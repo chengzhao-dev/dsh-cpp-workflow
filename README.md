@@ -19,13 +19,13 @@
 npm 安装钉死版本：
 
 ```bash
-dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.6.17
+dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.6.19
 ```
 
 同版本的 Git 标签：
 
 ```bash
-dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.6.17
+dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.6.19
 ```
 
 桌面应用独占 `desktop` profile。命令行 `add` 被拒绝时，在应用设置里添加插件，地址填同一个 npm 版本。Git 标签安装使用仓库内已构建的 `lib/`，不在目标机器上重新构建；包内也不含需要授权执行的安装脚本。
@@ -46,7 +46,7 @@ dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.6.17
 
 ## 项目级约定
 
-把 [templates/cpp-workflow-project](templates/cpp-workflow-project) 整个复制到目标仓库的 `.agents/skills/` 下，目录名保持 `cpp-workflow-project`；只补还不存在的文件，不覆盖已有的源码、`CMakeLists.txt` 或 `.clang-*`。项目技能只写本工程特有的事实：
+把 [templates/cpp-workflow-project](templates/cpp-workflow-project) 整个复制到目标仓库的 `.agents/skills/` 下，目录名保持 `cpp-workflow-project`；只补还不存在的文件，不覆盖已有的源码、`CMakeLists.txt` 或 `.clang-*`。项目技能写本工程特有的事实；通用工作流、编辑器与完成判据由模板的「通用工作流约定」承担，不在项目技能里重复：
 
 - 工程名、组件名和源码根；
 - 库与程序的边界、公共头位置；

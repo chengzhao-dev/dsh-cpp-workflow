@@ -7,7 +7,15 @@ metadata:
 
 # developing-cpp
 
-本技能处理换一台机器也不会改的源码内容：可观察行为、库与程序的边界、声明、命名、异常和源码注释。文件槽位与守卫以 `references/file-template.md` 为准；排版、命名、头文件与包含顺序以 `references/google-cpp-style.md` 的 Google 基线为准。异常条文取自 C++ Core Guidelines 的 Error handling，只约束开发期的源码，不进入插件运行时。`CMakeLists.txt` 与 `cmake/` 开 `configuring-cmake`；`running-build.sh`、`.clang-*`、`.vscode/` 和 `environment.json` 的维护开 `building-cpp`（本技能只读其中的 `standard`）。只改函数体、命名、异常或注释且入口命令可运行时，定实现后只开 `building-cpp` 的「通过检查」；新增或移动源文件、改库与程序的边界、补测试 target 时，声明和实现可以先写，但完成前必须开 `configuring-cmake` 把文件写进 CMake，再开 `building-cpp` 定工具配置并通过检查。`.qmd`、仓库 README、Python 和非 C++ 文档不打开本技能。
+本技能处理换一台机器也不会改的源码内容：可观察行为、库与程序的边界、声明、命名、异常和源码注释。文件槽位与守卫以 `references/file-template.md` 为准；排版、命名、头文件与包含顺序以 `references/google-cpp-style.md` 的 Google 基线为准。异常条文取自 C++ Core Guidelines 的 Error handling，只约束开发期的源码，不进入插件运行时。
+
+下面这些文件不归本技能：
+
+- `CMakeLists.txt` 与 `cmake/`：开 `configuring-cmake`。
+- `running-build.sh`、`.clang-*`、`.vscode/` 和 `environment.json`：开 `building-cpp`，本技能只读其中的 `standard`。
+- `.qmd`、仓库 README、Python 和非 C++ 文档：不打开本技能。
+
+只改函数体、命名、异常或注释且入口命令可运行时，定实现后只开 `building-cpp` 的「通过检查」；新增或移动源文件、改库与程序的边界、补测试 target 时，声明和实现可以先写，但完成前必须开 `configuring-cmake` 把文件写进 CMake，再开 `building-cpp` 定工具配置并通过检查。
 
 ## 适用场景
 
@@ -48,14 +56,14 @@ metadata:
 
 ### 四类改动
 
-四类改动是操作内部的域：操作定入口，域定层次。四域的定义、边界与次序见 `references/change-model.md`；一次改动混了两类时，按「写作 → 布局 → 排版 → 润色」拆开做，前一类落定并经检查再进下一类。
+四类改动是操作内部的域：操作定入口，域定层次。四域的定义、边界与次序见 `references/change-model.md`；一次改动混了两类时，按「内容 → 结构 → 版式 → 措辞」拆开做，前一类落定并经检查再进下一类。
 
 | 类型 | 典型请求 | 入口步骤 |
 | --- | --- | --- |
-| 写作 | 新增类型、函数或文件；改可观察行为；改库与程序的边界；补构造后置条件与成员事实 | `steps/01-behavior.md` |
-| 布局 | 换文件位置、拆头文件、调声明顺序、补测试 target；改注释位置与行尾形态 | `steps/03-declaration.md` |
-| 排版 | 只改缩进、行宽、包含顺序或注释符号 | `steps/03-declaration.md` |
-| 润色 | 只改命名、只改注释措辞 | `steps/03-declaration.md` |
+| 内容 | 新增类型、函数或文件；改可观察行为；改库与程序的边界；补构造后置条件与成员事实 | `steps/01-behavior.md` |
+| 结构 | 换文件位置、拆头文件、调声明顺序、补测试 target；改注释位置与行尾形态 | `steps/03-declaration.md` |
+| 版式 | 只改缩进、行宽、包含顺序或注释符号 | `steps/03-declaration.md` |
+| 措辞 | 只改命名、只改注释措辞 | `steps/03-declaration.md` |
 
 只改格式时不动行为，只改注释时不动签名；条文由入口步骤按需打开。
 

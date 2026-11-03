@@ -416,6 +416,20 @@ test('CLI 从 .clang-format 读取 ColumnLimit', () => {
   }
 })
 
+test('CLI 从子目录 .clang-format 读取 ColumnLimit', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
+  try {
+    const nested = path.join(dir, 'game')
+    mkdirSync(nested)
+    writeFileSync(path.join(nested, '.clang-format'), 'ColumnLimit: 120\n')
+    writeFileSync(path.join(nested, 'note.h'), '// ' + 'a'.repeat(100) + '\nint f();\n')
+    const result = runCli(['--root', dir, '--no-header', '--json'])
+    assert.equal(result.status, 0, result.stdout)
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
 test('不存在的根目录返回用法错误而不是堆栈', () => {
   const missing = path.join(tmpdir(), `comments-missing-${process.pid}-${Date.now()}`)
   const result = runCli(['--root', missing])

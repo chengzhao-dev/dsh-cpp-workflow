@@ -573,7 +573,7 @@ ok(read('docs/plugin-layout.md').includes('files'), '布局文档缺少 files �
 ok(read('docs/versioning.md').includes('## 修订号'), '版本文档缺少修订号规则')
 ok(read('docs/versioning.md').includes('## 次版本'), '版本文档缺少次版本规则')
 
-const domains = ['写作', '布局', '排版', '润色']
+const domains = ['内容', '结构', '版式', '措辞']
 const domainRowLines = (text, heading) => {
   const lines = withoutFences(text).split('\n')
   const start = lines.findIndex((line) => line.trim() === heading)
@@ -581,7 +581,7 @@ const domainRowLines = (text, heading) => {
   const rows = []
   for (let index = start + 1; index < lines.length; index += 1) {
     if (/^#{2,3}\s+/.test(lines[index])) break
-    if (/^\| (写作|布局|排版|润色) \|/.test(lines[index])) rows.push(lines[index])
+    if (/^\| (内容|结构|版式|措辞) \|/.test(lines[index])) rows.push(lines[index])
   }
   return rows
 }
@@ -602,7 +602,7 @@ ok(architectureText.includes('## 三个技能的四类改动'), 'architecture.md
 for (const skill of skillNames) {
   ok(architectureText.includes(`skills/${skill}/SKILL.md`), `architecture.md 缺少 ${skill} 的 SKILL.md 指针`)
 }
-const copiedDomainTable = ['写作', '布局', '排版', '润色'].some((domain) =>
+const copiedDomainTable = ['内容', '结构', '版式', '措辞'].some((domain) =>
   architectureText.includes(`| ${domain} |`),
 )
 ok(!copiedDomainTable, 'architecture.md 不应复制四类改动表')

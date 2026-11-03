@@ -19,13 +19,13 @@ The exception material follows the C++ Core Guidelines' Error handling section a
 Pinned npm install:
 
 ```bash
-dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.6.17
+dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.6.19
 ```
 
 The matching Git tag:
 
 ```bash
-dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.6.17
+dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.6.19
 ```
 
 The desktop app owns the `desktop` profile. If the command-line `add` is rejected, add the plugin in the app settings and use the same pinned npm version. A Git tag install uses the prebuilt `lib/` committed in the repository and runs no build on the target machine; the package has no install script that needs approval.
@@ -46,7 +46,7 @@ The packaged skills use rank 550. A project `.agents/skills` skill uses rank 200
 
 ## Project conventions
 
-Copy [templates/cpp-workflow-project](templates/cpp-workflow-project) into the target repository's `.agents/skills/` directory, keeping the `cpp-workflow-project` directory name. Add only files that do not exist; do not overwrite existing source, `CMakeLists.txt`, or `.clang-*` files. The project skill records only facts that cannot be inferred from the source:
+Copy [templates/cpp-workflow-project](templates/cpp-workflow-project) into the target repository's `.agents/skills/` directory, keeping the `cpp-workflow-project` directory name. Add only files that do not exist; do not overwrite existing source, `CMakeLists.txt`, or `.clang-*` files. The project skill records project-specific facts; the template's "common workflow conventions" carry the shared workflow, editor, and completion rules, so the project skill does not repeat them:
 
 - project and component names, source root;
 - library/program boundary and public header location;

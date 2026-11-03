@@ -89,7 +89,7 @@ function parseArgs(argv) {
   return options
 }
 
-/** 从工程 .clang-format 读取 ColumnLimit；没有配置时返回 undefined。 */
+/** 从指定目录的 .clang-format 读取 ColumnLimit；没有配置时返回 undefined。 */
 function readColumnLimit(root) {
   const dir = statSync(root).isDirectory() ? root : path.dirname(root)
   try {
@@ -98,6 +98,20 @@ function readColumnLimit(root) {
     return match ? Number(match[1]) : undefined
   } catch {
     return undefined
+  }
+}
+
+/** 从文件所在目录向上查找最近的 .clang-format，直到工程根。 */
+function readColumnLimitNear(file, root) {
+  const stop = path.resolve(root)
+  let dir = path.dirname(path.resolve(file))
+  while (true) {
+    const limit = readColumnLimit(dir)
+    if (limit !== undefined) return limit
+    if (dir === stop) return undefined
+    const parent = path.dirname(dir)
+    if (parent === dir) return undefined
+    dir = parent
   }
 }
 
@@ -605,7 +619,12 @@ function main(argv) {
       process.stderr.write(`错误：读取 ${file} 失败：${error.message}\n`)
       return EXIT.usage
     }
-    for (const issue of checkText(text, { ...options, fileName: path.relative(root, file) || file })) results.push({ file: path.relative(root, file) || file, ...issue })
+    const width = options.widthExplicit
+      ? options.width
+      : (readColumnLimitNear(file, root) ?? options.width)
+    for (const issue of checkText(text, { ...options, width, fileName: path.relative(root, file) || file })) {
+      results.push({ file: path.relative(root, file) || file, ...issue })
+    }
   }
   if (options.json) {
     process.stdout.write(`${JSON.stringify({ root, files: files.length, issues: results }, null, 2)}\n`)

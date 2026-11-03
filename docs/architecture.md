@@ -32,7 +32,7 @@ flowchart TD
 
 `steps/` 是做法，`references/` 是事实，`examples/` 是例子，`docs/` 是原因；这是 Diátaxis 的文档轴。四类改动是操作内部的域，只决定这次改的是哪一层，不新增目录，也不改加载顺序。三个技能各有一张同序表，表的权威在本技能的 `SKILL.md` 的「四类改动」；三种操作与四个域的定义、边界和次序在 `skills/developing-cpp/references/change-model.md`，另外两个技能只链接，不复制。本页不复制表，避免同一事实出现两份。
 
-域只决定这一层做什么，不新增加载层：每域仍落到现有的步骤文件与条文，`references/` 不按域建子目录，避免同一事实出现两份路径。写作域先落定行为与边界，布局与排版只改变形状，润色只改措辞。`comments.md` 按四类改动分节：写作定构造后置条件与成员事实，布局定注释位置与行尾形态，排版定符号、宽度、列表与标签，润色删复述、统一句式；`scripts/checking-comments.mjs` 逐条检查。`exceptions.md` 的「消息」节定 `what()` 的来源、条件、实际值与限度，语言由项目约定，消息不在抛出点做本地化。同一处命中多条规则时，按 `priority.md` 的五级次序判：行为与契约 > 结构 > 清晰 > 一致 > 形式。
+域只决定这一层做什么，不新增加载层：每域仍落到现有的步骤文件与条文，`references/` 不按域建子目录，避免同一事实出现两份路径。内容域先落定行为与边界，结构与版式只改变形状，措辞只改用词。`comments.md` 按四类改动分节：内容定构造后置条件与成员事实，结构定注释位置与行尾形态，版式定符号、宽度、列表与标签，措辞删复述、统一句式；`scripts/checking-comments.mjs` 逐条检查。`exceptions.md` 的「消息」节定 `what()` 的来源、条件、实际值与限度，语言由项目约定，消息不在抛出点做本地化。同一处命中多条规则时，按 `priority.md` 的五级次序判：行为与契约 > 结构 > 清晰 > 一致 > 形式。
 
 ## 为什么没有 shared/
 
@@ -47,9 +47,11 @@ flowchart TD
 | 层 | 文件 | 何时进上下文 | 预算 |
 | --- | --- | --- | --- |
 | 常驻元数据 | 三个 `SKILL.md` 的 frontmatter | 每次技能列表查询 | 每个约 100 token |
-| 技能正文 | `SKILL.md` 的 H2 四节 | 技能被选中后整篇载入 | 每个不超过 150 行 |
-| 步骤 | `steps/0N-*.md` | 走到第 N 步时只开同号一份 | 每份不超过 60 行 |
-| 条文与案例 | `references/`、`examples/`、`assets/` | 判不准、排错或步骤明确指向时 | 每份不超过 120 行 |
+| 技能正文 | `SKILL.md` 的 H2 四节 | 技能被选中后整篇载入 | 每个不超过 80 行 |
+| 步骤 | `steps/0N-*.md` | 走到第 N 步时只开同号一份 | 每份不超过 70 行 |
+| 条文与案例 | `references/`、`examples/`、`assets/` | 判不准、排错或步骤明确指向时 | `references/` 每份不超过 240 行；`examples/` 每份不超过 320 行；`assets/` 只复制，不按行数 |
+
+预算是上限，不是目标；案例组按主题保留，不为了压行数拆成多份。
 
 `SKILL.md` 的「步骤」表是唯一的路由表：步号、名称、文件、一句话。`references/` 不自动加载，必须由步骤或 `SKILL.md` 带条件句指向，例如「判不准坐标类型时打开 `references/types.md` 的区间与半开区间一节」；只写「详见 references/」不算。
 
@@ -62,7 +64,7 @@ flowchart TD
 | `skills/developing-cpp/SKILL.md` | 触发描述、适用边界、四步路由、完成判据 |
 | `skills/developing-cpp/steps/01-behavior.md`、`02-boundary.md`、`03-declaration.md`、`04-implementation.md` | 单步操作与退出条件 |
 | `skills/developing-cpp/examples/comments-declaration.md`、`comments-implementation.md`、`exceptions.md`、`naming.md`、`structure.md` | 对应步骤的正反例 |
-| `skills/developing-cpp/references/comments.md` | 注释四节（写作、布局、排版、润色）与长度预算 |
+| `skills/developing-cpp/references/comments.md` | 注释四节（内容、结构、版式、措辞）与长度预算 |
 | `skills/developing-cpp/references/comment-terms.md` | 注释术语表：位置、格子、更新、副本等首选词与禁用词 |
 | `skills/developing-cpp/references/change-model.md` | 三种操作、四个域、次序、交接与写作边界；三技能共用 |
 | `skills/developing-cpp/references/priority.md` | 规则冲突时的五级次序与常见冲突 |
@@ -82,10 +84,11 @@ flowchart TD
 | `skills/building-cpp/references/standards/` | 五档 `README.md` 与 `cmake-snippet.cmake`：设施、工具、降档与验证 |
 | `skills/building-cpp/scripts/checking-environment.mjs`、`checking-encoding.mjs` | 环境声明、构建产物 `compile_commands.json` 与编码的行检查 |
 | `skills/building-cpp/assets/` | 工具配置、四套工程模板；只复制，不注册为技能 |
-| `templates/cpp-workflow-project/` | 项目技能模板：门禁标记、环境声明、阶段表 |
+| `templates/cpp-workflow-project/` | 项目技能模板：门禁标记、环境声明、阶段表与通用工作流约定 |
 | `scripts/checking-skill-links.mjs` | 包元数据、三技能结构、链接、触发矩阵与结构检查 |
 | `docs/architecture.md` | 本页：分层、数据流与文件职责 |
 | `docs/plugin-flow.md` | 门禁与分流的维护说明 |
+| `docs/plugin-boundaries.md` | 门禁扫描范围、边界情形与 get/abort 规则 |
 | `docs/triggering.md` | 触发矩阵与描述维护规则 |
 | `docs/plugin-layout.md` | 目录与进包白名单 |
 | `docs/versioning.md` | 版本号与发布顺序 |
