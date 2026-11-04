@@ -83,7 +83,7 @@ test('the project skill alone opts in, even in a documentation-only repository',
   await writeFile(path.join(root, 'README.md'), '# docs only\n', 'utf8')
   const provider = makeProvider()
   const candidates = await provider.list({ cwd: root })
-  assert.deepEqual(candidates.map((candidate) => candidate.name), ['building-cpp', 'configuring-cmake', 'developing-cpp'])
+  assert.deepEqual(candidates.map((candidate) => candidate.name), ['building-cpp', 'developing-cpp', 'engineering'])
   await rm(root, { recursive: true, force: true })
 })
 
@@ -223,7 +223,7 @@ test('all three skills expose rank 550, bundled source and a directory resource 
   const provider = makeProvider()
   const candidates = await provider.list({ cwd: root })
 
-  assert.deepEqual(candidates.map((candidate) => candidate.name), ['building-cpp', 'configuring-cmake', 'developing-cpp'])
+  assert.deepEqual(candidates.map((candidate) => candidate.name), ['building-cpp', 'developing-cpp', 'engineering'])
   for (const candidate of candidates) {
     assert.equal(candidate.rank, 550)
     assert.equal(candidate.provider, 'dsh-cpp-workflow')

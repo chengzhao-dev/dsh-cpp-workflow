@@ -240,22 +240,26 @@ const skillDirs = readdirSync(skillsRoot, { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
   .map((entry) => entry.name)
   .sort()
-equal(skillDirs, ['building-cpp', 'configuring-cmake', 'developing-cpp'], 'skills 目录')
+equal(skillDirs, ['building-cpp', 'developing-cpp', 'engineering'], 'skills 目录')
 
 const SKILL_SPECS = {
   'developing-cpp': {
     title: 'developing-cpp',
     steps: ['01-behavior.md', '02-boundary.md', '03-declaration.md', '04-implementation.md'],
+    sections: ['source'],
     h2: ['适用场景', '三种操作', '步骤', '完成判据'],
   },
-  'configuring-cmake': {
-    title: 'configuring-cmake',
+  'engineering': {
+    title: 'engineering',
     steps: ['01-targets.md', '02-modules.md', '03-check.md'],
+    stepRoot: 'cmake/steps',
+    sections: ['cmake', 'formatting'],
     h2: ['适用场景', '三种操作', '步骤', '完成判据'],
   },
   'building-cpp': {
     title: 'building-cpp',
     steps: ['01-build.md', '02-tooling.md', '03-check.md'],
+    sections: ['references', 'examples'],
     h2: ['适用场景', '三种操作', '步骤', '完成判据'],
   },
 }
@@ -282,7 +286,7 @@ for (const [skillName, spec] of Object.entries(SKILL_SPECS)) {
   ok(text.includes('cpp-workflow-project'), `${skillName}: 未说明先读项目技能`)
   ok(text.includes('每步只打开同号'), `${skillName}: 未说明每步只打开一个步骤文件`)
 
-  const stepsDir = join(dir, 'steps')
+  const stepsDir = join(dir, spec.stepRoot ?? 'steps')
   const stepFiles = existsSync(stepsDir)
     ? readdirSync(stepsDir).filter((name) => name.endsWith('.md')).sort()
     : []
@@ -299,14 +303,14 @@ for (const [skillName, spec] of Object.entries(SKILL_SPECS)) {
     skillMarkdown.push(abs)
   }
 
-  const tableRows = [...(fm?.body ?? '').matchAll(/^\|\s*(\d+)\s*\|[^|\n]*\|\s*`(steps\/[^`]+)`\s*\|/gm)]
+  const tableRows = [...(fm?.body ?? '').matchAll(/^\|\s*(\d+)\s*\|[^|\n]*\|\s*`((?:cmake\/)?steps\/[^`]+)`\s*\|/gm)]
   equal(tableRows.length, spec.steps.length, `${skillName}: 步骤表行数`)
   for (const [index, row] of tableRows.entries()) {
     equal(Number(row[1]), index + 1, `${skillName}: 步骤表第 ${index + 1} 行编号`)
-    equal(row[2], `steps/${spec.steps[index]}`, `${skillName}: 步骤表第 ${index + 1} 行文件`)
+    equal(row[2], `${spec.stepRoot ?? 'steps'}/${spec.steps[index]}`, `${skillName}: 步骤表第 ${index + 1} 行文件`)
   }
 
-  for (const section of ['references', 'examples']) {
+  for (const section of spec.sections) {
     const sectionDir = join(dir, section)
     const files = existsSync(sectionDir) ? listFiles(sectionDir) : []
     ok(files.length > 0, `${skillName}: ${section} 为空`)
@@ -331,7 +335,7 @@ equal(h1(architecture), '技能架构', 'docs/architecture.md: H1')
 ok(/```mermaid\s*[\s\S]*?flowchart/.test(architecture), 'docs/architecture.md: 缺少 Mermaid 数据流图')
 for (const token of [
   'developing-cpp',
-  'configuring-cmake',
+  'engineering',
   'building-cpp',
   'cpp-workflow-project',
   'checking-comments.mjs',
@@ -341,13 +345,11 @@ for (const token of [
 ]) {
   ok(architecture.includes(token), `docs/architecture.md: 缺少 ${token}`)
 }
-for (const skill of ['developing-cpp', 'configuring-cmake', 'building-cpp']) {
-  for (const section of ['steps', 'references', 'examples', 'scripts']) {
-    const dir = join(ROOT, 'skills', skill, section)
-    if (!existsSync(dir)) continue
-    for (const abs of listFiles(dir).filter((file) => /\.(md|mjs)$/.test(file))) {
-      ok(architecture.includes(basename(abs)), `docs/architecture.md: 文件职责缺少 ${rel(abs)}`)
-    }
+const moduleLayout = read('docs/module-layout.md')
+for (const skill of ['developing-cpp', 'engineering', 'building-cpp']) {
+  const dir = join(ROOT, 'skills', skill)
+  for (const abs of listFiles(dir).filter((file) => /\.(md|mjs)$/.test(file))) {
+    ok(moduleLayout.includes(basename(abs)), `docs/module-layout.md: 缺少 ${rel(abs)}`)
   }
 }
 
@@ -365,7 +367,7 @@ for (const token of [
   '异常',
   '命名',
   'developing-cpp',
-  'configuring-cmake',
+  'engineering',
   'building-cpp',
 ]) {
   ok(triggering.includes(token), `docs/triggering.md: 缺少关键词 ${token}`)
@@ -432,7 +434,7 @@ ok(templateSkill.includes('复制整个目录'), '模板未说明复制整个目
 ok(templateSkill.includes('<project-name>'), '模板缺少工程名空位')
 ok(templateSkill.includes('<entry-command>'), '模板缺少入口命令空位')
 ok(templateSkill.includes('stages/stage-table.md'), '模板缺少阶段表路径')
-ok(!/developing-cpp|configuring-cmake|building-cpp/.test(templateSkill), '模板不应重复插件技能正文')
+ok(!/developing-cpp|engineering|building-cpp/.test(templateSkill), '模板不应重复插件技能正文')
 
 const templateEnvironment = readJson('templates/cpp-workflow-project/environment.json')
 if (templateEnvironment) {
@@ -470,7 +472,7 @@ const clangd = read('skills/building-cpp/assets/config/.clangd')
 ok(/CompilationDatabase:/.test(clangd), '.clangd 缺少 CompilationDatabase')
 ok(!/-std=/.test(clangd), '.clangd 不应写死 -std，标准由 compile_commands.json 决定')
 
-const standardsRoot = join(ROOT, 'skills', 'building-cpp', 'references', 'standards')
+const standardsRoot = join(ROOT, 'skills', 'engineering', 'cmake', '03-standard', 'standards')
 const standardIds = ['c++11', 'c++14', 'c++17', 'c++20', 'c++23']
 equal(
   readdirSync(standardsRoot, { withFileTypes: true })
@@ -480,16 +482,16 @@ equal(
   standardIds,
   'standards 标准目录',
 )
-const standards = read('skills/building-cpp/references/standards/README.md')
+const standards = read('skills/engineering/cmake/03-standard/standards/README.md')
 for (const standard of standardIds) {
   ok(standards.includes(standard), `standards/README.md 缺少 ${standard}`)
   const number = standard.replace('c++', '')
-  const profile = read(`skills/building-cpp/references/standards/${standard}/README.md`)
+  const profile = read(`skills/engineering/cmake/03-standard/standards/${standard}/README.md`)
   ok(profile.includes(`\`${standard}\``), `${standard}/README.md 缺少 standard id`)
   ok(profile.includes('__cplusplus'), `${standard}/README.md 缺少 __cplusplus`)
   ok(profile.includes('## 最重要的三件事'), `${standard}/README.md 缺少最重要的三件事`)
   ok(profile.includes('## 验证'), `${standard}/README.md 缺少验证`)
-  const snippet = read(`skills/building-cpp/references/standards/${standard}/cmake-snippet.cmake`)
+  const snippet = read(`skills/engineering/cmake/03-standard/standards/${standard}/cmake-snippet.cmake`)
   ok(snippet.includes(`cxx_std_${number}`), `${standard}/cmake-snippet.cmake 缺少 cxx_std_${number}`)
   ok(snippet.includes(`CXX_STANDARD ${number}`), `${standard}/cmake-snippet.cmake 缺少 CXX_STANDARD ${number}`)
   ok(snippet.includes('CXX_STANDARD_REQUIRED ON'), `${standard}/cmake-snippet.cmake 缺少 CXX_STANDARD_REQUIRED ON`)
@@ -531,7 +533,7 @@ for (const file of listFiles(ROOT).filter((item) => {
 }
 for (const file of [
   join(ROOT, 'skills', 'building-cpp', 'scripts', 'checking-environment.mjs'),
-  join(ROOT, 'skills', 'building-cpp', 'scripts', 'checking-encoding.mjs'),
+  join(ROOT, 'skills', 'engineering', 'formatting', 'scripts', 'checking-encoding.mjs'),
   join(ROOT, 'scripts', 'checking-skill-links.mjs'),
 ]) {
   try {
@@ -549,6 +551,7 @@ for (const file of [
 const docs = [
   'architecture.md',
   'comment-sources.md',
+  'module-layout.md',
   'plugin-boundaries.md',
   'plugin-flow.md',
   'plugin-layout.md',
@@ -586,13 +589,13 @@ const domainRowLines = (text, heading) => {
   return rows
 }
 const domainNames = (lines) => lines.map((line) => line.split('|')[1].trim())
-const skillNames = ['developing-cpp', 'configuring-cmake', 'building-cpp']
+const skillNames = ['developing-cpp', 'engineering', 'building-cpp']
 for (const skill of skillNames) {
   const rows = domainRowLines(read(`skills/${skill}/SKILL.md`), '### 四类改动')
   equal(domainNames(rows), domains, `${skill} SKILL.md 四类改动的域名与顺序`)
   ok(rows.length === 4, `${skill} SKILL.md 四类改动的行数`)
   ok(
-    rows.every((line) => line.includes('`steps/') && line.includes('.md`')),
+    rows.every((line) => line.includes('steps/') && line.includes('.md`')),
     `${skill} SKILL.md 四类改动缺少步骤入口`,
   )
 }

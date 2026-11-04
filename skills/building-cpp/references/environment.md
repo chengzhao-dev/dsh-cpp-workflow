@@ -105,4 +105,4 @@ node "<skill-dir>/scripts/checking-environment.mjs" --project . --live
 | 3 | 活动校验失败：不在声明的 build host、角色缺失、版本不符 |
 | 1 | 脚本自身错误：参数错误或内部异常 |
 
-各标准对应的编译器、库设施和工具档位见 [standards/README.md](standards/README.md)。
+各标准对应的编译器、库设施和工具档位见 [../../engineering/cmake/03-standard/standards/README.md](../../engineering/cmake/03-standard/standards/README.md)。

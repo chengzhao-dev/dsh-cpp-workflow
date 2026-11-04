@@ -15,14 +15,14 @@
 - 可观察的是终端输出、文件内容、退出码和库函数的返回值；内部状态不算可观察行为。
 - 一次只定一个可验收的切片；切片太大就拆成两句行为，各走一遍四步。
 - 失败方式与成功路径同写：非法参数、空输入、越界、文件不存在时，是返回错误值、打印提示，还是抛异常。
-- 新增输出用 `std::format` 组合消息；`std::print` 只在 C++23 且位于程序边界（`apps/`、`main`）时使用，设施选型见 `references/standard-library.md`。
-- 操作与范围按 `references/change-model.md` 判：本步是写作的入口；改写只在行为被打破时回到这里。
+- 新增输出用 `std::format` 组合消息；`std::print` 只在 C++23 且位于程序边界（`apps/`、`main`）时使用，设施选型见 `source/05-language/03-standard-library/06-format.md`。
+- 操作与范围按 `source/01-editing/01-edit-operations.md` 判：本步是写作的入口；改写只在行为被打破时回到这里。
 
 ## 情况
 
 **新功能**：先写最小可观察切片，例如「输入名字，输出一句问候」。交互、存档、排行榜不一次写进第 1 步。
 
-**领域规则**：先把动词和名词写成领域值——任务、状态、动作、结果。取值封闭时用 `enum class`；规则有歧义时列出至少两个解释并问用户，不静默选一个。领域值怎么选见 `references/project-design.md`。
+**领域规则**：先把动词和名词写成领域值——任务、状态、动作、结果。取值封闭时用 `enum class`；规则有歧义时列出至少两个解释并问用户，不静默选一个。领域值怎么选见 `source/03-design/01-project-design.md`。
 
 **修缺陷**：行为句写成「现在观察到 X，期望观察到 Y」，并保留复现输入。修完只验证 X → Y。
 
@@ -32,5 +32,5 @@
 
 ## 正反例指针
 
-- 边界怎么切、库和程序怎么分：`examples/structure.md`「行为与边界」。
-- 行为句写得太大或混入实现：`examples/structure.md`「行为句」。
+- 边界怎么切、库和程序怎么分：`source/03-design/examples/library-boundary.md`。
+- 行为句写得太大或混入实现：`source/03-design/examples/behavior-sentence.md`。

@@ -8,18 +8,18 @@
 
 - 函数保持短小，一个函数只做一件事。超过约 40 行时先找可以命名的中间步骤，不靠注释把长函数切成几段。
 - 按「准备 → 操作 → 收尾」排列语句，用空行分组；组与组之间的空行表达阶段。
-- `.cpp` 的第一个 include 是自己的配对头，然后直接包含本文件用到的标准库头，不依赖公共头转发声明。包含顺序见 `references/google-cpp-style.md`，文件槽位见 `references/file-template.md`。
-- 函数体注释用 `//`，不用 `///`：体内 `///` 会接到该函数的 Doxygen 详细说明后面。重要函数按空行分阶段，每个阶段上方写一句 `//`，写这一支的后果，可以点明处理了哪些枚举值，不逐词翻译下一行的条件；`//` 里的枚举值不加反引号。单表达式函数（如 `IsFull`）不配注释。只写删掉会让下一次修改得到错误结果、而代码本身看不出的内容；变更史留给提交说明。
+- `.cpp` 的第一个 include 是自己的配对头，然后直接包含本文件用到的标准库头，不依赖公共头转发声明。包含顺序见 `source/02-style/01-google-cpp-style.md`，文件槽位见 `source/04-layout/02-file-template.md`。
+- 函数体注释用 `//`，不用 `///`：体内 `///` 会接到该函数的 Doxygen 详细说明后面。重要函数按空行分阶段，每个阶段上方写一句 `//`，写这一支的后果，可以点明处理了哪些枚举值，不逐词翻译下一行的条件；`//` 里的枚举值不加反引号。单表达式函数（如 `IsFull`）不配注释；关键局部表（查表、分派表）上方写一句，说明表的角色与分组。只写删掉会让下一次修改得到错误结果、而代码本身看不出的内容；变更史留给提交说明。
 - 什么时候在 `if` 上方加一句：多条独立拒绝（如 `CheckPlaceable`）每个 `if` 一句，不同条件的 `if` 不合并成一句；成功写入前一句；只有次序依赖的一对 `if` 在第一个上方说明；循环上方已有阶段说明时，循环里的 `if` 不再加；单表达式谓词不加。
-- 失败是调用方正常结果时返回结果类型、`bool` 或 `std::optional`；函数无法完成自己的任务时抛异常，不拿异常做正常分支。Debug 与 Release 用同一套返回值与抛出条件，只有诊断详略不同。两种模式都要守的不变量用 `Check`（项目保留时），只在开发期做的自检用 `DebugCheck`；项目没有这两个宏时分别用 `assert` 与 `std::terminate`。捕获时按 `const` 引用，只处理能处理的类型，其余继续抛。异常类型、消息格式与「不抛的边界」见 `references/exceptions.md`。
-- 参数校验、调用方状态检查与正常结果返回的次序见 `references/exceptions.md` 的「检查次序」；本层的抛出检查先于 `kFinished` 之类的正常失败，下层检查不重复。
+- 失败是调用方正常结果时返回结果类型、`bool` 或 `std::optional`；函数无法完成自己的任务时抛异常，不拿异常做正常分支。Debug 与 Release 用同一套返回值与抛出条件，只有诊断详略不同。两种模式都要守的不变量用 `Check`（项目保留时），只在开发期做的自检用 `DebugCheck`；项目没有这两个宏时分别用 `assert` 与 `std::terminate`。捕获时按 `const` 引用，只处理能处理的类型，其余继续抛。异常类型、消息格式与「不抛的边界」见 `source/08-exceptions/01-throw-rules.md`。
+- 参数校验、调用方状态检查与正常结果返回的次序见 `source/08-exceptions/01-throw-rules.md` 的「检查次序」；本层的抛出检查先于 `kFinished` 之类的正常失败，下层检查不重复。
 - 声明 `noexcept` 前核对函数体：出现 `at()` 或其他可能抛出的调用就去掉。越界用 `at()` 抛 `std::out_of_range`，这个函数就不能标 `noexcept`。普通查询和返回结果枚举的函数，不因为当前函数体不抛就补 `noexcept`；它留给移动、交换、析构，以及已经标上的纯谓词。
 - 组合输出用 `std::format`，再写入 `std::cout` / `std::cerr`；库实现里不直接打印。C++23 且库支持时程序边界可用 `std::print`，C++20 及更早没有。
 - 转换用具名转换 `static_cast` / `std::bit_cast`，不用 C 风格强制转换。
 - 所有权用 `std::unique_ptr`；没有共享所有权的理由时不用 `std::shared_ptr`。
 - 只改注释时，不改可观察行为；只改实现时，不改公共声明。两者同时需要时，先改声明，再改实现。
-- 清空成员数组：元素类型提供收回空取值的函数时（如 `Cell::Reset`），容器的 `Clear` 逐个调用它；没有这种函数时才用 `std::ranges::fill(cells_ | std::views::join, CellState::kEmpty)` 或 `for` 循环逐格赋空值。两种写法都不直接写 `cells_ = {}`，也不从外部把枚举赋成空值。
-- 默认构造只做「建立初值」时用成员初值（如 `cells_{}`），不在构造函数里再调一遍 `Clear()`；`Clear()` 只负责把已经设置的元素收回空。
+- 清空成员数组：元素类型提供收回空取值的函数时（如 `Cell::Clear`），容器的 `Clear` 逐个调用它；没有这种函数时才用 `std::ranges::fill(cells_ | std::views::join, CellState::kEmpty)` 或 `for` 循环逐格赋空值。两种写法都不直接写 `cells_ = {}`，也不从外部把枚举赋成空值。
+- 默认构造只做「建立初值」时用成员初值（如 `cells_{}`），不在构造函数里再调一遍 `Clear()`；`Clear()` 只负责把已经放置的元素收回空。
 
 ## 情况
 
@@ -33,14 +33,14 @@
 
 ## 交回构建
 
-实现改完，按顺序交给下游：需要新增或移动源文件时，先由 `configuring-cmake` 的 `steps/01-targets.md` 把文件显式写进 target；target 齐了再由 `building-cpp` 的 `steps/01-build.md` configure、构建，最后走 `steps/03-check.md`。不要只改完函数体就宣称完成。
+实现改完，按顺序交给下游：需要新增或移动源文件时，先由 `engineering` 的 `steps/01-targets.md` 把文件显式写进 target；target 齐了再由 `building-cpp` 的 `steps/01-build.md` configure、构建，最后走 `steps/03-check.md`。不要只改完函数体就宣称完成。
 
 ## 正反例指针
 
-- 实现注释复述代码、分组混乱：`examples/comments-implementation.md`「实现注释」。
-- 已经证明非负的坐标把下标收成 `std::size_t` 再 `[]`，不转成 `int`：`references/types.md`「下标与越界」。
-- 越界消息的标签取自调用点：`references/exceptions.md`「消息」的 `std::source_location` 用法。
-- 为了保住 `noexcept` 再包一层只转发下标的私有函数：`references/exceptions.md`「不抛的边界」。
-- 用 `static_cast<void>` 丢弃 `[[nodiscard]]` 的落子结果，或丢掉调用方给的一手、在 `Game` 内重新拼装：`examples/structure.md`「落子结果不能丢，也不要重建一手」。
-- 异常类型与结果类型混用：`examples/exceptions.md`「什么时候抛」。
-- `std::format` 与流输出混用得当：`examples/exceptions.md`「异常类型与消息」。
+- 实现注释复述代码、分组混乱：`source/07-comments/examples/implementation-body.md`。
+- 已经证明非负的坐标把下标收成 `std::size_t` 再 `[]`，不转成 `int`：`source/05-language/02-value-types/09-subscript.md`。
+- 越界消息的标签取自调用点：`source/08-exceptions/01-throw-rules.md`「消息」的 `std::source_location` 用法。
+- 为了保住 `noexcept` 再包一层只转发下标的私有函数：`source/08-exceptions/01-throw-rules.md`「不抛的边界」。
+- 用 `static_cast<void>` 丢弃 `[[nodiscard]]` 的落子结果，或丢掉调用方给的一手、在 `Game` 内重新拼装：`source/03-design/examples/move-result.md`。
+- 异常类型与结果类型混用：`source/08-exceptions/examples/throw-when.md`。
+- `std::format` 与流输出混用得当：`source/08-exceptions/examples/throw-message.md`。

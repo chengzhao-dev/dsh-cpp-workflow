@@ -62,7 +62,7 @@ export const Config = Schema.object({
 
 const PROVIDER = 'dsh-cpp-workflow'
 const RANK = 550
-const KNOWN_SKILLS = new Set(['building-cpp', 'configuring-cmake', 'developing-cpp'])
+const KNOWN_SKILLS = new Set(['building-cpp', 'engineering', 'developing-cpp'])
 const SKILL_NAME_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const PACKAGE_ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
 const SKILLS_ROOT = path.join(PACKAGE_ROOT, 'skills')

@@ -7,25 +7,25 @@ metadata:
 
 # developing-cpp
 
-本技能处理换一台机器也不会改的源码内容：可观察行为、库与程序的边界、声明、命名、异常和源码注释。文件槽位与守卫以 `references/file-template.md` 为准；排版、命名、头文件与包含顺序以 `references/google-cpp-style.md` 的 Google 基线为准。异常条文取自 C++ Core Guidelines 的 Error handling，只约束开发期的源码，不进入插件运行时。
+本技能处理换一台机器也不会改的源码内容：可观察行为、库与程序的边界、声明、命名、异常和源码注释。文件槽位与守卫以 `source/04-layout/02-file-template.md` 为准；排版、命名、头文件与包含顺序以 `source/02-style/01-google-cpp-style.md` 的 Google 基线为准。异常条文取自 C++ Core Guidelines 的 Error handling，只约束开发期的源码，不进入插件运行时。
 
 下面这些文件不归本技能：
 
-- `CMakeLists.txt` 与 `cmake/`：开 `configuring-cmake`。
+- `CMakeLists.txt` 与 `cmake/`：开 `engineering`。
 - `running-build.sh`、`.clang-*`、`.vscode/` 和 `environment.json`：开 `building-cpp`，本技能只读其中的 `standard`。
 - `.qmd`、仓库 README、Python 和非 C++ 文档：不打开本技能。
 
-只改函数体、命名、异常或注释且入口命令可运行时，定实现后只开 `building-cpp` 的「通过检查」；新增或移动源文件、改库与程序的边界、补测试 target 时，声明和实现可以先写，但完成前必须开 `configuring-cmake` 把文件写进 CMake，再开 `building-cpp` 定工具配置并通过检查。
+只改函数体、命名、异常或注释且入口命令可运行时，定实现后只开 `building-cpp` 的「通过检查」；新增或移动源文件、改库与程序的边界、补测试 target 时，声明和实现可以先写，但完成前必须开 `engineering` 把文件写进 CMake，再开 `building-cpp` 定工具配置并通过检查。
 
 ## 适用场景
 
 存在项目技能 `cpp-workflow-project` 时先读它的 `SKILL.md`：工程名、库与程序的边界、阶段表、术语增补、入口命令与语言档位。项目技能没有写档位时，才读 `environment.json` 的 `standard`；两者都没有时才用本技能的新工程默认 C++23。声明 C++20 的工程里不要写 C++23 才有的设施；没有项目技能时门禁不会放出本技能，不要猜项目约定。
 
-源码和构建文件的编码以 `building-cpp` 的 `references/encoding.md` 为准；行尾与 `.clang-format` 的 `LineEnding` 跟仓库根 `.gitattributes` 和 `.editorconfig`。
+源码和构建文件的编码以 `engineering` 的 `formatting/01-encoding.md` 为准；行尾与 `.clang-format` 的 `LineEnding` 跟仓库根 `.gitattributes` 和 `.editorconfig`。
 
 ## 三种操作
 
-一次只选一种，范围（单点、整段）是任务属性。操作与域的判据、边界和交接见 `references/change-model.md`；四类改动是域，不是操作。
+一次只选一种，范围（单点、整段）是任务属性。操作与域的判据、边界和交接见 `source/01-editing/01-edit-operations.md`；四类改动是域，不是操作。
 
 | 操作 | 什么时候用 | 从哪步进 |
 | --- | --- | --- |
@@ -44,11 +44,27 @@ metadata:
 | 3 | 定声明 | `steps/03-declaration.md` | 写命名、声明顺序、头文件契约和声明注释 |
 | 4 | 定实现 | `steps/04-implementation.md` | 写 `.cpp` 函数体的操作顺序、分组和实现注释 |
 
-每步只打开同号的一个步骤文件。判不准才打开 `examples/` 里与该步对应的案例；`references/` 保存完整条文，只在排错、整目录重构，或步骤里明确指向某一条文时按需打开。性能问题读 `references/performance.md`，标准库设施选型读 `references/standard-library.md`，注释术语判不准读 `references/comment-terms.md`，链接与产物的细节读 `building-cpp` 的 `references/linking.md`。
+每步只打开同号的一个步骤文件。判不准才打开 `source/` 里与该步对应的案例；完整条文只在排错、整目录重构，或步骤里明确指向某一条时按需打开。性能问题读 `source/05-language/04-performance/01-measure.md`，标准库设施选型读 `source/05-language/03-standard-library/01-containers.md`，注释术语判不准读 `source/07-comments/glossary/comment-terms.md`，链接与产物的细节读 `engineering` 的 `cmake/linking/01-libraries.md`。
+
+### 入口表
+
+先按「改哪一类东西」选一行，再打开那一行点名的一份；同一步骤里的细节文件留到它真正需要时再开。
+
+| 改什么 | 从哪一份进 |
+| --- | --- |
+| 行为、库与程序的边界 | `steps/01-behavior.md`、`steps/02-boundary.md`；案例在 `source/03-design/examples/` |
+| 文件槽位、包含守卫、声明顺序 | `source/04-layout/02-file-template.md`、`source/04-layout/03-declaration-order.md` |
+| 命名与改名 | `source/06-naming/01-identifier-names.md`；案例在 `source/06-naming/examples/` |
+| 声明注释与实现注释 | `source/07-comments/01-comment-rules.md`；案例在 `source/07-comments/examples/` |
+| 异常规则与异常案例 | `source/08-exceptions/01-throw-rules.md`；案例在 `source/08-exceptions/examples/` |
+| 语言细节、类型、标准库、性能 | `source/05-language/` 下按主题只开一份：`01-language-basics/01-objects.md`、`02-value-types/01-width.md`、`03-standard-library/01-containers.md`、`04-performance/01-measure.md` |
+| 操作判不准、规则冲突 | `source/01-editing/01-edit-operations.md`、`source/01-editing/02-rule-priority.md` |
+
+案例目录里没有数字前缀的文件按语义选：数字前缀只表示同一主题内的阅读顺序，不是案例编号。
 
 本轮激活按三条上限走：
 
-- 只开当前步对应的一个步骤文件；同一改动域内不同时展开两个技能的步骤。跨域按 `源码 → configuring-cmake → building-cpp` 的顺序逐段进入，前一段结论落下再开下一段。
+- 只开当前步对应的一个步骤文件；同一改动域内不同时展开两个技能的步骤。跨域按 `源码 → engineering → building-cpp` 的顺序逐段进入，前一段结论落下再开下一段。
 - 条文只开该步点名的一份；同号案例留到下一次激活。
 - 标准档只打开项目技能声明的那一档，没有声明时用本技能已有的新工程默认，不把其余标准档读进来。
 
@@ -56,7 +72,7 @@ metadata:
 
 ### 四类改动
 
-四类改动是操作内部的域：操作定入口，域定层次。四域的定义、边界与次序见 `references/change-model.md`；一次改动混了两类时，按「内容 → 结构 → 版式 → 措辞」拆开做，前一类落定并经检查再进下一类。
+四类改动是操作内部的域：操作定入口，域定层次。四域的定义、边界与次序见 `source/01-editing/01-edit-operations.md`；一次改动混了两类时，按「内容 → 结构 → 版式 → 措辞」拆开做，前一类落定并经检查再进下一类。
 
 | 类型 | 典型请求 | 入口步骤 |
 | --- | --- | --- |
@@ -67,13 +83,13 @@ metadata:
 
 只改格式时不动行为，只改注释时不动签名；条文由入口步骤按需打开。
 
-同一处命中多条规则时，先按 `references/priority.md` 的五级次序判：行为与契约 > 结构 > 清晰 > 一致 > 形式。高层未解决，不先做低层润色；低层改动碰到高层事实就停手退回。
+同一处命中多条规则时，先按 `source/01-editing/02-rule-priority.md` 的五级次序判：行为与契约 > 结构 > 清晰 > 一致 > 形式。高层未解决，不先做低层润色；低层改动碰到高层事实就停手退回。
 
 ## 完成判据
 
 - [ ] 第 1 步的行为句能被用户或测试验收；有阶段表时只覆盖对应行，没有时只覆盖用户点名的行为。
 - [ ] 第 2 步的库 target 不依赖终端、GUI 或脚本；程序 target 只做装配和输入输出；共享抽象有第二个真实使用方。
-- [ ] 第 3 步的公共头文件自包含，命名、声明顺序和异常声明符合 `references/` 的条文。
+- [ ] 第 3 步的公共头文件自包含，命名、声明顺序和异常声明符合 `source/` 的条文。
 - [ ] 第 4 步的实现只兑现声明；资源由 RAII 管理；失败是正常结果时用返回值，函数无法完成任务时抛异常，不拿异常做正常分支。
-- [ ] 源码注释符合 `references/comments.md` 的四节规范，`node "<skill-dir>/scripts/checking-comments.mjs" --root <项目根>` 无输出。
+- [ ] 源码注释符合 `source/07-comments/01-comment-rules.md` 的四节规范，`node "<skill-dir>/scripts/checking-comments.mjs" --root <项目根>` 无输出。
 - [ ] 没有改 `CMakeLists.txt`、`.clang-*`、构建脚本，也没有把外部资料路径或项目专属类名写进通用条文。

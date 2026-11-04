@@ -25,8 +25,8 @@
 
 ## 覆盖关系
 
-插件技能的 rank 是 550。项目自己的 `.agents/skills` 技能 rank 是 200，用户级技能是 500，包内根技能是 600。项目里放同名的 `developing-cpp`、`configuring-cmake` 或 `building-cpp` 会盖住插件，项目模板禁止这么做。项目技能 `cpp-workflow-project` 是另一个名字，不冲突。
+插件技能的 rank 是 550。项目自己的 `.agents/skills` 技能 rank 是 200，用户级技能是 500，包内根技能是 600。项目里放同名的 `developing-cpp`、`engineering` 或 `building-cpp` 会盖住插件，项目模板禁止这么做。项目技能 `cpp-workflow-project` 是另一个名字，不冲突。
 
 ## get 与 abort
 
-`list()` 返回空列表时，没有 candidate，`get()` 也不会被调用。`get()` 带 `cwd` 时重新过门禁；换到未声明的目录后，旧 candidate 不再可用。调用方传 `AbortSignal` 时，已经中止的查询返回空列表，而不是抛错。
+`list()` 返回空列表时，没有 candidate，`get()` 也不会被调用。只有调用方传 `cwd` 时才重查门禁；不传时继续服务已经加载的 candidate。调用方传 `AbortSignal` 时，已经中止的查询返回空列表，而不是抛错。

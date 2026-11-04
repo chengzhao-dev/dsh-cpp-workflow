@@ -12,7 +12,7 @@
 clang-format --dry-run --Werror src/*.cpp include/*.h
 ```
 
-需要修复时单独运行 `clang-format -i`，再回看 diff。`clang-format` 只排版，不会把行尾注释搬到上一行；数据成员注释位置按 `developing-cpp/references/comments.md` 的规则和 `checking-comments.mjs` 检查。
+需要修复时单独运行 `clang-format -i`，再回看 diff。`clang-format` 只排版，不会把行尾注释搬到上一行；数据成员注释位置按 `developing-cpp/source/07-comments/01-comment-rules.md` 的规则和 `checking-comments.mjs` 检查。
 
 ## 用法
 
@@ -58,18 +58,18 @@ clang-format --dry-run --Werror src/*.cpp include/*.h
 - `Check`：两种模式都在条件不成立时打印诊断并终止。
 - `DebugCheck`：只在 Debug 生效，`NDEBUG` 后展开为空，参数不能带副作用。
 
-不要写成 Debug 抛异常、Release 返回 false 的模式分支；这会把调用方逼成两套逻辑。规则详见 `developing-cpp/references/exceptions.md`。
+不要写成 Debug 抛异常、Release 返回 false 的模式分支；这会把调用方逼成两套逻辑。规则详见 `developing-cpp/source/08-exceptions/01-throw-rules.md`。
 
 ## 失败分诊
 
 | 输出 | 先看 | 回到 |
 | --- | --- | --- |
 | `CMake Error ... CXX compiler` | `environment.json`、`--live` | `building-cpp` 的定构建 / 通过检查 |
-| `ninja: error: ... missing and no known rule` | 源文件是否在 CMake 中列出 | `configuring-cmake` 的 target 源文件清单 |
-| `fatal error: ... No such file` | `target_include_directories` | `configuring-cmake` 的包含边界 |
-| `undefined reference` | `target_link_libraries`、库 target 名 | `configuring-cmake` 的链接边界 |
+| `ninja: error: ... missing and no known rule` | 源文件是否在 CMake 中列出 | `engineering` 的 target 源文件清单 |
+| `fatal error: ... No such file` | `target_include_directories` | `engineering` 的包含边界 |
+| `undefined reference` | `target_link_libraries`、库 target 名 | `engineering` 的链接边界 |
 | `CTest` 失败 | 测试断言、行为句 | `developing-cpp` 的定行为 / 定实现 |
-| 运行时报找不到 `.so` | RPATH / `LD_LIBRARY_PATH` | `configuring-cmake` 的链接边界与 RPATH |
+| 运行时报找不到 `.so` | RPATH / `LD_LIBRARY_PATH` | `engineering` 的链接边界与 RPATH |
 
 ## 验收
 

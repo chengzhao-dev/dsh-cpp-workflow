@@ -1,0 +1,86 @@
+# Google C++ 风格：本技能采用的版本
+
+以 [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html) 为基线。除「异常政策」和「新工程默认 C++23」两处明确偏离外，排版、命名、头文件、包含顺序、类型和注释都按 Google 原文执行；本地习惯不能悄悄覆盖它。
+
+## 语言版本
+
+- 上游 [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html) 仍写 “Currently, code should target C++20, i.e., should not use C++23 features”。本工作流把**新工程默认标准**定为 C++23，并把标准放进项目声明 `environment.json` 的 `standard`（`c++11`–`c++23`）。这是项目级语言版本覆盖，不改变 Google 的排版、命名、头文件和包含顺序规则。
+- `standard=c++23` 时才使用 `std::print`、`std::expected`、`std::stacktrace` 等 C++23 设施；`c++20` 及更早的项目不得使用。C++11/14/17 项目用各自可用的替代写法，不能因为本机编译器支持就偷偷升级。
+- Google/LLVM 的公开基线仍集中在 C++17–C++20；默认 C++23 是本工作流的产品选择，不声称 Google 已改口。标准由项目声明和 CMake target 决定，同一仓库不要混用多个标准。
+- 不使用编译器扩展；需要扩展时先停下来，改成标准写法。
+- 一个工程只用一个编译器配置；不要在同一棵源码树上混用 Clang 与 GCC 的扩展。
+
+## 头文件
+
+- 每个头文件用 `#define` 守卫，符号由项目源码树全路径生成：`<PROJECT>_<PATH>_<FILE>_H_`，例如 `FOO_BAR_BAZ_H_`。不要用 `#pragma once`，也不要两者并存；模板见 `source/04-layout/02-file-template.md`。
+- 头文件必须自包含：自己用到的类型、宏、标准库头都直接包含，不依赖调用方的包含顺序。
+- `.cpp` 第一个包含自己的配对头，然后按下面的顺序包含。
+- 包含顺序：配对头 → C 系统头 → C++ 标准库头 → 其他库头 → 本项目头。每组之间空一行，组内按字母序；不要依赖 `clang-format` 的 `IncludeCategories` 自定义分组，本项目不再覆盖 Google 预设。
+- 本项目头用引号写裸文件名，例如 `#include "logging.h"`。构建时把该组件的 `include/` 加入 include 搜索路径（`target_include_directories(<target> PUBLIC .../include)`），不要写 `"base/logging.h"` 这种从源码根起的长路径。
+- 公共头文件直接放在组件的 `include/` 下；不要为了「整齐」再加一层命名空间目录。
+- 跨文件共享的常量用 `inline constexpr`，放在命名空间里并带 `k` 前缀；头文件里不要定义非 inline 的普通全局变量。
+- 头文件里只放模板、`constexpr`、类内联小函数和声明；普通函数的函数体放 `.cpp`。
+- 头文件里不要用匿名命名空间或 `static` 隐藏定义；内部链接的实现放 `.cpp`。
+
+## 命名
+
+大小写、前缀、成员尾随 `_`、常量与枚举子的 `k` 前缀、命名空间与文件名的完整规则表，以及访问器、谓词、`Try`、映射函数、`current_` 前缀的语义角色，见 `source/06-naming/01-identifier-names.md`。本文只保留两处 Google 原文允许选择、而本项目需要统一的点：
+
+- 访问器、修改器 Google 允许 PascalCase 或 snake_case；本项目统一 PascalCase，同一 API 不混用两套。
+- 测试名用 PascalCase 描述行为，例如 `RejectsOutOfRangeTask`；测试文件用 snake_case。
+
+## 类型与声明
+
+- 纯数据聚合用 `struct`；有不变量的类型用 `class`，不变量在构造函数和公共成员函数里维持。
+- 单参数构造函数写 `explicit`；零参数构造函数不写。
+- 默认成员初始化写在声明处（NSDMI），不要在构造函数初始化列表里重复。
+- 默认用花括号初始化：`int count{};`、`std::vector<int> values{1, 2, 3};`。成员声明处一律写 `{}`；只有需要拷贝初始化或 `auto` 推导时用 `=`；`name = {{` 只用于多行聚合常量表，单个对象和空初始化仍写 `count{}`；成员写 `=` 的例外见 `source/05-language/01-language-basics/02-initialization.md`；不要用 `()` 初始化普通对象。
+- 类声明顺序：public → protected → private；类型与别名 → 静态常量 → 工厂 → 构造/赋值/析构 → 其他函数 → 数据成员。
+- 用户声明的拷贝/移动/析构函数在头文件声明、在 `.cpp` 定义；只有零参数且默认实现足够时才写 `= default`。
+- 查询成员函数标尾部 `const`；返回结果对象的 API 加 `[[nodiscard]]`，不要给所有非 `void` 函数机械添加。标注位置与 `friend` 的例外见 `source/05-language/02-value-types/07-nodiscard.md`。
+- 所有权优先 `std::unique_ptr`；没有共享所有权的理由时不用 `std::shared_ptr`。禁止裸 `new` / `delete`。
+- 禁止 C 风格强制转换；用 `static_cast`、`const_cast`、`reinterpret_cast`、`std::bit_cast`，并让 `clang-tidy` 的 `google-readability-casting` 兜底。
+- `.cpp` 里不需要外部引用的 `constexpr` 直接放具名命名空间；仅一个函数使用时才用函数内 `static constexpr`；函数和类型仍放匿名命名空间。
+- 一个 `.cpp` 只写一个匿名命名空间，公开函数的定义放在它后面。
+- 常量要出 `.cpp` 时按四步升：1) 其他翻译单元要的是算出来的答案，给类加查询、表留 `.cpp`；2) 要同一份坐标但仍不是公开契约，放组件 `src/` 的私有头；3) 对方必须写 `Board::kLines` 且这是类型的稳定事实，才用类内 `public static constexpr`；不依赖某个对象的公开常量则用命名空间 `inline constexpr`；4) 第二使用方复用同一套坐标时再抽共享组件。
+
+## 函数
+
+- 优先返回值，不用输出参数：返回 `std::string`、`std::vector<T>`、结果结构体。
+- 已有成员按 `const` 引用返回，例如 `GetHistory()`；不要返回内部容器的可变引用。
+- 函数保持短小；没有硬上限，超过约 40 行时先拆出有名字的步骤，而不是加注释分节。
+- 头文件里只把大约 10 行以内、确实适合内联的短函数就地定义；更长或需要完整定义的函数放 `.cpp`，避免头文件膨胀和重复编译。
+- 虚函数不用默认参数；默认参数只用于非虚的便利接口。
+- 尾置返回类型只在普通语法不可行或明显更难读时使用，例如返回类型依赖参数；不要为了风格统一全面改写。
+- 只对自己的类型重载运算符；不重载 `&&`、`||`、`,`、一元 `&`；不定义用户字面量。
+
+## 表达式与整数
+
+- 比较不写 Yoda 形式：`x == 0`、`task == TaskState::kPending`；不要写 `0 == x`、`nullptr == p`。
+- 半开区间写成两个「变量在左」的比较：`id >= 0 && id < kTaskCount`；不要写 `0 <= id`。
+- 混合优先级算术加显式括号，消除 `readability-math-missing-parentheses`。
+- 内建整数默认用 `int`；需要确定宽度时用 `<cstdint>` 的 `std::int32_t`、`std::int64_t` 等（可省略 `std::` 前缀），可能到 2^31 的值用 64 位；`std::size_t` / `std::ptrdiff_t` 只用于大小和指针差。不要用无符号类型表达「这个值不会为负」。
+- 封闭状态码用 `enum class`；底层类型默认 `int`，只有确实需要缩小存储时才写固定底层类型并说明理由。枚举值总是带作用域：`OrderResult::kSuccess`。
+- 枚举的尾随注释要么全写要么全不写；两种句式与禁止项见 `source/07-comments/01-comment-rules.md`「枚举项与 `struct` 短字段：两种句式」。
+- 浮点不用 `==` 比较计算结果；按量纲给容差，金额用最小货币单位的整数。
+- 数值宽度、符号、枚举、强类型、`const` 成员和下标访问的完整规则见 `source/05-language/02-value-types/07-nodiscard.md`；初始化、RAII、移动和模板见 `source/05-language/01-language-basics/`。
+
+## 异常
+
+Google 原文不使用 C++ 异常；本工作流只在开发阶段的源码指导中按 `source/08-exceptions/01-throw-rules.md` 采用 C++ Core Guidelines 的 Error handling，插件运行时不编译、不执行这套策略。其余条目仍以 Google 原文为准。
+
+异常消息的组织方式见 `source/08-exceptions/01-throw-rules.md` 的「消息」节。
+
+## 输出与格式化
+
+- 组合消息以 `std::format` 为主：`std::format("任务 {} 进入状态 {}", task, state)`。
+- `std::print` 只在 C++23 且标准库支持时使用，通常放在程序边界；库代码仍用 `std::format` 组合消息。C++20 及更早把格式化结果写到 `std::cout` / `std::cerr` / `std::ostringstream`。
+- 简单字面量输出可以直接用 `std::cout << "..."`；需要拼接变量、对齐、数值格式时用 `std::format`。
+- 列宽跟工程根 `.clang-format` 的 `ColumnLimit` 走；项目已声明 100 时按 100，模板资产不写 `ColumnLimit`。每级缩进 2 个空格，代码不用 tab；缩进与对齐由 `.clang-format` 统一，不在条文里另定一套。
+- 浮点输出固定精度，整数不依赖隐式格式；`std::format` 的格式串写全。
+
+## 注释
+
+- 注释写意图、契约、取舍，不复述代码。
+- 文件头、声明注释、实现注释与配置注释的格式见 `source/07-comments/01-comment-rules.md`。
+- TODO 统一写 `// TODO: <阶段或 issue> - <要做什么>`；不要写 `@todo`、`FIXME` 或只有「参考」没有动作的占位。

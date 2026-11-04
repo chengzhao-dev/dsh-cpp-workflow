@@ -1,4 +1,4 @@
-// 注释检查器锁定 references/comments.md 的硬规则：文件头、标签、标签间空行、注释与声明的贴合、
+// 注释检查器锁定 source/07-comments/01-comment-rules.md 的硬规则：文件头、标签、标签间空行、注释与声明的贴合、
 // 列表缩进、成员清单、设计论证、跨类分工、类型系统复述、否定式边界、领域尺寸、谓词首句、
 // @param 完整性与枚举行尾注释。规则改动时必须同步这里的用例。
 import assert from 'node:assert/strict'

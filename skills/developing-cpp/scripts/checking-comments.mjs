@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 只读注释审计：按 references/comments.md 的硬规则检查 C/C++ 源文件。
+// 只读注释审计：按 source/07-comments/01-comment-rules.md 的硬规则检查 C/C++ 源文件。
 //
 // 检查项：Doxygen 文件头、注释行宽度、列表缩进、标签、标签间空行、注释与声明的贴合、
 // 类型注释存在性、成员功能清单、设计论证（方案对比）、否定式边界、领域尺寸、谓词首句、@param 完整性、枚举成员注释一致性、枚举行尾句式、数据成员主注释位置。
@@ -330,7 +330,7 @@ export function checkText(text, options = {}) {
       }
       for (const tag of FORBIDDEN_TAGS) {
         if (options.allowTags?.has(tag.slice(1))) continue
-        if (trimmed.includes(tag)) add(index + 1, 'forbidden-tag', `禁止使用 ${tag}，按 references/comments.md 的标签表改写`)
+        if (trimmed.includes(tag)) add(index + 1, 'forbidden-tag', `禁止使用 ${tag}，按 source/07-comments/01-comment-rules.md 的标签表改写`)
       }
     }
   }
@@ -344,7 +344,7 @@ export function checkText(text, options = {}) {
         if (displayWidth(rendered) > width) add(doc.start + 1, 'comment-width', `注释行 ${displayWidth(rendered)} 列，超过 ${width} 列`)
         for (const tag of FORBIDDEN_TAGS) {
           if (options.allowTags?.has(tag.slice(1))) continue
-          if (content.includes(tag)) add(doc.start + 1, 'forbidden-tag', `禁止使用 ${tag}，按 references/comments.md 的标签表改写`)
+          if (content.includes(tag)) add(doc.start + 1, 'forbidden-tag', `禁止使用 ${tag}，按 source/07-comments/01-comment-rules.md 的标签表改写`)
         }
       }
       for (let raw = doc.start; raw <= doc.end; raw += 1) {

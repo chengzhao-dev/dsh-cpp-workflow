@@ -9,7 +9,7 @@ Three skills for C++11–C++23 source, CMake, and build work; new projects defau
 | Skill | Covers | Open it when |
 | --- | --- | --- |
 | `developing-cpp` | Behavior, boundaries, declarations, implementation; naming, exceptions, and source comments in `.h` / `.cpp` / `.cc` | The user names source code, or the work is a new project or whole-stage refactor |
-| `configuring-cmake` | Targets, modules, checks; CMakeLists.txt, `cmake/` functions and modules, target properties, C++11–C++23 standards, 2-space layout | The change touches CMake targets, standards, link boundaries, functions, or modules |
+| `engineering` | Targets, modules, checks; CMakeLists.txt, `cmake/` functions and modules, target properties, C++11–C++23 standards, and `.clang-format`/`.clang-tidy`/`.clangd` configuration | The change touches CMake targets, standards, link boundaries, functions, modules, or encoding and clang tooling configuration |
 | `building-cpp` | Build setup, tool configuration, checks; Ninja, Clang config, build scripts, environment combinations, formatting, and static analysis | The change touches build commands, tool config, or the environment declaration, or the project is first connected to a build |
 
 The exception material follows the C++ Core Guidelines' Error handling section and guides source and examples only during development; the plugin runtime never compiles or executes those rules. All three skills read the project skill `cpp-workflow-project` first. Without it, the workspace gate never exposes these names.
@@ -19,13 +19,13 @@ The exception material follows the C++ Core Guidelines' Error handling section a
 Pinned npm install:
 
 ```bash
-dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.6.19
+dsh plugin --profile web add npm:@chengzhao-dev/dsh-cpp-workflow@0.6.20
 ```
 
 The matching Git tag:
 
 ```bash
-dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.6.19
+dsh plugin --profile web add github:chengzhao-dev/dsh-cpp-workflow#v0.6.20
 ```
 
 The desktop app owns the `desktop` profile. If the command-line `add` is rejected, add the plugin in the app settings and use the same pinned npm version. A Git tag install uses the prebuilt `lib/` committed in the repository and runs no build on the target machine; the package has no install script that needs approval.
@@ -42,7 +42,7 @@ Only one condition must hold before either skill appears: walking up from the cu
 
 The project skill marker is the repository's opt-in declaration. The plugin no longer requires a first-party `CMakeLists.txt` or C++ source file in the same repository: a docs-only repository, a repository that only copied the template, or a repository with no source files yet still matches; with an empty environment axis, the four source steps still work but build setup stops. Without the marker the list is empty, even when the repository contains CMake or `.cpp` files. Scan limits and boundary cases are in [docs/plugin-boundaries.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-boundaries.md).
 
-The packaged skills use rank 550. A project `.agents/skills` skill uses rank 200 and overrides a plugin skill with the same name; do not copy `developing-cpp`, `configuring-cmake`, or `building-cpp` into a project.
+The packaged skills use rank 550. A project `.agents/skills` skill uses rank 200 and overrides a plugin skill with the same name; do not copy `developing-cpp`, `engineering`, or `building-cpp` into a project.
 
 ## Project conventions
 
@@ -64,7 +64,7 @@ Keep one `environment.json` per repository. Its first three environment axes are
 | `compiler` | `clang`, `gcc` | One compiler per configuration |
 | `standard` | `c++11`, `c++14`, `c++17`, `c++20`, `c++23` | New projects default to `c++23`; one standard per project |
 
-The standard lives in `environment.json` as `standard` and must match the CMake target and compile database; on the CMake side, prefer `configuring-cmake`'s `CompileSettings_SetCxxStandard` function. New projects default to C++23; for C++11–C++20, lower `standard`, `cxx_std_*`, `CXX_STANDARD`, and the `.clang-format` parsing level together, not one at a time. Per-standard facilities, tooling, and downgrade tables are in the [standard directory](skills/building-cpp/references/standards/README.md); the CMake two-layer declaration is in [cxx-standard.md](skills/configuring-cmake/references/cxx-standard.md).
+The standard lives in `environment.json` as `standard` and must match the CMake target and compile database; on the CMake side, prefer `engineering`'s `CompileSettings_SetCxxStandard` function. New projects default to C++23; for C++11–C++20, lower `standard`, `cxx_std_*`, `CXX_STANDARD`, and the `.clang-format` parsing level together, not one at a time. Per-standard facilities, tooling, and downgrade tables are in the [standard directory](skills/engineering/cmake/03-standard/standards/README.md); the CMake two-layer declaration is in [cxx-standard.md](skills/engineering/cmake/03-standard/01-cxx-standard.md).
 
 The generator is always Ninja. Build directories are `build/clang/` and `build/gcc/`; they are never shared. Analysis tools are always `clang-format`, `clang-tidy`, and `clangd`; GCC mode does not switch to another analyzer.
 
@@ -84,7 +84,7 @@ The project root carries only `.vscode/extensions.json` and `settings.json`: cla
 ```text
 dsh-cpp-workflow/
 ├── lib/                 # build output, shipped in the npm package
-├── skills/              # developing-cpp, configuring-cmake, and building-cpp
+├── skills/              # developing-cpp, engineering, and building-cpp
 ├── templates/           # empty project template to copy
 ├── package.json
 ├── package-lock.json    # repository only, used by npm ci
