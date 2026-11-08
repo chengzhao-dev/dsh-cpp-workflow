@@ -3,7 +3,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { cp, mkdtemp, mkdir, rename, rm, writeFile } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
@@ -11,6 +10,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const SKILL = '---\nname: developing-cpp\ndescription: test skill\n---\nbody\n'
 
 async function makePackage() {
+  await mkdir(path.join(ROOT, 'temp'), { recursive: true })
   const dir = await mkdtemp(path.join(ROOT, 'temp', 'discovery-'))
   await cp(path.join(ROOT, 'lib'), path.join(dir, 'lib'), { recursive: true })
   await mkdir(path.join(dir, 'skills', 'developing-cpp'), { recursive: true })
