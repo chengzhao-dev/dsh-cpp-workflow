@@ -1,23 +1,17 @@
-// dsh-cpp-workflow bundle entry.
+// dsh-cpp-workflow 包入口。
 //
-// Registers the three packaged skills as one bundle-scoped skill provider. The
-// provider is read-only and scans only `skills/<name>/SKILL.md`; each skill
-// directory becomes the resourceBase so relative steps, references, examples
-// and assets resolve from the installed package.
+// 把打包的三份技能注册成一个技能提供方。提供方只读，只扫描
+// `skills/<name>/SKILL.md`；每份技能目录作为 resourceBase，步骤、参考页、
+// 示例与资产都由安装后的包内解析。
 //
-// The provider scopes itself to opted-in workspaces: `list()` returns nothing
-// unless the session cwd sits inside a git checkout that carries the explicit
-// `.agents/skills/cpp-workflow-project/SKILL.md` marker on the path to the git
-// root. C++ or CMake evidence is intentionally not part of the gate: a freshly
-// copied template has no sources yet, and an empty project legitimately stops
-// at the build step. A C++ sample outside an opted-in checkout never sees these
-// names; the marker lookup ignores sibling directories.
+// 门禁只认显式启用的工作区：会话 cwd 到 git 根的路径上必须有
+// `.agents/skills/cpp-workflow-project/SKILL.md`，否则 `list()` 返回空。
+// C++ 或 CMake 证据刻意不参与：刚复制的模板还没有源码，空工程也可以停在
+// 构建步骤；检出之外的 C++ 示例看不到这些技能名，标记查找也不进兄弟目录。
 //
-// Rank 550 is lower priority than project/user skills (project `.agents/skills`
-// 200, user `.agents/skills` 500) and higher priority than the bundled root
-// (600), so a project can override any packaged skill by name without editing
-// the package. The project skill itself (cpp-workflow-project, rank 200) is a
-// separate name and does not collide.
+// 优先级 550：低于项目级（200）与用户级（500），高于包内根（600）。项目
+// 可按名字覆盖任意打包技能，不必改包；项目技能 cpp-workflow-project（200）
+// 是另一个名字，与此不冲突。
 import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -86,9 +80,12 @@ interface ListOptions {
   signal?: AbortSignal
 }
 
+type SkillObservation = { candidates: SkillCandidate[]; complete: boolean }
+type ListResult = SkillCandidate[] | SkillObservation
+
 interface SkillProvider {
   name: string
-  list: (options?: ListOptions) => Promise<SkillCandidate[]>
+  list: (options?: ListOptions) => Promise<ListResult>
   get: (candidate: SkillCandidate | undefined, options?: ListOptions) => Promise<unknown>
 }
 
@@ -98,10 +95,11 @@ interface DshContext {
   }
 }
 
-/** Minimal YAML frontmatter reader for the keys SKILL.md actually uses. */
+/** 读取 SKILL.md 用到的 YAML frontmatter；只支持这些键所需的最小语法。 */
 function parseFrontmatter(source: string): { data: Record<string, unknown>; body: string } {
-  const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/.exec(source)
-  if (!match) return { data: {}, body: source }
+  const text = source.charCodeAt(0) === 0xfeff ? source.slice(1) : source
+  const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/.exec(text)
+  if (!match) return { data: {}, body: text }
 
   const data: Record<string, unknown> = {}
   const stack: Array<{ indent: number; target: Record<string, unknown> }> = [
@@ -125,10 +123,14 @@ function parseFrontmatter(source: string): { data: Record<string, unknown>; body
     }
     parent[key] = parseScalar(value)
   }
-  return { data, body: source.slice(match[0].length) }
+  return { data, body: text.slice(match[0].length) }
 }
 
 function parseScalar(value: string): unknown {
+  // 块标量、锚点与别名需要多行语法；本包只支持单行 frontmatter，遇到这些标记
+  // 直接判为不可解析，避免把 ">" 或 "|" 当成正文展示。
+  if (/^[>|&*]/.test(value)) return undefined
+  if (!value.startsWith('"') && !value.startsWith("'")) value = value.replace(/\s+#.*$/, '')
   if (
     (value.startsWith('"') && value.endsWith('"')) ||
     (value.startsWith("'") && value.endsWith("'"))
@@ -152,23 +154,26 @@ function parseScalar(value: string): unknown {
   return value
 }
 
-async function readCandidate(skillDir: string): Promise<SkillCandidate | undefined> {
+async function readCandidate(skillDir: string): Promise<{ candidate?: SkillCandidate; complete: boolean }> {
   const skillFile = path.join(skillDir, 'SKILL.md')
   let source: string
   try {
     source = await readFile(skillFile, 'utf8')
   } catch {
-    return undefined
+    // 读不到正文是瞬时 IO 问题，不能把目录当成「已完整扫描」。
+    return { complete: false }
   }
   const { data } = parseFrontmatter(source)
-  if (typeof data.name !== 'string' || !SKILL_NAME_RE.test(data.name)) return undefined
-  if (!KNOWN_SKILLS.has(data.name)) return undefined
-  if (typeof data.description !== 'string' || data.description.trim() === '') return undefined
-  if (data.name !== path.basename(skillDir)) return undefined
+  if (typeof data.name !== 'string' || !SKILL_NAME_RE.test(data.name)) return { complete: true }
+  if (!KNOWN_SKILLS.has(data.name)) return { complete: true }
+  if (typeof data.description !== 'string') return { complete: true }
+  const description = data.description.replace(/\s+/g, ' ').trim()
+  if (description === '') return { complete: true }
+  if (data.name !== path.basename(skillDir)) return { complete: true }
 
   const candidate: SkillCandidate = {
     name: data.name,
-    description: data.description.trim(),
+    description,
     invocation: { modelInvocable: true, userInvocable: true },
     source: 'bundled',
     provider: PROVIDER,
@@ -183,10 +188,10 @@ async function readCandidate(skillDir: string): Promise<SkillCandidate | undefin
   if (data.metadata && typeof data.metadata === 'object' && !Array.isArray(data.metadata)) {
     candidate.metadata = data.metadata as Record<string, unknown>
   }
-  return candidate
+  return { candidate, complete: true }
 }
 
-async function listSkills(options: ListOptions = {}): Promise<SkillCandidate[]> {
+async function listSkills(options: ListOptions = {}): Promise<ListResult> {
   if (options.signal?.aborted) return []
   if (!(await isCppWorkflowWorkspace(options.cwd))) return []
   if (options.signal?.aborted) return []
@@ -194,17 +199,20 @@ async function listSkills(options: ListOptions = {}): Promise<SkillCandidate[]> 
   try {
     entries = await readdir(SKILLS_ROOT, { withFileTypes: true })
   } catch {
-    return []
+    // 目录暂时读不到时返回不完整观察，宿主不会把它当成完整空目录缓存。
+    return { candidates: [], complete: false }
   }
   const candidates: SkillCandidate[] = []
+  let complete = true
   for (const entry of entries) {
     if (!entry.isDirectory() || !KNOWN_SKILLS.has(entry.name)) continue
     if (options.signal?.aborted) return []
-    const candidate = await readCandidate(path.join(SKILLS_ROOT, entry.name))
-    if (candidate) candidates.push(candidate)
+    const result = await readCandidate(path.join(SKILLS_ROOT, entry.name))
+    if (result.candidate) candidates.push(result.candidate)
+    if (!result.complete) complete = false
   }
   candidates.sort((a, b) => a.name.localeCompare(b.name))
-  return candidates
+  return complete ? candidates : { candidates, complete: false }
 }
 
 async function getSkill(
@@ -214,9 +222,8 @@ async function getSkill(
 ) {
   if (options.signal?.aborted) return undefined
   if (!candidate || candidate.provider !== PROVIDER) return undefined
-  // A candidate can outlive a directory change in the same session. Re-check
-  // only when the caller supplies a cwd; a plain `get()` keeps working for
-  // candidates that were already discovered in this workspace.
+  // candidate 可能比同一会话中的目录变化活得久。只有调用方传了 cwd 时才重查门禁；
+  // 不带 cwd 的 get() 继续服务本工作区已发现的 candidate。
   if (options.cwd !== undefined && !(await isCppWorkflowWorkspace(options.cwd))) return undefined
   if (!KNOWN_SKILLS.has(candidate.name)) return undefined
   const skillDir = candidate.locator

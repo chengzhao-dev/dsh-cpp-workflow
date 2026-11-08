@@ -1,11 +1,11 @@
-# dsh-cpp-workflow bundle patch.
+# dsh-cpp-workflow 的 bundle patch。
 #
-# Additive only: insert one host row. No official row is edited, disabled or
-# replaced. The row loads this package's `main` entry, which registers the
-# packaged developing-cpp and building-cpp skills through `ctx.skills`.
+# 只做追加：插入一行宿主配置。不改写、不关闭、不替换任何官方行。这一行加载
+# 本包的 `main` 入口，由它通过 `ctx.skills` 注册 developing-cpp、engineering 与
+# building-cpp 三份技能。
 #
-# Install with `dsh plugin --profile <name> add <package>`. Pinned npm and Git
-# tag addresses are in the README's Install section.
+# 用 `dsh plugin --profile <name> add <package>` 安装。固定到 npm 版本与 Git
+# 标签的地址写在 README 的 Install 一节。
 - insert:
     - id: cpp-workflow
       name: "@chengzhao-dev/dsh-cpp-workflow"

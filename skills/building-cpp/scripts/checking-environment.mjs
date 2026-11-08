@@ -1,11 +1,10 @@
 #!/usr/bin/env node
-// Read-only environment checker for the cpp-workflow project skill.
+// cpp-workflow 项目技能的只读环境检查。
 //
-// Static mode validates `.agents/skills/cpp-workflow-project/environment.json`
-// without touching PATH. `--live` additionally verifies the current build host,
-// the declared tool roles and version compatibility.
+// 静态模式校验 `.agents/skills/cpp-workflow-project/environment.json`，不碰 PATH。
+// `--live` 另查当前构建主机、声明的工具角色与版本兼容性。
 //
-// It never installs, downloads, edits PATH or writes into the project.
+// 不安装、不下载、不改 PATH，也不向工程写入。
 import { accessSync, constants, existsSync, readFileSync } from 'node:fs'
 import { access, readFile } from 'node:fs/promises'
 import { spawnSync } from 'node:child_process'
@@ -36,8 +35,8 @@ function normalize(value) {
 }
 
 /**
- * Validate the three environment axes, the language standard, and their combination.
- * Pure: no filesystem or PATH.
+ * 校验三个环境轴、语言标准以及它们的组合。
+ * 纯函数：不读文件系统，也不看 PATH。
  * @returns {{ok: boolean, issues: string[], notes: string[], axes: {host?: string, build_host?: string, compiler?: string, standard?: string}}}
  */
 export function validateEnvironment(value) {
@@ -112,7 +111,7 @@ export function validateEnvironment(value) {
   return { ok: issues.length === 0, issues, notes, axes }
 }
 
-/** Read and parse environment.json, returning a declaration or a structured error. */
+/** 读取并解析 environment.json；成功给声明，失败给结构化错误。 */
 export async function readEnvironmentFile(file) {
   let text
   try {
@@ -129,7 +128,7 @@ export async function readEnvironmentFile(file) {
   return { ok: true, file, value }
 }
 
-/** Walk from startDir to the git root (or filesystem root) for environment.json. */
+/** 从 startDir 向上走到 git 根（或文件系统根），找 environment.json。 */
 export async function findProjectEnvironment(startDir) {
   let cursor
   try {
@@ -138,7 +137,7 @@ export async function findProjectEnvironment(startDir) {
     return undefined
   }
 
-  // Allow pointing directly at the project skill directory.
+  // 允许直接指向项目技能目录。
   if (path.basename(cursor) === 'cpp-workflow-project') {
     const direct = path.join(cursor, 'environment.json')
     if (await exists(direct)) return direct
@@ -175,7 +174,7 @@ function findExecutable(command, pathValue = process.env.PATH ?? '') {
       accessSync(candidate, constants.X_OK)
       return candidate
     } catch {
-      // keep looking
+      // 继续向上找
     }
   }
   return undefined
@@ -241,8 +240,7 @@ function isWsl(env = process.env) {
 }
 
 /**
- * Live check. Dependencies are injectable so tests can exercise the host and
- * PATH branches without invoking a compiler.
+ * 实时检查。依赖可注入，测试不必真的调用编译器就能走主机与 PATH 分支。
  */
 export function checkLive(declaration, options = {}) {
   const platform = options.platform ?? process.platform

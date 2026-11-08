@@ -12,7 +12,7 @@
 | `clangd.arguments` 的 `--query-driver` | `/usr/bin/clang++` | `/usr/bin/g++` |
 | `cmake.debugConfig` | `MIMode: lldb`、`miDebuggerPath: /usr/bin/lldb` | `MIMode: gdb`、`miDebuggerPath: /usr/bin/gdb` |
 
-只改与 `environment.json` 冲突的键；其余保持工程原值。`.clangd` 的 `CompilationDatabase` 也随编译器改，见 `../../../engineering/formatting/04-clangd.md`。
+只改与 `environment.json` 冲突的键；其余保持工程原值。`.clangd` 的 `CompilationDatabase` 也随编译器改，见 `../../../engineering/references/formatting/04-clangd.md`。
 
 ## 各键分工
 
@@ -31,3 +31,9 @@
 - 注释用 JSONC 的 `//`，只写为什么这样设。
 
 下一步：设置与扩展对齐后，回到 [定工具配置](../../steps/02-tooling.md) 收尾，再进 [通过检查](../../steps/03-check.md)。
+
+## 依据
+
+- [clangd: Configuration](https://clangd.llvm.org/config)：`.clangd` 与 `clangd.arguments`。
+- [CMake Tools: Settings](https://github.com/microsoft/vscode-cmake-tools/blob/main/docs/cmake-settings.md)：`cmake.buildDirectory`、`cmake.generator`、`cmake.exportCompileCommandsFile`。
+- [VS Code: Debugging](https://code.visualstudio.com/docs/debugtest/debugging)：`cppdbg` 调试配置与 `miDebuggerPath`。

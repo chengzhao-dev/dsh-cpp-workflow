@@ -7,7 +7,7 @@ import test from 'node:test'
 import { fileURLToPath } from 'node:url'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
-const script = path.join(here, '..', 'skills', 'engineering', 'formatting', 'scripts', 'checking-encoding.mjs')
+const script = path.join(here, '..', 'skills', 'engineering', 'references', 'formatting', 'scripts', 'checking-encoding.mjs')
 
 function workspace(files) {
   const root = mkdtempSync(path.join(tmpdir(), 'dsh-encoding-'))

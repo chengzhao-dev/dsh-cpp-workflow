@@ -1,6 +1,6 @@
 # 工作区边界
 
-门禁只回答一个问题：当前会话是否处在一个已经声明 C++ 工作流的项目里。答案每次查询都重新计算，没有缓存，也没有常驻进程。
+门禁只回答一个问题：当前会话是否处在一个已经声明 C++ 工作流的项目里。插件自己没有缓存，也没有常驻进程或定时器，每次被调用都重新扫描；宿主会把完成的目录按 `cwd`、作用域与修订号缓存，重算之前不会再调用这里。运行时的写盘与缓存边界见 [plugin-storage.md](plugin-storage.md)。
 
 ## 扫描范围
 
@@ -25,8 +25,8 @@
 
 ## 覆盖关系
 
-插件技能的 rank 是 550。项目自己的 `.agents/skills` 技能 rank 是 200，用户级技能是 500，包内根技能是 600。项目里放同名的 `developing-cpp`、`engineering` 或 `building-cpp` 会盖住插件，项目模板禁止这么做。项目技能 `cpp-workflow-project` 是另一个名字，不冲突。
+插件技能的 rank 是 550。宿主本地扫描的六档是：`.dsh/skills` 100、项目 `.agents/skills` 200、`customSkillDirs` 300、`user-dsh` 400、`user-agents` 500、包内根 `bundled` 600；近层同名先直接胜出，rank 只在同一层内决胜。项目或用户目录里放同名的 `developing-cpp`、`engineering` 或 `building-cpp` 都会盖住插件，项目模板禁止这么做，用户目录里的旧副本也因此不会被误当成本包提供的能力；本包不注册根技能，只与 550 这一档比较。项目技能 `cpp-workflow-project` 是另一个名字，不冲突。
 
 ## get 与 abort
 
-`list()` 返回空列表时，没有 candidate，`get()` 也不会被调用。只有调用方传 `cwd` 时才重查门禁；不传时继续服务已经加载的 candidate。调用方传 `AbortSignal` 时，已经中止的查询返回空列表，而不是抛错。
+`list()` 返回空列表时，没有 candidate，`get()` 也不会被调用。只有调用方传 `cwd` 时才重查门禁；不传时继续服务已经加载的 candidate。插件本身不抛错：调用方传 `AbortSignal` 时，已中止的 `list()` 返回空列表，`get()` 返回 `undefined`；宿主在调用前后检查 abort 并抛出 `AbortError`，所以用户侧看到的仍是中止。

@@ -1,15 +1,15 @@
 #!/usr/bin/env node
-// Structural checks for the packaged C++ workflow skills.
+// 打包后的 C++ 工作流技能的结构检查。
 //
-// This script guards the parts that are easy to drift by hand: package metadata,
-// the one-row bundle patch, the two-skill layout, step numbering, local links,
-// the empty project template, the build assets, and the README/docs surface.
-// It performs no network access and does not need a C++ compiler.
+// 这里守住最容易随手改坏的部分：包元数据、单行 bundle patch、三份技能布局、
+// 步骤编号、本地链接、空工程模板、构建资产与 README/docs 表面。
+// 检查不联网，也不需要 C++ 编译器。
 
 import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
 import { basename, dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { isPackagedPath } from './skill-link-rules.mjs'
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const failures = []
@@ -109,13 +109,20 @@ function checkMarkdownLinks(files) {
         failures.push(`${rel(abs)}: 链接指出仓库 ${target}`)
         continue
       }
-      ok(existsSync(resolved), `${rel(abs)}: 链接指向不存在的 ${target}`)
+      const exists = existsSync(resolved)
+      ok(exists, `${rel(abs)}: 链接指向不存在的 ${target}`)
+      if (exists && isPackagedPath(rel(abs), packageJson?.files ?? [])) {
+        ok(
+          isPackagedPath(rel(resolved), packageJson?.files ?? []),
+          `${rel(abs)}: 链接目标不随 npm 包发布 ${target}`,
+        )
+      }
     }
   }
 }
 
 // ---------------------------------------------------------------------------
-// Package metadata
+// 包元数据
 // ---------------------------------------------------------------------------
 
 const packageJson = readJson('package.json')
@@ -144,9 +151,9 @@ if (packageJson) {
   }
 
   equal(packageJson.engines?.node, '>=22', 'engines.node')
-  equal(packageJson.engines?.dsh, '>=0.2.0-rc.1 <0.3.0-0', 'engines.dsh')
-  equal(packageJson.peerDependencies?.['@deepseek-ai/dsh-skill'], '>=0.2.0-rc.1 <0.3.0-0', 'peer 范围')
-  equal(packageJson.devDependencies?.['@deepseek-ai/dsh-skill'], '>=0.2.0-rc.1 <0.3.0-0', 'dev 范围')
+  equal(packageJson.engines?.dsh, '>=0.2.1-rc.1 <0.3.0-0', 'engines.dsh')
+  equal(packageJson.peerDependencies?.['@deepseek-ai/dsh-skill'], '>=0.2.1-rc.1 <0.3.0-0', 'peer 范围')
+  equal(packageJson.devDependencies?.['@deepseek-ai/dsh-skill'], '>=0.2.1-rc.1 <0.3.0-0', 'dev 范围')
   ok(Boolean(packageJson.devDependencies?.typescript), '缺少 TypeScript devDependency')
 
   equal(packageJson.publishConfig?.access, 'public', 'publishConfig.access')
@@ -173,8 +180,8 @@ if (packageJson) {
   if ('client' in (packageJson.dsh ?? {})) {
     equal(packageJson.dsh.client?.platform, 'web', 'dsh.client.platform')
     ok(
-      (packageJson.dsh.client?.inject ?? []).includes('@deepseek-ai/dsh-client-ui-slots'),
-      'dsh.client.inject 缺少 ui-slots',
+      (packageJson.dsh.client?.inject ?? []).includes('@deepseek-ai/dsh-client-ui-renderer'),
+      'dsh.client.inject 缺少提供 slots 服务的 ui-renderer',
     )
     equal(packageJson.exports?.['./client'], './lib/client.js', 'exports["./client"]')
   } else {
@@ -186,7 +193,7 @@ if (packageJson) {
   equal(packageJson.icon, './icon.svg', 'icon 字段')
 }
 
-// package-lock stays in sync with the scoped name.
+// package-lock 与带作用域的包名保持同步。
 const packageLock = readJson('package-lock.json')
 if (packageLock && packageJson) {
   equal(packageLock.name, '@chengzhao-dev/dsh-cpp-workflow', 'package-lock.name')
@@ -196,7 +203,7 @@ if (packageLock && packageJson) {
 }
 
 // ---------------------------------------------------------------------------
-// Bundle patch, locale, icon
+// Bundle patch、locale 与图标
 // ---------------------------------------------------------------------------
 
 const patch = read('cordis.patch.yml')
@@ -232,7 +239,7 @@ if (ok(existsSync(iconPath), '缺少 icon.svg')) {
 }
 
 // ---------------------------------------------------------------------------
-// Three skills and their steps
+// 三份技能与步骤
 // ---------------------------------------------------------------------------
 
 const skillsRoot = join(ROOT, 'skills')
@@ -246,21 +253,20 @@ const SKILL_SPECS = {
   'developing-cpp': {
     title: 'developing-cpp',
     steps: ['01-behavior.md', '02-boundary.md', '03-declaration.md', '04-implementation.md'],
-    sections: ['source'],
-    h2: ['适用场景', '三种操作', '步骤', '完成判据'],
+    sections: ['references'],
+    h2: ['适用场景', '三种操作', '步骤', '入口表', '加载预算', '四类改动', '完成判据'],
   },
   'engineering': {
     title: 'engineering',
     steps: ['01-targets.md', '02-modules.md', '03-check.md'],
-    stepRoot: 'cmake/steps',
-    sections: ['cmake', 'formatting'],
-    h2: ['适用场景', '三种操作', '步骤', '完成判据'],
+    sections: ['references'],
+    h2: ['适用场景', '三种操作', '步骤', '入口表', '加载预算', '四类改动', '完成判据'],
   },
   'building-cpp': {
     title: 'building-cpp',
     steps: ['01-build.md', '02-tooling.md', '03-check.md'],
     sections: ['references', 'examples'],
-    h2: ['适用场景', '三种操作', '步骤', '完成判据'],
+    h2: ['适用场景', '三种操作', '步骤', '入口表', '加载预算', '四类改动', '完成判据'],
   },
 }
 
@@ -318,7 +324,7 @@ for (const [skillName, spec] of Object.entries(SKILL_SPECS)) {
   }
 }
 
-// Local Markdown links must resolve inside the repository.
+// 本地 Markdown 链接必须能在仓库内解析。
 const docMarkdown = ['README.md', 'README.en.md']
 for (const doc of ['docs', 'templates']) {
   const dir = join(ROOT, doc)
@@ -326,8 +332,79 @@ for (const doc of ['docs', 'templates']) {
 }
 checkMarkdownLinks([...new Set([...skillMarkdown.map(rel), ...docMarkdown])].map((item) => join(ROOT, item)))
 
+// 目录级可达性：从三份入口表出发，沿文件路径、祖先目录（至少两级，
+// 如 references/language/）与本地链接逐层标记；references 下的 Markdown
+// 必须全部可达。目录引用后必须是非路径字符，避免误匹配子目录。
+const entryTexts = Object.keys(SKILL_SPECS).map((skillName) => {
+  const text = withoutFences(read(`skills/${skillName}/SKILL.md`))
+  const start = text.indexOf('## 入口表')
+  if (start < 0) return ''
+  const rest = text.slice(start + '## 入口表'.length)
+  const end = rest.search(/\n## /)
+  return end < 0 ? rest : rest.slice(0, end)
+})
+
+function isCited(text, candidate) {
+  for (let index = text.indexOf(candidate); index !== -1; index = text.indexOf(candidate, index + 1)) {
+    const next = text[index + candidate.length]
+    if (next === undefined || !/[A-Za-z0-9_./-]/.test(next)) return true
+  }
+  return false
+}
+
+const skillFiles = [...new Set(skillMarkdown.map(rel))]
+const skillTexts = new Map(skillFiles.map((file) => [file, withoutFences(read(file))]))
+const referenceMarkdown = skillFiles.filter((file) => /^skills\/[^/]+\/references\/.+\.md$/.test(file))
+
+function citedBy(text, file) {
+  const skillName = file.split('/')[1]
+  const fromSkill = file.slice(`skills/${skillName}/`.length)
+  const candidates = new Set([fromSkill])
+  for (let dir = dirname(fromSkill); dir.split('/').length > 1; dir = dirname(dir)) {
+    candidates.add(`${dir}/`)
+  }
+  return [...candidates].some((candidate) => isCited(text, candidate))
+}
+
+function linkedBy(file, text) {
+  const base = dirname(join(ROOT, file))
+  const targets = []
+  for (const match of text.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
+    const target = match[1].trim().replace(/^<|>$/g, '').split(/\s+/)[0].split('#')[0]
+    if (!target || /^[a-z][a-z0-9+.-]*:/i.test(target)) continue
+    const resolved = rel(resolve(base, target))
+    if (skillTexts.has(resolved)) targets.push(resolved)
+  }
+  return targets
+}
+
+const reachable = new Set()
+const queue = []
+function discover(files) {
+  for (const file of files) {
+    if (skillTexts.has(file) && !reachable.has(file)) {
+      reachable.add(file)
+      queue.push(file)
+    }
+  }
+}
+
+for (const text of entryTexts) discover(skillFiles.filter((file) => citedBy(text, file)))
+while (queue.length > 0) {
+  const file = queue.shift()
+  const text = skillTexts.get(file)
+  discover(skillFiles.filter((target) => citedBy(text, target)))
+  discover(linkedBy(file, text))
+}
+
+const unreachable = referenceMarkdown.filter((file) => !reachable.has(file))
+ok(
+  unreachable.length === 0,
+  `入口表无法到达的参考文件（${unreachable.length}）：${unreachable.slice(0, 8).join('、')}${unreachable.length > 8 ? ' 等' : ''}`,
+)
+
 // ---------------------------------------------------------------------------
-// Architecture and trigger docs
+// 架构与触发文档
 // ---------------------------------------------------------------------------
 
 const architecture = read('docs/architecture.md')
@@ -340,6 +417,7 @@ for (const token of [
   'cpp-workflow-project',
   'checking-comments.mjs',
   'checking-environment.mjs',
+  'checking-declaration-order.mjs',
   'environment.json',
   'compile_commands.json',
 ]) {
@@ -386,7 +464,7 @@ for (const readme of ['README.md', 'README.en.md']) {
 ok(read('docs/plugin-layout.md').includes('architecture.md'), 'docs/plugin-layout.md: 目录树缺少 architecture.md')
 ok(read('docs/plugin-layout.md').includes('triggering.md'), 'docs/plugin-layout.md: 目录树缺少 triggering.md')
 
-// Forbidden leftovers: old step numbering and formatting fallbacks.
+// 禁止残留：旧步骤号与已删除的格式回退。
 const SCANNED = new Set()
 for (const base of ['skills', 'templates', 'docs', 'locale']) {
   const dir = join(ROOT, base)
@@ -412,7 +490,7 @@ for (const abs of SCANNED) {
   }
 }
 
-// Reference pages must not point at the removed four-skill numbering.
+// 参考页不得再指向已删除的四技能编号。
 for (const abs of listFiles(join(ROOT, 'skills')).filter((file) => file.endsWith('.md'))) {
   const text = read(rel(abs))
   ok(!/第\s*0?[5-7]\s*步/.test(text), `${rel(abs)}: 仍引用 05-07 步`)
@@ -420,7 +498,7 @@ for (const abs of listFiles(join(ROOT, 'skills')).filter((file) => file.endsWith
 }
 
 // ---------------------------------------------------------------------------
-// Project template and build assets
+// 工程模板与构建资产
 // ---------------------------------------------------------------------------
 
 const templateRoot = join(ROOT, 'templates', 'cpp-workflow-project')
@@ -472,26 +550,26 @@ const clangd = read('skills/building-cpp/assets/config/.clangd')
 ok(/CompilationDatabase:/.test(clangd), '.clangd 缺少 CompilationDatabase')
 ok(!/-std=/.test(clangd), '.clangd 不应写死 -std，标准由 compile_commands.json 决定')
 
-const standardsRoot = join(ROOT, 'skills', 'engineering', 'cmake', '03-standard', 'standards')
+const standardsRoot = join(ROOT, 'skills', 'engineering', 'references', 'cmake', 'standards')
 const standardIds = ['c++11', 'c++14', 'c++17', 'c++20', 'c++23']
 equal(
   readdirSync(standardsRoot, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
+    .filter((entry) => entry.isDirectory() && entry.name.startsWith('c++'))
     .map((entry) => entry.name)
     .sort(),
   standardIds,
   'standards 标准目录',
 )
-const standards = read('skills/engineering/cmake/03-standard/standards/README.md')
+const standards = read('skills/engineering/references/cmake/standards/README.md')
 for (const standard of standardIds) {
   ok(standards.includes(standard), `standards/README.md 缺少 ${standard}`)
   const number = standard.replace('c++', '')
-  const profile = read(`skills/engineering/cmake/03-standard/standards/${standard}/README.md`)
+  const profile = read(`skills/engineering/references/cmake/standards/${standard}/README.md`)
   ok(profile.includes(`\`${standard}\``), `${standard}/README.md 缺少 standard id`)
   ok(profile.includes('__cplusplus'), `${standard}/README.md 缺少 __cplusplus`)
   ok(profile.includes('## 最重要的三件事'), `${standard}/README.md 缺少最重要的三件事`)
   ok(profile.includes('## 验证'), `${standard}/README.md 缺少验证`)
-  const snippet = read(`skills/engineering/cmake/03-standard/standards/${standard}/cmake-snippet.cmake`)
+  const snippet = read(`skills/engineering/references/cmake/standards/${standard}/cmake-snippet.cmake`)
   ok(snippet.includes(`cxx_std_${number}`), `${standard}/cmake-snippet.cmake 缺少 cxx_std_${number}`)
   ok(snippet.includes(`CXX_STANDARD ${number}`), `${standard}/cmake-snippet.cmake 缺少 CXX_STANDARD ${number}`)
   ok(snippet.includes('CXX_STANDARD_REQUIRED ON'), `${standard}/cmake-snippet.cmake 缺少 CXX_STANDARD_REQUIRED ON`)
@@ -517,8 +595,8 @@ const buildRef = read('skills/building-cpp/references/build-script.md')
 ok(buildRef.includes('省略时默认 `clang`'), '构建脚本文档未说明默认 clang')
 ok(!/第\s*0?[5-7]\s*步/.test(buildRef), '构建脚本文档仍引用旧步骤号')
 
-// Shell syntax and Node syntax. Dependency and VCS trees are not project shell
-// assets; scanning them would make the check depend on installed packages.
+// Shell 语法与 Node 语法。依赖目录与 VCS 目录不是工程的 shell 资产；
+// 扫描它们会让检查依赖已安装的包。
 for (const file of listFiles(ROOT).filter((item) => {
   if (!item.endsWith('.sh')) return false
   const relativePath = rel(item)
@@ -533,7 +611,7 @@ for (const file of listFiles(ROOT).filter((item) => {
 }
 for (const file of [
   join(ROOT, 'skills', 'building-cpp', 'scripts', 'checking-environment.mjs'),
-  join(ROOT, 'skills', 'engineering', 'formatting', 'scripts', 'checking-encoding.mjs'),
+  join(ROOT, 'skills', 'engineering', 'references', 'formatting', 'scripts', 'checking-encoding.mjs'),
   join(ROOT, 'scripts', 'checking-skill-links.mjs'),
 ]) {
   try {
@@ -545,7 +623,7 @@ for (const file of [
 }
 
 // ---------------------------------------------------------------------------
-// Docs, README and workflows
+// 文档、README 与工作流
 // ---------------------------------------------------------------------------
 
 const docs = [
@@ -555,6 +633,7 @@ const docs = [
   'plugin-boundaries.md',
   'plugin-flow.md',
   'plugin-layout.md',
+  'plugin-storage.md',
   'triggering.md',
   'versioning.md',
 ]
@@ -591,7 +670,7 @@ const domainRowLines = (text, heading) => {
 const domainNames = (lines) => lines.map((line) => line.split('|')[1].trim())
 const skillNames = ['developing-cpp', 'engineering', 'building-cpp']
 for (const skill of skillNames) {
-  const rows = domainRowLines(read(`skills/${skill}/SKILL.md`), '### 四类改动')
+  const rows = domainRowLines(read(`skills/${skill}/SKILL.md`), '## 四类改动')
   equal(domainNames(rows), domains, `${skill} SKILL.md 四类改动的域名与顺序`)
   ok(rows.length === 4, `${skill} SKILL.md 四类改动的行数`)
   ok(
@@ -624,12 +703,14 @@ equal(
 )
 const version = packageJson?.version ?? ''
 ok(version !== '', 'package.json 缺少 version')
-const npmPin = `@chengzhao-dev/dsh-cpp-workflow@${version}`
-const tagPin = `github:chengzhao-dev/dsh-cpp-workflow#v${version}`
-ok(readmeZh.includes(npmPin), 'README 缺少钉死版本的 npm 安装命令')
-ok(readmeZh.includes(tagPin), 'README 缺少 Git 标签安装命令')
-ok(readmeEn.includes(npmPin), 'README.en 缺少钉死版本的 npm 安装命令')
-ok(readmeEn.includes(tagPin), 'README.en 缺少 Git 标签安装命令')
+// README 钉死的是用户此刻能装到的版本，发布前可以落后于 package.json；
+// 这里只要求中英 README 各自给出带具体版本号的 npm 与 Git 标签安装命令。
+const checkPins = (text, label) => {
+  ok(/@chengzhao-dev\/dsh-cpp-workflow@\d+\.\d+\.\d+/.test(text), `${label} 缺少钉死版本的 npm 安装命令`)
+  ok(/github:chengzhao-dev\/dsh-cpp-workflow#v\d+\.\d+\.\d+/.test(text), `${label} 缺少 Git 标签安装命令`)
+}
+checkPins(readmeZh, 'README')
+checkPins(readmeEn, 'README.en')
 
 const creation = read('.github/creation-references.md')
 ok(creation.includes('deepseek-harness.github.io'), '创建依据缺少官方文档')
@@ -655,7 +736,7 @@ ok(publish.includes('gh release create'), 'publish.yml 未创建 GitHub Release'
 ok(publish.includes('--verify-tag'), 'publish.yml 创建 Release 时未校验标签')
 
 // ---------------------------------------------------------------------------
-// Built entry and schema gate
+// 构建入口与 schema 门禁
 // ---------------------------------------------------------------------------
 
 const libEntry = join(ROOT, 'lib', 'index.js')
@@ -689,7 +770,7 @@ ok(schemaTest.includes('oneOf'), 'schema 测试未覆盖 oneOf')
 ok(schemaTest.includes('additionalProperties'), 'schema 测试未覆盖 additionalProperties')
 
 // ---------------------------------------------------------------------------
-// Report
+// 报告
 // ---------------------------------------------------------------------------
 
 if (failures.length > 0) {

@@ -12,7 +12,7 @@
 clang-format --dry-run --Werror src/*.cpp include/*.h
 ```
 
-需要修复时单独运行 `clang-format -i`，再回看 diff。`clang-format` 只排版，不会把行尾注释搬到上一行；数据成员注释位置按 `developing-cpp/source/07-comments/01-comment-rules.md` 的规则和 `checking-comments.mjs` 检查。
+需要修复时单独运行 `clang-format -i`，再回看 diff。`clang-format` 只排版，不会把行尾注释搬到上一行；数据成员注释位置按 `developing-cpp/references/comments/comment-rules.md` 的规则和 `checking-comments.mjs` 检查。
 
 ## 用法
 
@@ -34,7 +34,7 @@ clang-format --dry-run --Werror src/*.cpp include/*.h
 4. **configure**：每次运行都重新 configure，不复用缓存；传 `-G Ninja`、`-DCMAKE_BUILD_TYPE=Debug`、`-DCMAKE_C_COMPILER`、`-DCMAKE_CXX_COMPILER`、`-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`。C 与 C++ 使用同一套编译器；没有 C 语言的工程会忽略 C 编译器设置。
 5. **build**：`cmake --build "$BUILD_DIR"`。
 6. **编译数据库链接**：先 `rm -f build/compile_commands.json`，再 `ln -s "${COMPILER}/compile_commands.json" build/compile_commands.json`；不用 `ln -n`，它在 BSD/macOS 上不可移植。
-7. **test**：`ctest --test-dir "$BUILD_DIR" --output-on-failure`；没有测试时 CTest 成功。
+7. **test**：有 `tests/` 目录时 `ctest --test-dir "$BUILD_DIR" --output-on-failure --no-tests=error`，防止测试 discovery 失败后 0 条也算通过；没有测试目录时 `ctest --test-dir "$BUILD_DIR" --output-on-failure`，0 条不算失败。
 8. **run**：`(cd "$BUILD_DIR/bin" && "./$APP_NAME")`；共享库的运行时路径由定构建的 CMake RPATH 负责，不在脚本里设全局 `LD_LIBRARY_PATH`。
 
 最后一行是 `main "$@"`；函数定义在 `main()` 之前，`set` / `readonly` 在最前。
@@ -58,7 +58,7 @@ clang-format --dry-run --Werror src/*.cpp include/*.h
 - `Check`：两种模式都在条件不成立时打印诊断并终止。
 - `DebugCheck`：只在 Debug 生效，`NDEBUG` 后展开为空，参数不能带副作用。
 
-不要写成 Debug 抛异常、Release 返回 false 的模式分支；这会把调用方逼成两套逻辑。规则详见 `developing-cpp/source/08-exceptions/01-throw-rules.md`。
+不要写成 Debug 抛异常、Release 返回 false 的模式分支；这会把调用方逼成两套逻辑。规则详见 `developing-cpp/references/exceptions/throw-rules.md`。
 
 ## 失败分诊
 
@@ -79,3 +79,10 @@ clang-format --dry-run --Werror src/*.cpp include/*.h
 - 切换编译器后 `build/compile_commands.json` 指向新数据库。
 - 调用者的 `LD_LIBRARY_PATH` 在脚本结束后不变。
 - Windows 原生：声明校验已拒绝该组合；不要伪造 PowerShell 脚本，也不要绕过声明。
+
+## 依据
+
+- [CMake: `cmake(1)`](https://cmake.org/cmake/help/latest/manual/cmake.1.html)：`-S`、`-B`、`--build` 与 `-G Ninja`。
+- [CMake: `ctest(1)`](https://cmake.org/cmake/help/latest/manual/ctest.1.html)：`--test-dir`、`--output-on-failure`、`--no-tests=error`。
+- [Ninja Manual](https://ninja-build.org/manual.html)：构建目录与增量构建。
+- [GNU Bash Reference: `set -euo pipefail`](https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html)：脚本的失败即停与未定义变量检查。

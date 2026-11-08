@@ -70,7 +70,11 @@ main() {
     "${BUILD_ROOT}/compile_commands.json"
 
   header "测试"
-  ctest --test-dir "${BUILD_DIR}" --output-on-failure
+  if [ -d tests ]; then
+    ctest --test-dir "${BUILD_DIR}" --output-on-failure --no-tests=error
+  else
+    ctest --test-dir "${BUILD_DIR}" --output-on-failure
+  fi
 
   header "运行 ${APP_NAME}"
   (

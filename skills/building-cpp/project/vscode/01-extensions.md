@@ -20,3 +20,9 @@
 4. 模板在 `../../assets/config/.vscode/extensions.json`，只作为新工程的起点；工程已有文件时不复制整份覆盖。
 
 下一步：扩展对齐后，读 [02-settings.md](02-settings.md) 接线设置。
+
+## 依据
+
+- [clangd: Editor Plugins](https://clangd.llvm.org/installation#editor-plugins)：VS Code 的 clangd 扩展与语言服务。
+- [CMake Tools for VS Code](https://github.com/microsoft/vscode-cmake-tools/blob/main/docs/README.md)：配置、构建、调试入口。
+- [VS Code: Extension Recommendations](https://code.visualstudio.com/docs/editor/extension-marketplace#_workspace-recommended-extensions)：`extensions.json` 的 `recommendations`。

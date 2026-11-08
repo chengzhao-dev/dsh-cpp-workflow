@@ -1,33 +1,18 @@
-// Workspace evidence for dsh-cpp-workflow.
+// dsh-cpp-workflow 的工作区判定。
 //
-// A repository opts in only when it carries the project skill on the path from
-// the session cwd up to the git root. The marker is the opt-in declaration;
-// first-party C++ or CMake evidence is deliberately not part of the gate, so a
-// freshly copied template still sees the workflow. The git root is the
-// repository boundary: marker lookup ignores sibling directories and never
-// searches above the root.
+// 仓库只有在「cwd 到 git 根的路径上带着项目技能」时才视为主动启用。标记文件
+// 就是启用声明；C++ 或 CMake 证据刻意不参与，刚复制的模板照样能看到工作流。
+// git 根是仓库边界：标记查找不进兄弟目录，也不向根之上继续。
 import { access } from 'node:fs/promises'
 import path from 'node:path'
 
 export const PROJECT_SKILL = path.join('.agents', 'skills', 'cpp-workflow-project', 'SKILL.md')
 export const MAX_ASCENT = 64
-const SKIPPED_DIRS = new Set([
-  '.git',
-  'node_modules',
-  'vendor',
-  'third_party',
-  'templates',
-  'build',
-  'temp',
-  '.cache',
-])
-
-export const CPP_BUILD_FILES = new Set(['CMakeLists.txt'])
 
 export interface ProjectSkillMarker {
-  /** Absolute path to `.agents/skills/cpp-workflow-project/SKILL.md`. */
+  /** `.agents/skills/cpp-workflow-project/SKILL.md` 的绝对路径。 */
   file: string
-  /** Directory that directly contains `.agents`; not the repository boundary. */
+  /** 直接包含 `.agents` 的目录；不是仓库边界。 */
   root: string
 }
 
@@ -40,7 +25,7 @@ async function exists(target: string): Promise<boolean> {
   }
 }
 
-/** Nearest enclosing git checkout, including a worktree's `.git` file. */
+/** 最近的上级 git 检出；worktree 的 `.git` 文件也算。 */
 export async function findGitRoot(cwd: string | undefined): Promise<string | undefined> {
   if (typeof cwd !== 'string' || cwd.trim() === '') return undefined
   let cursor: string
@@ -59,9 +44,8 @@ export async function findGitRoot(cwd: string | undefined): Promise<string | und
 }
 
 /**
- * Find the nearest project-skill marker between `cwd` and the git root,
- * inclusive. A marker above the git root never counts. The marker's directory
- * is also returned for diagnostics; it is not the repository boundary.
+ * 在 `cwd` 与 git 根之间（含两端）找最近的项目技能标记；根之上的标记不算。
+ * 同时返回标记所在目录供诊断，它不是仓库边界。
  */
 export async function findProjectSkill(
   cwd: string | undefined,
@@ -95,22 +79,11 @@ export async function findProjectSkill(
   return undefined
 }
 
-/** Boolean form of {@link findProjectSkill}. */
-export async function hasProjectSkill(
-  cwd: string | undefined,
-  gitRoot?: string,
-): Promise<boolean> {
-  return (await findProjectSkill(cwd, gitRoot)) !== undefined
-}
-
 /**
- * Session gate. The project skill must sit between `cwd` and the git root
- * (inclusive). First-party C++ or CMake evidence is deliberately not required:
- * a freshly copied template still needs the workflow, and an empty project
- * legitimately stops at the build step.
+ * 会话门禁：项目技能必须位于 `cwd` 与 git 根之间（含两端）。不要求 C++ 或
+ * CMake 证据：刚复制的模板仍需要工作流，空工程也可以合法地停在构建步骤。
  *
- * No cwd, no git checkout, a marker above the git root, or a marker only in a
- * sibling directory returns false.
+ * 没有 cwd、不在 git 检出内、标记只在 git 根之上或只在兄弟目录时返回 false。
  */
 export async function isCppWorkflowWorkspace(cwd: string | undefined): Promise<boolean> {
   const gitRoot = await findGitRoot(cwd)

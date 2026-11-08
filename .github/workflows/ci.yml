@@ -20,6 +20,7 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run test:matrix
+      - run: npm run pack:check
   test-windows:
     runs-on: windows-latest
     steps:

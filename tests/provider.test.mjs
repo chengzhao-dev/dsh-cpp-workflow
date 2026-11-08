@@ -1,7 +1,6 @@
-// Provider tests: the marker gate, candidate shape and get() confinement.
-// No C++ toolchain is needed: the gate is the project-skill marker, and the
-// skills themselves are packaged Markdown. CMake/C++ evidence is deliberately
-// not required, so an empty or freshly copied project still sees the workflow.
+// Provider 测试：标记门禁、候选形状与 get() 的路径围栏。
+// 不需要 C++ 工具链：门禁看的是项目技能标记，技能本身是打包的 Markdown。
+// CMake/C++ 证据刻意不参与，空工程或刚复制的模板照样能看到工作流。
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
@@ -250,6 +249,21 @@ test('the tag snapshot rides only on developing-cpp and follows the config', asy
   assert.match(loaded.content, /当前注释配置/)
   assert.match(loaded.content, /@author chengzhao-dev/)
   assert.doesNotMatch(building ? (await provider.get(building)).content : '', /当前注释配置/)
+  await rm(root, { recursive: true, force: true })
+})
+
+// 开销数字记在 docs/plugin-flow.md 的「开销（实测）」一节；这里只锁预算，
+// 正文或描述涨过预算时先改文档，再决定要不要接受这次增长。
+test('packaged skills stay inside the documented size budget', async () => {
+  const root = await makeRepo({ cpp: true })
+  const provider = makeProvider()
+  const candidates = await provider.list({ cwd: root })
+  const catalog = candidates.map((candidate) => `- \`${candidate.name}\`: ${candidate.description}`).join('\n')
+  assert.ok(catalog.length <= 700, `the catalog grew to ${catalog.length} characters`)
+  for (const candidate of candidates) {
+    const loaded = await provider.get(candidate)
+    assert.ok(loaded.content.length <= 5200, `${candidate.name} grew to ${loaded.content.length} characters`)
+  }
   await rm(root, { recursive: true, force: true })
 })
 

@@ -1,5 +1,5 @@
 // 锁定设置页的标签策略：默认预览、隐私标签、文件名跟随、检查器参数与技能快照。
-// 规则改动时同步 source/07-comments/01-comment-rules.md 与设置页文案。
+// 规则改动时同步 references/comments/comment-rules.md 与设置页文案。
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
@@ -107,6 +107,10 @@ test('技能快照写出符号、开关与放行项', () => {
   assert.match(text, /符号：\/\*\* \.\.\. \*\//)
   assert.match(text, /@author chengzhao-dev/)
   assert.match(text, /@note/)
+  const empty = snapshotText(DEFAULT_CONFIG)
+  assert.match(empty, /未填值 @author、@date、@copyright、@version/)
+  assert.match(empty, /开启 @file、@brief、@param/)
+  assert.doesNotMatch(empty, /未填值 @brief/)
 })
 
 test('客户端产物内联同一份策略', () => {

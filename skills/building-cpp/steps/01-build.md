@@ -15,7 +15,7 @@ build/
 
 ## 前置
 
-先读项目技能与 `environment.json`，再确认 `engineering` 已经把 target 图、公共 include、语言标准和输出目录写进 CMake。target 缺失、标准不对、include 或链接边界没写时，停止本步，转 `engineering` 的定 target 与标准；不要在这里用全局变量或临时 `-std` 绕过。 只在需要核对时打开 `../../engineering/cmake/01-targets/01-rules.md` 或 `../../engineering/cmake/03-standard/01-cxx-standard.md` 被点名的一份；CMake 的写改仍由 `engineering` 落笔。
+先读项目技能与 `environment.json`，再确认 `engineering` 已经把 target 图、公共 include、语言标准和输出目录写进 CMake。target 缺失、标准不对、include 或链接边界没写时，停止本步，转 `engineering` 的定 target 与标准；不要在这里用全局变量或临时 `-std` 绕过。 只在需要核对时打开 `../../engineering/references/cmake/targets/rules.md` 或 `../../engineering/references/cmake/standards/cxx-standard.md` 被点名的一份；CMake 的写改仍由 `engineering` 落笔。
 
 ## 环境
 
@@ -26,7 +26,7 @@ build/
 | `compiler` | `clang` / `gcc` | 用哪个编译器；一次只配一个 |
 | `standard` | `c++11`–`c++23` | 一个工程一个语言标准；新工程默认 `c++23`，已有工程按原声明 |
 
-环境轴为空、`standard` 非法或组合非法时，停在定构建，先让用户把 `environment.json` 填对。不要替用户选 WSL、Clang 或构建目录。`windows` + `native` 只给一句「本版本不能在 Windows 原生壳里构建」。
+三个环境轴为空、`standard` 取值不在 `c++11`–`c++23` 内或组合非法时，停在定构建，先让用户把 `environment.json` 填对。`standard` 缺失或为空时按默认 `c++23` 继续并提示声明升级，不按非法声明停下。不要替用户选 WSL、Clang 或构建目录。`windows` + `native` 只给一句「本版本不能在 Windows 原生壳里构建」。
 
 ## 规则
 
@@ -43,6 +43,7 @@ build/
 ```bash
 cmake -S . -B build/clang -G Ninja \
   -DCMAKE_BUILD_TYPE=Debug \
+  -DCMAKE_C_COMPILER=clang \
   -DCMAKE_CXX_COMPILER=clang++ \
   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 cmake --build build/clang
@@ -50,11 +51,11 @@ rm -f build/compile_commands.json
 ln -s clang/compile_commands.json build/compile_commands.json
 ```
 
-GCC 模式把目录和编译器换成 `build/gcc`、`g++`。每次构建都重新 configure；不要依赖上一次缓存。
+GCC 模式把目录和编译器换成 `build/gcc`、`g++`（C 驱动换成 `gcc`）。每次构建都重新 configure；不要依赖上一次缓存。C 与 C++ 驱动一起换，不要只换 C++ 驱动。
 
 ## 情况
 
-**新工程**：从 `../assets/templates/projects/` 选形态；模板缺 target 时先转 `engineering`，target 齐了再 configure。
+**新工程**：从 `../assets/templates/projects/` 选形态；把 `../assets/templates/projects/common/running-build.sh` 复制到工程根，`chmod +x` 并用 `bash -n` 验证语法。模板缺 target 时先转 `engineering`，target 齐了再 configure。
 
 **已有工程**：先读现有 `CMakeLists.txt`，只核对 target、标准与输出目录；不改与当前任务无关的 target，大改前先让现有构建跑通。
 

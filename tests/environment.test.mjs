@@ -47,12 +47,12 @@ function cli(args) {
   return spawnSync(process.execPath, [script, ...args], { encoding: 'utf8' })
 }
 
-/** Fake PATH resolver: every listed command exists at /fake/bin/<command>. */
+/** 假的 PATH 解析器：列出的命令都存在于 /fake/bin/<command>。 */
 function resolver(command) {
   return `/fake/bin/${command}`
 }
 
-/** Fake --version runner, keyed by the resolved command's basename. */
+/** 假的 --version 运行器，按解析后命令的 basename 取版本。 */
 function runner(versions) {
   return (executable) => {
     const command = path.basename(executable)

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// 只读注释审计：按 source/07-comments/01-comment-rules.md 的硬规则检查 C/C++ 源文件。
+// 只读注释审计：按 references/comments/comment-rules.md 的硬规则检查 C/C++ 源文件。
 //
 // 检查项：Doxygen 文件头、注释行宽度、列表缩进、标签、标签间空行、注释与声明的贴合、
-// 类型注释存在性、成员功能清单、设计论证（方案对比）、否定式边界、领域尺寸、谓词首句、@param 完整性、枚举成员注释一致性、枚举行尾句式、数据成员主注释位置。
+// 类型注释存在性、成员功能清单、设计论证（方案对比）、否定式边界、领域尺寸、谓词首句、@param 完整性、摘要裸参数名、枚举成员注释一致性、枚举行尾句式、数据成员主注释位置。
 // 不重写任何文件。
 //
 // 用法：
@@ -33,13 +33,17 @@ const DOXY_BRIEF = /^\/\/\/\s*@brief\s+\S/
 const BLOCK_FILE = /^@file\s+\S/
 const BLOCK_BRIEF = /^@brief\s+\S/
 const MEMBER_LIST = /提供[^。]{0,40}、[^。]{0,40}(的功能|的能力|的接口)|功能[:：]/
+const CALLER_LIST = /调用/
+const MEMBER_REF = /`(?:Get|Set|Clear|Is|Has|Can|Completes|Would|Check|ToIndex|Place|Undo|Choose)[A-Za-z0-9_]*`/
 const RATIONALE = /而不是|而非|代价.{0,4}忽略|只留一份|与其|比.{0,12}更|更(?:安全|快|清楚|直接|好写|难写)/
 const FORWARD_REF = /(?:留在|归|交给|由)\s*`?[A-Z][A-Za-z0-9_]*`?/
 const TYPE_SYSTEM = /值语义|自由拷贝/
 const NEGATED_BOUNDARY = /只保存|不拥有|不含/
 const NEGATIVE_SCOPE = /不(?:检查|校验|验证|负责|判断)/
 const DOMAIN_SIZE = /\d+\s*[×xX]\s*\d+|九格|九个格子/
-const PREDICATE_DECL = /^(?:\[\[nodiscard\]\]\s*)?(?:static\s+)?bool\s+(?:Is|Has|Can|Completes)[A-Za-z0-9_]*\s*\(|operator==/
+const PREDICATE_DECL = /^(?:\[\[nodiscard\]\]\s*)?(?:static\s+)?bool\s+(?:Is|Has|Can|Completes|Would)[A-Za-z0-9_]*\s*\(|operator==/
+const isPredicateFirstOk = (declaration, firstDocLine) =>
+  firstDocLine.startsWith('检查') || (declaration.includes('operator==') && firstDocLine.startsWith('相等运算符'))
 const DECL_KEYWORDS = /^(class|struct|union|enum|namespace|using|typedef|template|#|if|else|for|while|switch|return|case|default)\b/
 
 function usage(message) {
@@ -135,16 +139,44 @@ export function displayWidth(text) {
   return width
 }
 
-/** 标签块开始后是否出现空行；描述与首个标签之间的空行不算。 */
+const TAG_GROUPS = {
+  param: 'param',
+  tparam: 'param',
+  return: 'return',
+  returns: 'return',
+  retval: 'return',
+  result: 'return',
+  throws: 'throws',
+  throw: 'throws',
+  exception: 'throws',
+  note: 'note',
+}
+
+/** 取标签所属分组；参数、返回值、异常、说明各成一组。 */
+function tagGroupOf(tag) {
+  const name = tag.slice(1).toLowerCase().split(/[\s{[(]/)[0]
+  return TAG_GROUPS[name] ?? 'other'
+}
+
+/** 分组之间允许空行；同一分组内出现空行才算标签粘连。描述与首个标签之间的空行不算。 */
 function hasTagGap(contents) {
-  let seenTag = false
+  let lastGroup = null
+  let pendingGap = false
   for (const content of contents) {
     const trimmed = content.trim()
     if (trimmed.startsWith('@')) {
-      seenTag = true
+      const group = tagGroupOf(trimmed)
+      if (pendingGap && lastGroup === group) return true
+      pendingGap = false
+      lastGroup = group
       continue
     }
-    if (seenTag && trimmed === '') return true
+    if (trimmed === '') {
+      if (lastGroup !== null) pendingGap = true
+      continue
+    }
+    // 空行后接正文是标签说明内的段落，不是分组分隔，取消待定空行
+    pendingGap = false
   }
   return false
 }
@@ -208,6 +240,23 @@ export function functionParams(declaration) {
     return undefined
   }
   return splitParams(decl.slice(open + 1, close)).map(paramName).filter(Boolean)
+}
+
+/** 取函数注释第一段：遇到空行或 Doxygen 标签就结束。 */
+function summaryParagraph(contents) {
+  const paragraph = []
+  for (const line of contents) {
+    const text = line.trim()
+    if (text === '' || text.startsWith('@')) break
+    paragraph.push(text)
+  }
+  return paragraph.join(' ')
+}
+
+/** 判断摘要中是否直接出现了参数名。 */
+function mentionsParam(text, name) {
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`(^|[^A-Za-z0-9_])${escaped}([^A-Za-z0-9_]|$)`).test(text)
 }
 
 /** 标记每一行是否位于 class/struct 体内，供数据成员注释位置检查使用。 */
@@ -330,7 +379,7 @@ export function checkText(text, options = {}) {
       }
       for (const tag of FORBIDDEN_TAGS) {
         if (options.allowTags?.has(tag.slice(1))) continue
-        if (trimmed.includes(tag)) add(index + 1, 'forbidden-tag', `禁止使用 ${tag}，按 source/07-comments/01-comment-rules.md 的标签表改写`)
+        if (trimmed.includes(tag)) add(index + 1, 'forbidden-tag', `禁止使用 ${tag}，按 references/comments/comment-rules.md 的标签表改写`)
       }
     }
   }
@@ -344,7 +393,7 @@ export function checkText(text, options = {}) {
         if (displayWidth(rendered) > width) add(doc.start + 1, 'comment-width', `注释行 ${displayWidth(rendered)} 列，超过 ${width} 列`)
         for (const tag of FORBIDDEN_TAGS) {
           if (options.allowTags?.has(tag.slice(1))) continue
-          if (content.includes(tag)) add(doc.start + 1, 'forbidden-tag', `禁止使用 ${tag}，按 source/07-comments/01-comment-rules.md 的标签表改写`)
+          if (content.includes(tag)) add(doc.start + 1, 'forbidden-tag', `禁止使用 ${tag}，按 references/comments/comment-rules.md 的标签表改写`)
         }
       }
       for (let raw = doc.start; raw <= doc.end; raw += 1) {
@@ -353,7 +402,7 @@ export function checkText(text, options = {}) {
         }
       }
       if (!doc.contents.some((content) => content.includes('@file')) && hasTagGap(doc.contents)) {
-        add(doc.start + 1, 'tag-gap', 'Doxygen 标签之间有空行：描述与标签组之间空一行，标签之间不空行')
+        add(doc.start + 1, 'tag-gap', '同一分组内的 Doxygen 标签之间有空行：参数、返回值、异常、说明各成一组，组间空一行，组内连续')
       }
       index = doc.end
     }
@@ -382,9 +431,12 @@ export function checkText(text, options = {}) {
     const block = lines.slice(start, end + 1).join('\n')
     const docContents = lines.slice(start, end + 1).map((line) => line.trim().replace(/^\/\/\/\s?/, ''))
     if (hasTagGap(docContents)) {
-      add(start + 1, 'tag-gap', 'Doxygen 标签之间有空行：描述与标签组之间空一行，标签之间不空行')
+      add(start + 1, 'tag-gap', '同一分组内的 Doxygen 标签之间有空行：参数、返回值、异常、说明各成一组，组间空一行，组内连续')
     }
     const isType = /^(template\s*<[^>]*>\s*)?(class|struct|union|enum)\b/.test(declaration)
+    if (!isType && CALLER_LIST.test(block) && MEMBER_REF.test(block)) {
+      add(start + 1, 'caller-list', '函数注释在点名调用者：调用关系会随重构过期，只写这个函数做什么、参数、返回值与异常')
+    }
     if (RATIONALE.test(block)) {
       add(start + 1, 'rationale', '注释在写设计取舍：方案对比与理由移到正文或实现注释，接口注释只留契约')
     }
@@ -404,14 +456,19 @@ export function checkText(text, options = {}) {
       add(start + 1, 'negative-scope', '注释用「不检查/不校验/不负责/不判断」写能力边界：改成正向限定，前置条件写「调用方保证…」或 @pre')
     }
     if (isType && DOMAIN_SIZE.test(block)) {
-      add(start + 1, 'domain-size', '类型注释在写领域尺寸：格子数由 cells_ 之类成员声明表达，删掉这句')
+      add(start + 1, 'domain-size', '类型注释在写领域尺寸：格子数由 squares_ 之类成员声明表达，删掉这句')
     }
     const firstDocLine = lines[start].trim().replace(/^\/\/\/\s*/, '')
-    if (!isType && PREDICATE_DECL.test(declaration) && !firstDocLine.startsWith('检查')) {
+    if (!isType && PREDICATE_DECL.test(declaration) && !isPredicateFirstOk(declaration, firstDocLine)) {
       add(start + 1, 'predicate-first', '布尔查询或 operator== 的第一句应写「检查…是否…」')
     }
     const params = functionParams(declaration)
     if (!params) continue
+    const summary = summaryParagraph(docContents)
+    const named = params.filter((name) => mentionsParam(summary, name))
+    if (named.length > 0) {
+      add(start + 1, 'param-in-summary', `函数摘要直接写了参数名 ${named.join('、')}：改用「指定坐标」「传入的值」这类语义名词，参数名只放在 @param 行`)
+    }
     const documented = [...block.matchAll(/@param(?:\[[^\]]*\])?\s+(\w+)/g)].map((match) => match[1])
     if (documented.length === 0) continue
     for (const name of params) {
@@ -440,19 +497,27 @@ export function checkText(text, options = {}) {
       const declaration = lines[next].trim()
       const block = doc.contents.join('\n')
       const isType = /^(template\s*<[^>]*>\s*)?(class|struct|union|enum)\b/.test(declaration)
+      if (!isType && CALLER_LIST.test(block) && MEMBER_REF.test(block)) {
+        add(doc.start + 1, 'caller-list', '函数注释在点名调用者：调用关系会随重构过期，只写这个函数做什么、参数、返回值与异常')
+      }
       if (RATIONALE.test(block)) add(doc.start + 1, 'rationale', '注释在写设计取舍：方案对比与理由移到正文或实现注释，接口注释只留契约')
       if (isType && MEMBER_LIST.test(block)) add(doc.start + 1, 'member-list', '类型注释在罗列成员功能，应改写为概念与使用约定')
       if (isType && FORWARD_REF.test(block)) add(doc.start + 1, 'forward-ref', '类型注释在交代别的类型负责什么：只写本类型的契约，删掉这句，不要挪到文件头')
       if (isType && TYPE_SYSTEM.test(block)) add(doc.start + 1, 'type-system', '类型注释在复述类型系统已表达的性质：可拷贝与 const 查询由声明给出，删掉这句')
       if (isType && NEGATED_BOUNDARY.test(block)) add(doc.start + 1, 'negated-boundary', '类型注释用「只保存/不拥有/不含」写否定式边界：改成名词短语，边界交给成员类型表达')
       if (NEGATIVE_SCOPE.test(block)) add(doc.start + 1, 'negative-scope', '注释用「不检查/不校验/不负责/不判断」写能力边界：改成正向限定，前置条件写「调用方保证…」或 @pre')
-      if (isType && DOMAIN_SIZE.test(block)) add(doc.start + 1, 'domain-size', '类型注释在写领域尺寸：格子数由 cells_ 之类成员声明表达，删掉这句')
+      if (isType && DOMAIN_SIZE.test(block)) add(doc.start + 1, 'domain-size', '类型注释在写领域尺寸：格子数由 squares_ 之类成员声明表达，删掉这句')
       const firstDocLine = doc.contents[0] ?? ''
-      if (!isType && PREDICATE_DECL.test(declaration) && !firstDocLine.startsWith('检查')) {
+      if (!isType && PREDICATE_DECL.test(declaration) && !isPredicateFirstOk(declaration, firstDocLine)) {
         add(doc.start + 1, 'predicate-first', '布尔查询或 operator== 的第一句应写「检查…是否…」')
       }
       const params = functionParams(declaration)
       if (!params) continue
+      const summary = summaryParagraph(doc.contents)
+      const named = params.filter((name) => mentionsParam(summary, name))
+      if (named.length > 0) {
+        add(doc.start + 1, 'param-in-summary', `函数摘要直接写了参数名 ${named.join('、')}：改用「指定坐标」「传入的值」这类语义名词，参数名只放在 @param 行`)
+      }
       const documented = [...block.matchAll(/@param(?:\[[^\]]*\])?\s+(\w+)/g)].map((match) => match[1])
       if (documented.length === 0) continue
       for (const name of params) {

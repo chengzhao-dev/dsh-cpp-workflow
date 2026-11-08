@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Verify every project template at every supported language standard.
-# Run on a POSIX host (Linux, macOS, or WSL) with cmake, ninja, perl and a C++ compiler.
+# 逐个语言标准验证每个工程模板。
+# 在 POSIX 主机（Linux、macOS 或 WSL）上运行，需要 cmake、ninja、perl 与 C++ 编译器。
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

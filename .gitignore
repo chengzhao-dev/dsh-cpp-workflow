@@ -5,3 +5,6 @@ coverage/
 
 # Local build output produced while exercising the templates.
 build/
+
+# Scratch files from local verification.
+temp/

@@ -1,6 +1,8 @@
 # 注释规范书目
 
-本页是 `source/07-comments/01-comment-rules.md` 与 `source/07-comments/glossary/comment-terms.md` 的检索底稿，共 **100 份**中文资源。书目按「官方文档 → 语言参考 → 工具手册 → 社区实践」分层；每份只记标题、类型、URL 与采信点，不复制正文。URL 访问日期为 2026-11-01；同一页面的不同章节按独立条目计，去重按「标题 + URL（含锚点）」判断。
+> 维护者文档：只记录条文出处，不随 npm 包发布，运行时也不需要读取。
+
+本页是 `skills/developing-cpp/references/comments/comment-rules.md` 与 `skills/developing-cpp/references/comments/glossary/comment-terms.md` 的检索底稿，共 **100 份**中文资源；另在「外部核对」列 15 个英文页面，只用于核对结论，不计入 100 份。书目按「官方文档 → 语言参考 → 工具手册 → 社区实践」分层；每份只记标题、类型、URL 与采信点，不复制正文。URL 访问日期为 2026-11-01；同一页面的不同章节按独立条目计，去重按「标题 + URL（含锚点）」判断。
 
 采信原则：官方文档优先于企业规范，企业规范优先于社区文章；社区文章只用来发现问题与对照写法，不单独作为规则依据。
 
@@ -109,15 +111,15 @@
 | 编号 | 标题 | 类型 | URL | 采信点 |
 | --- | --- | --- | --- | --- |
 | 81 | C++ Core Guidelines 中文仓库 | 社区规范 | https://github.com/lynnboy/CppCoreGuidelines-zh-CN | 规则总览与翻译 |
-| 82 | 注释（NL） | 社区规范 | https://github.com/lynnboy/CppCoreGuidelines-zh-CN/blob/master/CppCoreGuidelines-zh-CN.md#注释 | 注释写意图，不翻译代码 |
-| 83 | 命名与命名空间 | 社区规范 | https://github.com/lynnboy/CppCoreGuidelines-zh-CN/blob/master/CppCoreGuidelines-zh-CN.md#命名 | 命名与术语一致 |
-| 84 | 函数 | 社区规范 | https://github.com/lynnboy/CppCoreGuidelines-zh-CN/blob/master/CppCoreGuidelines-zh-CN.md#函数 | 函数契约与参数 |
-| 85 | 类与类层次 | 社区规范 | https://github.com/lynnboy/CppCoreGuidelines-zh-CN/blob/master/CppCoreGuidelines-zh-CN.md#类 | 类不变量与继承 |
-| 86 | 枚举 | 社区规范 | https://github.com/lynnboy/CppCoreGuidelines-zh-CN/blob/master/CppCoreGuidelines-zh-CN.md#枚举 | `enum class` 与取值 |
-| 87 | 错误处理 | 社区规范 | https://github.com/lynnboy/CppCoreGuidelines-zh-CN/blob/master/CppCoreGuidelines-zh-CN.md#错误处理 | 异常与错误路径 |
-| 88 | 资源管理 | 社区规范 | https://github.com/lynnboy/CppCoreGuidelines-zh-CN/blob/master/CppCoreGuidelines-zh-CN.md#资源管理 | 所有权与生命周期 |
-| 89 | 接口 | 社区规范 | https://github.com/lynnboy/CppCoreGuidelines-zh-CN/blob/master/CppCoreGuidelines-zh-CN.md#接口 | 接口契约与最小暴露 |
-| 90 | 标准库 | 社区规范 | https://github.com/lynnboy/CppCoreGuidelines-zh-CN/blob/master/CppCoreGuidelines-zh-CN.md#标准库 | 标准库约定 |
+| 82 | 注释（NL） | 社区规范 | https://github.com/lynnboy/CppCoreGuidelines-zh-CN/blob/master/CppCoreGuidelines-zh-CN.md#rl-comments | 注释写意图，不翻译代码 |
+| 83 | 命名与命名空间 | 社区规范 | https://github.com/lynnboy/CppCoreGuidelines-zh-CN/blob/master/CppCoreGuidelines-zh-CN.md#s-naming | 命名与术语一致 |
+| 84 | 函数 | 社区规范 | https://github.com/lynnboy/CppCoreGuidelines-zh-CN/blob/master/CppCoreGuidelines-zh-CN.md#s-functions | 函数契约与参数 |
+| 85 | 类与类层次 | 社区规范 | https://github.com/lynnboy/CppCoreGuidelines-zh-CN/blob/master/CppCoreGuidelines-zh-CN.md#s-class | 类不变量与继承 |
+| 86 | 枚举 | 社区规范 | https://github.com/lynnboy/CppCoreGuidelines-zh-CN/blob/master/CppCoreGuidelines-zh-CN.md#s-enum | `enum class` 与取值 |
+| 87 | 错误处理 | 社区规范 | https://github.com/lynnboy/CppCoreGuidelines-zh-CN/blob/master/CppCoreGuidelines-zh-CN.md#s-errors | 异常与错误路径 |
+| 88 | 资源管理 | 社区规范 | https://github.com/lynnboy/CppCoreGuidelines-zh-CN/blob/master/CppCoreGuidelines-zh-CN.md#s-resource | 所有权与生命周期 |
+| 89 | 接口 | 社区规范 | https://github.com/lynnboy/CppCoreGuidelines-zh-CN/blob/master/CppCoreGuidelines-zh-CN.md#s-interfaces | 接口契约与最小暴露 |
+| 90 | 标准库 | 社区规范 | https://github.com/lynnboy/CppCoreGuidelines-zh-CN/blob/master/CppCoreGuidelines-zh-CN.md#s-stdlib | 标准库约定 |
 
 ## 六、中文社区实践（10 份）
 
@@ -136,20 +138,31 @@
 
 ## 校验结论
 
-- 计数：表格编号 1–100 连续，100 条正文 URL 无重复；连同 4 条外部核对共 104 个唯一 URL。
+- 计数：表格编号 1–100 连续，100 条正文 URL 无重复；连同 15 条外部核对共 115 个唯一 URL。
 - 可达性：2026-11-01 复核，100 条正文中 60 条 HTTP 200；30 条 cppreference 返回 403（站点反爬，页面有效）；10 条 GitHub 页面在当前网络下超时；**无 404**。
-- 类注释不列成员函数名、不写枚举常量：以条目 4、8、82 为依据；`Cell` 从「初始状态为 `kEmpty`」改为「初始时为空」。
-- `enum class` 类型注释统一为「主体 + 属性」：以条目 12、42、86 为依据；`CellState`、`PlaceResult`、`BoardState` 分别改为「格子状态」「放置结果」「棋盘状态」。
-- 枚举值每行必须带同一主体：以条目 12、42、86 为依据；`BoardState` 的四行改为「棋盘尚未分出胜负」「棋盘上 X 已连成一线」「棋盘上 O 已连成一线」「棋盘已满且无人连成一线」，不再写「X 成线」「尚未结束」。
-- 类型名用拥有它的那一层的词汇：`Board` 定义 `BoardState`，不写 `GameResult`；反例见 `source/06-naming/examples/naming-lower-layer.md`。
-- 描述与标签组之间一个空行、标签之间不空行：以条目 61、62 为依据；`Cell::Place` 已经按此调整，`checking-comments.mjs` 的 `tag-gap` 负责拦截回流。
-- 注释换行按工程列宽、在分句处断：以条目 9 为依据；本项目使用 `.clang-format` 的 `ColumnLimit: 100`，中文按 2 列计。
+- 类注释不列成员函数名、不写枚举常量：以条目 4、8、82 为依据；`Square` 从「初始状态为 `kEmpty`」改为「初始为空格子」。
+- `enum class` 类型注释统一为「主体 + 属性」：以条目 12、42、86 为依据；`SquareValue`、`PlaceResult` 与 `GameResult`（后两者同在 `Game` 层）分别改为「格子取值」「一次落子的结果」「对局结果」。
+- 枚举值每行必须带同一主体：以条目 12、42、86 为依据；`GameResult` 的四行改为「对局尚未结束」「X 已连成一线，X 赢下这一局」「O 已连成一线，O 赢下这一局」「棋盘已满且无人连成一线，这一局平局」，不再写「X 成线」「尚未结束」。
+- 类型名用拥有它的那一层的词汇：`PlaceResult` 与 `GameResult` 都在 `Game` 层；`Board` 只做写入，不承担终局，也不让 `Square` 承担落子结果；反例见 `skills/developing-cpp/references/naming/examples/naming-lower-layer.md`。
+- 参数、返回值、异常、说明分组的标签之间各空一行：以 LLVM Coding Standards 的 `\param`/`\returns` 示例、LSST DM Developer Guide 与 NVIDIA libcudf 的标签分组为依据；`Board::SetSquare`、`Game::Place` 已按此调整，`checking-comments.mjs` 的 `tag-gap` 拦截同一分组内的空行。
+- 注释换行按工程列宽、在分句处断：以条目 9 为依据；按工程 `.clang-format` 的 `ColumnLimit`，中文按 2 列计，工程未写时按 Google 默认 80 列。
 
 ## 外部核对（不计入 100 份）
 
-以下英文页面只用于核对中文条目的结论，不参与上面的 100 份计数：
+以下 15 个英文页面只用于核对中文条目的结论，不参与上面的 100 份计数：
 
 - OpenOCD Doxygen Style Guide：https://openocd.sourceforge.io/doc/doxygen/html/styledoxygen.html
 - LLVM Coding Standards：https://www.llvm.org/docs/CodingStandards.html
+- LLVM Coding Standards: Use Early Exits and `continue` to Simplify Code：https://llvm.org/docs/CodingStandards.html#use-early-exits-and-continue-to-simplify-code
+- clang-tidy `readability-else-after-return`：https://clang.llvm.org/extra/clang-tidy/checks/readability/else-after-return.html
+- C++ Core Guidelines F.56: Avoid unnecessary condition nesting：https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#f56-avoid-unnecessary-condition-nesting
+- C++ Core Guidelines NL.1: Compilers do not read comments：https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#nl1-compilers-do-not-read-comments
+- Doxygen: Documenting the code：https://www.doxygen.nl/manual/docblocks.html
+- Microsoft Framework Design Guidelines: Names of Type Members：https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/names-of-type-members
 - Google API reference comments：https://developers.google.com/style/api-reference-comments
 - Zephyr Doxygen style：https://docs.zephyrproject.org/latest/contribute/style/doxygen.html
+- LSST DM Developer Guide（C++ API docs）：https://developer.lsst.io/cpp/api-docs.html
+- NVIDIA libcudf 文档规范：https://docs.nvidia.com/cudf/latest/libcudf/developer_guide/DOCUMENTATION/
+- µOS++ Doxygen Style Guide：https://micro-os-plus.github.io/develop/doxygen-style-guide/
+- stan-dev Doxygen 注释写法：https://github.com/stan-dev/stan/wiki/How-to-Write-Doxygen-Doc-Comments
+- ITK Coding Style Guide：https://insightsoftwareconsortium.github.io/ITKWikiArchive/Wiki/ITK/Coding_Style_Guide/

@@ -29,7 +29,7 @@ function fakeReact() {
   }
 }
 
-function loadClient() {
+function loadClient(reactFactory = fakeReact) {
   const source = readFileSync(CLIENT, 'utf8')
   let exported
   let id
@@ -39,7 +39,7 @@ function loadClient() {
         id = options.id
         exported = options.factory((specifier) => {
           assert.equal(specifier, 'react', `客户端半侧只能加载 react，实际为 ${specifier}`)
-          return fakeReact()
+          return reactFactory()
         })
       },
     },
@@ -142,7 +142,7 @@ test('只向插件页注册一个配置挂点，并用组合包条目 id 取表�
     },
   }
   exported.apply(ctx)
-  // 表单延迟到页面渲染时再取：宿主服务晚到时，挂点已存在也能接上。
+  // 表单在页面首次绘制时取一次；挂点已存在即可接上。
   assert.deepEqual(requested, [])
   assert.deepEqual(injected, ['plugins.bundle.config'])
   assert.equal(registered[0].meta.key, PACKAGE_NAME)
@@ -155,9 +155,11 @@ test('只向插件页注册一个配置挂点，并用组合包条目 id 取表�
   assert.deepEqual(texts.filter((text) => text === '文档注释'), ['文档注释'])
 })
 
-test('表单服务晚到时页面重新取表单，不再冻结只读', () => {
-  const { exported } = loadClient()
-  let form
+test('表单在挂载时取一次，重绘沿用同一个 controller', () => {
+  const react = statefulReact()
+  const { exported } = loadClient(() => react)
+  let calls = 0
+  const form = readyForm(true)
   let registered
   const ctx = {
     effect(run) {
@@ -165,6 +167,7 @@ test('表单服务晚到时页面重新取表单，不再冻结只读', () => {
     },
     configForms: {
       get() {
+        calls += 1
         return form
       },
       whileServed(namespaces, register) {
@@ -182,14 +185,58 @@ test('表单服务晚到时页面重新取表单，不再冻结只读', () => {
     },
   }
   exported.apply(ctx)
-  let texts = flatten(registered.render({}))
-  assert.ok(texts.some((text) => text.includes('暂时没有连到配置表单')))
-  form = readyForm(true)
-  texts = flatten(registered.render({}))
+  const draw = () => {
+    react.reset()
+    return flatten(registered.render({}))
+  }
+  let texts = draw()
+  assert.equal(calls, 1)
   assert.ok(!texts.some((text) => text.includes('暂时没有连到配置表单')))
+  texts = draw()
+  draw()
+  assert.equal(calls, 1)
   const switches = collect(registered.render({}), (node) => node.type === 'input' && node.props.type === 'checkbox')
   assert.ok(switches.length > 0)
-  assert.ok(switches.every((node) => node.props.disabled === false))
+})
+
+test('取不到表单时页面只读，且不轮询重试宿主服务', () => {
+  const react = statefulReact()
+  const { exported } = loadClient(() => react)
+  let calls = 0
+  let registered
+  const ctx = {
+    effect(run) {
+      return run()
+    },
+    configForms: {
+      get() {
+        calls += 1
+        throw new Error('boom')
+      },
+      whileServed(namespaces, register) {
+        return register(new Set(namespaces))
+      },
+    },
+    slots: {
+      inject(name, callback) {
+        callback()
+      },
+      register(meta, render) {
+        registered = { meta, render }
+        return () => {}
+      },
+    },
+  }
+  exported.apply(ctx)
+  const draw = () => {
+    react.reset()
+    return flatten(registered.render({}))
+  }
+  const texts = draw()
+  assert.equal(calls, 1)
+  assert.ok(texts.some((text) => text.includes('暂时没有连到配置表单')))
+  draw()
+  assert.equal(calls, 1)
 })
 
 test('出厂设置的预览先写文件头，再写函数契约', () => {
@@ -295,4 +342,68 @@ test('ConfigFormController 的 getSnapshot 快照也能打开编辑', () => {
   const switches = collect(tree, (node) => node.type === 'input' && node.props.type === 'checkbox')
   assert.ok(switches.length > 0)
   assert.ok(switches.every((node) => node.props.disabled === false))
+})
+
+// 跨渲染保留状态的 React 替身：用来驱动修改 → 外部更新 → 保存这条路径。
+function statefulReact() {
+  const slots = []
+  let cursor = 0
+  return {
+    reset() {
+      cursor = 0
+    },
+    createElement(type, props, ...children) {
+      return { type, props: { ...props, children } }
+    },
+    useState(initial) {
+      const index = cursor++
+      if (!(index in slots)) slots[index] = typeof initial === 'function' ? initial() : initial
+      return [
+        slots[index],
+        (value) => {
+          slots[index] = typeof value === 'function' ? value(slots[index]) : value
+        },
+      ]
+    },
+    useMemo(factory) {
+      return factory()
+    },
+    useEffect(run) {
+      run()
+    },
+  }
+}
+
+test('脏草稿保存时提交草稿基准 revision，外部更新后不覆盖', async () => {
+  const react = statefulReact()
+  const { exported } = loadClient(() => react)
+  const calls = []
+  const form = {
+    state: { status: 'ready', writable: true, revision: 7, value: {} },
+    async mutate(operations, expectedRevision) {
+      calls.push({ operations, expectedRevision })
+      return false
+    },
+  }
+  const draw = () => {
+    react.reset()
+    return exported.ConfigPage({ form })
+  }
+  const flagRow = collect(
+    draw(),
+    (node) => node.props?.tag === 'param' && typeof node.props.onChange === 'function',
+  )[0]
+  assert.ok(flagRow, '应能在页面上找到 param 开关')
+  flagRow.props.onChange(false)
+  // 草稿期间宿主序列被别人推进；下一次绘制会读到新 revision。
+  form.state.revision = 9
+  draw()
+  const tree = draw()
+  const save = collect(tree, (node) => node.type === 'button' && flatten(node).includes('保存'))[0]
+  assert.equal(save.props.disabled, false)
+  await save.props.onClick()
+  assert.equal(calls.length, 1)
+  assert.equal(calls[0].expectedRevision, 7, '提交旧基准 revision，宿主才能发现冲突')
+  const texts = flatten(draw())
+  assert.ok(texts.some((text) => text.includes('保存被拒绝')))
 })

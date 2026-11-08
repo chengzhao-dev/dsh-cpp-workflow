@@ -1,6 +1,6 @@
-// 注释检查器锁定 source/07-comments/01-comment-rules.md 的硬规则：文件头、标签、标签间空行、注释与声明的贴合、
+// 注释检查器锁定 references/comments/comment-rules.md 的硬规则：文件头、标签、标签间空行、注释与声明的贴合、
 // 列表缩进、成员清单、设计论证、跨类分工、类型系统复述、否定式边界、领域尺寸、谓词首句、
-// @param 完整性与枚举行尾注释。规则改动时必须同步这里的用例。
+// @param 完整性、摘要裸参数名与枚举行尾注释。规则改动时必须同步这里的用例。
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
 import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs'
@@ -137,6 +137,21 @@ test('类型注释不许交代别的类型负责什么', () => {
   assert.deepEqual(rules(contract), [])
 })
 
+test('纯值容器类型注释只写一句，跨类分工与否定能力边界都报错', () => {
+  const verbose = file(
+    '/// 格子：保存一个 `SquareValue` 的值容器。',
+    '///',
+    '/// 初始为空。`SetValue` 只更新存储的值，不检查当前值；',
+    '/// 空值、占用与终局由 `Board` 与 `Game` 决定。`Square` 不依赖棋盘或对局类型。',
+    'class Square {};',
+  )
+  const issues = rules(verbose)
+  assert.ok(issues.includes('forward-ref'))
+  assert.ok(issues.includes('negative-scope'))
+  const concise = file('/// 格子：保存一个 `SquareValue` 的值容器。', 'class Square {};')
+  assert.deepEqual(rules(concise), [])
+})
+
 test('类型注释不写否定式边界', () => {
   const text = file('/// 棋盘坐标。', '///', '/// 只保存位置，不拥有棋盘区间。', 'struct CellPosition {};')
   assert.deepEqual(rules(text), ['negated-boundary'])
@@ -151,20 +166,21 @@ test('注释不写否定式能力边界', () => {
   assert.deepEqual(rules(state), [])
 })
 
-test('Doxygen 标签之间不空行', () => {
+test('同一分组内的 Doxygen 标签之间不空行', () => {
   const bad = file(
     '/// 检查标志。',
     '///',
     '/// @param flag 待检查的标志。',
     '///',
-    '/// @return 标志有效时返回 true。',
-    'bool Check(bool flag);',
+    '/// @param other 另一个标志。',
+    'bool Check(bool flag, bool other);',
   )
   assert.deepEqual(rules(bad), ['tag-gap'])
   const ok = file(
     '/// 检查标志。',
     '///',
     '/// @param flag 待检查的标志。',
+    '///',
     '/// @return 标志有效时返回 true。',
     'bool Check(bool flag);',
   )
@@ -187,6 +203,23 @@ test('谓词首句写检查是否', () => {
   assert.deepEqual(rules(ok), [])
 })
 
+test('函数注释不点名调用者', () => {
+  const caller = file(
+    '/// 读取指定坐标的方格。',
+    '///',
+    '/// 供需要先检查再读写的调用方直接使用；`GetSquare`、`SetSquare` 与 `ClearSquare` 内部也调用它。',
+    'Square GetSquare(Position position) const;',
+  )
+  assert.deepEqual(rules(caller, { width: 200 }), ['caller-list'])
+  const ok = file(
+    '/// 读取指定坐标的方格。',
+    '///',
+    '/// @param position 目标坐标。',
+    'Square GetSquare(Position position) const;',
+  )
+  assert.deepEqual(rules(ok), [])
+})
+
 test('类型注释不许复述类型系统已表达的性质', () => {
   const text = file(
     '/// 井字棋棋盘。',
@@ -206,6 +239,39 @@ test('@param 必须与声明参数一一对应', () => {
   assert.deepEqual(rules(ok), [])
 })
 
+test('函数摘要不直接写参数名', () => {
+  const bad = file(
+    '/// 把 `value` 写到 `pos` 对应的格子上。',
+    '///',
+    '/// @param pos 目标坐标。',
+    '/// @param value 要写入的值。',
+    'void Place(int pos, int value);',
+  )
+  assert.deepEqual(rules(bad), ['param-in-summary'])
+  const good = file(
+    '/// 把指定值写到指定坐标的格子上。',
+    '///',
+    '/// @param pos 目标坐标。',
+    '/// @param value 要写入的值。',
+    'void Place(int pos, int value);',
+  )
+  assert.deepEqual(rules(good), [])
+})
+
+test('块注释摘要也不直接写参数名', () => {
+  const block = [
+    '/**',
+    ' * 把 `value` 写到 `pos` 对应的格子上。',
+    ' *',
+    ' * @param pos 目标坐标。',
+    ' * @param value 要写入的值。',
+    ' */',
+    'void Place(int pos, int value);',
+    '',
+  ].join('\n')
+  assert.ok(rules(block, { commentStyle: 'block' }).includes('param-in-summary'))
+})
+
 test('没有 @param 的短注释不触发完整性检查', () => {
   assert.deepEqual(rules(file('/// 清空棋盘。', 'void Clear();')), [])
 })
@@ -216,9 +282,9 @@ test('@param 支持 [out] 说明', () => {
 })
 
 test('枚举成员注释全写或全不写', () => {
-  const partial = file('/// 玩家。', 'enum class Player : std::uint8_t {', '  kCross = 0,  ///< 先手。', '  kNought = 1,', '};')
+  const partial = file('/// 玩家。', 'enum class Player : std::uint8_t {', '  kX = 1,  ///< 玩家为 X', '  kO = 2,', '};')
   assert.deepEqual(rules(partial), ['enum-partial'])
-  const full = file('/// 玩家。', 'enum class Player : std::uint8_t {', '  kCross = 0,   ///< 先手。', '  kNought = 1,  ///< 后手。', '};')
+  const full = file('/// 玩家。', 'enum class Player : std::uint8_t {', '  kX = 1,  ///< 玩家为 X', '  kO = 2,  ///< 玩家为 O', '};')
   assert.deepEqual(rules(full), [])
 })
 
@@ -253,7 +319,7 @@ test('枚举行尾两种句式与冒号约束', () => {
   assert.deepEqual(rules(field), [])
   const final = file(
     '/// 格子的状态。',
-    'enum class CellState : std::uint8_t {',
+    'enum class CellMark : std::uint8_t {',
     '  kEmpty = 0,  ///< 状态为空，尚未设置',
     '  kX = 1,      ///< 状态为 X',
     '  kO = 2,      ///< 状态为 O',

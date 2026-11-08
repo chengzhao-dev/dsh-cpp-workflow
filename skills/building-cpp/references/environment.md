@@ -105,4 +105,11 @@ node "<skill-dir>/scripts/checking-environment.mjs" --project . --live
 | 3 | 活动校验失败：不在声明的 build host、角色缺失、版本不符 |
 | 1 | 脚本自身错误：参数错误或内部异常 |
 
-各标准对应的编译器、库设施和工具档位见 [../../engineering/cmake/03-standard/standards/README.md](../../engineering/cmake/03-standard/standards/README.md)。
+各标准对应的编译器、库设施和工具档位见 [../../engineering/references/cmake/standards/README.md](../../engineering/references/cmake/standards/README.md)。
+
+## 依据
+
+- [CMake: Compilers](https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER.html)：编译器探测与 `CMAKE_<LANG>_COMPILER`。
+- [CMake: `CMakePresets.json`](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html)：preset 的继承、生成器与构建目录。
+- [GCC: `--version`](https://gcc.gnu.org/onlinedocs/gcc/Invoking-GCC.html)：版本输出与 `-dumpfullversion`。
+- [Clang: Command Line](https://clang.llvm.org/docs/CommandGuide/clang.html)：`--version` 与目标平台输出。

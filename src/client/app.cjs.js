@@ -4,9 +4,6 @@
 
 // 宿主组合包 cordis.patch.yml 插入的 profile 条目 id；设置服务按它定位表单。
 const ENTRY_ID = 'cpp-workflow'
-// configForms 可能晚于本插件挂载；页面在首次绘制后短暂重试，拿不到再给手动恢复入口。
-const FORM_RETRY_MS = 500
-const MAX_FORM_RETRIES = 20
 
 /** 文件头可填写标签的占位文字；顺序与 HEADER_TAGS 一致。 */
 const HEADER_PLACEHOLDER = {
@@ -33,17 +30,20 @@ const FLAG_PLACEHOLDER = {
 function ConfigPage(props) {
   const s = t()
   ensureStyles()
-  // form 由挂点注入；resolveForm 兜住“服务晚到”的部署，拿到后下一次绘制自动接上。
-  const form = props.form || (typeof props.resolveForm === 'function' ? props.resolveForm() : undefined)
+  // 宿主把 configForms 列为必需注入，挂载时取一次表单；之后沿用同一个 controller，
+  // 不在每次绘制里调用宿主服务。
+  const [form] = React.useState(
+    () => props.form || (typeof props.resolveForm === 'function' ? props.resolveForm() : undefined),
+  )
   const state = useFormSnapshot(form)
   const initial = React.useMemo(() => normalizeConfig(state.value), [])
   const [draft, setDraft] = React.useState(initial)
   const [base, setBase] = React.useState(initial)
   const [dirty, setDirty] = React.useState(false)
+  const [baseRevision, setBaseRevision] = React.useState(state.revision)
   const [busy, setBusy] = React.useState(false)
   const [message, setMessage] = React.useState('')
   const [tone, setTone] = React.useState('')
-  const [attempt, setAttempt] = React.useState(0)
   const revision = state.revision
   // 快照只有 status / writable / revision；旧版本多出来的 mode 字段已不存在，
   // 再按它判断会把所有可写表单误判成只读。
@@ -55,14 +55,9 @@ function ConfigPage(props) {
     if (dirty || state.status !== 'ready') return
     const next = normalizeConfig(state.value)
     setBase(next)
+    setBaseRevision(state.revision)
     setDraft(next)
   }, [revision, status, dirty, form, state.value])
-
-  React.useEffect(() => {
-    if (form || attempt >= MAX_FORM_RETRIES || typeof setTimeout !== 'function') return undefined
-    const timer = setTimeout(() => setAttempt((value) => value + 1), FORM_RETRY_MS)
-    return () => clearTimeout(timer)
-  }, [form, attempt])
 
   // 脏标记按与已保存值的差集算：把开关关了又开回原值时，页面不该再说“有未保存的改动”。
   const update = (patch) => {
@@ -102,8 +97,12 @@ function ConfigPage(props) {
     if (operations.length === 0) return
     setBusy(true)
     try {
-      const accepted = await form.mutate(operations, revision)
+      // 基准 revision 与 base 同时记录：草稿期间外部若改过配置，这里传旧 revision，
+      // 宿主会拒绝，不会用新 revision 把旧草稿盖上去。
+      const accepted = await form.mutate(operations, baseRevision)
       if (accepted) {
+        const fresh = snapshotOf(form)
+        if (fresh && fresh.status === 'ready') setBaseRevision(fresh.revision)
         setBase(draft)
         setDirty(false)
         setMessage(s.saved)
@@ -111,7 +110,10 @@ function ConfigPage(props) {
       } else {
         // 被拒时宿主已刷新镜像；把基准对齐到新快照，撤销才不会回到过期值。
         const fresh = snapshotOf(form)
-        if (fresh && fresh.status === 'ready') setBase(normalizeConfig(fresh.value))
+        if (fresh && fresh.status === 'ready') {
+          setBase(normalizeConfig(fresh.value))
+          setBaseRevision(fresh.revision)
+        }
         setMessage(s.rejected)
         setTone('warn')
       }
@@ -261,7 +263,8 @@ function apply(ctx) {
   if (ctx.configForms && typeof ctx.configForms.whileServed === 'function') {
     ctx.effect(() => ctx.configForms.whileServed([ENTRY_ID], mount), 'dsh-cpp-workflow: 配置挂点')
   } else {
-    mount()
+    // 旧宿主没有 whileServed 时也交给效果作用域注销挂点，卸载后不留悬挂注册。
+    ctx.effect(() => mount(), 'dsh-cpp-workflow: 配置挂点')
   }
 }
 

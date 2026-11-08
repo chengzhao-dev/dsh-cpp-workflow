@@ -1,10 +1,9 @@
 #!/usr/bin/env node
-// Structural checks for GitHub Actions workflows.
+// GitHub Actions 工作流的结构检查。
 //
-// The plugin's npm checks cover the package and its skills. This script keeps
-// the workflow files in the same gate: YAML must parse, each job needs a
-// runner and steps, every step needs `uses` or `run`, local actions must
-// exist, and action refs must not float on main/master/latest.
+// 插件的 npm 检查覆盖包与技能；这里把工作流文件也纳入同一道门禁：YAML 必须
+// 能解析，每个 job 要有 runner 与 steps，每个 step 要有 `uses` 或 `run`，本地
+// action 必须存在，action 引用不得漂在 main/master/latest 上。
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'

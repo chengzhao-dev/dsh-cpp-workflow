@@ -1,7 +1,6 @@
-// The host accepts a deliberately small JSON Schema subset. These tests pin
-// that subset locally so a future tool schema cannot reintroduce a keyword the
-// host rejects. The plugin currently registers no tools; the validator is still
-// exercised against representative parameter and result schemas.
+// 宿主只接受刻意收窄的 JSON Schema 子集。这些测试在本地钉住该子集，防止
+// 以后新增的工具 schema 带回宿主会拒绝的关键字。插件当前不注册工具，
+// 校验器仍用有代表性的参数与结果 schema 跑通。
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
@@ -26,7 +25,7 @@ function isRecord(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
-/** Throws on the first violation, so tests can use assert.doesNotThrow. */
+/** 第一处违规就抛错，测试可以直接用 assert.doesNotThrow。 */
 export function assertSchemaSubset(schema, pointer = '#') {
   assert.ok(isRecord(schema), `${pointer} must be an object`)
 
