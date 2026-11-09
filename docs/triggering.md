@@ -25,28 +25,29 @@
 | 5 | 「C++23 里这里用 `std::expected` 还是 `optional`」 | `developing-cpp` | 标准设施选型 |
 | 6 | 「这几个测试的注释也按同一标准改」 | `developing-cpp` | 测试也是源码 |
 | 7 | 「CMake 里把 `logging` 拆成 static target」 | `engineering` | target 与链接边界 |
-| 8 | 「`clang-tidy` 报了 `bugprone-*`，配置怎么调」 | `building-cpp` | 工具配置 |
-| 9 | 「`compile_commands.json` 没生成，clangd 不跳转」 | `building-cpp` | 编译数据库与 clangd |
-| 10 | 「Ninja 下链接失败，找不到 `greeting`」 | `engineering` | target 不存在或链接边界 |
-| 11 | 「把工程从 C++20 降到 C++17」 | `engineering`，再 `building-cpp` | CMake 标准与工具档位一起降 |
-| 12 | 「`running-build.sh` 的 format 那步失败」 | `building-cpp` | 构建脚本与工具 |
-| 13 | 「同时改 `board.cpp` 和 `CMakeLists.txt`」 | 三个都出现，先 `developing-cpp` | 跨边界，先源码、再 CMake、最后构建 |
-| 14 | 「只改 `Game` 的函数体，入口能跑」 | `developing-cpp`，之后只到「通过检查」 | 增量的最短路径 |
+| 8 | 「`clang-tidy` 报了 `bugprone-*`，规则条文怎么调」 | `engineering` | 规则条文与配置项 |
+| 9 | 「`clang-tidy` 配置已经给了，怎么落地并跑起来」 | `building-cpp` | 复制、落地与通过检查 |
+| 10 | 「`compile_commands.json` 没生成，clangd 不跳转」 | `building-cpp` | 编译数据库与 clangd |
+| 11 | 「Ninja 下链接失败，找不到 `greeting`」 | `engineering` | target 不存在或链接边界 |
+| 12 | 「把工程从 C++20 降到 C++17」 | `engineering`，再 `building-cpp` | CMake 标准与工具档位一起降 |
+| 13 | 「`running-build.sh` 的 format 那步失败」 | `building-cpp` | 构建脚本与工具 |
+| 14 | 「同时改 `board.cpp` 和 `CMakeLists.txt`」 | 三个都出现，先 `developing-cpp` | 跨边界，先源码、再 CMake、最后构建 |
+| 15 | 「只改 `Game` 的函数体，入口能跑」 | `developing-cpp`，之后只到「通过检查」 | 增量的最短路径 |
 
 ## 反例
 
 | # | 用户请求 | 应出现 | 原因 |
 | --- | --- | --- | --- |
-| 15 | 「把这一章 `.qmd` 的错别字改掉」 | 都不出现 | Quarto 正文不归本插件 |
-| 16 | 「更新仓库 README 的安装说明」 | 都不出现 | 非 C++ 文档 |
-| 17 | 「修一下仓库里的 Python 检查脚本」 | 都不出现 | Python 不归本插件 |
-| 18 | 「解释一下 C++ 的虚函数表」 | 都不出现 | 概念问答，不动工程 |
-| 19 | 「这个仓库有 CMake 和 `.cpp`，但没装项目技能」 | 都不出现 | 门禁只认项目技能标记 |
-| 20 | 「在非 git 目录里新建一个 C++ 文件」 | 都不出现 | 没有 git 根，没有门禁边界 |
+| 16 | 「把这一章 `.qmd` 的错别字改掉」 | 都不出现 | Quarto 正文不归本插件 |
+| 17 | 「更新仓库 README 的安装说明」 | 都不出现 | 非 C++ 文档 |
+| 18 | 「修一下仓库里的 Python 检查脚本」 | 都不出现 | Python 不归本插件 |
+| 19 | 「解释一下 C++ 的虚函数表」 | 都不出现 | 概念问答，不动工程 |
+| 20 | 「这个仓库有 CMake 和 `.cpp`，但没装项目技能」 | 都不出现 | 门禁只认项目技能标记 |
+| 21 | 「在非 git 目录里新建一个 C++ 文件」 | 都不出现 | 没有 git 根，没有门禁边界 |
 
 ## 验证与维护
 
 - 结构检查：`scripts/checking-skill-links.mjs` 要求本页存在、三个技能的 description 关键词（`CMake`、`Ninja`、`clang-format`、`clang-tidy`、`clangd`、`C++23`、`注释`、`异常`、`命名`）都能在本页找到；触发矩阵与反例的编号行合计不少于 12 行，其中「都不出现」的反例不少于 6 条。
 - 人工抽样：改 description 或步骤表后，用 8–10 条正例、8–10 条反例各跑 3 次，触发率低于一半就改 description 的信号词，不改正文。
 - 改 `SKILL.md` 的 `description` 必须同改本页的判据表与矩阵；只改矩阵不改 description，等于没改。
-- 四类改动（即四个域）的域表在每个技能的 `SKILL.md`，本页不复制；三种操作与四个域的定义在 `skills/developing-cpp/references/editing/01-edit-operations.md`，改域划分时只改该模型与各技能的表，本页只判技能是否该出现。
+- 四类改动（即四个域）的域表在每个技能的 `SKILL.md`，本页不复制；三种操作与四个域的定义在 `skills/shared/operations.md`，改域划分时只改该模型与各技能的表，本页只判技能是否该出现。

@@ -1,3 +1,4 @@
+<!-- 读取时机：排声明顺序时；读完能回答：源码布局；预算：一次只开这一份（78 行），不自动串联。 -->
 # 源码布局
 
 布局服务于边界：库是纯的，程序是薄的，测试从公共接口进入。这里只定目录和文件职责；CMake target 由 `engineering` 的 `steps/01-targets.md` 定。
@@ -53,7 +54,7 @@ app/
 
 ## 头文件契约
 
-自包含、共享常量、`using namespace`、模板实现与包含顺序的规则见 `references/style/google-cpp-style.md`「头文件」；扩展名与槽位见 `references/layout/02-file-template.md`。库不包含 `<iostream>` 的边界见本文「程序」节。本文只强调一条：公共头只暴露稳定契约，测试只包含公共头。
+自包含、共享常量、`using namespace`、模板实现与包含顺序的规则见 `references/style/01-google-cpp-style.md`「头文件」；扩展名与槽位见 `references/layout/02-file-template.md`。库不包含 `<iostream>` 的边界见本文「程序」节。本文只强调一条：公共头只暴露稳定契约，测试只包含公共头。
 
 ## 测试
 

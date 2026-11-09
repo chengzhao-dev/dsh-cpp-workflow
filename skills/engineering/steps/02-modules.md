@@ -27,11 +27,11 @@
 ## 契约
 
 - 公开函数上方写中文 `#` 契约：一句功能、空行、边界，再用 `:param` / `:keyword` 标参数；不写 `#[[.rst:` 与 `.. command::`。
-- 完整写法见 `../references/cmake/targets/rules.md`；签名留在 `function()` 那一行。
-- 签名、警告等级与错误消息以 `../references/cmake/assets/` 和 `../references/cmake/modules/functions.md` 为准；本步不复制第二份。
+- 完整写法见 `../references/cmake/targets/01-target-rules.md`；签名留在 `function()` 那一行。
+- 签名、警告等级与错误消息以 `../references/cmake/assets/` 和 `../references/cmake/modules/01-functions.md` 为准；本步不复制第二份。
 - 普通函数只改传入 target 的属性，不写全局变量、不读环境变量、不下载依赖；唯一例外是 `LinkSettings_FetchGoogleTest`，只在测试需要时调用。
 - 先校验 target、可见性与标准，再调用 `target_*` 或 `set_target_properties`；失败用 `FATAL_ERROR`，消息带函数名与非法值。
 
 ## 退出
 
-模块可被根文件导入且函数签名稳定后，进 `03-check.md` 跑 configure、构建与数据库核对。排版、2 空格与注释形态按 `../references/cmake/targets/rules.md`。
+模块可被根文件导入且函数签名稳定后，进 `03-check.md` 跑 configure、构建与数据库核对。排版、2 空格与注释形态按 `../references/cmake/targets/01-target-rules.md`。

@@ -1,6 +1,6 @@
 {
   "name": "@chengzhao-dev/dsh-cpp-workflow",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "description": "写 C++ 源码、配 CMake、用 Clang 构建；头文件用 /// Doxygen 文档注释，函数体用 // 分段说明，文件头标签可在设置里改。",
   "type": "module",
   "main": "./lib/index.js",
@@ -37,6 +37,12 @@
         "@deepseek-ai/dsh-client-ui-plugin-manager"
       ]
     },
+    "compatibility": {
+      "dshReleases": {
+        "0.2.1-rc.1": "compatible",
+        "0.2.1-rc.5": "compatible"
+      }
+    },
     "catalog": {
       "category": "skill",
       "summary": {
@@ -51,10 +57,10 @@
   "icon": "./icon.svg",
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/building-client.mjs",
-    "test": "node scripts/building-client.mjs --check && npm run build && node scripts/checking-skill-links.mjs && node skills/engineering/references/formatting/scripts/checking-encoding.mjs --quiet && node scripts/checking-github-workflows.mjs && node --test tests/*.test.mjs",
+    "test": "node scripts/building-client.mjs --check && npm run build && node scripts/checking-skill-links.mjs && node skills/engineering/scripts/checking-encoding.mjs --quiet && node scripts/checking-github-workflows.mjs && node --test tests/*.test.mjs",
     "ci": "npm ci && npm test && npm run pack:check",
     "ci:full": "npm run ci && npm run test:matrix",
-    "check:encoding": "node skills/engineering/references/formatting/scripts/checking-encoding.mjs",
+    "check:encoding": "node skills/engineering/scripts/checking-encoding.mjs",
     "check:workflows": "node scripts/checking-github-workflows.mjs",
     "test:matrix": "bash scripts/checking-standard-matrix.sh",
     "pack:check": "npm pack --dry-run"

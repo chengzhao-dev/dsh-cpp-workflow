@@ -1,3 +1,4 @@
+<!-- 读取时机：查语言细节时；读完能回答：`std::string` 与 `std::string_view`；预算：一次只开这一份（13 行），不自动串联。 -->
 # `std::string` 与 `std::string_view`
 
 - 函数只读文本时参数用 `std::string_view`；需要保存或修改时用 `std::string`。

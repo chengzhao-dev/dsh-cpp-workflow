@@ -22,16 +22,16 @@ npm 安装固定版本：
 dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.1
 ```
 
-npm 当前最新发布是 `0.7.1`；仓库工作区里的 `0.7.3` 尚未发布，发布前请用上面的 0.7.1。工作区版本发布后，把 npm 命令换成：
+npm 当前最新发布是 `0.7.1`；仓库工作区里的 `0.7.4` 尚未发布，发布前请用上面的 0.7.1。`0.7.3` 已跳过、不再发布。工作区版本发布后，把 npm 命令换成：
 
 ```bash
-dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.3
+dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.4
 ```
 
-GitHub 标签安装要等 `v0.7.3` 创建后再用；标签创建后，地址中的版本号与标签同号：
+GitHub 标签安装要等 `v0.7.4` 创建后再用；标签创建后，地址中的版本号与标签同号：
 
 ```bash
-dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.3
+dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.4
 ```
 
 `--profile` 换成你实际运行的那个 profile。桌面应用固定跑 `desktop` profile，且该 profile 由应用独占管理；命令行 `add` 被拒绝时，在应用设置里添加插件，地址填同一个 npm 版本。Git 标签安装使用仓库内已构建的 `lib/`，不在目标机器上重新构建；包内也不含需要授权执行的安装脚本。
@@ -70,7 +70,7 @@ dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.3
 | `compiler` | `clang`、`gcc` | 一次配置一个编译器 |
 | `standard` | `c++11`、`c++14`、`c++17`、`c++20`、`c++23` | 新工程默认 `c++23`；一个工程一个标准 |
 
-标准写在 `environment.json` 的 `standard`，并同步到 CMake target 和编译数据库；CMake 侧优先调用 `engineering` 提供的 `CompileSettings_SetCxxStandard` 函数。新工程默认 C++23；C++11–C++20 工程把 `standard`、`cxx_std_*`、`CXX_STANDARD` 和 `.clang-format` 的解析档位一起降级，不要只改一处。每档的设施、工具和降档表见 [标准目录](skills/engineering/references/cmake/standards/README.md)，CMake 两层声明见 [cxx-standard.md](skills/engineering/references/cmake/standards/cxx-standard.md)。
+标准写在 `environment.json` 的 `standard`，并同步到 CMake target 和编译数据库；CMake 侧优先调用 `engineering` 提供的 `CompileSettings_SetCxxStandard` 函数。新工程默认 C++23；C++11–C++20 工程把 `standard`、`cxx_std_*`、`CXX_STANDARD` 和 `.clang-format` 的解析档位一起降级，不要只改一处。每档的设施、工具和降档表见 [标准目录](skills/engineering/references/cmake/standards/index.md)，CMake 两层声明见 [01-cxx-standard.md](skills/engineering/references/cmake/standards/01-cxx-standard.md)。
 
 生成器固定 Ninja，构建目录是 `build/clang/` 与 `build/gcc/`，不共用 `build/`。诊断工具固定 `clang-format`、`clang-tidy`、`clangd`；GCC 模式也不换成别的分析器。
 
@@ -89,7 +89,7 @@ node "<skill-dir>/scripts/checking-environment.mjs" --project . --live
 
 运行时闭包是 `lib/`、`skills/`、`templates/`、`locale/`、`cordis.patch.yml`、两个 README、`LICENSE` 与 `icon.svg`。仓库另有 `src/`、`scripts/`、`tests/` 与 `docs/`，只服务开发与评审，不进包。权威白名单与逐项目录见 [docs/plugin-layout.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-layout.md)。
 
-边界与门禁的维护说明在 [docs/plugin-flow.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-flow.md)，技能的层次与数据流在 [docs/architecture.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/architecture.md)，触发矩阵在 [docs/triggering.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/triggering.md)，目录和进包白名单在 [docs/plugin-layout.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-layout.md)，运行时磁盘与缓存边界在 [docs/plugin-storage.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-storage.md)，版本规则在 [docs/versioning.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/versioning.md)。
+边界与门禁的维护说明在 [docs/plugin-flow.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-flow.md)，技能的层次与数据流在 [docs/architecture.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/architecture.md)，触发矩阵在 [docs/triggering.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/triggering.md)，目录和进包白名单在 [docs/plugin-layout.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-layout.md)，运行时磁盘与缓存边界在 [docs/plugin-storage.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-storage.md)，设计原则在 [docs/design-principles.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/design-principles.md)，注释与命名资料检索流程在 [docs/comment-sources.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/comment-sources.md)，版本规则在 [docs/versioning.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/versioning.md)。
 
 ## 本地开发
 
@@ -97,7 +97,7 @@ node "<skill-dir>/scripts/checking-environment.mjs" --project . --live
 
 ```bash
 npm ci
-npm test              # 构建、结构/编码/工作流检查与 11 组单元测试
+npm test              # 提交前主门：构建、结构/编码/工作流检查与单元测试
 npm run test:matrix   # 四套模板 × 五档标准的真实构建矩阵
 npm run pack:check    # 核对 npm 包内容
 npm run ci            # 复现 Ubuntu CI：安装、测试、打包检查（不含标准矩阵）

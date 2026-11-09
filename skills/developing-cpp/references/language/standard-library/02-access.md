@@ -1,3 +1,4 @@
+<!-- 读取时机：查语言细节时；读完能回答：访问与边界；预算：一次只开这一份（14 行），不自动串联。 -->
 # 访问与边界
 
 - `operator[]` 不检查边界，越界是未定义行为；`at` 检查并抛 `std::out_of_range`。规则与家族差异见 `references/language/value-types/09-subscript.md`。

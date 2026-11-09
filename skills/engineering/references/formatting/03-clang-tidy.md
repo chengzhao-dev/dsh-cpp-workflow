@@ -1,12 +1,13 @@
+<!-- 读取时机：排版或工具配置时；读完能回答：clang-tidy 与静态检查门禁；预算：一次只开这一份（58 行），不自动串联。 -->
 # clang-tidy 与静态检查门禁
 
 ## clang-tidy
 
 ```bash
 clang-tidy -p build/clang \
-  --header-filter="^$(pwd -P)/(include|src|apps|tests)/" \
+  --header-filter="^$(pwd -P)/(include|src|app|tests)/" \
   --warnings-as-errors='*' \
-  src/*.cpp apps/*.cpp tests/*.cpp
+  src/*.cpp app/*.cpp tests/*.cpp
 ```
 
 - `-p` 指向当前编译器的构建目录，读取 `compile_commands.json`。

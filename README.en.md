@@ -22,16 +22,16 @@ Fixed-version npm install:
 dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.1
 ```
 
-The latest published version is `0.7.1`; `0.7.3` exists only in the working tree and is not published yet, so use `0.7.1` above until it is released. After the working-tree version is published, switch the npm command to:
+The latest published version is `0.7.1`; `0.7.4` exists only in the working tree and is not published yet, so use `0.7.1` above until it is released. `0.7.3` is skipped and will not be published. After the working-tree version is published, switch the npm command to:
 
 ```bash
-dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.3
+dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.4
 ```
 
-GitHub tag installs require the matching tag; once `v0.7.3` is created, the version in the address matches the tag:
+GitHub tag installs require the matching tag; once `v0.7.4` is created, the version in the address matches the tag:
 
 ```bash
-dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.3
+dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.4
 ```
 
 Replace `--profile` with the profile you actually run. The desktop app always runs the `desktop` profile, and that profile is owned by the app; if the command-line `add` is rejected, add the plugin in the app settings and use the same pinned npm version. A Git tag install uses the prebuilt `lib/` committed in the repository and runs no build on the target machine; the package has no install script that needs approval.
@@ -70,7 +70,7 @@ Keep one `environment.json` per repository. Its first three environment axes are
 | `compiler` | `clang`, `gcc` | One compiler per configuration |
 | `standard` | `c++11`, `c++14`, `c++17`, `c++20`, `c++23` | New projects default to `c++23`; one standard per project |
 
-The standard lives in `environment.json` as `standard` and must match the CMake target and compile database; on the CMake side, prefer `engineering`'s `CompileSettings_SetCxxStandard` function. New projects default to C++23; for C++11–C++20, lower `standard`, `cxx_std_*`, `CXX_STANDARD`, and the `.clang-format` parsing level together, not one at a time. Per-standard facilities, tooling, and downgrade tables are in the [standard directory](skills/engineering/references/cmake/standards/README.md); the CMake two-layer declaration is in [cxx-standard.md](skills/engineering/references/cmake/standards/cxx-standard.md).
+The standard lives in `environment.json` as `standard` and must match the CMake target and compile database; on the CMake side, prefer `engineering`'s `CompileSettings_SetCxxStandard` function. New projects default to C++23; for C++11–C++20, lower `standard`, `cxx_std_*`, `CXX_STANDARD`, and the `.clang-format` parsing level together, not one at a time. Per-standard facilities, tooling, and downgrade tables are in the [standard directory](skills/engineering/references/cmake/standards/index.md); the CMake two-layer declaration is in [01-cxx-standard.md](skills/engineering/references/cmake/standards/01-cxx-standard.md).
 
 The generator is always Ninja. Build directories are `build/clang/` and `build/gcc/`; they are never shared. Analysis tools are always `clang-format`, `clang-tidy`, and `clangd`; GCC mode does not switch to another analyzer.
 
@@ -89,7 +89,7 @@ The project root carries only `.vscode/extensions.json` and `settings.json`: cla
 
 The runtime closure is `lib/`, `skills/`, `templates/`, `locale/`, `cordis.patch.yml`, both READMEs, `LICENSE`, and `icon.svg`. The repository also keeps `src/`, `scripts/`, `tests/`, and `docs/` for development and review; they are not published. The authoritative whitelist and per-directory map live in [docs/plugin-layout.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-layout.md).
 
-Maintenance notes: flow and gate in [docs/plugin-flow.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-flow.md), skill layers and data flow in [docs/architecture.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/architecture.md), trigger matrix in [docs/triggering.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/triggering.md), directory and npm whitelist in [docs/plugin-layout.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-layout.md), runtime disk and cache boundaries in [docs/plugin-storage.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-storage.md), version rules in [docs/versioning.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/versioning.md).
+Maintenance notes: flow and gate in [docs/plugin-flow.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-flow.md), skill layers and data flow in [docs/architecture.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/architecture.md), trigger matrix in [docs/triggering.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/triggering.md), directory and npm whitelist in [docs/plugin-layout.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-layout.md), runtime disk and cache boundaries in [docs/plugin-storage.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-storage.md), design principles in [docs/design-principles.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/design-principles.md), comment and naming source-research process in [docs/comment-sources.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/comment-sources.md), version rules in [docs/versioning.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/versioning.md).
 
 ## Local development
 
@@ -97,7 +97,7 @@ Requires Node.js 22 or newer.
 
 ```bash
 npm ci
-npm test              # build, structural/encoding/workflow checks, and 11 unit-test files
+npm test              # main pre-commit gate: build, structural/encoding/workflow checks, and unit tests
 npm run test:matrix   # real build matrix: 4 templates x 5 standards
 npm run pack:check    # inspect the npm package contents
 npm run ci            # replay the Ubuntu CI job: install, test, package check

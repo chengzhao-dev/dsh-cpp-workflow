@@ -1,4 +1,4 @@
-// 注释检查器锁定 references/comments/comment-rules.md 的硬规则：文件头、标签、标签间空行、注释与声明的贴合、
+// 注释检查器锁定 references/comments/01-comment-rules.md 的硬规则：文件头、标签、标签间空行、注释与声明的贴合、
 // 列表缩进、成员清单、设计论证、跨类分工、类型系统复述、否定式边界、领域尺寸、谓词首句、
 // @param 完整性、摘要裸参数名与枚举行尾注释。规则改动时必须同步这里的用例。
 import assert from 'node:assert/strict'
@@ -89,8 +89,8 @@ test('文件头提到别的源文件或目录时报错', () => {
   assert.ok(rules(cross, { fileName: 'board.h' }).includes('header-cross-file'))
   const own = ['/// @file board.h', '/// @brief 定义棋盘。', '///', '/// 棋盘状态。', '', 'class Board {};', ''].join('\n')
   assert.ok(!rules(own, { fileName: 'board.h' }).includes('header-cross-file'))
-  const apps = ['/// @file board.h', '/// @brief 定义棋盘。', '///', '/// 输入输出在 apps/。', '', 'class Board {};', ''].join('\n')
-  assert.ok(rules(apps, { fileName: 'board.h' }).includes('header-cross-file'))
+  const other = ['/// @file board.h', '/// @brief 定义棋盘。', '///', '/// 输入输出在 tests/。', '', 'class Board {};', ''].join('\n')
+  assert.ok(rules(other, { fileName: 'board.h' }).includes('header-cross-file'))
 })
 
 test('禁止的 Doxygen 标签', () => {
@@ -194,13 +194,15 @@ test('类型注释不写领域尺寸', () => {
   assert.deepEqual(rules(ok), [])
 })
 
-test('谓词首句写检查是否', () => {
-  const bad = file('/// 坐标在棋盘内时返回 true。', 'bool IsInRange(CellPosition position) const;')
+test('谓词首句写主体是否状态', () => {
+  const bad = file('/// 检查坐标是否在棋盘内。', 'bool IsInRange(CellPosition position) const;')
   assert.deepEqual(rules(bad), ['predicate-first'])
   const opBad = file('/// 比较两个坐标。', 'bool operator==(const CellPosition& other) const;')
   assert.deepEqual(rules(opBad), ['predicate-first'])
-  const ok = file('/// 检查坐标是否在棋盘内。', 'bool IsInRange(CellPosition position) const;')
+  const ok = file('/// 坐标是否在棋盘内。', 'bool IsInRange(CellPosition position) const;')
   assert.deepEqual(rules(ok), [])
+  const opOk = file('/// 相等运算符。', 'bool operator==(const CellPosition& other) const;')
+  assert.deepEqual(rules(opOk), [])
 })
 
 test('函数注释不点名调用者', () => {
@@ -534,6 +536,79 @@ test('--allow-tag 缺值时返回用法错误', () => {
   const result = runCli(['--root', '.', '--allow-tag'])
   assert.equal(result.status, EXIT.usage)
   assert.match(result.stderr, /--allow-tag 需要标签名/)
+})
+
+test('头文件已声明的定义处不再写 ///', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
+  try {
+    writeFileSync(
+      path.join(dir, 'pair.h'),
+      [
+        '/// @file pair.h',
+        '/// @brief 配对声明。',
+        '',
+        '/// 相加。',
+        '///',
+        '/// @param a 第一个加数。',
+        '/// @param b 第二个加数。',
+        '/// @return 两个数的和。',
+        'int Add(int a, int b);',
+        '',
+      ].join('\n'),
+    )
+    writeFileSync(
+      path.join(dir, 'pair.cpp'),
+      [
+        '/// @file pair.cpp',
+        '/// @brief 配对实现。',
+        '',
+        '/// 相加。',
+        'int Add(int a, int b) { return a + b; }',
+        '',
+      ].join('\n'),
+    )
+    const report = JSON.parse(runCli(['--root', dir, '--json']).stdout)
+    assert.ok(report.issues.some((issue) => issue.rule === 'doc-on-definition'))
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('只在 .cpp 出现的函数需要完整契约', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
+  try {
+    writeFileSync(
+      path.join(dir, 'helper.cpp'),
+      [
+        '/// @file helper.cpp',
+        '/// @brief 辅助实现。',
+        '',
+        'int Helper(int value) { return value; }',
+        '',
+      ].join('\n'),
+    )
+    const missing = JSON.parse(runCli(['--root', dir, '--json']).stdout)
+    assert.ok(missing.issues.some((issue) => issue.rule === 'cpp-contract-missing'))
+    writeFileSync(
+      path.join(dir, 'helper.cpp'),
+      [
+        '/// @file helper.cpp',
+        '/// @brief 辅助实现。',
+        '',
+        '/// 返回传入的值。',
+        '///',
+        '/// @param value 输入值。',
+        '///',
+        '/// @return 传入的值。',
+        'int Helper(int value) { return value; }',
+        '',
+      ].join('\n'),
+    )
+    const ok = JSON.parse(runCli(['--root', dir, '--json']).stdout)
+    assert.ok(!ok.issues.some((issue) => issue.rule === 'cpp-contract-missing'))
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
 })
 
 function runCli(args) {

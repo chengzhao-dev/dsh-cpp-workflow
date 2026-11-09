@@ -1,3 +1,4 @@
+<!-- 读取时机：排版或工具配置时；读完能回答：clangd 与编辑器；预算：一次只开这一份（91 行），不自动串联。 -->
 # clangd 与编辑器
 
 ## clangd
@@ -63,6 +64,7 @@ Diagnostics:
   ],
   "cmake.buildDirectory": "${workspaceFolder}/build/clang",
   "cmake.generator": "Ninja",
+  "cmake.configureOnOpen": true,
   "cmake.buildBeforeRun": true,
   "cmake.exportCompileCommandsFile": true,
   "cmake.debugConfig": {

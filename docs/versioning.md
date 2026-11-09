@@ -4,7 +4,7 @@
 
 ## 当前版本
 
-工作区 `dsh-cpp-workflow` 为 **0.7.3**（尚未发布），npm 最新发布是 **0.7.1**；`dsh-quarto-book` 为 **0.6.24**。两个插件各自发布，不再共用版本号。误发的 `0.0.1` 已从 npm 撤回，并删除 GitHub 标签与 Release；该号作废，不再复用。
+工作区 `dsh-cpp-workflow` 为 **0.7.4**（尚未发布；**0.7.3** 跳过），npm 最新发布是 **0.7.1**；`dsh-quarto-book` 为 **0.6.24**。两个插件各自发布，不再共用版本号。误发的 `0.0.1` 已从 npm 撤回，并删除 GitHub 标签与 Release；该号作废，不再复用。
 
 ## 修订号
 
@@ -29,12 +29,12 @@
 1. 改 `package.json` 与 `package-lock.json` 的版本，提交并推送 `main`。
 2. `ci` 与 `publish.yml` 都会在 `main` 上运行。`publish.yml` 读 `package.json` 的版本，再查 npm：版本不存在，就 `npm ci`、`npm test`、`npm publish --tag latest`（provenance 由 `publishConfig.provenance=true` 提供）；版本已存在，就跳过发布。测试失败时整条发布链停在发布前。
 3. 发布成功后，同一个 workflow 在同一个提交上建 annotated 标签 `v<版本>`，再用 `gh release create --verify-tag --generate-notes` 建 GitHub Release。标签已存在就复用，不重复创建。
-4. 需要手动补发时，也可以推送 `v<版本>` 标签；workflow 发现 npm 上已有同版本时只补 Release。
+4. 需要手动补发时，也可以推送 `v<版本>` 标签；workflow 发现 npm 上已有同版本时只补 Release。`workflow_dispatch` 只在 `main` 或 `v*` 标签上执行，其他 ref 直接跳过。
 5. 读回两边的 commit，必须相同：
 
    ```bash
-   npm view @chengzhao-dev/dsh-cpp-workflow@0.7.1 version gitHead
-   git rev-parse v0.7.1^{commit}
+   npm view @chengzhao-dev/dsh-cpp-workflow@0.7.4 version gitHead
+   git rev-parse v0.7.4^{commit}
    ```
 
    `npm view ... dist.attestations` 应能看到 provenance 记录。

@@ -6,7 +6,7 @@
 
 - 目录名不加数字前缀；数字只出现在步骤文件与同一主题内的条文文件上。
 - 步骤文件用两位数字前缀，表示先后顺序：`steps/01-behavior.md`。
-- 一个主题内部的条文按两位数字前缀排阅读顺序；目录里只有一个主文档时不加数字。案例文件按种类命名，不加数字（如 `declaration-enum.md`、`throw-when.md`）。
+- 一个主题内部的条文按两位数字前缀排阅读顺序；目录里只有一个主文档时不加数字。案例文件按种类命名，不加数字（如 `03-declaration-enum.md`、`07-throw-when.md`）。
 - 只有还会继续长大的主题才建子目录（如 `references/language/language-basics/`）；`examples/` 与 `glossary/` 内不再建目录。
 - 入口表可以点名目录（如 `references/language/`）；结构检查从入口表出发，沿路径、目录与本地链接确认 `references/` 下每份 Markdown 可达。新增文件放进已点名的目录，或同时补入口表。
 - 同一事实只在一份文件展开，旧路径不保留转述页。
@@ -19,6 +19,7 @@ dsh-cpp-workflow/
 ├── docs/
 │   ├── architecture.md
 │   ├── comment-sources.md
+│   ├── design-principles.md
 │   ├── module-layout.md
 │   ├── plugin-boundaries.md
 │   ├── plugin-flow.md
@@ -86,53 +87,61 @@ src/
 
 `src/comment-policy.ts` 由服务端与客户端共用：`scripts/building-client.mjs` 把它内联进 `lib/client.js`，两边读同一份默认值与快照。`lib/` 是 `npm run build` 的产物（`index.js`、`workspace.js`、`comment-policy.js`、`client.js`），改源码后重新构建，不手改。
 
+## skills/shared
+
+```text
+shared/
+├── budget.md
+├── operations.md
+└── rule-priority.md
+```
+
 ## skills/developing-cpp
 
 ```text
 developing-cpp/
 ├── references/
+│   ├── index.md
 │   ├── comments/
 │   │   ├── examples/
-│   │   │   ├── declaration-class.md
-│   │   │   ├── declaration-constructor.md
-│   │   │   ├── declaration-enum.md
-│   │   │   ├── declaration-file.md
-│   │   │   ├── declaration-function.md
-│   │   │   ├── declaration-member.md
-│   │   │   ├── declaration-predicate.md
-│   │   │   ├── declaration-struct.md
-│   │   │   ├── implementation-body.md
-│   │   │   └── implementation-todo.md
+│   │   │   ├── 01-declaration-class.md
+│   │   │   ├── 02-declaration-constructor.md
+│   │   │   ├── 03-declaration-enum.md
+│   │   │   ├── 04-declaration-file.md
+│   │   │   ├── 05-declaration-function.md
+│   │   │   ├── 06-declaration-member.md
+│   │   │   ├── 07-declaration-predicate.md
+│   │   │   ├── 08-declaration-struct.md
+│   │   │   ├── 09-implementation-body.md
+│   │   │   └── 10-implementation-todo.md
 │   │   ├── glossary/
-│   │   │   └── comment-terms.md
-│   │   ├── comment-rules.md
-│   │   └── comment-style.md
+│   │   │   └── 01-comment-terms.md
+│   │   ├── 01-comment-rules.md
+│   │   └── 02-style.md
 │   ├── design/
 │   │   ├── examples/
-│   │   │   ├── behavior-sentence.md
-│   │   │   ├── coordinate-table.md
-│   │   │   ├── header-place.md
-│   │   │   ├── library-boundary.md
-│   │   │   ├── library-split.md
-│   │   │   ├── move-result.md
-│   │   │   └── preview-read.md
-│   │   └── project-design.md
-│   ├── editing/
-│   │   ├── 01-edit-operations.md
-│   │   └── 02-rule-priority.md
+│   │   │   ├── 01-behavior-sentence.md
+│   │   │   ├── 02-coordinate-table.md
+│   │   │   ├── 03-header-place.md
+│   │   │   ├── 04-library-boundary.md
+│   │   │   ├── 05-library-split.md
+│   │   │   ├── 06-move-result.md
+│   │   │   └── 07-preview-read.md
+│   │   ├── 01-project-design.md
+│   │   └── session-layer.md
 │   ├── exceptions/
 │   │   ├── examples/
-│   │   │   ├── throw-boundary.md
-│   │   │   ├── throw-build-mode.md
-│   │   │   ├── throw-catch.md
-│   │   │   ├── throw-destructor.md
-│   │   │   ├── throw-format.md
-│   │   │   ├── throw-message.md
-│   │   │   └── throw-when.md
-│   │   └── throw-rules.md
+│   │   │   ├── 01-throw-boundary.md
+│   │   │   ├── 02-throw-build-mode.md
+│   │   │   ├── 03-throw-catch.md
+│   │   │   ├── 04-throw-destructor.md
+│   │   │   ├── 05-throw-format.md
+│   │   │   ├── 06-throw-message.md
+│   │   │   └── 07-throw-when.md
+│   │   └── 01-exception-rules.md
 │   ├── language/
 │   │   ├── glossary/
-│   │   │   └── language-terms.md
+│   │   │   └── 01-language-terms.md
 │   │   ├── language-basics/
 │   │   │   ├── 01-objects.md
 │   │   │   ├── 02-initialization.md
@@ -143,7 +152,7 @@ developing-cpp/
 │   │   │   ├── 07-classes.md
 │   │   │   ├── 08-raii.md
 │   │   │   ├── 09-templates.md
-│   │   │   └── 10-checklist.md
+│   │   │   └── 10-language-checklist.md
 │   │   ├── performance/
 │   │   │   ├── 01-measure.md
 │   │   │   ├── 02-complexity.md
@@ -162,7 +171,7 @@ developing-cpp/
 │   │   │   ├── 07-time.md
 │   │   │   ├── 08-random.md
 │   │   │   ├── 09-files.md
-│   │   │   └── 10-checklist.md
+│   │   │   └── 10-library-checklist.md
 │   │   └── value-types/
 │   │       ├── 01-width.md
 │   │       ├── 02-signed.md
@@ -181,26 +190,29 @@ developing-cpp/
 │   │   └── 03-declaration-order.md
 │   ├── naming/
 │   │   ├── examples/
-│   │   │   ├── naming-accessor.md
-│   │   │   ├── naming-basic.md
-│   │   │   ├── naming-current-prefix.md
-│   │   │   ├── naming-local.md
-│   │   │   ├── naming-lookup.md
-│   │   │   ├── naming-lower-layer.md
-│   │   │   ├── naming-multiple-return.md
-│   │   │   ├── naming-player-value.md
-│   │   │   ├── naming-predicate.md
-│   │   │   ├── naming-rename.md
-│   │   │   ├── naming-responsibility.md
-│   │   │   ├── naming-role.md
-│   │   │   └── naming-state-change.md
+│   │   │   ├── 01-naming-accessor.md
+│   │   │   ├── 02-naming-basic.md
+│   │   │   ├── 03-naming-current-prefix.md
+│   │   │   ├── 04-naming-local.md
+│   │   │   ├── 05-naming-lookup.md
+│   │   │   ├── 06-naming-lower-layer.md
+│   │   │   ├── 07-naming-multiple-return.md
+│   │   │   ├── 08-naming-player-value.md
+│   │   │   ├── 09-naming-predicate.md
+│   │   │   ├── 10-naming-rename.md
+│   │   │   ├── 11-naming-responsibility.md
+│   │   │   ├── 12-naming-role.md
+│   │   │   └── 13-naming-state-change.md
 │   │   ├── glossary/
-│   │   │   ├── naming-terms.md
-│   │   │   ├── position.md
-│   │   │   └── square.md
-│   │   └── identifier-names.md
+│   │   │   ├── 01-naming-terms.md
+│   │   │   ├── 02-position.md
+│   │   │   ├── 03-selection.md
+│   │   │   ├── 04-square.md
+│   │   │   ├── 05-scoring.md
+│   │   │   └── 06-difficulty.md
+│   │   └── 01-identifier-names.md
 │   └── style/
-│       └── google-cpp-style.md
+│       └── 01-google-cpp-style.md
 ├── scripts/
 │   ├── checking-comments.mjs
 │   └── checking-declaration-order.mjs
@@ -217,6 +229,7 @@ developing-cpp/
 ```text
 engineering/
 ├── references/
+│   ├── index.md
 │   ├── cmake/
 │   │   ├── assets/
 │   │   │   ├── CompileSettings.cmake
@@ -227,40 +240,34 @@ engineering/
 │   │   │   ├── 03-undefined-reference.md
 │   │   │   └── 04-inspect.md
 │   │   ├── modules/
-│   │   │   └── functions.md
+│   │   │   └── 01-functions.md
 │   │   ├── standards/
 │   │   │   ├── examples/
-│   │   │   │   └── standard.md
+│   │   │   │   └── 01-standard.md
 │   │   │   ├── c++11/
-│   │   │   │   ├── cmake-snippet.cmake
-│   │   │   │   └── README.md
+│   │   │   │   └── cmake-snippet.cmake
 │   │   │   ├── c++14/
-│   │   │   │   ├── cmake-snippet.cmake
-│   │   │   │   └── README.md
+│   │   │   │   └── cmake-snippet.cmake
 │   │   │   ├── c++17/
-│   │   │   │   ├── cmake-snippet.cmake
-│   │   │   │   └── README.md
+│   │   │   │   └── cmake-snippet.cmake
 │   │   │   ├── c++20/
-│   │   │   │   ├── cmake-snippet.cmake
-│   │   │   │   └── README.md
+│   │   │   │   └── cmake-snippet.cmake
 │   │   │   ├── c++23/
-│   │   │   │   ├── cmake-snippet.cmake
-│   │   │   │   └── README.md
-│   │   │   ├── README.md
-│   │   │   └── cxx-standard.md
+│   │   │   │   └── cmake-snippet.cmake
+│   │   │   ├── versions.md
+│   │   │   ├── index.md
+│   │   │   └── 01-cxx-standard.md
 │   │   ├── targets/
 │   │   │   ├── examples/
-│   │   │   │   ├── glob.md
-│   │   │   │   ├── rpath.md
-│   │   │   │   └── target.md
-│   │   │   └── rules.md
+│   │   │   │   └── 01-rpath.md
+│   │   │   └── 01-target-rules.md
 │   │   └── testing/
-│   │       └── ctest.md
+│   │       └── 01-ctest.md
 │   └── formatting/
 │       ├── examples/
-│       │   ├── clang-format.md
-│       │   ├── clang-tidy.md
-│       │   └── clangd.md
+│       │   ├── 01-clang-format.md
+│       │   ├── 02-clang-tidy.md
+│       │   └── 03-clangd.md
 │       ├── scripts/
 │       │   └── checking-encoding.mjs
 │       ├── 01-encoding.md
@@ -323,18 +330,15 @@ building-cpp/
 │               └── CMakeLists.txt
 ├── examples/
 │   └── environment.md
-├── project/
-│   └── vscode/
-│       ├── 01-extensions.md
-│       └── 02-settings.md
 ├── references/
-│   ├── build-script.md
-│   └── environment.md
+│   ├── 01-build-script.md
+│   └── 02-environment.md
 ├── scripts/
 │   └── checking-environment.mjs
 ├── steps/
 │   ├── 01-build.md
 │   ├── 02-tooling.md
-│   └── 03-check.md
+│   ├── 03-check.md
+│   └── 04-vscode.md
 └── SKILL.md
 ```

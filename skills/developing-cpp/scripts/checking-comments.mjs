@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// 只读注释审计：按 references/comments/comment-rules.md 的硬规则检查 C/C++ 源文件。
+// 只读注释审计：按 references/comments/01-comment-rules.md 的硬规则检查 C/C++ 源文件。
 //
 // 检查项：Doxygen 文件头、注释行宽度、列表缩进、标签、标签间空行、注释与声明的贴合、
-// 类型注释存在性、成员功能清单、设计论证（方案对比）、否定式边界、领域尺寸、谓词首句、@param 完整性、摘要裸参数名、枚举成员注释一致性、枚举行尾句式、数据成员主注释位置。
+// 类型注释存在性、成员功能清单、设计论证（方案对比）、否定式边界、领域尺寸、谓词首句、@param 完整性、摘要裸参数名、枚举成员注释一致性、枚举行尾句式、数据成员主注释位置、定义处重复声明注释、只在 .cpp 出现的函数契约。
 // 不重写任何文件。
 //
 // 用法：
@@ -20,6 +20,7 @@ const SOURCE_EXT = new Set([
   '.cpp', '.cc', '.cxx', '.c++', '.c', '.m', '.mm',
 ])
 const HEADER_EXT = new Set(['.h', '.hh', '.hpp', '.hxx', '.h++', '.inl', '.ipp', '.tpp'])
+const CPP_EXT = new Set(['.cpp', '.cc', '.cxx', '.c++', '.c'])
 const SKIP_DIR = new Set([
   '.git', '.hg', '.svn', 'build', 'build-release', 'out', 'node_modules', '_book', '.quarto', '.cache',
   '.tmp', 'temp', 'third_party', 'third-party', 'external', 'vendor', 'deps', 'cmake-build-debug',
@@ -42,8 +43,11 @@ const NEGATED_BOUNDARY = /只保存|不拥有|不含/
 const NEGATIVE_SCOPE = /不(?:检查|校验|验证|负责|判断)/
 const DOMAIN_SIZE = /\d+\s*[×xX]\s*\d+|九格|九个格子/
 const PREDICATE_DECL = /^(?:\[\[nodiscard\]\]\s*)?(?:static\s+)?bool\s+(?:Is|Has|Can|Completes|Would)[A-Za-z0-9_]*\s*\(|operator==/
+const PREDICATE_BANNED_PREFIX = /^(?:检查|判断|校验|验证)/
 const isPredicateFirstOk = (declaration, firstDocLine) =>
-  firstDocLine.startsWith('检查') || (declaration.includes('operator==') && firstDocLine.startsWith('相等运算符'))
+  declaration.includes('operator==')
+    ? firstDocLine.startsWith('相等运算符')
+    : firstDocLine.includes('是否') && !PREDICATE_BANNED_PREFIX.test(firstDocLine)
 const DECL_KEYWORDS = /^(class|struct|union|enum|namespace|using|typedef|template|#|if|else|for|while|switch|return|case|default)\b/
 
 function usage(message) {
@@ -242,6 +246,86 @@ export function functionParams(declaration) {
   return splitParams(decl.slice(open + 1, close)).map(paramName).filter(Boolean)
 }
 
+/** 收集头文件里声明的函数名，供 .cpp 定义处配对；声明可以跨行。 */
+function declarationNames(text) {
+  const names = new Set()
+  let buffer = ''
+  for (const line of text.split(/\r?\n/)) {
+    const trimmed = line.trim()
+    if (trimmed === '' || trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*') || trimmed.startsWith('#')) continue
+    buffer = buffer === '' ? trimmed : `${buffer} ${trimmed}`
+    if (!buffer.includes(';')) continue
+    const declaration = buffer
+    buffer = ''
+    if (/^(if|for|while|switch|catch|else|return|case|default|do)\b/.test(declaration)) continue
+    const match = declaration.match(/^(.*?)\b([A-Za-z_]\w*)\s*\(([^;{}]*)\)\s*(?:const\s*)?(?:noexcept\s*)?(?:override\s*)?(?:final\s*)?(?:=\s*(?:0|default|delete)\s*)?;$/)
+    if (match) names.add(match[2])
+  }
+  return names
+}
+
+/** 取定义行上的函数名、返回类型与参数名；不是单行定义时返回 undefined。 */
+function definitionAt(lines, index) {
+  const line = lines[index]
+  if (/^\s*(if|for|while|switch|catch|else|return|case|default|do)\b/.test(line)) return undefined
+  if (/^\s*[A-Z][A-Z0-9_]*\s*\(/.test(line)) return undefined
+  const match = line.match(/^(\s*)(.*?)\b([A-Za-z_]\w*)\s*\(([^)]*)\)\s*(?:const\s*)?(?:noexcept\s*)?(?:->\s*[^{]+)?\{\s*.*$/)
+  if (!match) return undefined
+  const prefix = match[2].trim()
+  if (/^(if|for|while|switch|catch|else|return|case|default|do)$/.test(match[3])) return undefined
+  if (prefix.endsWith('::~')) return undefined
+  const returnType = prefix.replace(/[A-Za-z_]\w*::$/, '').trim()
+  return { name: match[3], returnType, params: splitParams(match[4]).map(paramName).filter(Boolean) }
+}
+
+/** 取定义上一行紧贴的 /// 文档块。 */
+function docAbove(lines, index) {
+  let cursor = index - 1
+  if (cursor < 0 || !lines[cursor].trim().startsWith('///')) return undefined
+  const contents = []
+  let start = cursor
+  while (cursor >= 0 && lines[cursor].trim().startsWith('///')) {
+    contents.unshift(lines[cursor].trim().replace(/^\/\/\/\s?/, ''))
+    start = cursor
+    cursor -= 1
+  }
+  return { start, contents }
+}
+
+/** 检查 .cpp 定义处的注释落点：头文件已声明的定义不写 ///，只在 .cpp 出现的函数写完整契约。 */
+export function checkDefinitionDocs(text, headerNames = new Set()) {
+  const issues = []
+  const lines = text.split(/\r?\n/)
+  for (let index = 0; index < lines.length; index += 1) {
+    const definition = definitionAt(lines, index)
+    if (!definition || definition.name === 'main' || definition.name.startsWith('operator')) continue
+    const doc = docAbove(lines, index)
+    if (headerNames.has(definition.name)) {
+      if (doc) {
+        issues.push({ line: doc.start + 1, rule: 'doc-on-definition', message: '定义处重复了头文件声明注释：删掉这里的 ///，契约留在声明处' })
+      }
+      continue
+    }
+    const needsContract = definition.params.length > 0 || (definition.returnType !== '' && definition.returnType !== 'void')
+    if (!needsContract) continue
+    if (!doc) {
+      issues.push({ line: index + 1, rule: 'cpp-contract-missing', message: '只在 .cpp 出现的函数缺少完整契约：在定义上一行补 @param/@return' })
+      continue
+    }
+    const block = doc.contents.join('\n')
+    const documented = [...block.matchAll(/@param(?:\[[^\]]*\])?\s+(\w+)/g)].map((match) => match[1])
+    for (const name of definition.params) {
+      if (!documented.includes(name)) {
+        issues.push({ line: doc.start + 1, rule: 'cpp-contract-missing', message: `只在 .cpp 出现的函数缺少 @param ${name}：补完整契约` })
+      }
+    }
+    if (definition.returnType !== '' && definition.returnType !== 'void' && !/@return\b/.test(block)) {
+      issues.push({ line: doc.start + 1, rule: 'cpp-contract-missing', message: '只在 .cpp 出现的函数缺少 @return：补完整契约' })
+    }
+  }
+  return issues
+}
+
 /** 取函数注释第一段：遇到空行或 Doxygen 标签就结束。 */
 function summaryParagraph(contents) {
   const paragraph = []
@@ -365,7 +449,7 @@ export function checkText(text, options = {}) {
       for (const name of namesToCheck) {
         if (name !== own) add(headerLine, 'header-cross-file', `文件头提到了别的源文件 ${name}：只介绍本文件，删掉跨文件句子`)
       }
-      if (/\bapps\//.test(text)) add(headerLine, 'header-cross-file', '文件头指向了另一个目录：只介绍本文件')
+      if (/\b(?:app|src|include|tests)\//.test(text)) add(headerLine, 'header-cross-file', '文件头指向了另一个目录：只介绍本文件')
     }
   }
 
@@ -379,7 +463,7 @@ export function checkText(text, options = {}) {
       }
       for (const tag of FORBIDDEN_TAGS) {
         if (options.allowTags?.has(tag.slice(1))) continue
-        if (trimmed.includes(tag)) add(index + 1, 'forbidden-tag', `禁止使用 ${tag}，按 references/comments/comment-rules.md 的标签表改写`)
+        if (trimmed.includes(tag)) add(index + 1, 'forbidden-tag', `禁止使用 ${tag}，按 references/comments/01-comment-rules.md 的标签表改写`)
       }
     }
   }
@@ -393,7 +477,7 @@ export function checkText(text, options = {}) {
         if (displayWidth(rendered) > width) add(doc.start + 1, 'comment-width', `注释行 ${displayWidth(rendered)} 列，超过 ${width} 列`)
         for (const tag of FORBIDDEN_TAGS) {
           if (options.allowTags?.has(tag.slice(1))) continue
-          if (content.includes(tag)) add(doc.start + 1, 'forbidden-tag', `禁止使用 ${tag}，按 references/comments/comment-rules.md 的标签表改写`)
+          if (content.includes(tag)) add(doc.start + 1, 'forbidden-tag', `禁止使用 ${tag}，按 references/comments/01-comment-rules.md 的标签表改写`)
         }
       }
       for (let raw = doc.start; raw <= doc.end; raw += 1) {
@@ -460,7 +544,7 @@ export function checkText(text, options = {}) {
     }
     const firstDocLine = lines[start].trim().replace(/^\/\/\/\s*/, '')
     if (!isType && PREDICATE_DECL.test(declaration) && !isPredicateFirstOk(declaration, firstDocLine)) {
-      add(start + 1, 'predicate-first', '布尔查询或 operator== 的第一句应写「检查…是否…」')
+      add(start + 1, 'predicate-first', '布尔查询的第一句应写「…是否…」，句首不用「检查/判断/校验/验证」；operator== 写「相等运算符」')
     }
     const params = functionParams(declaration)
     if (!params) continue
@@ -509,7 +593,7 @@ export function checkText(text, options = {}) {
       if (isType && DOMAIN_SIZE.test(block)) add(doc.start + 1, 'domain-size', '类型注释在写领域尺寸：格子数由 squares_ 之类成员声明表达，删掉这句')
       const firstDocLine = doc.contents[0] ?? ''
       if (!isType && PREDICATE_DECL.test(declaration) && !isPredicateFirstOk(declaration, firstDocLine)) {
-        add(doc.start + 1, 'predicate-first', '布尔查询或 operator== 的第一句应写「检查…是否…」')
+        add(doc.start + 1, 'predicate-first', '布尔查询的第一句应写「…是否…」，句首不用「检查/判断/校验/验证」；operator== 写「相等运算符」')
       }
       const params = functionParams(declaration)
       if (!params) continue
@@ -676,6 +760,7 @@ function main(argv) {
     return usage(`读取 ${root} 失败：${error.message}`)
   }
   const results = []
+  const texts = new Map()
   for (const file of files) {
     let text
     try {
@@ -684,6 +769,7 @@ function main(argv) {
       process.stderr.write(`错误：读取 ${file} 失败：${error.message}\n`)
       return EXIT.usage
     }
+    texts.set(file, text)
     const width = options.widthExplicit
       ? options.width
       : (readColumnLimitNear(file, root) ?? options.width)
@@ -691,6 +777,19 @@ function main(argv) {
       results.push({ file: path.relative(root, file) || file, ...issue })
     }
   }
+  const headerNames = new Set()
+  for (const file of files) {
+    if (HEADER_EXT.has(path.extname(file).toLowerCase())) {
+      for (const name of declarationNames(texts.get(file))) headerNames.add(name)
+    }
+  }
+  for (const file of files) {
+    if (!CPP_EXT.has(path.extname(file).toLowerCase())) continue
+    for (const issue of checkDefinitionDocs(texts.get(file), headerNames)) {
+      results.push({ file: path.relative(root, file) || file, ...issue })
+    }
+  }
+  results.sort((left, right) => left.file.localeCompare(right.file) || left.line - right.line)
   if (options.json) {
     process.stdout.write(`${JSON.stringify({ root, files: files.length, issues: results }, null, 2)}\n`)
   } else if (results.length > 0) {

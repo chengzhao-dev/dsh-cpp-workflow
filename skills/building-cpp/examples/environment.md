@@ -6,7 +6,8 @@
 {
   "host": "windows",
   "build_host": "wsl",
-  "compiler": "clang"
+  "compiler": "clang",
+  "standard": "c++23"
 }
 ```
 
@@ -117,10 +118,10 @@ clang 模式要求四者同主版本；这里 18 与 16 不一致，`--live` 失
 
 ```bash
 # CI / Windows 开发机：只读声明，不需要工具链
-node scripts/checking-environment.mjs --project .
+node "<skill-dir>/scripts/checking-environment.mjs" --project .
 
 # build host 上：核对构建宿主、PATH 和版本
-node scripts/checking-environment.mjs --project . --live
+node "<skill-dir>/scripts/checking-environment.mjs" --project . --live
 ```
 
 不带 `--live` 时永远不探测 PATH；不要把活动校验塞进每次构建，构建脚本已经隐含了工具存在性。

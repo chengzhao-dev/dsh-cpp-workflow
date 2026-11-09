@@ -1,6 +1,7 @@
+<!-- 读取时机：排声明顺序时；读完能回答：文件模板；预算：一次只开这一份（137 行），不自动串联。 -->
 # 文件模板
 
-本文件是头文件与实现文件槽位的唯一权威。`references/style/google-cpp-style.md` 的头文件节保留文件级规则（守卫选择、自包含、包含顺序），槽位细节以本文件为准；`references/layout/01-source-layout.md` 只定文件放在哪；`steps/03-declaration.md` 指向这里。类内声明顺序仍只写在 `references/layout/03-declaration-order.md`，本文件不复制。
+本文件是头文件与实现文件槽位的唯一权威。`references/style/01-google-cpp-style.md` 的头文件节保留文件级规则（守卫选择、自包含、包含顺序），槽位细节以本文件为准；`references/layout/01-source-layout.md` 只定文件放在哪；`steps/03-declaration.md` 指向这里。类内声明顺序仍只写在 `references/layout/03-declaration-order.md`，本文件不复制。
 
 ## 选择扩展名
 
@@ -29,7 +30,7 @@
 | `my_project/include/board.h` | `MY_PROJECT_INCLUDE_BOARD_H_` |
 | `my_project/include/game.h` | `MY_PROJECT_INCLUDE_GAME_H_` |
 | `my_project/include/computer.h` | `MY_PROJECT_INCLUDE_COMPUTER_H_` |
-| `apps/include/cli.h` | `APPS_INCLUDE_CLI_H_` |
+| `my_project/include/terminal.h` | `MY_PROJECT_INCLUDE_TERMINAL_H_` |
 | `my_project/tests/computer_test_support.h` | `MY_PROJECT_TESTS_COMPUTER_TEST_SUPPORT_H_` |
 
 - 通用示例：`taskflow/include/task_table.h` → `TASKFLOW_INCLUDE_TASK_TABLE_H_`。
@@ -39,7 +40,7 @@
 
 槽位顺序固定：
 
-1. 文件头注释（格式见 `references/comments/comment-rules.md`，留在守卫外）
+1. 文件头注释（格式见 `references/comments/01-comment-rules.md`，留在守卫外）
 2. `#ifndef` / `#define`
 3. 分组包含（组间空行，组内字母序）
 4. 命名空间内：常量 → 枚举 → 结构体 → 自由函数 → 类

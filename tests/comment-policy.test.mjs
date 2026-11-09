@@ -1,5 +1,5 @@
 // 锁定设置页的标签策略：默认预览、隐私标签、文件名跟随、检查器参数与技能快照。
-// 规则改动时同步 references/comments/comment-rules.md 与设置页文案。
+// 规则改动时同步 references/comments/01-comment-rules.md 与设置页文案。
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'

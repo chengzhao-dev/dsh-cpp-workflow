@@ -7,7 +7,7 @@ metadata:
 
 # engineering
 
-本技能管两件事：CMake 文件与 target 契约，以及编码与排版工具配置。函数体、类型、命名、异常与源码注释只开 `developing-cpp`；构建目录、编译器、入口脚本与运行检查开 `building-cpp`。
+本技能管两件事：CMake 文件与 target 契约，以及编码与排版工具配置。函数体、类型、命名、异常与源码注释只开 `developing-cpp`；构建目录、编译器、入口脚本与运行检查开 `building-cpp`。加载顺序与层表见 [budget.md](../shared/budget.md)。
 
 ## 适用场景
 
@@ -19,7 +19,7 @@ metadata:
 
 ## 三种操作
 
-一次只选一种，范围（单点、整段）是任务属性；判据、边界与交接见 `../developing-cpp/references/editing/01-edit-operations.md`。四类改动是域，不是操作。
+一次只选一种操作，范围（单点、整段）是任务属性；判据、边界与交接见共用入口 [operations.md](../shared/operations.md)。本技能从 [01-targets.md](steps/01-targets.md) 进；四类改动是域，不是操作。
 
 | 操作 | 什么时候用 | 从哪步进 |
 | --- | --- | --- |
@@ -46,28 +46,28 @@ metadata:
 
 | 要做的事 | 打开 |
 | --- | --- |
-| 定 target、include、链接、输出目录与警告 | `references/cmake/targets/rules.md`；案例在 `references/cmake/targets/examples/` |
-| 定语言标准与档位 | `references/cmake/standards/cxx-standard.md`；五档细节在 `references/cmake/standards/` |
-| 抽 CMake 函数与模块 | `references/cmake/modules/functions.md` |
+| 不知道开哪一份条文 | `references/index.md` |
+| 定 target、include、链接、输出目录与警告 | `references/cmake/targets/01-target-rules.md`；案例在 `references/cmake/targets/examples/` |
+| 定语言标准与档位 | `references/cmake/standards/01-cxx-standard.md`；五档细节在 `references/cmake/standards/versions.md` |
+| 抽 CMake 函数与模块 | `references/cmake/modules/01-functions.md` |
 | 链接方式、rpath、undefined reference、产物核对 | 按问题只开一份：`references/cmake/linking/01-libraries.md`、`02-rpath.md`、`03-undefined-reference.md`、`04-inspect.md` |
-| CTest 注册、断言与用例拆分 | `references/cmake/testing/ctest.md` |
+| CTest 注册、断言与用例拆分 | `references/cmake/testing/01-ctest.md` |
 | 编码、BOM 与行尾 | `references/formatting/01-encoding.md` |
-| clang-format | `references/formatting/02-clang-format.md`；案例 `references/formatting/examples/clang-format.md` |
-| clang-tidy 与检查分级 | `references/formatting/03-clang-tidy.md`；案例 `references/formatting/examples/clang-tidy.md` |
-| clangd 与编辑器补全 | `references/formatting/04-clangd.md`；案例 `references/formatting/examples/clangd.md` |
+| clang-format | `references/formatting/02-clang-format.md`；案例 `references/formatting/examples/01-clang-format.md` |
+| clang-tidy 与检查分级 | `references/formatting/03-clang-tidy.md`；案例 `references/formatting/examples/02-clang-tidy.md` |
+| clangd 与编辑器补全 | `references/formatting/04-clangd.md`；案例 `references/formatting/examples/03-clangd.md` |
 | 可复制的 CMake 函数 | `references/cmake/assets/CompileSettings.cmake`、`references/cmake/assets/LinkSettings.cmake` |
+| 操作判不准、规则冲突 | `../shared/operations.md`、`../shared/rule-priority.md` |
 
 ## 加载预算
 
-- 只开当前步对应的一个步骤文件；同一改动域内不同时展开两个技能的步骤。
-- 条文只开该步点名的一份；同号案例留到下一次激活；target 案例先列 `references/cmake/targets/examples/`，再按问题选一份；排版工具一次只开入口表里的那一份。
-- 标准档只打开项目技能声明的那一档，没有声明时用本技能已有的新工程默认，不把其余标准档读进来。
+加载预算见 [budget.md](../shared/budget.md)；engineering 的步骤固定 3 份。
 
 项目技能列出了检查命令时只跑那一条，没有时按 `steps/03-check.md` 的 configure 与构建命令跑；退出码为 0 后停在这一步，不再继续走没有失败的步骤。五档标准的语言设施、工具映射与降档由 `references/cmake/standards/` 维护；本技能只负责这些标准在 CMake 里怎么写，以及三份工具配置各自的最低版本。
 
 ## 四类改动
 
-四类改动是操作内部的域：操作定入口，域定层次。四域的定义、边界与次序见 `../developing-cpp/references/editing/01-edit-operations.md`；一次改动混了两类时，按「内容 → 结构 → 版式 → 措辞」拆开做，前一类落定并经检查再进下一类。
+四类改动是操作内部的域：操作定入口，域定层次。四域的定义、边界与次序见 [operations.md](../shared/operations.md)；engineering 的一次改动混了两类时，按「内容 → 结构 → 版式 → 措辞」拆开做，前一类落定并经检查再进下一类。
 
 | 类型 | 典型请求 | 入口步骤 |
 | --- | --- | --- |
@@ -81,7 +81,7 @@ metadata:
 - [ ] target 图显式：程序 target 叫 `app`，库 target 用组件名，程序链接库，库的公共 include 用 `PUBLIC`；没有全局 include、全局编译选项或 GLOB。
 - [ ] 每个 target 的标准来自 `environment.json`；`target_compile_features` 与 `CXX_STANDARD`、`CXX_STANDARD_REQUIRED ON`、`CXX_EXTENSIONS OFF` 同时存在，live 的 `compile_commands.json` 中每个 target 的 `-std=` 都与声明一致，且每个 target 只有一条、不同值即失败，不是 `gnu++NN`。
 - [ ] 复用的 CMake 函数放在工程根的 `cmake/` 模块里（模板源在 `references/cmake/assets/`），文件名用 UpperCamelCase，函数名用 `<ModuleName>_` 加 PascalCase，有目标与参数校验，根 `CMakeLists.txt` 通过 `CMAKE_MODULE_PATH` 导入；没有重复片段和未使用的旧模块。
-- [ ] 公开函数上方写中文 `#` 契约：一句功能、空行、边界，再用 `:param` / `:keyword` 标参数；不写 `#[[.rst:` 与 `.. command::`，完整写法见 `references/cmake/targets/rules.md`；函数组之间用 `#---`，不画 `#===...===#` 方框。
+- [ ] 公开函数上方写中文 `#` 契约：一句功能、空行、边界，再用 `:param` / `:keyword` 标参数；不写 `#[[.rst:` 与 `.. command::`，完整写法见 `references/cmake/targets/01-target-rules.md`；函数组之间用 `#---`，不画 `#===...===#` 方框。
 - [ ] `CMakeLists.txt` 与 `*.cmake` 用 UTF-8 无 BOM、LF、2 空格缩进、不用 tab；行宽按团队约定，默认 80 列。
 - [ ] 编码与排版工具各管一段：`.clang-format` 管空白与包含顺序，`.clang-tidy` 管检查分级，`.clangd` 管编辑器补全；三份都不把标准写死成与 `environment.json` 冲突的值，也不把 clang-format 塞进构建脚本。
 - [ ] configure 与构建通过，构建产物不落在源码目录；没有改源码语义，也没有覆盖已有工程文件。

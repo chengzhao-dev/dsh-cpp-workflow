@@ -16,7 +16,7 @@
 
 ## 开销（实测）
 
-在本书仓库上实测（Node 26，重复测量）：门禁通过时 `list()` 约 1 ms（热缓存 50 次均值 0.999 ms），门禁不通过时 0.11 ms，`get()` 每份约 0.4–1.3 ms；宿主按 `cwd`、作用域与修订号缓存完成的目录，同一工作区不会每轮重扫。模型侧的三行目录共 595 个字符（按中文约 1.8 字符一个 token 估算约 331 tokens，下同）；三份技能正文分别是 4855、5053 与 4694 个字符（`developing-cpp` 已含 161 字符的注释配置快照），合计约 1.46 万字符，全部加载约 8.1k tokens；正文不常驻，只有目录行常驻，加载时才进上下文，改正文也不产生目录消息；`references/` 在入口表或步骤点名时打开，判不准、规则冲突或排错时按需读取。运行时不写盘、不建缓存，见 [plugin-storage.md](plugin-storage.md)。
+在本仓库上实测（Node 26，重复测量）：门禁通过时 `list()` 约 1 ms（热缓存 50 次均值 0.999 ms），门禁不通过时 0.11 ms，`get()` 每份约 0.4–1.3 ms；宿主按 `cwd`、作用域与修订号缓存完成的目录，同一工作区不会每轮重扫。模型侧的三行目录共 590 个字符（按中文约 1.8 字符一个 token 估算约 328 tokens，下同）；三份技能文件分别为 4,963、5,152 与 4,812 个字符，合计 14,927 个字符，约 8.2k tokens；`get()` 时 `developing-cpp` 另附注释配置快照，加载字符数随快照变化，不在此重复；正文不常驻，只有目录行常驻，加载时才进上下文，改正文也不产生目录消息；`references/` 在入口表或步骤点名时打开，判不准、规则冲突或排错时按需读取。运行时不写盘、不建缓存，见 [plugin-storage.md](plugin-storage.md)。
 
 ### 失败路径
 
@@ -46,9 +46,9 @@
 | 入口命令仍是 `<entry-command>` 或空白 | 到 `building-cpp` 的通过检查停住，不猜命令 |
 | `.qmd`、仓库 README、Python、非 C++ 文档 | 三个都不开 |
 
-编译失败先分因：诊断指向函数体，回到定实现；指向声明或类型，回到定声明；指向找不到头、链接失败、target 不存在或标准不对，转 `engineering`；指向没有编译数据库、工具配置不对，转 `engineering` 的 formatting；入口脚本错误留在 `building-cpp` 的定构建。
+编译失败先分因：诊断指向函数体，回到定实现；指向声明或类型，回到定声明；指向找不到头、链接失败、target 不存在或标准不对，转 `engineering`；指向没有编译数据库、规则条文不对，转 `engineering` 的 formatting；配置已给但没落地、工具不在 PATH，留在 `building-cpp` 的定工具配置；入口脚本错误留在 `building-cpp` 的定构建。
 
-VSCode 侧只保留一个入口：推荐 clangd、CMake Tools 和 C/C++ 扩展；clangd 负责编辑、补全、诊断和格式化，CMake Tools 负责配置、构建、运行和调试，C/C++ 扩展只作为 `CMake: Debug` 的调试后端并关闭 IntelliSense。工程根只带 `.vscode/extensions.json` 和 `settings.json`，不写 `tasks.json` 或 `launch.json`，避免第二套构建或启动路径。 接线细节在 `skills/building-cpp/project/vscode/`；工程没有 `.vscode/` 时不新建。
+VSCode 侧只保留一个入口：推荐 clangd、CMake Tools 和 C/C++ 扩展；clangd 负责编辑、补全、诊断和格式化，CMake Tools 负责配置、构建、运行和调试，C/C++ 扩展只作为 `CMake: Debug` 的调试后端并关闭 IntelliSense。工程根只带 `.vscode/extensions.json` 和 `settings.json`，不写 `tasks.json` 或 `launch.json`，避免第二套构建或启动路径。 接线细节在 `skills/building-cpp/steps/04-vscode.md`；工程没有 `.vscode/` 时不新建。
 
 ## 第四层：检查
 

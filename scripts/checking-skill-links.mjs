@@ -247,7 +247,8 @@ const skillDirs = readdirSync(skillsRoot, { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
   .map((entry) => entry.name)
   .sort()
-equal(skillDirs, ['building-cpp', 'developing-cpp', 'engineering'], 'skills 目录')
+equal(skillDirs.filter((name) => name !== 'shared'), ['building-cpp', 'developing-cpp', 'engineering'], '技能目录')
+equal(skillDirs.includes('shared'), true, 'skills/shared 目录')
 
 const SKILL_SPECS = {
   'developing-cpp': {
@@ -264,7 +265,7 @@ const SKILL_SPECS = {
   },
   'building-cpp': {
     title: 'building-cpp',
-    steps: ['01-build.md', '02-tooling.md', '03-check.md'],
+    steps: ['01-build.md', '02-tooling.md', '03-check.md', '04-vscode.md'],
     sections: ['references', 'examples'],
     h2: ['适用场景', '三种操作', '步骤', '入口表', '加载预算', '四类改动', '完成判据'],
   },
@@ -277,6 +278,10 @@ for (const [skillName, spec] of Object.entries(SKILL_SPECS)) {
   if (!ok(existsSync(skillFile), `${skillName}: 缺少 SKILL.md`)) continue
   const text = read(rel(skillFile))
   skillMarkdown.push(skillFile)
+  ok(
+    text.split(/\r?\n/).length <= 100,
+    `${skillName}: SKILL.md 超过 100 行（${text.split(/\r?\n/).length}）`,
+  )
   const fm = frontmatter(text)
   ok(Boolean(fm), `${skillName}: 缺少 frontmatter`)
   equal(fm?.data.name, skillName, `${skillName}: frontmatter name 与目录名`)
@@ -356,13 +361,70 @@ const skillFiles = [...new Set(skillMarkdown.map(rel))]
 const skillTexts = new Map(skillFiles.map((file) => [file, withoutFences(read(file))]))
 const referenceMarkdown = skillFiles.filter((file) => /^skills\/[^/]+\/references\/.+\.md$/.test(file))
 
+for (const file of referenceMarkdown) {
+  const text = skillTexts.get(file) ?? ''
+  const first = text.split(/\r?\n/).find((line) => line.trim()) ?? ''
+  ok(
+    /^<!-- 读取时机：.+；读完能回答：.+；预算：/.test(first),
+    `${file}: 首行缺少读取时机/读完能回答/预算`,
+  )
+  const budget = first.match(/预算：.*?（(\d+) 行）/)
+  if (budget) {
+    const bodyLines = read(file).trimEnd().split(/\r?\n/).length - 1
+    ok(
+      Number(budget[1]) === bodyLines,
+      `${file}: 首行预算 ${budget[1]} 行与正文 ${bodyLines} 行不一致`,
+    )
+  }
+}
+
+const referenceBasenames = new Map()
+for (const file of referenceMarkdown) {
+  const base = basename(file)
+  if (base === 'index.md') continue
+  const previous = referenceBasenames.get(base)
+  ok(!previous, `references 文件名重复：${previous ?? ''} 与 ${file}`)
+  referenceBasenames.set(base, file)
+}
+
+for (const skill of ['developing-cpp', 'engineering']) {
+  const indexFile = `skills/${skill}/references/index.md`
+  if (!existsSync(join(ROOT, indexFile))) continue
+  for (const line of read(indexFile).split(/\r?\n/)) {
+    const match = line.match(/^\|\s*`([^`]+)`.*?一次只开这一份（(\d+) 行）/)
+    if (!match) continue
+    const target = `skills/${skill}/references/${match[1]}`
+    if (!existsSync(join(ROOT, target))) {
+      ok(false, `${indexFile}: 指向不存在的 ${match[1]}`)
+      continue
+    }
+    const bodyLines = read(target).trimEnd().split(/\r?\n/).length - 1
+    ok(
+      Number(match[2]) === bodyLines,
+      `${indexFile}: ${match[1]} 预算 ${match[2]} 行与正文 ${bodyLines} 行不一致`,
+    )
+  }
+}
+
+const paragraphSeen = new Map()
+for (const [file, text] of skillTexts) {
+  const body = text.replace(/<!--[\s\S]*?-->/g, '')
+  for (const block of body.split(/\r?\n\s*\r?\n/)) {
+    const paragraph = block.replace(/\s+/g, ' ').trim()
+    if (paragraph.length < 40) continue
+    const previous = paragraphSeen.get(paragraph)
+    if (previous) {
+      ok(false, `重复段落：${previous} 与 ${file}`)
+      break
+    }
+    paragraphSeen.set(paragraph, file)
+  }
+}
+
 function citedBy(text, file) {
   const skillName = file.split('/')[1]
   const fromSkill = file.slice(`skills/${skillName}/`.length)
-  const candidates = new Set([fromSkill])
-  for (let dir = dirname(fromSkill); dir.split('/').length > 1; dir = dirname(dir)) {
-    candidates.add(`${dir}/`)
-  }
+  const candidates = new Set([fromSkill, fromSkill.replace(/^references\//, '')])
   return [...candidates].some((candidate) => isCited(text, candidate))
 }
 
@@ -560,24 +622,22 @@ equal(
   standardIds,
   'standards 标准目录',
 )
-const standards = read('skills/engineering/references/cmake/standards/README.md')
+const standards = read('skills/engineering/references/cmake/standards/index.md')
+const versions = read('skills/engineering/references/cmake/standards/versions.md')
 for (const standard of standardIds) {
-  ok(standards.includes(standard), `standards/README.md 缺少 ${standard}`)
+  const label = standard.replace('c++', 'C++')
+  ok(standards.includes(standard), `standards/index.md 缺少 ${standard}`)
+  ok(versions.includes(`## ${label}`), `standards/versions.md 缺少 ${label}`)
   const number = standard.replace('c++', '')
-  const profile = read(`skills/engineering/references/cmake/standards/${standard}/README.md`)
-  ok(profile.includes(`\`${standard}\``), `${standard}/README.md 缺少 standard id`)
-  ok(profile.includes('__cplusplus'), `${standard}/README.md 缺少 __cplusplus`)
-  ok(profile.includes('## 最重要的三件事'), `${standard}/README.md 缺少最重要的三件事`)
-  ok(profile.includes('## 验证'), `${standard}/README.md 缺少验证`)
   const snippet = read(`skills/engineering/references/cmake/standards/${standard}/cmake-snippet.cmake`)
   ok(snippet.includes(`cxx_std_${number}`), `${standard}/cmake-snippet.cmake 缺少 cxx_std_${number}`)
   ok(snippet.includes(`CXX_STANDARD ${number}`), `${standard}/cmake-snippet.cmake 缺少 CXX_STANDARD ${number}`)
   ok(snippet.includes('CXX_STANDARD_REQUIRED ON'), `${standard}/cmake-snippet.cmake 缺少 CXX_STANDARD_REQUIRED ON`)
   ok(snippet.includes('CXX_EXTENSIONS OFF'), `${standard}/cmake-snippet.cmake 缺少 CXX_EXTENSIONS OFF`)
 }
-ok(standards.includes('Latest'), 'standards/README.md 未说明 clang-format 21/22 的 Latest fallback')
-ok(standards.includes('CXX_STANDARD_REQUIRED ON'), 'standards/README.md 未说明 CXX_STANDARD_REQUIRED')
-ok(standards.includes('三个规划粒度'), 'standards/README.md 未说明项目/target/代码/验证粒度')
+ok(standards.includes('Latest'), 'standards/index.md 未说明 clang-format 21/22 的 Latest fallback')
+ok(standards.includes('CXX_STANDARD_REQUIRED ON'), 'standards/index.md 未说明 CXX_STANDARD_REQUIRED')
+ok(standards.includes('三个规划粒度'), 'standards/index.md 未说明项目/target/代码/验证粒度')
 ok(existsSync(join(ROOT, 'scripts', 'checking-standard-matrix.sh')), 'scripts/checking-standard-matrix.sh 不存在')
 ok(packageJson.scripts?.['test:matrix'] === 'bash scripts/checking-standard-matrix.sh', 'package.json 未提供 test:matrix 脚本')
 ok(read('scripts/checking-standard-matrix.sh').startsWith('#!/usr/bin/env bash'), 'scripts/checking-standard-matrix.sh 缺少 bash shebang')
@@ -591,7 +651,7 @@ ok(buildScript.includes('--output-on-failure'), '构建脚本缺少 CTest 失败
 ok(!buildScript.includes('--fallback-style'), '构建脚本不应回退格式基线')
 ok(!/greeting\//.test(buildScript), '构建脚本 header-filter 不应硬编码 greeting')
 
-const buildRef = read('skills/building-cpp/references/build-script.md')
+const buildRef = read('skills/building-cpp/references/01-build-script.md')
 ok(buildRef.includes('省略时默认 `clang`'), '构建脚本文档未说明默认 clang')
 ok(!/第\s*0?[5-7]\s*步/.test(buildRef), '构建脚本文档仍引用旧步骤号')
 
@@ -611,7 +671,7 @@ for (const file of listFiles(ROOT).filter((item) => {
 }
 for (const file of [
   join(ROOT, 'skills', 'building-cpp', 'scripts', 'checking-environment.mjs'),
-  join(ROOT, 'skills', 'engineering', 'references', 'formatting', 'scripts', 'checking-encoding.mjs'),
+  join(ROOT, 'skills', 'engineering', 'scripts', 'checking-encoding.mjs'),
   join(ROOT, 'scripts', 'checking-skill-links.mjs'),
 ]) {
   try {
@@ -629,6 +689,7 @@ for (const file of [
 const docs = [
   'architecture.md',
   'comment-sources.md',
+  'design-principles.md',
   'module-layout.md',
   'plugin-boundaries.md',
   'plugin-flow.md',

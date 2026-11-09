@@ -6,12 +6,12 @@
 
 ## 通用情况
 
-先读 `environment.json` 的 `standard`，再把它映射成两层；调整标准前先打开 `../references/cmake/standards/<standard>/README.md`，按「不能假设」「降档要改什么」逐条处理，不允许只改数字。降档还要对照 `../references/cmake/standards/README.md` 的共用矩阵确认工具链下限。
+先读 `environment.json` 的 `standard`，再把它映射成两层；调整标准前先打开 `../references/cmake/standards/versions.md`，按「不能假设」「降档要改什么」逐条处理，不允许只改数字。降档还要对照 `../references/cmake/standards/index.md` 的共用矩阵确认工具链下限。
 
 | `standard` | `target_compile_features` | `CXX_STANDARD` | 支持该特性的 CMake 下限 |
 | --- | --- | --- | --- |
-| `c++11` | `cxx_std_11` | `11` | 3.8 |
-| `c++14` | `cxx_std_14` | `14` | 3.8 |
+| `c++11` | `cxx_std_11` | `11` | 3.1 |
+| `c++14` | `cxx_std_14` | `14` | 3.1 |
 | `c++17` | `cxx_std_17` | `17` | 3.8 |
 | `c++20` | `cxx_std_20` | `20` | 3.12 |
 | `c++23` | `cxx_std_23` | `23` | 3.20 |

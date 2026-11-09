@@ -11,15 +11,15 @@ app           职责：参数、输入输出、装配   依赖：<component>
 
 ## 通用情况
 
-- 库接收值、返回值，在无法完成任务时抛异常；终端、GUI、网络脚本与全局单例留在程序层。返回值与异常的取舍见 `references/exceptions/throw-rules.md`。
+- 库接收值、返回值，在无法完成任务时抛异常；终端、GUI、网络脚本与全局单例留在程序层。返回值与异常的取舍见 `references/exceptions/01-exception-rules.md`。
 - 程序链接库，负责读参数、读标准输入、打印结果，并把退出码翻译成进程退出码。
 - 依赖方向从程序指向库；组件之间只经由公共头互相依赖。
-- 公共头放在组件的 `include/` 下，包含时写裸文件名；搜索路径由 target 的 `target_include_directories(... PUBLIC .../include)` 提供，写法见 `engineering` 的 `cmake/targets/rules.md`。
+- 公共头放在组件的 `include/` 下，包含时写裸文件名；搜索路径由 target 的 `target_include_directories(... PUBLIC .../include)` 提供，写法见 `engineering` 的 `cmake/targets/01-target-rules.md`。
 - 测试放 `tests/`，链接被测库，从公共头进入；文件命名 `<被测>_test.cpp`，一个文件对应一个行为组，测试名描述行为，不复制实现、不依赖执行顺序、不读写固定绝对路径。
 - 只有一个可执行文件、没有复用需求时不分库；出现第二个真实调用方，或测试需要直接调用时再拆。
 - 抽共享抽象前先确认第二个真实使用方和相同语义；抽象理由写进项目技能或设计注释。
 - 本步只决定边界：`CMakeLists.txt` 与 target 图由 `engineering` 的 `steps/01-targets.md` 写，构建与工具配置由 `building-cpp` 定。
-- 一个查询该成为成员还是同命名空间的函数，按 `references/design/project-design.md` 的「谁回答这个问题」判：掌握数据的一方回答。
+- 一个查询该成为成员还是同命名空间的函数，按 `references/design/01-project-design.md` 的「谁回答这个问题」判：掌握数据的一方回答。
 
 ## 情况
 
@@ -29,11 +29,11 @@ app           职责：参数、输入输出、装配   依赖：<component>
 
 **库 + 程序**：库放在 `<component>/`，程序放在 `app/` 或根 `src/main.cpp`；程序只包含库的公共头，实现细节留在 `.cpp` 或私有头。
 
-**静态库 / 动态库**：接口相同，差别在链接方式和运行时库路径；都遵守「库不依赖终端」。选哪种由 `engineering` 的定 target 步骤决定，运行时路径写法见其 `cmake/targets/rules.md`。
+**静态库 / 动态库**：接口相同，差别在链接方式和运行时库路径；都遵守「库不依赖终端」。选哪种由 `engineering` 的定 target 步骤决定，运行时路径写法见其 `cmake/targets/01-target-rules.md`。
 
 **测试**：测试通过公共头调用库；需要测私有逻辑时，先判断它是否应该成为公共行为。
 
 ## 正反例指针
 
-- 终端输出被塞进库、程序反向依赖：`references/design/examples/library-boundary.md`。
-- 公共头放在 `src/`、测试被迫包含私有头：`references/design/examples/header-place.md`。
+- 终端输出被塞进库、程序反向依赖：`references/design/examples/04-library-boundary.md`。
+- 公共头放在 `src/`、测试被迫包含私有头：`references/design/examples/03-header-place.md`。

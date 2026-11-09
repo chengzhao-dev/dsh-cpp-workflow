@@ -1,6 +1,7 @@
+<!-- 读取时机：查语言细节时；读完能回答：函数、参数与返回值；预算：一次只开这一份（17 行），不自动串联。 -->
 # 函数、参数与返回值
 
-- 命名规则以 `references/naming/identifier-names.md` 为准：函数 PascalCase、查询 `Is` / `Has` / `Can` / `Get` / `Find`、转换 `SourceToTarget`。
+- 命名规则以 `references/naming/01-identifier-names.md` 为准：函数 PascalCase、查询 `Is` / `Has` / `Can` / `Get` / `Find`、转换 `SourceToTarget`。
 - 输入参数默认按值传小对象、按 `const&` 传大对象；需要修改调用方对象时用引用参数，并在名字或注释里标 `[out]`。
 - 优先返回值而不是输出参数；需要返回多个值时用 `struct` 聚合，不用多个 `bool` 输出参数。
 - 返回容器或大对象时按值返回，依赖 RVO / 移动；不要返回局部对象的引用或指针。

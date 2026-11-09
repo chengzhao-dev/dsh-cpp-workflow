@@ -1,3 +1,4 @@
+<!-- 读取时机：查语言细节时；读完能回答：`std::format` 与输出；预算：一次只开这一份（116 行），不自动串联。 -->
 # `std::format` 与输出
 
 - 组合消息优先 `std::format`；它返回 `std::string`，不直接写流。
@@ -5,7 +6,7 @@
 - 格式串里的 `{}` 按顺序取参数；需要位置时写 `{0}`、`{1}`。
 - 自定义类型要格式化时，特化 `std::formatter<T>`；写法与边界见下面的「自定义类型的格式化」。
 - 浮点默认格式可能与预期不同；需要固定精度时写 `{:.2f}`，需要科学计数时写 `{:e}`。
-- 异常消息、日志、用户界面文本都通过 `std::format` 组合，不手工拼接数字和字符串。异常消息的组织方式见 `references/exceptions/throw-rules.md` 的「消息」节；面向用户的中文只留在程序入口的前缀里。
+- 异常消息、日志、用户界面文本都通过 `std::format` 组合，不手工拼接数字和字符串。异常消息的组织方式见 `references/exceptions/01-exception-rules.md` 的「消息」节；面向用户的中文只留在程序入口的前缀里。
 
 ## 自定义类型的格式化
 
@@ -53,6 +54,8 @@ struct std::formatter<game::Player> {
   }
 };
 ```
+
+这是在报告非法值，不是 `std::unreachable()`；全覆盖且范围外算程序错误时仍按 `references/language/language-basics/05-expressions.md`。
 
 ## 枚举值与整数输出
 

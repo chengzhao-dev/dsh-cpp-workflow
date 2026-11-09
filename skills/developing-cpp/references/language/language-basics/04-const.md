@@ -1,3 +1,4 @@
+<!-- 读取时机：查语言细节时；读完能回答：`const`、`constexpr`、`consteval`、`constinit`；预算：一次只开这一份（25 行），不自动串联。 -->
 # `const`、`constexpr`、`consteval`、`constinit`
 
 | 关键字 | 承诺 | 典型位置 |

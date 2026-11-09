@@ -2,12 +2,12 @@
 name: building-cpp
 description: 在已写好 CMake 的 C++11–C++23 工程上配置、构建和检查时使用：Ninja、compile_commands.json、CTest 失败、clang-format、clang-tidy、clangd、environment.json、running-build.sh 与工程内已有的 `.vscode/` 接线。不用于只改源码语义、文档、Python 或与 C++ 无关的文件。
 metadata:
-  short-description: C++11–C++23 构建三步
+  short-description: C++11–C++23 构建流程
 ---
 
 # building-cpp
 
-本技能处理环境声明、构建入口与工具配置：`environment.json`、`running-build.sh`、`.clang-format`、`.clang-tidy`、`.clangd`、`.vscode/`、构建命令、编译数据库、CTest 与运行。
+本技能处理环境声明、构建入口与工具配置：`environment.json`、`running-build.sh`、`.clang-format`、`.clang-tidy`、`.clangd`、`.vscode/`、构建命令、编译数据库、CTest 与运行。加载顺序与层表见 [budget.md](../shared/budget.md)。
 
 ## 适用场景
 
@@ -17,11 +17,11 @@ metadata:
 - **前置**：存在项目技能 `cpp-workflow-project` 时先读它的 `SKILL.md`、`environment.json` 和 `stages/stage-table.md`。三个环境轴为空、`standard` 非法或组合非法时停在定构建，不猜 WSL、Clang 或构建目录；`standard` 缺失或为空时按默认 `c++23` 继续并提示声明升级；`windows` + `native` 直接拒绝，提示「本版本不能在 Windows 原生壳里构建」，不给补 PowerShell 的路线。
 - **分因**：编译失败时先看诊断指向哪一层。函数体问题回 `developing-cpp` 的定实现；找不到头、链接失败、target 不存在或标准不对转 `engineering` 的对应步骤；没有编译数据库、format/tidy 不在 PATH 或配置不生效留在本技能的定工具配置。
 - **编码**：源码与构建文件用 UTF-8 无 BOM、检出 LF，`.bat` / `.cmd` 用 CRLF，`.clang-format` 写 `LineEnding: LF`；MSVC 原生构建优先加 `/utf-8`，不靠 BOM 过关。完整规则见 `../engineering/references/formatting/01-encoding.md`，机器规则以仓库根 `.gitattributes` 与 `.editorconfig` 为准。
-- **编辑器**：工程根已有 `.vscode/` 时按 `project/vscode/` 两页接线；从当前目录向上到 git 根都没有 `.vscode/` 时不打开、也不新建。配置、构建、运行和调试都从 CMake Tools 进入，构建仍以 `running-build.sh` 为准。
+- **编辑器**：工程根已有 `.vscode/` 时按 `steps/04-vscode.md` 接线；从当前目录向上到 git 根都没有 `.vscode/` 时不打开、也不新建。配置、构建、运行和调试都从 CMake Tools 进入，构建仍以 `running-build.sh` 为准。
 
 ## 三种操作
 
-一次只选一种，范围（单点、整段）是任务属性；判据、边界与交接见 `../developing-cpp/references/editing/01-edit-operations.md`。四类改动是域，不是操作。
+一次只选一种操作，范围（单点、整段）是任务属性；判据、边界与交接见共用入口 [operations.md](../shared/operations.md)。本技能从 [01-build.md](steps/01-build.md) 进；四类改动是域，不是操作。
 
 | 操作 | 什么时候用 | 从哪步进 |
 | --- | --- | --- |
@@ -40,6 +40,7 @@ metadata:
 | 1 | 定构建 | `steps/01-build.md` | 读环境声明，固定 Ninja 与单一编译器，产出编译数据库 |
 | 2 | 定工具配置 | `steps/02-tooling.md` | 格式化、静态检查、clangd 各管一段，互不越界 |
 | 3 | 通过检查 | `steps/03-check.md` | 按编码 → 声明校验 → 活动校验 → 项目入口的次序跑，前一步失败就停 |
+| 4 | VS Code 接线 | `steps/04-vscode.md` | 工程已有 `.vscode/` 时接扩展与设置，没有时不新建 |
 
 每步只打开同号的一个步骤文件。判不准才打开 `examples/` 里与该步对应的案例；`references/` 保存完整条文，只在排错、整目录重构，或步骤里明确指向某一条时打开。
 
@@ -47,25 +48,24 @@ metadata:
 
 | 要做的事 | 打开 |
 | --- | --- |
-| 读环境轴、配置与构建 | `steps/01-build.md`；条文 `references/environment.md`；案例 `examples/environment.md` |
+| 读环境轴、配置与构建 | `steps/01-build.md`；条文 `references/02-environment.md`；案例 `examples/environment.md` |
 | 配 `.clang-format`、`.clang-tidy`、`.clangd` | `steps/02-tooling.md`；条文在 `../engineering/references/formatting/`，一次一份 |
-| 工程已有 `.vscode/`，接扩展与设置 | `project/vscode/01-extensions.md` 或 `02-settings.md`；没有 `.vscode/` 不打开也不新建 |
-| 编码、声明校验、活动校验与入口命令 | `steps/03-check.md`；条文 `references/build-script.md` |
+| 工程已有 `.vscode/`，接扩展与设置 | `steps/04-vscode.md`；没有 `.vscode/` 不打开也不新建 |
+| 编码、声明校验、活动校验与入口命令 | `steps/03-check.md`；条文 `references/01-build-script.md` |
 | 新工程模板与可复制配置 | `assets/templates/projects/`、`assets/config/` |
+| 操作判不准、规则冲突 | `../shared/operations.md`、`../shared/rule-priority.md` |
 
-链接、rpath 与产物布局读 `../engineering/references/cmake/linking/01-libraries.md`；测试设计、断言与 CTest 注册读 `../engineering/references/cmake/testing/ctest.md`；CMake 的 target、标准与函数写法读 `../engineering/references/cmake/`，可复用片段在 `../engineering/references/cmake/assets/`。
+链接、rpath 与产物布局读 `../engineering/references/cmake/linking/01-libraries.md`；测试设计、断言与 CTest 注册读 `../engineering/references/cmake/testing/01-ctest.md`；CMake 的 target、标准与函数写法读 `../engineering/references/cmake/`，可复用片段在 `../engineering/references/cmake/assets/`。
 
 ## 加载预算
 
-- 只开当前步对应的一个步骤文件；同一改动域内不同时展开两个技能的步骤。
-- 条文只开该步点名的一份；同号案例留到下一次激活。
-- 标准档只打开项目技能声明的那一档，没有声明时用本技能已有的新工程默认，不把其余标准档读进来。
+加载预算见 [budget.md](../shared/budget.md)；building-cpp 的步骤固定 4 份。
 
-项目技能列出了检查命令时只跑那一条，没有时跑本技能自己的 `scripts/checking-environment.mjs` 与 `../engineering/references/formatting/scripts/checking-encoding.mjs`；退出码为 0 后停在这一步，不再继续走没有失败的步骤。入口脚本只做配置、构建、CTest 与最小运行；`clang-format` 与 `clang-tidy` 的手动检查留在定工具配置，不塞进入口脚本。`environment.json` 的三个环境轴与 `standard` 是唯一来源，缺项就停。
+项目技能列出了检查命令时只跑那一条，没有时跑本技能自己的 `scripts/checking-environment.mjs` 与 `../engineering/scripts/checking-encoding.mjs`；退出码为 0 后停在这一步，不再继续走没有失败的步骤。入口脚本只做配置、构建、CTest 与最小运行；`clang-format` 与 `clang-tidy` 的手动检查留在定工具配置，不塞进入口脚本。`environment.json` 的三个环境轴与 `standard` 是唯一来源，缺项就停。
 
 ## 四类改动
 
-四类改动是操作内部的域：操作定入口，域定层次。四域的定义、边界与次序见 `../developing-cpp/references/editing/01-edit-operations.md`；一次改动混了两类时，按「内容 → 结构 → 版式 → 措辞」拆开做，前一类落定并经检查再进下一类。
+四类改动是操作内部的域：操作定入口，域定层次。四域的定义、边界与次序见 [operations.md](../shared/operations.md)；building-cpp 的一次改动混了两类时，按「内容 → 结构 → 版式 → 措辞」拆开做，前一类落定并经检查再进下一类。
 
 | 类型 | 典型请求 | 入口步骤 |
 | --- | --- | --- |
@@ -82,4 +82,4 @@ metadata:
 - [ ] `clang-format --dry-run --Werror` 与 `clang-tidy` 在项目源码上零告警；只扫描项目源码和项目头。
 - [ ] CTest 全绿，程序从该编译器的构建目录启动；有测试时注册用 `gtest_discover_tests` 或项目既有机制，运行带 `--output-on-failure --no-tests=error`，失败时报告的是具体角色和原因。
 - [ ] 没有改源码语义，没有覆盖已有工程文件，也没有安装或下载任何工具。
-- [ ] 工程有 `.vscode/` 时，扩展与设置按 `project/vscode/` 接好；没有时不新建，也没有 `tasks.json` 或 `launch.json` 另起构建。
+- [ ] 工程有 `.vscode/` 时，扩展与设置按 `steps/04-vscode.md` 接好；没有时不新建，也没有 `tasks.json` 或 `launch.json` 另起构建。

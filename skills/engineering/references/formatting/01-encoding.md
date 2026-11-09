@@ -1,3 +1,4 @@
+<!-- 读取时机：排版或工具配置时；读完能回答：编码与行尾；预算：一次只开这一份（49 行），不自动串联。 -->
 # 编码与行尾
 
 默认组合是 UTF-8 无 BOM、LF。机器规则以仓库根 `.gitattributes` 与 `.editorconfig` 为准，本文件只记决定、MSVC 例外与检查方法。
@@ -32,7 +33,7 @@ MSVC 默认按 BOM 判断源码编码。源码没有 BOM 时，它按当前用�
 在仓库根运行：
 
 ```bash
-node "<skill-dir>/references/formatting/scripts/checking-encoding.mjs" --profile portable
+node "<skill-dir>/scripts/checking-encoding.mjs" --profile portable
 ```
 
 - `portable`（默认）要求所有文本文件 UTF-8 无 BOM、LF、末尾换行。

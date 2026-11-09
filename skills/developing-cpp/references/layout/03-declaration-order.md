@@ -1,3 +1,4 @@
+<!-- 读取时机：排声明顺序时；读完能回答：声明顺序；预算：一次只开这一份（150 行），不自动串联。 -->
 # 声明顺序
 
 顺序的作用是让读者先看类型和契约，再看数据。`clang-format` 不管顺序，靠人工和 review 维持。
@@ -23,7 +24,7 @@ class TaskTable {
   ~TaskTable();
 
   // 5. 其他成员函数
-  [[nodiscard]] bool Contains(int id) const;
+  [[nodiscard]] bool HasTask(int id) const;
   [[nodiscard]] TaskState GetTaskState(int id) const;
   void SetTaskState(int id, TaskState state);
 
@@ -55,7 +56,7 @@ class TaskTable {
 Google、LLVM、OpenCV 都没有规定这一组内部的次序；本工作流补上：
 
 - 有比较运算符时，开头是 `operator==`：成员默认比较和 `friend` 都放这里，然后才是谓词 `Is` / `Has` / `Can`、`Get`、普通函数按使用先后。`friend` 不再放到这一组末尾。
-- `CheckInRange` 是诊断函数，紧挨 `IsInRange` 写，排在 `Get` 之前；它是本条谓词顺序的例外，见 `references/exceptions/throw-rules.md`。
+- `CheckInRange` 是诊断函数，紧挨 `IsInRange` 写，排在 `Get` 之前；它是本条谓词顺序的例外，见 `references/exceptions/01-exception-rules.md`。
 - 多个直接返回成员的 `Get` 按对应数据成员的声明顺序排列，不按调用频率或字母序：成员依次是 `current_player_`、`board_`、`history_`，getter 就依次是 `GetCurrentPlayer()`、`GetBoard()`、`GetHistory()`；成员顺序调整时 getter 一起改，一个类里只留一套顺序。
 - 直接返回成员的 `Get` 按成员顺序；没有独立成员的派生查询排在直接 `Get` 之后，按「先局部元素、后整体状态」阅读，不插进直接 `Get` 之间。例：`Game` 的 `GetResult()` 扫描棋盘后才得到结果，排在直接返回成员的 `GetCurrentPlayer()`、`GetBoard()`、`GetHistory()` 之后。
 - 成对的局部/整体操作沿用同一方向：先 `ClearSquare(pos)` 清一格，再 `Clear()` 清整盘；局部操作在前，整体操作在后，不按调用频率互换。
@@ -87,7 +88,7 @@ struct TaskRecord {
   TaskState state{TaskState::kPending};
 };
 
-[[nodiscard]] bool Contains(int id);
+[[nodiscard]] bool HasTask(int id);
 [[nodiscard]] std::string TaskStateToString(TaskState state);
 
 class TaskTable {
@@ -107,7 +108,7 @@ class TaskTable {
 ## `.cpp` 的定义顺序
 
 - 本工作流约定：与头文件声明同序，先类型和常量，再自由函数，再成员函数；成员函数按类内声明顺序。Google、LLVM 与 C++ Core Guidelines 都没有规定 `.cpp` 成员定义的次序；这里选同序，是为了让读者能在头文件与实现之间逐项对照。
-- 文件头注释之后先放本文件的 `namespace taskflow {`，再放公共定义；常量仍排在具名命名空间内、成员函数之前；内部链接的写法按 `references/style/google-cpp-style.md`，本文不复述。
+- 文件头注释之后先放本文件的 `namespace taskflow {`，再放公共定义；常量仍排在具名命名空间内、成员函数之前；内部链接的写法按 `references/style/01-google-cpp-style.md`，本文不复述。
 - 构造函数、析构函数、拷贝/移动定义通常放在成员函数组最前；如果头文件把某个成员声明在构造函数之前，仍按头文件声明顺序，不把构造函数硬提到前面。`= default` 的定义放 `.cpp` 时紧跟声明顺序。
 - 不要为了「先编译」重排定义；C++ 不要求定义顺序，读者顺序优先。
 
@@ -130,7 +131,16 @@ class TaskTable {
 - 取回一个结果并按结果分支的语句连成一组（声明、`if`、`throw` / `return`），组内不空行；这一组与收尾（记录这一步、轮到对方、返回成功）之间空 1 行。
 - 同一组语句不拆：三个校验之后的赋值与 `return` 之间不空行。
 - 只有次序依赖的一对 `if`（`GetWinner`、`JudgeAfterPlace`）之间空 1 行。
+- 互斥策略组与组之间空 1 行；`std::unreachable()` 紧跟 `switch` 的右花括号，中间不空行。位置理由不在这里重复。
+- 循环结束后还有 `return` 时，循环与 `return` 之间空 1 行。
 - 最多 1 行，不连续空两行。
+
+### 头文件里的空行
+
+- 类内六个组之间、同组函数之间、命名空间内顶层实体之间各空 1 行。
+- 数据成员之间不空行；`private:` 之前空 1 行。
+- 注释贴住它说明的声明，注释与声明之间不空行。
+- Doxygen 列表项之间不插空注释行。
 
 ## 依据
 

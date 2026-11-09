@@ -1,3 +1,4 @@
+<!-- 读取时机：查语言细节时；读完能回答：下标与 `at`；预算：一次只开这一份（15 行），不自动串联。 -->
 # 下标与 `at`
 
 同一容器上，`operator[]` 与 `at` 的失败方式不同：
@@ -12,4 +13,4 @@
 - 已经证明非负的坐标在 `[]` 前收成 `std::size_t`：写 `static_cast<std::size_t>(index)`，不要先转成 `int`；默认仍用 `at()`，只有选择 `[]` 时才做这一步。
 - 行列下标是乘加结果时，先把各操作数拓宽再乘加，不要先乘加再转换；见 `references/language/value-types/03-integer-roles.md`。
 - `map::operator[]` 会插入，不是“读取可能缺失的键”；只读查询用 `find` / `contains` / `at`。
-- 契约失败的消息用 `std::format`，见 `references/exceptions/throw-rules.md`。
+- 契约失败的消息用 `std::format`，见 `references/exceptions/01-exception-rules.md`。

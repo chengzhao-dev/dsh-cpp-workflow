@@ -1,11 +1,14 @@
+<!-- 读取时机：查语言细节时；读完能回答：表达式与比较；预算：一次只开这一份（31 行），不自动串联。 -->
 # 表达式与比较
 
 - 比较写成“变量在左、常量在右”：`if (id < kTaskCount)`，不写 Yoda 条件 `if (kTaskCount > id)`；常量与枚举值总在右边。成员与参数比较时，成员状态在左、参数在右，如 `if (current_player_ != move.player)`：判断「轮到谁」以对象自己的状态为起点，参数是被核对的一次输入；成员与常量比较时成员在左，如 `if (value_ != SquareValue::kEmpty)`；参数与常量比较时参数在左。分不清主次时按“读起来的主语”决定，同一段代码保持同一种顺序。
-- 同一个值对多个离散取值分派时用 `switch`，不用一串 `if`：值来自枚举或整数常量、分支 3 个以上、分支体短。枚举覆盖全部取值时不写 `default`，新增取值由 `-Wswitch` 指出；编译器需要出口时在 `switch` 后写 `std::unreachable()`（C++23 起；低标准写 `assert(false)` 或 `std::abort()`），不写 `throw` 兜底。
+- 同一个值对多个离散取值分派时用 `switch`，不用一串 `if`：值来自枚举或整数常量、分支 3 个以上、分支体短。
+- `if` / `for` / `while` / `do` 即使只有一条语句也写花括号。`case` 不照搬：单条 `return`、`break`、`continue` 或 `throw` 不加花括号；这一支有声明，或不止一条语句时，才用花括号把声明收进这一支。连续几个 `case` 共用一条语句时不加花括号，也不写 `[[fallthrough]]`。
+- 枚举的全部分支都写了 `case` 时不写 `default`。需要出口时，`std::unreachable()` 放在 `switch` 右花括号之后、紧挨着它，中间不空行。头文件是 `<utility>`，C++23；更低标准写 `assert(false)` 或 `std::abort()`。不放进 `default`，也不写 `throw` 兜底。`default` 会让 `-Wswitch` 不再报告新增枚举值。
+- 条件不是枚举，或枚举只处理一部分常见值时，写 `default` 并在里面做真正的处理。域已经在前面收窄、又不是枚举时，才在 `default` 里写 `std::unreachable()`。非法枚举值要报告时，在 `switch` 后写正常返回，不用 `std::unreachable()`。不依赖隐式穿透；确实要穿透时写 `[[fallthrough]]`。
 - 条件是比较范围、布尔组合，或只有 1–2 个分支时用 `if`；一个函数里有多条拒绝分支时，每条各写一条独立 `if` 并提前返回，成功路径留在函数末尾，不串 `else if`，也不用 `else` 包住。
-- 否定按「类型有什么谓词」决定，不按个人习惯：类型提供 `IsEmpty()`、`IsFull()` 这类肯定式查询时，条件直接从肯定式写起，如 `if (square.IsEmpty())`。被拒绝的情形没有对应谓词时才用 `!`，如占用检查只能写成 `if (!square.IsEmpty())`；这种 `!` 只套一层，不写 `!!`，也不把 `!(value != SquareValue::kEmpty)` 这类双重否定留给读者。枚举比较同样先写正向判断：判空写 `value == SquareValue::kEmpty`，判非空写 `value != SquareValue::kEmpty`。
+- 否定按「类型有什么谓词」决定，不按个人习惯：类型提供 `IsEmpty()`、`IsFull()` 这类肯定式查询时，条件直接从肯定式写起，如 `if (square.IsEmpty())`。被拒绝的情形没有对应谓词时才用 `!`，如占用检查只能写成 `if (!square.IsEmpty())`；这种 `!` 只套一层，不写 `!!`，也不把 `!(value != SquareValue::kEmpty)` 这类双重否定留给读者。枚举比较同样先写正向判断：判空写 `value == SquareValue::kEmpty`，判非空写 `value != SquareValue::kEmpty`。同一个状态的比较只写在谓词定义里；调用处写 `IsInProgress()` 或 `!IsInProgress()`，不把 `GetResult() != GameResult::kInProgress` 再写一遍。
 - 同一类值有 3 个以上时用数组加下标，不写 `value0`、`value1`、`value2`：`std::array<SquareValue, 3> values{};` 配合 `values[i]`；成组的常量数据写成 `std::array<Line, 8> kLines` 再由循环消费。只有 1–2 个语义各自独立的值才各起名字。
-- 不依赖隐式穿透；确实需要穿透时写 `[[fallthrough]]`。
 - 混合优先级的算术表达式加括号：`(a + b) * c`，不依赖读者记忆优先级。`readability-math-missing-parentheses` 会检查。
 - 区间用半开区间 `[low, high)`；判空用 `empty()`，不要用 `size() == 0`。
 - 逻辑表达式按语义分组，一组一个括号；组内的单个比较不再加括号，`&&` 的优先级已经清楚，多加一层反而难核对。
@@ -23,6 +26,7 @@
 - [C++ Core Guidelines: ES.70、ES.78、ES.79](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#s-expr)：有选择时优先 `switch`；对常量比较，通常比 `if`-`then`-`else` 链更容易优化，并能提示枚举是否覆盖全；不依赖隐式穿透，`default` 只处理常见情况。
 - [LLVM Coding Standards: Don't use default labels in fully covered switches over enumerations](https://llvm.org/docs/CodingStandards.html#don-t-use-default-labels-in-fully-covered-switches-over-enumerations)：全覆盖枚举 `switch` 不写 `default`；需要给编译器出口时在 `switch` 后用 `llvm_unreachable`（对应本项目的 `std::unreachable`）。
 - [Google C++ Style Guide: switch statements](https://google.github.io/styleguide/cppguide.html#switch-statements)：非枚举条件的 `switch` 必须有 `default`；枚举由编译器提醒未覆盖值；`[[fallthrough]]` 必须标注。
+- 花括号与 `default` 的取舍：[Mozilla C++ 风格](https://firefox-source-docs.mozilla.org/code-quality/coding-style/coding_style_cpp.html) 只在 `case` 声明局部变量时加花括号；[clang-tidy `readability-braces-around-statements`](https://clang.llvm.org/extra/clang-tidy/checks/readability/braces-around-statements.html) 与 clang-format 的 `InsertBraces` 不检查 `case`；[cppreference `std::unreachable`](https://en.cppreference.com/w/cpp/utility/unreachable) 的 `default` 例子是整数而不是枚举；[MISRA C++:2023 9.4.2](https://www.mathworks.com/help/bugfinder/ref/misracpp2023rule9.4.2.html) 要求 `default`，本项目按 LLVM/Google 对封闭枚举的取舍不跟这条，范围外值由程序保证不出现。
 - 关于多分支与提前返回：[LLVM Coding Standards](https://llvm.org/docs/CodingStandards.html) 要求 `return`、`break`、`continue`、`goto` 之后不写 `else`，[C++ Core Guidelines F.56](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#f-nesting) 把 `return` 之后的 `else` 列为冗余，[clang-tidy `readability-else-after-return`](https://clang.llvm.org/extra/clang-tidy/checks/readability/else-after-return.html) 直接检查 `return`、`break`、`continue`、`throw` 之后的 `else`。本工作流按这个方向写：每条拒绝各写一条独立 `if` 并提前返回，成功路径留在末尾；不同拒绝原因之间没有先后依赖，不串 `else if`。
 - 肯定/否定谓词：[Microsoft Framework Design Guidelines: Names of Type Members](https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/names-of-type-members) 要求布尔成员用肯定短语（`CanSeek`，不用 `CantSeek`），可加 `Is`、`Can`、`Has`。C++ Core Guidelines、LLVM 与 Google 都没有规定条件的极性，所以「默认肯定式」在本工作流属于项目约定，Microsoft 的条文只作跨语言旁证。
 - 3 个以上同类值用数组加下标：没有一手规范规定这一点，属于本工作流的项目约定；理由是同一段循环只写一次，新增一项不必再起一个名字。

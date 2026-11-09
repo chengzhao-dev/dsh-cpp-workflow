@@ -15,7 +15,7 @@ build/
 
 ## 前置
 
-先读项目技能与 `environment.json`，再确认 `engineering` 已经把 target 图、公共 include、语言标准和输出目录写进 CMake。target 缺失、标准不对、include 或链接边界没写时，停止本步，转 `engineering` 的定 target 与标准；不要在这里用全局变量或临时 `-std` 绕过。 只在需要核对时打开 `../../engineering/references/cmake/targets/rules.md` 或 `../../engineering/references/cmake/standards/cxx-standard.md` 被点名的一份；CMake 的写改仍由 `engineering` 落笔。
+先读项目技能与 `environment.json`，再确认 `engineering` 已经把 target 图、公共 include、语言标准和输出目录写进 CMake。target 缺失、标准不对、include 或链接边界没写时，停止本步，转 `engineering` 的定 target 与标准；不要在这里用全局变量或临时 `-std` 绕过。 只在需要核对时打开 `../../engineering/references/cmake/targets/01-target-rules.md` 或 `../../engineering/references/cmake/standards/01-cxx-standard.md` 被点名的一份；CMake 的写改仍由 `engineering` 落笔。
 
 ## 环境
 
@@ -59,7 +59,7 @@ GCC 模式把目录和编译器换成 `build/gcc`、`g++`（C 驱动换成 `gcc`
 
 **已有工程**：先读现有 `CMakeLists.txt`，只核对 target、标准与输出目录；不改与当前任务无关的 target，大改前先让现有构建跑通。
 
-**测试**：`enable_testing()` 与 `add_subdirectory(tests)` 的顺序由 `engineering` 定；本步只跑 CTest，不在没有测试时加空测试。
+**测试**：`enable_testing()` 与 `add_subdirectory(tests)` 的顺序由 `engineering` 定；本步不跑 CTest，CTest 在通过检查里跑；不在没有测试时加空测试。
 
 **CMakePresets**：如果项目使用 preset，名称固定 `clang` / `gcc`，与构建目录一致；没有 preset 时直接用上面的命令。
 

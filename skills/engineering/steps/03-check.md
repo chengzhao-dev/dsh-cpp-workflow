@@ -32,7 +32,7 @@ GCC 模式把目录和编译器换成 `build/gcc`、`g++`。每次检查都重�
 | 现象 | 回哪一步 |
 | --- | --- |
 | 找不到 target、链接失败、include 路径不对 | 第 1 步 |
-| 目标标准没有生效、`-std` 与声明不一致 | 第 1 步，必要时重读 `../references/cmake/standards/cxx-standard.md` |
+| 目标标准没有生效、`-std` 与声明不一致 | 第 1 步，必要时重读 `../references/cmake/standards/01-cxx-standard.md` |
 | 函数参数没校验、模块重复导入、旧模块残留 | 第 2 步 |
 | 只是 CTest 或运行失败 | 转 `building-cpp` 的通过检查 |
 

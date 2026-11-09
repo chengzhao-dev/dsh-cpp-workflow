@@ -7,7 +7,7 @@ metadata:
 
 # developing-cpp
 
-本技能处理换一台机器也不会改的源码内容：可观察行为、库与程序的边界、声明、命名、异常与源码注释。文件槽位以 `references/layout/02-file-template.md` 为准，排版以 `references/style/google-cpp-style.md` 的 Google 基线为准，命名以 `references/naming/identifier-names.md` 为准。
+本技能处理换一台机器也不会改的源码内容：可观察行为、库与程序的边界、声明、命名、异常与源码注释。文件槽位以 `references/layout/02-file-template.md` 为准，排版以 `references/style/01-google-cpp-style.md` 的 Google 基线为准，命名以 `references/naming/01-identifier-names.md` 为准。加载顺序与层表见 [budget.md](../shared/budget.md)。
 
 ## 适用场景
 
@@ -19,7 +19,7 @@ metadata:
 
 ## 三种操作
 
-一次只选一种，范围（单点、整段）是任务属性；判据、边界与交接见 `references/editing/01-edit-operations.md`。四类改动是域，不是操作。
+一次只选一种，范围（单点、整段）是任务属性；判据、边界与交接见共用入口 [operations.md](../shared/operations.md)。四类改动是域，不是操作。
 
 | 操作 | 什么时候用 | 从哪步进 |
 | --- | --- | --- |
@@ -49,30 +49,30 @@ metadata:
 
 | 改什么 | 从哪一份进 |
 | --- | --- |
+| 不知道开哪一份条文 | `references/index.md` |
 | 行为、库与程序的边界 | `steps/01-behavior.md`、`steps/02-boundary.md`；案例在 `references/design/examples/` |
+| 会话层、选着与程序边界 | `references/design/session-layer.md`；领域规则见 `references/design/01-project-design.md` |
 | 文件槽位、包含守卫、声明顺序 | `references/layout/02-file-template.md`、`references/layout/03-declaration-order.md` |
-| 命名与改名 | `references/naming/identifier-names.md`；案例在 `references/naming/examples/` |
-| 声明注释与实现注释 | `references/comments/comment-rules.md`（写什么）与 `references/comments/comment-style.md`（结构、版式、措辞）；案例在 `references/comments/examples/` |
-| 异常规则与异常案例 | `references/exceptions/throw-rules.md`；案例在 `references/exceptions/examples/` |
+| 命名与改名 | `references/naming/01-identifier-names.md`；案例在 `references/naming/examples/`；术语在 `references/naming/glossary/` |
+| 声明注释与实现注释 | `references/comments/01-comment-rules.md`（写什么）与 `references/comments/02-style.md`（结构、版式、措辞）；案例在 `references/comments/examples/` |
+| 异常规则与异常案例 | `references/exceptions/01-exception-rules.md`；案例在 `references/exceptions/examples/` |
 | 结果类型与值类型 | `references/language/value-types/`：宽度、符号、整数角色、枚举、强类型、const 成员、`[[nodiscard]]`、比较、下标、float/bool |
 | 语言基础 | `references/language/language-basics/`：对象、初始化、推导、const、表达式、函数、类、RAII、模板 |
 | 标准库 | `references/language/standard-library/`：容器、访问、迭代、算法、string、format、time、random、files |
 | 性能与陷阱 | `references/language/performance/`：测量、复杂度、内存、未定义行为、陷阱、伪优化 |
-| 操作判不准、规则冲突 | `references/editing/01-edit-operations.md`、`references/editing/02-rule-priority.md` |
+| 操作判不准、规则冲突 | `../shared/operations.md`、`../shared/rule-priority.md` |
 
-进入 `references/language/` 或任一 `examples/` 前先列出目录，再按主题或语义选一份；数字前缀只表示同一主题内的阅读顺序，不是案例编号；每类末尾的完成清单在该类改完后读。
+进入 `references/` 前先读 `references/index.md`，再按主题或语义选一份；数字前缀只表示同一主题内的阅读顺序，不是案例编号；每类末尾的完成清单在该类改完后读。
 
 ## 加载预算
 
-- 只开当前步对应的一个步骤文件；同一改动域内不同时展开两个技能的步骤。
-- 条文只开该步点名的一份；同号案例留到下一次激活。
-- 标准档只打开项目技能声明的那一档，没有声明时用本技能已有的新工程默认，不把其余标准档读进来。
+加载预算见 [budget.md](../shared/budget.md)。
 
 项目技能列出了检查命令时先跑它；无论有没有项目命令，都再跑本技能的 `scripts/checking-declaration-order.mjs`（定义顺序）与 `scripts/checking-comments.mjs`（注释）；两者退出码为 0 后停在这一步，不再继续走没有失败的步骤。
 
 ## 四类改动
 
-四类改动是操作内部的域：操作定入口，域定层次。四域的定义、边界与次序见 `references/editing/01-edit-operations.md`；一次改动混了两类时，按「内容 → 结构 → 版式 → 措辞」拆开做，前一类落定并经检查再进下一类。
+四类改动是操作内部的域：操作定入口，域定层次。四域的定义、边界与次序见 [operations.md](../shared/operations.md)；一次改动混了两类时，按「内容 → 结构 → 版式 → 措辞」拆开做，前一类落定并经检查再进下一类。
 
 | 类型 | 典型请求 | 入口步骤 |
 | --- | --- | --- |
@@ -81,7 +81,7 @@ metadata:
 | 版式 | 只改缩进、行宽、包含顺序或注释符号 | `steps/03-declaration.md` |
 | 措辞 | 只改命名、只改注释措辞 | `steps/03-declaration.md` |
 
-只改格式时不动行为，只改注释时不动签名；条文由入口步骤按需打开。同一处命中多条规则时，按 `references/editing/02-rule-priority.md` 的五级次序判：行为与契约 > 结构 > 清晰 > 一致 > 形式；高层未解决，不先做低层润色。
+只改格式时不动行为，只改注释时不动签名；条文由入口步骤按需打开。同一处命中多条规则时，按 `../shared/rule-priority.md` 的五级次序判：行为与契约 > 结构 > 清晰 > 一致 > 形式；高层未解决，不先做低层润色。
 
 ## 完成判据
 
@@ -90,5 +90,5 @@ metadata:
 - [ ] 第 3 步的公共头文件自包含，命名、声明顺序和异常声明符合 `references/` 的条文；类型注释只写本类型，纯值容器一句，初始状态归默认构造函数。
 - [ ] 第 4 步的实现只兑现声明；`.cpp` 定义顺序与头文件声明同序；同一文件里的函数按同一套分段约定，需要分阶段的都有阶段注释与空行；资源由 RAII 管理；失败是正常结果时用返回值，函数无法完成任务时抛异常，不拿异常做正常分支。
 - [ ] `.cpp` 定义顺序检查通过：`node "<skill-dir>/scripts/checking-declaration-order.mjs" --root <项目根>` 退出码为 0；有乱序先修，不能跳过。
-- [ ] 源码注释符合 `references/comments/comment-rules.md` 与 `comment-style.md` 的规范，`node "<skill-dir>/scripts/checking-comments.mjs" --root <项目根>` 退出码为 0，末行是「注释检查通过：N 个文件。」。
+- [ ] 源码注释符合 `references/comments/01-comment-rules.md` 与 `02-style.md` 的规范，`node "<skill-dir>/scripts/checking-comments.mjs" --root <项目根>` 退出码为 0，末行是「注释检查通过：N 个文件。」。
 - [ ] 没有改 `CMakeLists.txt`、`.clang-*`、构建脚本，也没有把外部资料路径或项目专属类名写进通用条文。
