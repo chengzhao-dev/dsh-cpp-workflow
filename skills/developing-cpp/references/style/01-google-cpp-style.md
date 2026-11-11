@@ -1,7 +1,7 @@
 <!-- 读取时机：查格式与写法时；读完能回答：Google C++ 风格：本技能采用的版本；预算：一次只开这一份（93 行），不自动串联。 -->
 # Google C++ 风格：本技能采用的版本
 
-以 [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html) 为基线。除「异常政策」「新工程默认 C++23」和「注释格式」三处明确偏离外，排版、命名、头文件、包含顺序和类型都按 Google 原文执行；本地习惯不能悄悄覆盖它。
+以 [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html) 为基线。除「异常政策」「新工程默认 C++23」「枚举底层类型 `std::uint8_t`」和「注释格式」四处明确偏离外，排版、命名、头文件、包含顺序和类型都按 Google 原文执行；普通对象默认花括号属于 Google 允许的本地选择，不单列为偏离；本地习惯不能悄悄覆盖它。
 
 ## 语言版本
 
@@ -37,7 +37,7 @@
 - 纯数据聚合用 `struct`；有不变量的类型用 `class`，不变量在构造函数和公共成员函数里维持。
 - 单参数构造函数写 `explicit`；零参数构造函数不写。
 - 默认成员初始化写在声明处（NSDMI），不要在构造函数初始化列表里重复。
-- 默认用花括号初始化：`int count{};`、`std::vector<int> values{1, 2, 3};`。成员声明处一律写 `{}`；只有需要拷贝初始化或 `auto` 推导时用 `=`；`name = {{` 只用于多行聚合常量表，单个对象和空初始化仍写 `count{}`；成员写 `=` 的例外见 `references/language/language-basics/02-initialization.md`；不要用 `()` 初始化普通对象。
+- 普通对象默认用花括号初始化：`int count{};`、`std::vector<int> values{1, 2, 3};`。成员声明处也默认写 `{}`；拷贝初始化或 `auto` 推导用 `=`；`name = {{` 只用于多行聚合常量表，单个对象和空初始化仍写 `count{}`；容量构造等 `()` 例外见 `references/language/language-basics/02-initialization.md`。
 - 类声明顺序：public → protected → private；类型与别名 → 静态常量 → 工厂 → 构造/赋值/析构 → 其他函数 → 数据成员。
 - 用户声明的拷贝/移动/析构函数在头文件声明、在 `.cpp` 定义；只有零参数且默认实现足够时才写 `= default`。
 - 查询成员函数标尾部 `const`；返回结果对象的 API 加 `[[nodiscard]]`，不要给所有非 `void` 函数机械添加。标注位置与 `friend` 的例外见 `references/language/value-types/07-nodiscard.md`。
@@ -81,7 +81,7 @@ Google 原文不使用 C++ 异常；本工作流只在开发阶段的源码指�
 ## 输出与格式化
 
 - 组合消息以 `std::format` 为主：`std::format("任务 {} 进入状态 {}", task, state)`。
-- `std::print` 只在 C++23 且标准库支持时使用，通常放在程序边界；库代码仍用 `std::format` 组合消息。C++20 及更早把格式化结果写到 `std::cout` / `std::cerr` / `std::ostringstream`。
+- 写到已有的 `std::ostream` 用 `<<`；没有流对象时，默认用 `std::print` 与 `std::println`，它们只在 C++23 且标准库支持时可用；见 `references/language/standard-library/06-format.md`。
 - 简单字面量输出可以直接用 `std::cout << "..."`；需要拼接变量、对齐、数值格式时用 `std::format`。
 - 列宽跟工程根 `.clang-format` 的 `ColumnLimit` 走；项目已声明 100 时按 100，模板资产不写 `ColumnLimit`。每级缩进 2 个空格，代码不用 tab；缩进与对齐由 `.clang-format` 统一，不在条文里另定一套。
 - 浮点输出固定精度，整数不依赖隐式格式；`std::format` 的格式串写全。
@@ -89,6 +89,6 @@ Google 原文不使用 C++ 异常；本工作流只在开发阶段的源码指�
 ## 注释
 
 - 注释写意图、契约、取舍，不复述代码。
-- 注释格式是本项目的第三处偏离：用 Doxygen 的 `///` 加 `@file`、`@brief`、`@param` 组织，Google 原文用 `//` 散文、文件头放 license boilerplate；本项目源码不带 license 头，分发或开源前补上。
+- 注释格式是本项目的第四处偏离：用 Doxygen 的 `///` 加 `@file`、`@brief`、`@param` 组织，Google 原文用 `//` 散文、文件头放 license boilerplate；本项目源码不带 license 头，分发或开源前补上。
 - 文件头、声明注释、实现注释与配置注释的格式见 `references/comments/02-style.md`，写什么见 `01-comment-rules.md`。
 - TODO 统一写 `// TODO: <阶段或 issue> - <要做什么>`；不要写 `@todo`、`FIXME` 或只有「参考」没有动作的占位。

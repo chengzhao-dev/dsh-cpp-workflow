@@ -1,4 +1,4 @@
-<!-- 读取时机：配 CMake 或工具链时；读完能回答：CMake；预算：一次只开这一份（227 行），不自动串联。 -->
+<!-- 读取时机：配 CMake 或工具链时；读完能回答：CMake；预算：一次只开这一份（230 行），不自动串联。 -->
 # CMake
 
 目标：一个编译器、Ninja、target-based 规则、可用的编译数据库。下面是最小形状和常见边界；工程模板仍由 `building-cpp` 提供，在 `../../../../building-cpp/assets/templates/projects/`，可复用的 CMake 函数在本技能的 `assets/`：`CompileSettings.cmake` 收标准与警告，`LinkSettings.cmake` 收构建期 RPATH 与 GoogleTest 依赖。
@@ -96,6 +96,9 @@ MSVC 分支用 `/W4`、`/permissive-`、`/WX`；其他编译器直接报错，�
 - 不把 `main()` 编进库；程序只做装配和 I/O。
 - 头文件不参与编译时，不需要 `target_sources` 列出；需要 IDE 展示时再列。
 - 组件多起来时，一个组件一个 `CMakeLists.txt`：库放 `<component>/include` 与 `<component>/src`，程序放 `app/include` 与 `app/src`；`app/include` 只给程序内部用，不要被库 `PUBLIC` 导出。
+- 源文件只列在它所在目录的 target 里；子目录的程序或测试用 `target_link_libraries` 链接该 target，不写 `../other/src/*.cpp`；跨目录共用代码时，先让源目录提供可链接的 target。
+- CMake 注释只写 target 的职责、可见性和使用条件，不写「源码留在本目录」「子目录不写 ../other/src/*.cpp」这类目录边界；源文件列表与链接关系已经表达边界。
+- 一个 target 的配置连续成块：按 `add_*`、`target_include_directories`、`CompileSettings_SetCxxStandard`、`CompileSettings_SetWarnings`、其它 `target_*` 编译选项、`target_link_libraries`、`set_target_properties` 的顺序写；标准与警告必须相邻，`target_link_libraries` 与 `set_target_properties` 也必须相邻，中间不插其它调用。
 - 测试 target 等出现第二个消费者时再加，不要为单个 `main()` 提前引入测试框架；测试只链接库的公共接口。
 
 ## 工程名

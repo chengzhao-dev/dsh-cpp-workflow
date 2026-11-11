@@ -311,12 +311,15 @@ test('get() rejects foreign candidates and locators outside the skill root', asy
   await rm(root, { recursive: true, force: true })
 })
 
-test('an aborted signal returns no candidates', async () => {
+test('an aborted signal returns an incomplete observation', async () => {
   const root = await makeRepo({ cpp: true })
   const provider = makeProvider()
   const controller = new AbortController()
   controller.abort()
-  assert.deepEqual(await provider.list({ cwd: root, signal: controller.signal }), [])
+  assert.deepEqual(await provider.list({ cwd: root, signal: controller.signal }), {
+    candidates: [],
+    complete: false,
+  })
   await rm(root, { recursive: true, force: true })
 })
 

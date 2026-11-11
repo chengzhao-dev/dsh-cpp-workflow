@@ -20,7 +20,7 @@ flowchart TD
     E --> L["skills/engineering/SKILL.md<br/>三步：定 target→定模块→通过检查"]
     L --> M["steps/；references/cmake/、references/formatting/"]
     M --> N["CMakeLists.txt、cmake/ 模块与 .clang-* 配置"]
-    E --> O["skills/building-cpp/SKILL.md<br/>三步：定构建→定工具配置→通过检查"]
+    E --> O["skills/building-cpp/SKILL.md<br/>前三步必做；已有 .vscode/ 时第 4 步接线随第 2 步完成"]
     O --> P["steps/、references/、examples/、assets/"]
     P --> Q["running-build.sh、.clang-*、environment.json、compile_commands.json"]
     Q --> R["skills/building-cpp/scripts/checking-environment.mjs<br/>skills/engineering/scripts/checking-encoding.mjs"]
@@ -33,7 +33,7 @@ flowchart TD
 三个技能只共用一套布局：
 
 - 每个技能是 `SKILL.md + steps/ + references/`；可执行片段放 `scripts/`，可复制样例放 `examples/` 或 `assets/`，编辑器接线放 `steps/`。
-- 目录名不加数字；步骤文件用两位数字前缀，表示先后顺序；同一主题的条文按两位数字排阅读顺序，案例按种类命名，不加数字。
+- 目录名不加数字；步骤文件用两位数字前缀，表示先后顺序；同一主题的条文按两位数字排阅读顺序；案例文件用两位数字前缀加种类名，例如 `03-declaration-enum.md`。
 - 只有还会继续长大的主题才建子目录；`examples/` 与 `glossary/` 内不再建目录。
 - 一份文件只讲一个主题：规则文件不超过 240 行，案例不超过 320 行；超长就拆主题，不堆长段。
 - 同一事实只在一份文件展开，旧路径不保留转述页；跨技能需要时用相对路径直接指过去。
@@ -44,7 +44,7 @@ flowchart TD
 
 - `skills/developing-cpp/SKILL.md`：内容与结构先到 `steps/01-behavior.md`、`steps/02-boundary.md`，声明与实现再到 `steps/03-declaration.md`、`steps/04-implementation.md`；注释事实在 `references/comments/01-comment-rules.md`（写什么）与 `02-style.md`（结构、版式、措辞），异常事实在 `references/exceptions/01-exception-rules.md`，规则冲突在 `skills/shared/rule-priority.md`。
 - `skills/engineering/SKILL.md`：target、模块与检查分别到 `steps/01-targets.md`、`steps/02-modules.md`、`steps/03-check.md`；排版工具从入口表直接开 `references/formatting/` 的一份。
-- `skills/building-cpp/SKILL.md`：构建、工具配置与通过检查分别到 `steps/01-build.md`、`steps/02-tooling.md`、`steps/03-check.md`。
+- `skills/building-cpp/SKILL.md`：构建、工具配置与通过检查分别到 `steps/01-build.md`、`steps/02-tooling.md`、`steps/03-check.md`；工程已有 `.vscode/` 时，第 4 步 `steps/04-vscode.md` 随第 2 步完成。
 
 ## 为什么有 shared/
 
@@ -90,7 +90,7 @@ flowchart TD
 | --- | --- |
 | `skills/developing-cpp/SKILL.md` | 源码四步与 `references/` 的入口 |
 | `skills/engineering/SKILL.md` | CMake 三步（`steps/`）与 `references/cmake/`、`references/formatting/` 的入口 |
-| `skills/building-cpp/SKILL.md` | 构建三步、编辑器接线、环境脚本与工程模板的入口 |
+| `skills/building-cpp/SKILL.md` | 构建前三步必做、第 4 步随第 2 步的可选接线、环境脚本与工程模板的入口 |
 | `docs/module-layout.md` | 目录树与逐文件清单，结构检查的覆盖依据 |
 | `docs/triggering.md` | 触发矩阵与反例 |
 | `docs/plugin-storage.md` | 运行时磁盘与缓存边界、守卫与 dsh-ops 对照 |

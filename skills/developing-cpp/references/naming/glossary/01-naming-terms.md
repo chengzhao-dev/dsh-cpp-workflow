@@ -1,4 +1,4 @@
-<!-- 读取时机：统一命名术语时；读完能回答：命名术语与用词；预算：一次只开这一份（26 行），不自动串联。 -->
+<!-- 读取时机：统一命名术语时；读完能回答：命名术语与用词；预算：一次只开这一份（27 行），不自动串联。 -->
 # 命名术语与用词
 
 本文件是 `references/naming/01-identifier-names.md` 的附录，只在判不准某个词该用完整写法还是缩写时打开；它不随该文件一起加载，也不重复命名规则表。
@@ -14,6 +14,7 @@
 | `selection` | 从多个候选里选一个用 `Choose`，找不到合法候选返回 `optional`；查找已有元素用 `Find`；可能失败的动作与校验用 `Try` | [03-selection.md](03-selection.md) |
 | `score` | 终局评分用 `ScoreFinishedGame`，搜索分是 `int`；不把分数塞进 `GameResult` | [05-scoring.md](05-scoring.md) |
 | `difficulty` | 电脑难度用 `Difficulty` 两档 `kNormal`/`kHard`；与 `MatchMode` 分层 | [06-difficulty.md](06-difficulty.md) |
+| `input` / `output` / `diagnostics` | 流的参数与成员写完整词，不用 `in` / `out` / `err` | [07-stream.md](07-stream.md) |
 
 ## 加词流程
 

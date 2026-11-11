@@ -12,7 +12,7 @@
 | `engineering` | 改 `CMakeLists.txt` 或 `cmake/`；target 拆分、公共 include、链接边界；`target_compile_features`、`CXX_STANDARD`、标准降档；GLOB、全局变量、RPATH、输出目录；抽取或导入 CMake 函数/模块；CMake 缩进、注释与排版；`.clang-format`、`.clang-tidy`、`.clangd` 与编码的规则条文 | 只改函数体、命名、异常或源码注释；只改 `running-build.sh` 或入口脚本；只改 `.qmd`、README、Python |
 | `building-cpp` | 改 `running-build.sh`、`.vscode/`、`environment.json`；复制或落地 `.clang-format`、`.clang-tidy`、`.clangd`；配置 Ninja 或换编译器；编译数据库、format/tidy/clangd 配置的检查；只改 `.vscode` 的扩展或设置（接线，不写构建任务）；在 CMake target 已就绪后跑构建、测试与运行 | 只改 target、属性、标准或模块；只改函数体语义、命名或异常；只改文档；不涉及构建文件的纯代码走查 |
 
-三个技能同时出现时先开 `developing-cpp`。只改函数体、命名、异常或注释且入口命令可运行时，定声明或实现后只开 `building-cpp` 的「通过检查」，不再重走构建三步。只改 CMake 时先开 `engineering`，完成前落到 `building-cpp` 的通过检查；一次改动同时碰到源码和 CMake 时，先源码、再 CMake、最后构建检查。
+三个技能同时出现时先开 `developing-cpp`。只改函数体、命名、异常或注释且入口命令可运行时，定声明或实现后只开 `building-cpp` 的「通过检查」，不再重走构建前三步（工程已有 `.vscode/` 时，第 4 步接线随第 2 步完成）。只改 CMake 时先开 `engineering`，完成前落到 `building-cpp` 的通过检查；一次改动同时碰到源码和 CMake 时，先源码、再 CMake、最后构建检查。
 
 ## 触发矩阵
 

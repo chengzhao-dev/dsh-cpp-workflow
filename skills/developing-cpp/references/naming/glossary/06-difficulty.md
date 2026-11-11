@@ -21,6 +21,6 @@
 
 ## 依据
 
-- 本项目 `games/tictactoe/tictactoe/include/computer.h` 的 `Difficulty` 与 `SetDifficulty`；`games/tictactoe/tictactoe/include/terminal.h` 的 `Terminal::MatchMode`。
+- 本项目 `games/tictactoe/tictactoe/include/computer.h` 的 `Difficulty` 与 `SetDifficulty`；`games/tictactoe/tictactoe/include/console.h` 命名空间层的 `MatchMode`。
 - 选择类函数用 `Choose` 的规则见 [03-selection.md](03-selection.md)。
 - 会话、选着与规则的边界见 [session-layer.md](../../design/session-layer.md)。

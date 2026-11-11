@@ -4,9 +4,9 @@
 
 ## 命名规则
 
-- 目录名不加数字前缀；数字只出现在步骤文件与同一主题内的条文文件上。
+- 目录名不加数字前缀；数字出现在步骤文件、同一主题内的条文文件与案例文件上。
 - 步骤文件用两位数字前缀，表示先后顺序：`steps/01-behavior.md`。
-- 一个主题内部的条文按两位数字前缀排阅读顺序；目录里只有一个主文档时不加数字。案例文件按种类命名，不加数字（如 `03-declaration-enum.md`、`07-throw-when.md`）。
+- 一个主题内部的条文按两位数字前缀排阅读顺序；目录里只有一个主文档时不加数字。案例文件用两位数字前缀加种类名（如 `03-declaration-enum.md`、`07-throw-when.md`）；`building-cpp/examples/environment.md` 是唯一例外，沿用旧名。
 - 只有还会继续长大的主题才建子目录（如 `references/language/language-basics/`）；`examples/` 与 `glossary/` 内不再建目录。
 - 入口表可以点名目录（如 `references/language/`）；结构检查从入口表出发，沿路径、目录与本地链接确认 `references/` 下每份 Markdown 可达。新增文件放进已点名的目录，或同时补入口表。
 - 同一事实只在一份文件展开，旧路径不保留转述页。
@@ -126,7 +126,8 @@ developing-cpp/
 │   │   │   ├── 04-library-boundary.md
 │   │   │   ├── 05-library-split.md
 │   │   │   ├── 06-move-result.md
-│   │   │   └── 07-preview-read.md
+│   │   │   ├── 07-preview-read.md
+│   │   │   └── 08-screen-enter-exit.md
 │   │   ├── 01-project-design.md
 │   │   └── session-layer.md
 │   ├── exceptions/
@@ -209,7 +210,8 @@ developing-cpp/
 │   │   │   ├── 03-selection.md
 │   │   │   ├── 04-square.md
 │   │   │   ├── 05-scoring.md
-│   │   │   └── 06-difficulty.md
+│   │   │   ├── 06-difficulty.md
+│   │   │   └── 07-stream.md
 │   │   └── 01-identifier-names.md
 │   └── style/
 │       └── 01-google-cpp-style.md
@@ -268,12 +270,12 @@ engineering/
 │       │   ├── 01-clang-format.md
 │       │   ├── 02-clang-tidy.md
 │       │   └── 03-clangd.md
-│       ├── scripts/
-│       │   └── checking-encoding.mjs
 │       ├── 01-encoding.md
 │       ├── 02-clang-format.md
 │       ├── 03-clang-tidy.md
 │       └── 04-clangd.md
+├── scripts/
+│   └── checking-encoding.mjs
 ├── steps/
 │   ├── 01-targets.md
 │   ├── 02-modules.md

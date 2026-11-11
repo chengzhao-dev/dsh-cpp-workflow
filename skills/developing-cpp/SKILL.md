@@ -62,7 +62,7 @@ metadata:
 | 性能与陷阱 | `references/language/performance/`：测量、复杂度、内存、未定义行为、陷阱、伪优化 |
 | 操作判不准、规则冲突 | `../shared/operations.md`、`../shared/rule-priority.md` |
 
-进入 `references/` 前先读 `references/index.md`，再按主题或语义选一份；数字前缀只表示同一主题内的阅读顺序，不是案例编号；每类末尾的完成清单在该类改完后读。
+进入 `references/` 前先读 `references/index.md`，再按主题或语义选一份；数字前缀只表示同一主题内的阅读顺序，案例同样按它排序；每类末尾的完成清单在该类改完后读。
 
 ## 加载预算
 

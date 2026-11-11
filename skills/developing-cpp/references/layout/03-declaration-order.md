@@ -1,4 +1,4 @@
-<!-- 读取时机：排声明顺序时；读完能回答：声明顺序；预算：一次只开这一份（150 行），不自动串联。 -->
+<!-- 读取时机：排声明顺序时；读完能回答：声明顺序；预算：一次只开这一份（151 行），不自动串联。 -->
 # 声明顺序
 
 顺序的作用是让读者先看类型和契约，再看数据。`clang-format` 不管顺序，靠人工和 review 维持。
@@ -56,6 +56,7 @@ class TaskTable {
 Google、LLVM、OpenCV 都没有规定这一组内部的次序；本工作流补上：
 
 - 有比较运算符时，开头是 `operator==`：成员默认比较和 `friend` 都放这里，然后才是谓词 `Is` / `Has` / `Can`、`Get`、普通函数按使用先后。`friend` 不再放到这一组末尾。
+- 不属于 `Is` / `Get` / `Set` 的流程函数按调用层次排：入口操作在前，它调用的显示 helper 紧随其后；`DisplayOptions`、`Note` 等共享 helper 放在调用它们的流程之后；终端进入、退出与清屏可集中在组首，按进入、退出、清屏排。
 - `CheckInRange` 是诊断函数，紧挨 `IsInRange` 写，排在 `Get` 之前；它是本条谓词顺序的例外，见 `references/exceptions/01-exception-rules.md`。
 - 多个直接返回成员的 `Get` 按对应数据成员的声明顺序排列，不按调用频率或字母序：成员依次是 `current_player_`、`board_`、`history_`，getter 就依次是 `GetCurrentPlayer()`、`GetBoard()`、`GetHistory()`；成员顺序调整时 getter 一起改，一个类里只留一套顺序。
 - 直接返回成员的 `Get` 按成员顺序；没有独立成员的派生查询排在直接 `Get` 之后，按「先局部元素、后整体状态」阅读，不插进直接 `Get` 之间。例：`Game` 的 `GetResult()` 扫描棋盘后才得到结果，排在直接返回成员的 `GetCurrentPlayer()`、`GetBoard()`、`GetHistory()` 之后。

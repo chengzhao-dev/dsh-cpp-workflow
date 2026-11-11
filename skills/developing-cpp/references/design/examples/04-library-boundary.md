@@ -21,9 +21,9 @@ void TaskList::Print() const {
 [[nodiscard]] std::vector<Task> SortedByPriority() const;
 
 // app/cli.cpp（程序）
-void PrintTasks(const std::vector<Task>& tasks, std::ostream& out) {
+void PrintTasks(const std::vector<Task>& tasks, std::ostream& output) {
   for (const auto& task : tasks) {
-    out << std::format("{} {}\n", task.priority, task.name);
+    output << std::format("{} {}\n", task.priority, task.name);
   }
 }
 ```

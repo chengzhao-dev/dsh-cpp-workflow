@@ -22,16 +22,16 @@ Fixed-version npm install:
 dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.1
 ```
 
-The latest published version is `0.7.1`; `0.7.4` exists only in the working tree and is not published yet, so use `0.7.1` above until it is released. `0.7.3` is skipped and will not be published. After the working-tree version is published, switch the npm command to:
+The latest published version is `0.7.1`; `0.7.5` exists only in the working tree and is not published yet, so use `0.7.1` above until it is released. `0.7.3` is skipped and will not be published. After the working-tree version is published, switch the npm command to:
 
 ```bash
-dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.4
+dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.5
 ```
 
-GitHub tag installs require the matching tag; once `v0.7.4` is created, the version in the address matches the tag:
+GitHub tag installs require the matching tag; once `v0.7.5` is created, the version in the address matches the tag:
 
 ```bash
-dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.4
+dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.5
 ```
 
 Replace `--profile` with the profile you actually run. The desktop app always runs the `desktop` profile, and that profile is owned by the app; if the command-line `add` is rejected, add the plugin in the app settings and use the same pinned npm version. A Git tag install uses the prebuilt `lib/` committed in the repository and runs no build on the target machine; the package has no install script that needs approval.

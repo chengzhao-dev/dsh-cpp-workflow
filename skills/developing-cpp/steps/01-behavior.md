@@ -15,7 +15,7 @@
 - 可观察的是终端输出、文件内容、退出码和库函数的返回值；内部状态不算可观察行为。
 - 一次只定一个可验收的切片；切片太大就拆成两句行为，各走一遍四步。
 - 失败方式与成功路径同写：非法参数、空输入、越界、文件不存在时，是返回错误值、打印提示，还是抛异常。
-- 新增输出用 `std::format` 组合消息；`std::print` 只在 C++23 且位于程序边界（`app/`、`main`）时使用，设施选型见 `references/language/standard-library/06-format.md`。
+- 写到已有的 `std::ostream` 用 `<<`；没有流对象时，默认用 `std::print` 与 `std::println`，它们只在 C++23 且标准库支持时可用；见 `references/language/standard-library/06-format.md`。
 - 操作与范围按 `../../shared/operations.md` 判：本步是写作的入口；改写只在行为被打破时回到这里。
 
 ## 情况

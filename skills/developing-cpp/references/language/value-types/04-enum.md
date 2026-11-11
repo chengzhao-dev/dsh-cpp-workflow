@@ -1,4 +1,4 @@
-<!-- 读取时机：查语言细节时；读完能回答：枚举类；预算：一次只开这一份（24 行），不自动串联。 -->
+<!-- 读取时机：查语言细节时；读完能回答：枚举类；预算：一次只开这一份（35 行），不自动串联。 -->
 # 枚举类
 
 `enum class` 定义封闭取值集合：
@@ -16,6 +16,17 @@
 - 需要“编号”与“名字”两套表示时，写显式映射函数，例如 `TaskStateToName` / `TaskStateFromName`，不要在枚举和整数之间来回隐式转换。
 - 编号按“正常优先”排：0 表示正常态——空、进行中或成功；失败与异常态随后，按固定顺序排列。带缺省语义的枚举（`kEmpty`、`kInProgress`）和返回结果的枚举（`kPlaced`、`kOccupiedSquare`）因此共用同一条约定。身份枚举按领域编号，如 `Player::kX = 1`、`Player::kO = 2`，不套用 0 = 正常态。
 - 编号只用于输出和既有接口；要从编号找回名字，仍走显式映射函数，不拿编号做算术。
+
+## 什么时候不用枚举
+
+- 每个取值都真实存在，调用方要 `switch`，成功本身不另带数据：`enum class`。`MatchMode`、`LoopResult`、`PlaceResult`、`Player`、`SquareValue` 留在这里。
+- 要么有一个 `T`，要么没有，没有值不需要第二种原因：`std::optional<T>`。`PromptMatchMode`、`PromptDifficulty` 与 `PromptHumanSide` 分别返回 `optional<MatchMode>`、`optional<Difficulty>`、`optional<Player>`。不为「没有」再造 `kEnd`、`kNone`，也不写枚举加出参。
+- 成功带 `T`，失败带调用方要读的原因：C++23 用 `std::expected<T, E>`，`E` 仍可以是 `enum class`。本工程的落子没有额外载荷，继续用 `PlaceResult`，不改成 `expected`。
+- 一次交出多份互相独立的数据：具名 `struct`。
+- 只有是否，没有载荷，两种含义写在 `@return`：`bool`。`Replay` 留在这里。
+- 函数完不成自己的合同：沿用异常规则。
+
+依据：Google C++ Style「Inputs and Outputs」、Abseil TotW 176、C++ Core Guidelines F.20/F.21、cppreference `std::optional` 与 `std::expected`。
 
 ## 标准与推荐
 

@@ -1,4 +1,4 @@
-<!-- 读取时机：排版或工具配置时；读完能回答：clang-format；预算：一次只开这一份（20 行），不自动串联。 -->
+<!-- 读取时机：排版或工具配置时；读完能回答：clang-format；预算：一次只开这一份（21 行），不自动串联。 -->
 # clang-format
 
 三件语言工具各管一段：`clang-format` 排版、`clang-tidy` 诊断、`clangd` 提供补全/跳转/诊断。它们都读同一份编译数据库，但职责不重叠。编辑器侧只保留 CMake Tools 作为配置、构建、运行和调试入口；C/C++ 扩展只做 `CMake: Debug` 的调试后端，不参与语言服务。
@@ -12,6 +12,7 @@ clang-format --dry-run --Werror src/*.cpp include/*.h app/*.cpp tests/*.cpp
 - 只扫描项目源码：`src/`、`include/`、`app/`、`tests/` 等实际存在的目录；不扫描 `build/`、第三方、生成文件。
 - 配置文件在工程根 `.clang-format`；不要依赖用户主目录或编辑器内置配置。
 - `BasedOnStyle: Google`、`Standard: Latest`；`c++23` 到 clang-format 23 才被接受，21 与 22 会报 `error: unknown enumerated scalar`，`Latest` 在旧版本上按该版本支持的最高标准解析。列宽、缩进与包含顺序以工程根 `.clang-format` 为准；工程显式写 `ColumnLimit` 时按工程值执行，模板资产不写 `ColumnLimit`。
+- 构造函数初始化列表写 `PackConstructorInitializers: BinPack`：放得下时并入一行，超出列宽再按成员换行。Google 预设逐项换行，成员一多就占五六行，与「列宽内保持一行」冲突；这条只在配置里定，不在条文里规定手写位置。
 - 格式化失败就是失败，不要用 `// clang-format off` 绕过；确需关闭时只包住无法排版的宏或表格，并写一句理由。
 
 ## 依据

@@ -1,4 +1,4 @@
-<!-- 读取时机：写或改注释的示例时；读完能回答：正反例：实现注释；预算：一次只开这一份（94 行），不自动串联。 -->
+<!-- 读取时机：写或改注释的示例时；读完能回答：正反例：实现注释；预算：一次只开这一份（113 行），不自动串联。 -->
 # 正反例：实现注释
 
 实现注释只写本层为什么停在这里；声明注释、文件头与配置注释见 `references/comments/examples/` 里的 `04-declaration-file.md`、`01-declaration-class.md` 等案例。
@@ -75,6 +75,25 @@ return PlaceResult::kPlaced;
 
 成功路径有多步状态更新时，用一句阶段注释概括整段；不在每一步上方逐行解释 `push_back` 与赋值。
 
+**好（逐条对应）**：
+
+```cpp
+void Console::EnterAlternateScreen() {
+  output_ << "\033[?1049h";  // 进入备用屏幕。
+  output_ << "\033[?25l";    // 隐藏光标。
+  output_.flush();
+}
+
+void Console::ExitAlternateScreen() {
+  // 先恢复光标再退出，避免退出后短暂看不到光标。
+  output_ << "\033[?25h";    // 恢复光标。
+  output_ << "\033[?1049l";  // 退出备用屏幕。
+  output_.flush();
+}
+```
+
+几条语句各写一件读者要分别知道的事时，事实落在对应语句的行尾；整段共有的次序或防护理由仍只在段首写一句。两段的区别在事实的数量：上一段的赋值与 `push_back` 是同一件事的步骤，共写一句；这里每条序列做的是不同的事，才逐条写在行尾。
+
 ## 从函数体注释到函数头注释
 
 函数体里的「检查…是否…」不再写；如果这句话确实是函数头的契约，把条件写成声明注释的「主体是否状态」和 `@return`，实现里只留 `return`、`throw` 或赋值。
@@ -82,13 +101,13 @@ return PlaceResult::kPlaced;
 ## 只在 .cpp 出现的函数
 
 ```cpp
-/// 把输入流读到一行。
+/// 从输入流读一行。
 ///
-/// @param in 输入流。
-/// @param line 读到的行。
-/// @return 读到内容时返回 true；流结束返回 false。
-bool ReadLine(std::istream& in, std::string& line) {
-  return static_cast<bool>(std::getline(in, line));
+/// @param input 输入流。
+/// @return 读到的行；输入结束为空。
+std::optional<std::string> GetLine(std::istream& input) {
+  std::string line;
+  return std::getline(input, line) ? std::optional{line} : std::nullopt;
 }
 ```
 

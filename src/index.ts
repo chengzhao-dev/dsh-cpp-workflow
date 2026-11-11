@@ -192,9 +192,9 @@ async function readCandidate(skillDir: string): Promise<{ candidate?: SkillCandi
 }
 
 async function listSkills(options: ListOptions = {}): Promise<ListResult> {
-  if (options.signal?.aborted) return []
+  if (options.signal?.aborted) return { candidates: [], complete: false }
   if (!(await isCppWorkflowWorkspace(options.cwd))) return []
-  if (options.signal?.aborted) return []
+  if (options.signal?.aborted) return { candidates: [], complete: false }
   let entries
   try {
     entries = await readdir(SKILLS_ROOT, { withFileTypes: true })
@@ -206,7 +206,7 @@ async function listSkills(options: ListOptions = {}): Promise<ListResult> {
   let complete = true
   for (const entry of entries) {
     if (!entry.isDirectory() || !KNOWN_SKILLS.has(entry.name)) continue
-    if (options.signal?.aborted) return []
+    if (options.signal?.aborted) return { candidates, complete: false }
     const result = await readCandidate(path.join(SKILLS_ROOT, entry.name))
     if (result.candidate) candidates.push(result.candidate)
     if (!result.complete) complete = false

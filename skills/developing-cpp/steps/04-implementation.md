@@ -17,7 +17,7 @@
 - 失败是调用方正常结果时返回结果类型、`bool` 或 `std::optional`；函数无法完成自己的任务时抛异常，不拿异常做正常分支。Debug 与 Release 用同一套返回值与抛出条件，只有诊断详略不同。两种模式都要守的不变量用 `Check`（项目保留时），只在开发期做的自检用 `DebugCheck`；项目没有这两个宏时，`Check` 用 `std::terminate()` 兜底，`DebugCheck` 用 `assert`；`assert` 在 Release 不求值，不能代替 `Check`。`Check` 不是 `[[noreturn]]`，条件成立时正常返回；`DebugCheck` 的参数在 Release 不求值，不能放入有副作用的表达式。捕获时按 `const` 引用，只处理能处理的类型，其余继续抛。异常类型、消息格式与「不抛的边界」见 `references/exceptions/01-exception-rules.md`。
 - 参数校验、调用方状态检查与正常结果返回的次序见 `references/exceptions/01-exception-rules.md` 的「检查次序」：先整局状态，再进行中的玩家，最后交给下层检查坐标与占用，下层检查不重复。改完 `throw` 再走同文件的「检查清单」：异常类型、消息标签、跨行消息先存变量、不吞异常。
 - 声明 `noexcept` 前核对函数体：出现 `at()` 或其他可能抛出的调用就去掉。越界用 `at()` 抛 `std::out_of_range`，这个函数就不能标 `noexcept`。普通查询和返回结果枚举的函数，不因为当前函数体不抛就补 `noexcept`；它留给移动、交换、析构，以及已经标上的纯谓词。
-- 组合输出用 `std::format`，再写入 `std::cout` / `std::cerr`；库实现里不直接打印。C++23 且库支持时程序边界可用 `std::print`，C++20 及更早没有。
+- 写到已有的 `std::ostream` 用 `<<`；没有流对象时，默认用 `std::print` 与 `std::println`，它们只在 C++23 且标准库支持时可用；见 `references/language/standard-library/06-format.md`。
 - 转换用具名转换 `static_cast` / `std::bit_cast`，不用 C 风格强制转换。
 - 所有权用 `std::unique_ptr`；禁止裸 `new` / `delete`，没有共享所有权的理由时不用 `std::shared_ptr`。
 - 只改注释时，不改可观察行为；只改实现时，不改公共声明。两者同时需要时，先改声明，再改实现。

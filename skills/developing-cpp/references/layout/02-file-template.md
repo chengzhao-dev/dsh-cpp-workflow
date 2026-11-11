@@ -30,7 +30,7 @@
 | `my_project/include/board.h` | `MY_PROJECT_INCLUDE_BOARD_H_` |
 | `my_project/include/game.h` | `MY_PROJECT_INCLUDE_GAME_H_` |
 | `my_project/include/computer.h` | `MY_PROJECT_INCLUDE_COMPUTER_H_` |
-| `my_project/include/terminal.h` | `MY_PROJECT_INCLUDE_TERMINAL_H_` |
+| `my_project/include/game_session.h` | `MY_PROJECT_INCLUDE_GAME_SESSION_H_` |
 | `my_project/tests/computer_test_support.h` | `MY_PROJECT_TESTS_COMPUTER_TEST_SUPPORT_H_` |
 
 - 通用示例：`taskflow/include/task_table.h` → `TASKFLOW_INCLUDE_TASK_TABLE_H_`。

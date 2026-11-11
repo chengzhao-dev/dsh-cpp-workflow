@@ -1,4 +1,4 @@
-<!-- 读取时机：命名或统一术语时；读完能回答：命名；预算：一次只开这一份（127 行），不自动串联。 -->
+<!-- 读取时机：命名或统一术语时；读完能回答：命名；预算：一次只开这一份（130 行），不自动串联。 -->
 # 命名
 
 命名先回答「它是什么角色」，再选词。规则表是底线，语义角色表决定用哪个动词。
@@ -27,6 +27,7 @@
 - 缩写按单词处理：`url`、`id`、`http`，不要写 `URL` 混进 snake_case；类型名里可以 `HttpClient`。
 - 不用单字母名：坐标参数和局部变量用 `pos`，行、列用 `row`、`col`；公开数据成员仍用完整名词（`Move::position`），避免 API 缩写；迭代器式的位置参数才写完整 `position`。取舍依据与更多词见 [01-naming-terms.md](glossary/01-naming-terms.md)。`i` / `j` 只用于没有领域名字的计数（如遍历固定长度的下标）。也不要用 `data`、`info`、`tmp` 这类不说明内容的名字。
 - 参数或局部变量的类型已在签名里写明时，用主流缩写而不是重复类型名：`Position pos`，不写 `Position position`；缩写只在含义无歧义时使用。
+- 流的参数与成员是上一条的例外：即使类型已在签名里，也写完整词 `input`、`output`、`diagnostics`，不写 `in`、`out`、`err`；取舍见 [glossary/07-stream.md](glossary/07-stream.md)。
 - 局部变量与类成员用同一套词根：成员叫 `current_player_`，局部就叫 `current_player`，不写 `currentPlayer` 这类 camelCase。涉及多个对象时把角色写进名字，如 `target_square`、`target_square_value`，不要用 `target` 这种离开上下文读不出对象的词。规则表里的 snake_case 同样约束局部变量，`.clang-tidy` 的 `readability-identifier-naming` 会检查。
 
 ## 用词
@@ -61,6 +62,8 @@
 | 读写 | `Read` / `Write` | `ReadEnvironment()`、`WriteLedger()` | 涉及 I/O 时用；不要在库核心用 |
 | 访问器 | `Get` + PascalCase，或 snake_case | `GetHistory()`、`history()` | Google 允许两种；同一 API 只选一种，不用成员名直接当函数名 |
 
+- 界面提示用 `Prompt`：显示菜单或提示并等待用户选择时写 `PromptMatchMode()`；`Read` / `Write` 留给 I/O 读写与记录处理。提示负责显示与重试，实际读行由 `GetLine()` 完成；`std::optional` 表示输入结束，这是 `Get` 的界面例外，不承诺前置条件已满足。
+- 带编号选项的开局菜单用 `Display<Object>Options`：写 `DisplayMatchModeOptions()`、`DisplayDifficultyOptions()`；不写 `Show<Object>Menu`。`Prompt<Object>` 负责显示并读入，`Display*Options` 只负责显示。
 - 返回 `bool` 的 lambda 也用 `is_` / `has_` / `can_` 命名：`auto is_empty = [](const Order& order) { ... };`。
 - `Find` 不把“没找到”当异常；`Get` 在前置条件不满足时抛标准异常：坐标越界用 `std::out_of_range`，调用时不变量已破坏用 `std::logic_error`；只有调用方必须把这些类型区分开时，才新增派生自它们的类型。两种构建模式的抛出条件相同。两者不要互换。
 - 查询返回多个值时用 `struct`，不要用三个 `GetXxx()` 加输出参数。

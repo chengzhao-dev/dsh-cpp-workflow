@@ -3,7 +3,7 @@
 
 从多个候选里选一个，用 `Choose`；名字写清选的对象，如 `ChooseRandomPosition`、`ChooseBestPosition`；对外只暴露 `ChoosePosition`。没有合法候选时返回 `std::optional` 的空值，不返回哨兵位置，也不抛异常。
 
-查找已经存在的元素，用 `Find`；找不到是正常结果，返回 `std::optional`、指针或迭代器。`Get` 只用于前置条件保证存在的查询。
+查找已经存在的元素，用 `Find`；找不到是正常结果，返回 `std::optional`、指针或迭代器。`Get` 只用于前置条件保证存在的查询；`GetLine` 这类界面读入不在此列，输入结束用 `std::optional` 表示。
 
 可能失败、且调用方需要区分原因的动作，用 `Try` 或领域动词；返回 `enum class` 结果。只有一个失败原因时返回 `bool`。
 

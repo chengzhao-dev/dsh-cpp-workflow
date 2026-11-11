@@ -141,7 +141,7 @@ int main() {
 }
 ```
 
-消息要能让调用者定位操作和关键值，句式见下节；`std::format` 只是构造 `what()` 或边界消息的方式。C++20 及更早没有 `std::print`；默认 C++23 且标准库支持时，可在程序边界用 `std::print`，库代码仍只组合消息、不直接打印。
+消息要能让调用者定位操作和关键值，句式见下节；`std::format` 只是构造 `what()` 或边界消息的方式。写到已有的 `std::ostream` 用 `<<`；没有流对象时，默认用 `std::print` 与 `std::println`，它们只在 C++23 且标准库支持时可用；见 `references/language/standard-library/06-format.md`。
 
 ## 消息
 

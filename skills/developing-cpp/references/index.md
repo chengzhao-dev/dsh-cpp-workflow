@@ -7,8 +7,8 @@
 
 | 文件 | 读取时机 | 读完能回答 | 预算 |
 | --- | --- | --- | --- |
-| `comments/01-comment-rules.md` | 写或改注释时 | 注释：写什么 | 一次只开这一份（197 行），不自动串联。 |
-| `comments/02-style.md` | 写或改注释时 | 注释的结构、版式与措辞 | 一次只开这一份（77 行），不自动串联。 |
+| `comments/01-comment-rules.md` | 写或改注释时 | 注释：写什么 | 一次只开这一份（199 行），不自动串联。 |
+| `comments/02-style.md` | 写或改注释时 | 注释的结构、版式与措辞 | 一次只开这一份（79 行），不自动串联。 |
 | `comments/examples/01-declaration-class.md` | 写或改注释的示例时 | 正反例：类型注释：概念与约定，不是功能清单 | 一次只开这一份（65 行），不自动串联。 |
 | `comments/examples/02-declaration-constructor.md` | 写或改注释的示例时 | 正反例：构造函数与析构函数：标签 + 职责 | 一次只开这一份（22 行），不自动串联。 |
 | `comments/examples/03-declaration-enum.md` | 写或改注释的示例时 | 正反例：枚举 | 一次只开这一份（47 行），不自动串联。 |
@@ -17,7 +17,7 @@
 | `comments/examples/06-declaration-member.md` | 写或改注释的示例时 | 正反例：数据成员 | 一次只开这一份（23 行），不自动串联。 |
 | `comments/examples/07-declaration-predicate.md` | 写或改注释的示例时 | 正反例：布尔查询写主体是否状态 | 一次只开这一份（14 行），不自动串联。 |
 | `comments/examples/08-declaration-struct.md` | 写或改注释的示例时 | 正反例：完整声明：后置条件与轴向 | 一次只开这一份（18 行），不自动串联。 |
-| `comments/examples/09-implementation-body.md` | 写或改注释的示例时 | 正反例：实现注释 | 一次只开这一份（94 行），不自动串联。 |
+| `comments/examples/09-implementation-body.md` | 写或改注释的示例时 | 正反例：实现注释 | 一次只开这一份（113 行），不自动串联。 |
 | `comments/examples/10-implementation-todo.md` | 写或改注释的示例时 | 正反例：TODO | 一次只开这一份（16 行），不自动串联。 |
 | `comments/glossary/01-comment-terms.md` | 统一注释术语时 | 注释术语与用词 | 一次只开这一份（92 行），不自动串联。 |
 
@@ -32,8 +32,9 @@
 | `design/examples/05-library-split.md` | 看设计案例时 | 正反例：单文件何时拆库 | 一次只开这一份（7 行），不自动串联。 |
 | `design/examples/06-move-result.md` | 看设计案例时 | 正反例：落子结果用返回值回答 | 一次只开这一份（41 行），不自动串联。 |
 | `design/examples/07-preview-read.md` | 看设计案例时 | 正反例：推演一步读原数据 | 一次只开这一份（36 行），不自动串联。 |
+| `design/examples/08-screen-enter-exit.md` | 看设计案例时 | 正反例：进入与退出显式配对 | 一次只开这一份（39 行），不自动串联。 |
 | `design/01-project-design.md` | 设计类型、接口或目录时 | 领域建模与项目设计 | 一次只开这一份（160 行），不自动串联。 |
-| `design/session-layer.md` | 设计会话、选着、规则与构建边界时 | 会话层与程序边界 | 一次只开这一份（88 行），不自动串联。 |
+| `design/session-layer.md` | 设计会话、选着、规则与构建边界时 | 会话层与程序边界 | 一次只开这一份（90 行），不自动串联。 |
 
 ## exceptions
 
@@ -54,11 +55,11 @@
 | --- | --- | --- | --- |
 | `language/glossary/01-language-terms.md` | 查语言细节时 | 术语 | 一次只开这一份（88 行），不自动串联。 |
 | `language/language-basics/01-objects.md` | 查语言细节时 | 值与对象 | 一次只开这一份（15 行），不自动串联。 |
-| `language/language-basics/02-initialization.md` | 查语言细节时 | 初始化与列表初始化 | 一次只开这一份（26 行），不自动串联。 |
+| `language/language-basics/02-initialization.md` | 查语言细节时 | 初始化与列表初始化 | 一次只开这一份（33 行），不自动串联。 |
 | `language/language-basics/03-deduction.md` | 查语言细节时 | `auto` 与类型推导 | 一次只开这一份（12 行），不自动串联。 |
 | `language/language-basics/04-const.md` | 查语言细节时 | `const`、`constexpr`、`consteval`、`constinit` | 一次只开这一份（25 行），不自动串联。 |
 | `language/language-basics/05-expressions.md` | 查语言细节时 | 表达式与比较 | 一次只开这一份（31 行），不自动串联。 |
-| `language/language-basics/06-functions.md` | 查语言细节时 | 函数、参数与返回值 | 一次只开这一份（17 行），不自动串联。 |
+| `language/language-basics/06-functions.md` | 查语言细节时 | 函数、参数与返回值 | 一次只开这一份（19 行），不自动串联。 |
 | `language/language-basics/07-classes.md` | 查语言细节时 | 类、结构体与特殊成员 | 一次只开这一份（15 行），不自动串联。 |
 | `language/language-basics/08-raii.md` | 查语言细节时 | RAII、所有权与移动 | 一次只开这一份（15 行），不自动串联。 |
 | `language/language-basics/09-templates.md` | 查语言细节时 | 模板、概念与 CTAD | 一次只开这一份（26 行），不自动串联。 |
@@ -70,7 +71,7 @@
 | `language/performance/05-pitfalls.md` | 查语言细节时 | 常见性能陷阱 | 一次只开这一份（17 行），不自动串联。 |
 | `language/performance/06-false-optimizations.md` | 查语言细节时 | 不要做的“优化” | 一次只开这一份（13 行），不自动串联。 |
 | `language/performance/07-checklist.md` | 查语言细节时 | 检查清单 | 一次只开这一份（8 行），不自动串联。 |
-| `language/standard-library/01-containers.md` | 查语言细节时 | 容器选择 | 一次只开这一份（29 行），不自动串联。 |
+| `language/standard-library/01-containers.md` | 查语言细节时 | 容器选择 | 一次只开这一份（30 行），不自动串联。 |
 | `language/standard-library/02-access.md` | 查语言细节时 | 访问与边界 | 一次只开这一份（14 行），不自动串联。 |
 | `language/standard-library/03-iteration.md` | 查语言细节时 | 迭代与失效 | 一次只开这一份（18 行），不自动串联。 |
 | `language/standard-library/04-algorithms.md` | 查语言细节时 | 算法优先于手写循环 | 一次只开这一份（26 行），不自动串联。 |
@@ -83,14 +84,14 @@
 | `language/value-types/01-width.md` | 查语言细节时 | 宽度、范围与 `std::size_t` | 一次只开这一份（17 行），不自动串联。 |
 | `language/value-types/02-signed.md` | 查语言细节时 | 有符号、无符号与溢出 | 一次只开这一份（26 行），不自动串联。 |
 | `language/value-types/03-integer-roles.md` | 查语言细节时 | 项目对整型角色的约定 | 一次只开这一份（38 行），不自动串联。 |
-| `language/value-types/04-enum.md` | 查语言细节时 | 枚举类 | 一次只开这一份（24 行），不自动串联。 |
+| `language/value-types/04-enum.md` | 查语言细节时 | 枚举类与返回值选型 | 一次只开这一份（35 行），不自动串联。 |
 | `language/value-types/05-strong-type.md` | 查语言细节时 | 强类型包装 | 一次只开这一份（17 行），不自动串联。 |
 | `language/value-types/06-const-method.md` | 查语言细节时 | 成员函数尾部的 `const` | 一次只开这一份（22 行），不自动串联。 |
 | `language/value-types/07-nodiscard.md` | 查语言细节时 | `[[nodiscard]]` | 一次只开这一份（15 行），不自动串联。 |
 | `language/value-types/08-comparison.md` | 查语言细节时 | 比较运算符 | 一次只开这一份（10 行），不自动串联。 |
 | `language/value-types/09-subscript.md` | 查语言细节时 | 下标与 `at` | 一次只开这一份（15 行），不自动串联。 |
 | `language/value-types/10-float-bool.md` | 查语言细节时 | 浮点与布尔 | 一次只开这一份（13 行），不自动串联。 |
-| `language/value-types/11-checklist.md` | 查语言细节时 | 检查清单 | 一次只开这一份（8 行），不自动串联。 |
+| `language/value-types/11-checklist.md` | 查语言细节时 | 检查清单 | 一次只开这一份（9 行），不自动串联。 |
 
 ## layout
 
@@ -98,7 +99,7 @@
 | --- | --- | --- | --- |
 | `layout/01-source-layout.md` | 排声明顺序时 | 源码布局 | 一次只开这一份（78 行），不自动串联。 |
 | `layout/02-file-template.md` | 排声明顺序时 | 文件模板 | 一次只开这一份（137 行），不自动串联。 |
-| `layout/03-declaration-order.md` | 排声明顺序时 | 声明顺序 | 一次只开这一份（150 行），不自动串联。 |
+| `layout/03-declaration-order.md` | 排声明顺序时 | 声明顺序 | 一次只开这一份（151 行），不自动串联。 |
 
 ## naming
 
@@ -117,13 +118,14 @@
 | `naming/examples/11-naming-responsibility.md` | 命名示例时 | 正反例：名字与职责 | 一次只开这一份（19 行），不自动串联。 |
 | `naming/examples/12-naming-role.md` | 命名示例时 | 正反例：语义角色 | 一次只开这一份（21 行），不自动串联。 |
 | `naming/examples/13-naming-state-change.md` | 命名示例时 | 正反例：状态变更：动作与结果枚举 | 一次只开这一份（69 行），不自动串联。 |
-| `naming/glossary/01-naming-terms.md` | 统一命名术语时 | 命名术语与用词 | 一次只开这一份（26 行），不自动串联。 |
+| `naming/glossary/01-naming-terms.md` | 统一命名术语时 | 命名术语与用词 | 一次只开这一份（27 行），不自动串联。 |
 | `naming/glossary/02-position.md` | 统一命名术语时 | position 与 pos | 一次只开这一份（23 行），不自动串联。 |
 | `naming/glossary/03-selection.md` | 判不准选择类函数用 Choose、Find 还是 Try 时 | 选择、查找与尝试 | 一次只开这一份（22 行），不自动串联。 |
 | `naming/glossary/04-square.md` | 统一命名术语时 | square 与 SquareValue | 一次只开这一份（47 行），不自动串联。 |
 | `naming/glossary/05-scoring.md` | 统一命名术语时 | 终局评分与搜索分 | 一次只开这一份（26 行），不自动串联。 |
 | `naming/glossary/06-difficulty.md` | 统一命名术语时 | 电脑难度与对局模式 | 一次只开这一份（25 行），不自动串联。 |
-| `naming/01-identifier-names.md` | 命名或统一术语时 | 命名 | 一次只开这一份（127 行），不自动串联。 |
+| `naming/glossary/07-stream.md` | 统一命名术语时 | 流的 input、output 与 diagnostics 写法 | 一次只开这一份（20 行），不自动串联。 |
+| `naming/01-identifier-names.md` | 命名或统一术语时 | 命名 | 一次只开这一份（130 行），不自动串联。 |
 
 ## style
 

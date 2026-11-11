@@ -16,7 +16,7 @@
 
 ## 开销（实测）
 
-在本仓库上实测（Node 26，重复测量）：门禁通过时 `list()` 约 1 ms（热缓存 50 次均值 0.999 ms），门禁不通过时 0.11 ms，`get()` 每份约 0.4–1.3 ms；宿主按 `cwd`、作用域与修订号缓存完成的目录，同一工作区不会每轮重扫。模型侧的三行目录共 590 个字符（按中文约 1.8 字符一个 token 估算约 328 tokens，下同）；三份技能文件分别为 4,963、5,152 与 4,812 个字符，合计 14,927 个字符，约 8.2k tokens；`get()` 时 `developing-cpp` 另附注释配置快照，加载字符数随快照变化，不在此重复；正文不常驻，只有目录行常驻，加载时才进上下文，改正文也不产生目录消息；`references/` 在入口表或步骤点名时打开，判不准、规则冲突或排错时按需读取。运行时不写盘、不建缓存，见 [plugin-storage.md](plugin-storage.md)。
+在本仓库上实测（Node 26，重复测量）：门禁通过时 `list()` 约 1 ms（热缓存 50 次均值 0.999 ms），门禁不通过时 0.11 ms，`get()` 每份约 0.4–1.3 ms；宿主按 `cwd`、作用域与修订号缓存完成的目录，同一工作区不会每轮重扫。模型侧的三行目录共 590 个字符（按中文约 1.8 字符一个 token 估算约 328 tokens，下同）；三份技能文件分别为 4,965、5,152 与 4,861 个字符，合计 14,978 个字符，约 8.2k tokens；`get()` 时 `developing-cpp` 另附注释配置快照，加载字符数随快照变化，不在此重复；正文不常驻，只有目录行常驻，加载时才进上下文，改正文也不产生目录消息；`references/` 在入口表或步骤点名时打开，判不准、规则冲突或排错时按需读取。运行时不写盘、不建缓存，见 [plugin-storage.md](plugin-storage.md)。
 
 ### 失败路径
 
@@ -29,7 +29,7 @@
 | `skills/` 读不出来（权限、目录被删） | `{ candidates: [], complete: false }`；不缓存，下一轮重试 | — |
 | 某份 `SKILL.md` 读不出来 | 其余候选照常返回，`{ candidates, complete: false }`；不缓存 | 该名字给 `undefined` |
 | 某份 `SKILL.md` 的 frontmatter 不合规（`name` 与目录不同、`description` 为空、名字不在白名单、块标量不支持） | 该技能静默跳过，其余照常返回，complete 仍为 true | 该名字给 `undefined` |
-| 调用方 abort | 插件返回空数组；宿主在调用前后检查 abort 并抛出 `AbortError` | `undefined` |
+| 调用方 abort | 返回已发现候选与 `complete: false`；宿主在调用前后检查 abort 并抛出 `AbortError` | `undefined` |
 | `locator` 越出 `skills/`，或末段与 `name` 不符 | — | `undefined` |
 
 静默跳过是有意的：一份写坏的文件不该拖垮另外两个技能。代价是没有诊断输出，排错时只能对照本表逐项复核。门禁按 `cwd` 现算，所以同一份候选在另一个工作区里可能立刻变成 `undefined`。
@@ -52,7 +52,7 @@ VSCode 侧只保留一个入口：推荐 clangd、CMake Tools 和 C/C++ 扩展�
 
 ## 第四层：检查
 
-源码四步不依赖环境组合。构建三步先读项目声明，再在构建宿主上运行环境脚本。`<skill-dir>` 是安装后的 `building-cpp` 目录：
+源码四步不依赖环境组合。构建前三步必做，先读项目声明，再在构建宿主上运行环境脚本；工程已有 `.vscode/` 时，第 4 步接线随第 2 步完成。`<skill-dir>` 是安装后的 `building-cpp` 目录：
 
 ```bash
 node "<skill-dir>/scripts/checking-environment.mjs" --project .

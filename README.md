@@ -22,16 +22,16 @@ npm 安装固定版本：
 dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.1
 ```
 
-npm 当前最新发布是 `0.7.1`；仓库工作区里的 `0.7.4` 尚未发布，发布前请用上面的 0.7.1。`0.7.3` 已跳过、不再发布。工作区版本发布后，把 npm 命令换成：
+npm 当前最新发布是 `0.7.1`；仓库工作区里的 `0.7.5` 尚未发布，发布前请用上面的 0.7.1。`0.7.3` 已跳过、不再发布。工作区版本发布后，把 npm 命令换成：
 
 ```bash
-dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.4
+dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.5
 ```
 
-GitHub 标签安装要等 `v0.7.4` 创建后再用；标签创建后，地址中的版本号与标签同号：
+GitHub 标签安装要等 `v0.7.5` 创建后再用；标签创建后，地址中的版本号与标签同号：
 
 ```bash
-dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.4
+dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.5
 ```
 
 `--profile` 换成你实际运行的那个 profile。桌面应用固定跑 `desktop` profile，且该 profile 由应用独占管理；命令行 `add` 被拒绝时，在应用设置里添加插件，地址填同一个 npm 版本。Git 标签安装使用仓库内已构建的 `lib/`，不在目标机器上重新构建；包内也不含需要授权执行的安装脚本。
