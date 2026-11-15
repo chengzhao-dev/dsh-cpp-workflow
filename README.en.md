@@ -19,7 +19,7 @@ The exception material follows the C++ Core Guidelines' Error handling section a
 Fixed-version npm install:
 
 ```bash
-dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.6
+dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.7
 ```
 
 This page follows each release; run `npm view @chengzhao-dev/dsh-cpp-workflow version` if you need to confirm the current version on the registry.
@@ -27,7 +27,7 @@ This page follows each release; run `npm view @chengzhao-dev/dsh-cpp-workflow ve
 GitHub tag installs use the tag with the same version number:
 
 ```bash
-dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.6
+dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.7
 ```
 
 Replace `--profile` with the profile you actually run. The desktop app always runs the `desktop` profile, and that profile is owned by the app; if the command-line `add` is rejected, add the plugin in the app settings and use the same pinned npm version. A Git tag install uses the prebuilt `lib/` committed in the repository and runs no build on the target machine; the package has no install script that needs approval.
