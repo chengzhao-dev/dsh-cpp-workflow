@@ -162,15 +162,17 @@ const TAG_GROUPS = {
   throw: 'throws',
   exception: 'throws',
   note: 'note',
+  pre: 'pre',
+  post: 'pre',
 }
 
-/** 取标签所属分组；参数、返回值、异常、说明各成一组。 */
+/** 取标签所属分组；参数、返回值、异常、前置条件、说明各成一组。 */
 function tagGroupOf(tag) {
   const name = tag.slice(1).toLowerCase().split(/[\s{[(]/)[0]
   return TAG_GROUPS[name] ?? 'other'
 }
 
-/** 分组之间允许空行；同一分组内出现空行才算标签粘连。描述与首个标签之间的空行不算。 */
+/** 分组之间允许空行；同一分组内出现空行才算标签粘连。摘要与首个标签之间的空行另由 brief-tag-gap 检查。 */
 function hasTagGap(contents) {
   let lastGroup = null
   let pendingGap = false
@@ -189,6 +191,19 @@ function hasTagGap(contents) {
     }
     // 空行后接正文是标签说明内的段落，不是分组分隔，取消待定空行
     pendingGap = false
+  }
+  return false
+}
+
+/** 摘要或详细描述与首个标签之间必须有空行。 */
+function hasBriefTagGap(contents) {
+  let sawText = false
+  for (let index = 0; index < contents.length; index += 1) {
+    const trimmed = contents[index].trim()
+    if (trimmed.startsWith('@')) {
+      return sawText && index > 0 && contents[index - 1].trim() !== ''
+    }
+    if (trimmed !== '') sawText = true
   }
   return false
 }
@@ -518,6 +533,9 @@ export function checkText(text, options = {}) {
           add(raw + 1, 'list-indent', '块注释列表项要在 * 后空三格再写 -：` *   - `，与总起句拉开层级')
         }
       }
+      if (!doc.contents.some((content) => content.includes('@file')) && hasBriefTagGap(doc.contents)) {
+        add(doc.start + 1, 'brief-tag-gap', '摘要或详细描述与标签块之间要空一行：在首个标签前补一行 `///`')
+      }
       if (!doc.contents.some((content) => content.includes('@file')) && hasTagGap(doc.contents)) {
         add(doc.start + 1, 'tag-gap', '同一分组内的 Doxygen 标签之间有空行：参数、返回值、异常、说明各成一组，组间空一行，组内连续')
       }
@@ -547,6 +565,9 @@ export function checkText(text, options = {}) {
     const declaration = lines[next].trim()
     const block = lines.slice(start, end + 1).join('\n')
     const docContents = lines.slice(start, end + 1).map((line) => line.trim().replace(/^\/\/\/\s?/, ''))
+    if (hasBriefTagGap(docContents)) {
+      add(start + 1, 'brief-tag-gap', '摘要或详细描述与标签块之间要空一行：在首个标签前补一行 `///`')
+    }
     if (hasTagGap(docContents)) {
       add(start + 1, 'tag-gap', '同一分组内的 Doxygen 标签之间有空行：参数、返回值、异常、说明各成一组，组间空一行，组内连续')
     }

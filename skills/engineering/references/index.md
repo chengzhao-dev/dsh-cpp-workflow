@@ -11,7 +11,7 @@
 | `cmake/linking/02-rpath.md` | 输出目录与 RPATH | 一次只开这一份（25 行），不自动串联。 |
 | `cmake/linking/03-undefined-reference.md` | undefined reference 分诊 | 一次只开这一份（20 行），不自动串联。 |
 | `cmake/linking/04-inspect.md` | 验收：file 与 ldd | 一次只开这一份（20 行），不自动串联。 |
-| `cmake/modules/01-functions.md` | CMake 模块与函数 | 一次只开这一份（117 行），不自动串联。 |
+| `cmake/modules/01-functions.md` | CMake 模块与函数 | 一次只开这一份（118 行），不自动串联。 |
 | `cmake/standards/01-cxx-standard.md` | C++ 标准与 CMake | 一次只开这一份（68 行），不自动串联。 |
 | `cmake/standards/versions.md` | C++11–C++23 各档差异 | 一次只开这一份（43 行），不自动串联。 |
 | `cmake/standards/examples/01-standard.md` | 正反例：标准只写一半 | 一次只开这一份（19 行），不自动串联。 |
@@ -23,7 +23,7 @@
 
 | 文件 | 读完能回答 | 预算 |
 | --- | --- | --- |
-| `formatting/01-encoding.md` | 编码与行尾 | 一次只开这一份（49 行），不自动串联。 |
+| `formatting/01-encoding.md` | 编码与行尾 | 一次只开这一份（52 行），不自动串联。 |
 | `formatting/02-clang-format.md` | clang-format | 一次只开这一份（23 行），不自动串联。 |
 | `formatting/03-clang-tidy.md` | clang-tidy 与静态检查门禁 | 一次只开这一份（58 行），不自动串联。 |
 | `formatting/04-clangd.md` | clangd 与编辑器 | 一次只开这一份（91 行），不自动串联。 |

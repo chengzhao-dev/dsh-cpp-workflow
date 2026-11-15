@@ -222,6 +222,22 @@ test('同一分组内的 Doxygen 标签之间不空行', () => {
   assert.deepEqual(rules(ok), [])
 })
 
+test('摘要与标签块之间必须空行', () => {
+  const bad = file(
+    '/// 检查标志。',
+    '/// @param flag 待检查的标志。',
+    'bool Check(bool flag);',
+  )
+  assert.deepEqual(rules(bad), ['brief-tag-gap'])
+  const ok = file(
+    '/// 检查标志。',
+    '///',
+    '/// @param flag 待检查的标志。',
+    'bool Check(bool flag);',
+  )
+  assert.deepEqual(rules(ok), [])
+})
+
 test('类型注释不写领域尺寸', () => {
   const text = file('/// 井字棋棋盘。', '///', '/// 3×3 个格子。', 'class Board {};')
   assert.deepEqual(rules(text), ['domain-size'])
@@ -268,11 +284,11 @@ test('类型注释不许复述类型系统已表达的性质', () => {
 })
 
 test('@param 必须与声明参数一一对应', () => {
-  const missing = file('/// 放置。', '/// @param position 坐标。', 'bool Place(CellPosition position, CellType type);')
+  const missing = file('/// 放置。', '///', '/// @param position 坐标。', 'bool Place(CellPosition position, CellType type);')
   assert.deepEqual(rules(missing), ['param-missing'])
-  const extra = file('/// 放置。', '/// @param position 坐标。', '/// @param type 类型。', '/// @param mode 模式。', 'bool Place(CellPosition position, CellType type);')
+  const extra = file('/// 放置。', '///', '/// @param position 坐标。', '/// @param type 类型。', '/// @param mode 模式。', 'bool Place(CellPosition position, CellType type);')
   assert.deepEqual(rules(extra), ['param-extra'])
-  const ok = file('/// 放置。', '/// @param position 坐标。', '/// @param type 类型。', 'bool Place(CellPosition position, CellType type);')
+  const ok = file('/// 放置。', '///', '/// @param position 坐标。', '/// @param type 类型。', 'bool Place(CellPosition position, CellType type);')
   assert.deepEqual(rules(ok), [])
 })
 
@@ -314,7 +330,7 @@ test('没有 @param 的短注释不触发完整性检查', () => {
 })
 
 test('@param 支持 [out] 说明', () => {
-  const text = file('/// 查询。', '/// @param[out] result 写入结果。', '/// @param cells 格子。', 'void Query(std::vector<Cell>& result, int cells);')
+  const text = file('/// 查询。', '///', '/// @param[out] result 写入结果。', '/// @param cells 格子。', 'void Query(std::vector<Cell>& result, int cells);')
   assert.deepEqual(rules(text), [])
 })
 

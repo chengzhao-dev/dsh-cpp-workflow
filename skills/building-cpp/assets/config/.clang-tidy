@@ -5,7 +5,6 @@ InheritParentConfig: false
 Checks: >
   -*,
   google-*,
-  portability-avoid-pragma-once,
   readability-identifier-naming
 
 WarningsAsErrors: '*'
@@ -59,6 +58,3 @@ CheckOptions:
     value: lower_case
   - key: readability-identifier-naming.MacroDefinitionCase
     value: UPPER_CASE
-  # 包含守卫按 Google 规则以 _H_ 结尾，UPPER_CASE 会把它判成多余下划线。
-  - key: readability-identifier-naming.MacroDefinitionIgnoredRegexp
-    value: '^[A-Z][A-Z0-9_]*_H_$'

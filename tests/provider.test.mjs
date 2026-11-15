@@ -98,7 +98,7 @@ test('C++ header evidence does not change an existing marker opt-in', async () =
   await mkdir(path.join(root, 'include'), { recursive: true })
   await writeFile(
     path.join(root, 'include', 'demo.h'),
-    '#ifndef DEMO_INCLUDE_DEMO_H_\n#define DEMO_INCLUDE_DEMO_H_\n#endif\n',
+    '#pragma once\n',
     'utf8',
   )
   const provider = makeProvider()

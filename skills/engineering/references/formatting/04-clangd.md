@@ -41,7 +41,7 @@ Diagnostics:
 
 ## 编辑器
 
-`.vscode/extensions.json` 推荐：
+`.vscode/extensions.json` 推荐（`ms-vscode.cpptools` 只作调试后端，关闭 IntelliSense 与格式化；clangd 安装文档要求不装它，是针对 IntelliSense 冲突的默认建议，这里是明确的本地例外）：
 
 ```json
 {
@@ -64,7 +64,7 @@ Diagnostics:
   ],
   "cmake.buildDirectory": "${workspaceFolder}/build/clang",
   "cmake.generator": "Ninja",
-  "cmake.configureOnOpen": true,
+  "cmake.configureOnOpen": false,
   "cmake.buildBeforeRun": true,
   "cmake.exportCompileCommandsFile": true,
   "cmake.debugConfig": {

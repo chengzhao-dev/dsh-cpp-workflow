@@ -51,107 +51,107 @@ Commands
 include_guard(GLOBAL)
 
 function(set_target_cxx_standard target visibility standard)
-	set(supported_standards c++11 c++14 c++17 c++20 c++23)
+    set(supported_standards c++11 c++14 c++17 c++20 c++23)
 
-	if(NOT TARGET "${target}")
-		message(FATAL_ERROR
-			"set_target_cxx_standard: target '${target}' does not exist")
-	endif()
+    if(NOT TARGET "${target}")
+        message(FATAL_ERROR
+            "set_target_cxx_standard: target '${target}' does not exist")
+    endif()
 
-	if(NOT visibility MATCHES "^(PUBLIC|PRIVATE|INTERFACE)$")
-		message(FATAL_ERROR
-			"set_target_cxx_standard: visibility must be "
-			"PUBLIC, PRIVATE, or INTERFACE")
-	endif()
+    if(NOT visibility MATCHES "^(PUBLIC|PRIVATE|INTERFACE)$")
+        message(FATAL_ERROR
+            "set_target_cxx_standard: visibility must be "
+            "PUBLIC, PRIVATE, or INTERFACE")
+    endif()
 
-	if(NOT standard IN_LIST supported_standards)
-		message(FATAL_ERROR
-			"set_target_cxx_standard: standard must be one of "
-			"${supported_standards}")
-	endif()
+    if(NOT standard IN_LIST supported_standards)
+        message(FATAL_ERROR
+            "set_target_cxx_standard: standard must be one of "
+            "${supported_standards}")
+    endif()
 
-	string(SUBSTRING "${standard}" 3 -1 number)
+    string(SUBSTRING "${standard}" 3 -1 number)
 
-	target_compile_features("${target}" "${visibility}" "cxx_std_${number}")
+    target_compile_features("${target}" "${visibility}" "cxx_std_${number}")
 
-	set_target_properties("${target}" PROPERTIES
-		CXX_STANDARD "${number}"
-		CXX_STANDARD_REQUIRED ON
-		CXX_EXTENSIONS OFF
-	)
+    set_target_properties("${target}" PROPERTIES
+        CXX_STANDARD "${number}"
+        CXX_STANDARD_REQUIRED ON
+        CXX_EXTENSIONS OFF
+    )
 endfunction()
 
 function(set_target_warnings target visibility)
-	cmake_parse_arguments(PARSE_ARGV 2 arg "" "LEVEL" "")
+    cmake_parse_arguments(PARSE_ARGV 2 arg "" "LEVEL" "")
 
-	if(arg_UNPARSED_ARGUMENTS)
-		message(FATAL_ERROR
-			"set_target_warnings: unexpected arguments: "
-			"${arg_UNPARSED_ARGUMENTS}")
-	endif()
+    if(arg_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR
+            "set_target_warnings: unexpected arguments: "
+            "${arg_UNPARSED_ARGUMENTS}")
+    endif()
 
-	if(NOT TARGET "${target}")
-		message(FATAL_ERROR
-			"set_target_warnings: target '${target}' does not exist")
-	endif()
+    if(NOT TARGET "${target}")
+        message(FATAL_ERROR
+            "set_target_warnings: target '${target}' does not exist")
+    endif()
 
-	if(NOT visibility MATCHES "^(PRIVATE|INTERFACE)$")
-		message(FATAL_ERROR
-			"set_target_warnings: visibility must be PRIVATE or INTERFACE")
-	endif()
+    if(NOT visibility MATCHES "^(PRIVATE|INTERFACE)$")
+        message(FATAL_ERROR
+            "set_target_warnings: visibility must be PRIVATE or INTERFACE")
+    endif()
 
-	if(NOT arg_LEVEL)
-		set(arg_LEVEL standard)
-	endif()
+    if(NOT arg_LEVEL)
+        set(arg_LEVEL standard)
+    endif()
 
-	if(MSVC)
-		set(basic_warnings /W4)
-		set(standard_warnings ${basic_warnings} /permissive- /WX)
-		set(strict_warnings
-			${standard_warnings}
-			/w14242 /w14254 /w14263 /w14265 /w14287 /w14296
-			/w14311 /w14545 /w14546 /w14547 /w14549 /w14555
-			/w14619 /w14640 /w14826
-		)
-	elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
-		set(basic_warnings -Wall -Wextra)
-		set(standard_warnings
-			${basic_warnings}
-			-Werror
-			-Wshadow
-			-Wold-style-cast
-			-Wpedantic
-			-Wnon-virtual-dtor
-			-Woverloaded-virtual
-		)
-		set(strict_warnings
-			${standard_warnings}
-			-Wcast-align
-			-Wcast-qual
-			-Wconversion
-			-Wsign-conversion
-			-Wdouble-promotion
-			-Wformat=2
-			-Wimplicit-fallthrough
-			-Wnull-dereference
-			-Wundef
-		)
-	else()
-		message(FATAL_ERROR
-			"set_target_warnings: unsupported compiler "
-			"'${CMAKE_CXX_COMPILER_ID}'")
-	endif()
+    if(MSVC)
+        set(basic_warnings /W4)
+        set(standard_warnings ${basic_warnings} /permissive- /WX)
+        set(strict_warnings
+            ${standard_warnings}
+            /w14242 /w14254 /w14263 /w14265 /w14287 /w14296
+            /w14311 /w14545 /w14546 /w14547 /w14549 /w14555
+            /w14619 /w14640 /w14826
+        )
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+        set(basic_warnings -Wall -Wextra)
+        set(standard_warnings
+            ${basic_warnings}
+            -Werror
+            -Wshadow
+            -Wold-style-cast
+            -Wpedantic
+            -Wnon-virtual-dtor
+            -Woverloaded-virtual
+        )
+        set(strict_warnings
+            ${standard_warnings}
+            -Wcast-align
+            -Wcast-qual
+            -Wconversion
+            -Wsign-conversion
+            -Wdouble-promotion
+            -Wformat=2
+            -Wimplicit-fallthrough
+            -Wnull-dereference
+            -Wundef
+        )
+    else()
+        message(FATAL_ERROR
+            "set_target_warnings: unsupported compiler "
+            "'${CMAKE_CXX_COMPILER_ID}'")
+    endif()
 
-	if(arg_LEVEL STREQUAL "basic")
-		set(warnings ${basic_warnings})
-	elseif(arg_LEVEL STREQUAL "standard")
-		set(warnings ${standard_warnings})
-	elseif(arg_LEVEL STREQUAL "strict")
-		set(warnings ${strict_warnings})
-	else()
-		message(FATAL_ERROR
-			"set_target_warnings: LEVEL must be basic, standard, or strict")
-	endif()
+    if(arg_LEVEL STREQUAL "basic")
+        set(warnings ${basic_warnings})
+    elseif(arg_LEVEL STREQUAL "standard")
+        set(warnings ${standard_warnings})
+    elseif(arg_LEVEL STREQUAL "strict")
+        set(warnings ${strict_warnings})
+    else()
+        message(FATAL_ERROR
+            "set_target_warnings: LEVEL must be basic, standard, or strict")
+    endif()
 
-	target_compile_options("${target}" "${visibility}" ${warnings})
+    target_compile_options("${target}" "${visibility}" ${warnings})
 endfunction()

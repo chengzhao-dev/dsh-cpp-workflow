@@ -24,7 +24,7 @@
 
 ## 体量与对照
 
-三份 `SKILL.md` 分别为 `developing-cpp` 98 行、`engineering` 87 行、`building-cpp` 85 行，文件字符数合计 15,404（约 8.6k tokens；只有目录行常驻）；最大的 reference 是 `skills/developing-cpp/references/exceptions/01-exception-rules.md` 208 行（正文 207 行），其余按主题拆成单文件、由正文点名后按需读取。Agent Skills 规范建议正文控制在 500 行以内、references 保持聚焦；抽到的 4 个带技能包中，`dsh-univer-office` 有 12 个 `SKILL.md`、12–261 行（最短两份 12–13 行），`dsh-image-gen` 22 行，`modlens` 59 行，`modsearch` 137 行；本包把细节放在 references 里，正文只留入口、步骤与完成判据。
+三份 `SKILL.md` 分别为 `developing-cpp` 98 行、`engineering` 87 行、`building-cpp` 85 行，文件字符数合计 15,418（约 8.6k tokens；只有目录行常驻）；最大的 reference 是 `skills/developing-cpp/references/exceptions/01-exception-rules.md` 208 行（正文 207 行），其余按主题拆成单文件、由正文点名后按需读取。Agent Skills 规范建议正文控制在 500 行以内、references 保持聚焦；抽到的 4 个带技能包中，`dsh-univer-office` 有 12 个 `SKILL.md`、12–261 行（最短两份 12–13 行），`dsh-image-gen` 22 行，`modlens` 59 行，`modsearch` 137 行；本包把细节放在 references 里，正文只留入口、步骤与完成判据。
 
 目录消息只带 `name` 与 `description`，DSH 默认在 500 字符处截断；三份 description 分别为 `building-cpp` 197、`developing-cpp` 143、`engineering` 198 字符，触发条件与常见症状写在句子里，未依赖 `whenToUse` 字段兜底（该字段仍会随候选一起返回）。插件 rank 是 550：近层同名先直接胜出，rank 只在同一层内决胜；本项目与用户目录的 200、500 两档都排在它前面，本包不注册根技能。
 

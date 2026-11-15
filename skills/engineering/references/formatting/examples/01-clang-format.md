@@ -30,7 +30,7 @@ BasedOnStyle: Google
 **好**：
 
 ```yaml
-# Google 基线；本工程用 Tab 缩进（宽 4）、120 列。
+# Google 基线；本工程用 4 个空格缩进、120 列。
 Language: Cpp
 BasedOnStyle: Google
 Standard: Latest
@@ -38,7 +38,7 @@ IncludeBlocks: Preserve
 ColumnLimit: 120
 IndentWidth: 4
 TabWidth: 4
-UseTab: ForIndentation
+UseTab: Never
 ContinuationIndentWidth: 8
 AccessModifierOffset: -4
 PackConstructorInitializers: BinPack

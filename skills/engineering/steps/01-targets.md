@@ -18,13 +18,13 @@
 
 target 规则：
 
-- 程序 target 固定叫 `app`；库 target 用组件名，程序链接库；不把 `main()` 编进库。
+- 程序 target 用项目技能点名的名字（模板默认 `app`，本书 `terminal`）；库 target 用组件名，程序链接库；不把 `main()` 编进库。
 - 每个 target 自己声明 include、标准、编译选项和链接库；公共头用 `PUBLIC`，实现目录用 `PRIVATE`。
 - 用 `target_include_directories`、`target_compile_features`、`target_link_libraries`；禁止全局 `include_directories()`、`add_definitions()`、`CMAKE_CXX_FLAGS`。target 内的命令按 `../references/cmake/targets/01-target-rules.md` 的块顺序写，标准与警告放在链接之前。
 - 源文件显式列出；不写 `file(GLOB ...)`，新增文件时改 CMake。
 - `set(CMAKE_EXPORT_COMPILE_COMMANDS ON)`；可执行文件输出到 `build/<compiler>/bin`，库到 `build/<compiler>/lib`。
 - 需要直接运行构建产物的共享库程序，调用 `set_target_build_rpath(app)`；函数在 Linux 写 `$ORIGIN/../lib`，Apple 写 `@loader_path/../lib`。
-- 标准用工程根 `cmake/` 里的 `set_target_cxx_standard(target visibility c++NN)`；没有这个函数时先从 `../references/cmake/assets/CompileSettings.cmake` 复制到工程根 `cmake/` 并导入，不要在每个 target 重复三属性。需要 `set_target_build_rpath` 或 `fetch_googletest` 时，把同目录的 `LinkSettings.cmake` 一并复制并 `include(LinkSettings)`。
+- 标准用工程根 `cmake/` 里的 `set_target_cxx_standard(target visibility c++NN)`；模板为了脱离插件可直接复制而内联三属性，复制进工程后应改回函数。没有这个函数时先从 `../references/cmake/assets/CompileSettings.cmake` 复制到工程根 `cmake/` 并导入，不要在每个 target 重复三属性。需要 `set_target_build_rpath` 或 `fetch_googletest` 时，把同目录的 `LinkSettings.cmake` 一并复制并 `include(LinkSettings)`。
 - 警告用同一份 `CompileSettings.cmake` 里的 `set_target_warnings(target visibility LEVEL basic|standard|strict)`；`visibility` 用 `PRIVATE` 或 `INTERFACE`，不要在每个 target 重复 `-Wall` 列表。
 
 ## 命令形状
@@ -41,7 +41,7 @@ GCC 模式把目录和编译器换成 `build/gcc`、`g++`（C 驱动换成 `gcc`
 
 ## 情况
 
-**新工程**：工程模板仍由 `building-cpp` 提供，从 `../../building-cpp/assets/templates/projects/` 选形态，只复制目标工程缺的文件；模板里的三属性与 `-Wall -Wextra -Werror` 只是可运行的最小形状，接管时按本节换成 `CompileSettings_*` 函数；模板里的 `{{PROJECT_NAME}}` 换成真实工程名，再按本节改 target 与标准。
+**新工程**：工程模板仍由 `building-cpp` 提供，从 `../../building-cpp/assets/templates/projects/` 选形态，只复制目标工程缺的文件；模板里的三属性与 `-Wall -Wextra -Werror` 只是可运行的最小形状，接管时按本节换成 `set_target_cxx_standard`；需要警告时再加 `set_target_warnings`；模板里的 `{{PROJECT_NAME}}` 换成真实工程名，再按本节改 target 与标准。
 
 **已有工程**：先读现有 `CMakeLists.txt`，找出全局设置、GLOB、输出目录和 target 命名；只改与当前任务相关的一处。大改前先让现有构建跑通，保留可回退点。
 

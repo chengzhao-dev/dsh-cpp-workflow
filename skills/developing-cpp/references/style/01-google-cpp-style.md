@@ -1,7 +1,7 @@
 <!-- 读取时机：查格式与写法时；读完能回答：Google C++ 风格：本技能采用的版本；预算：一次只开这一份（93 行），不自动串联。 -->
 # Google C++ 风格：本技能采用的版本
 
-以 [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html) 为基线。除「异常政策」「新工程默认 C++23」「枚举底层类型 `std::uint8_t`」和「注释格式」四处明确偏离外，排版、命名、头文件、包含顺序和类型都按 Google 原文执行；普通对象默认花括号属于 Google 允许的本地选择，不单列为偏离；本地习惯不能悄悄覆盖它。
+以 [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html) 为基线。除「异常政策」「新工程默认 C++23」「枚举底层类型 `std::uint8_t`」「注释格式」「头文件去重方式」和「排版（4 空格、120 列、`IncludeBlocks: Preserve`）」六处明确偏离外，排版、命名、头文件、包含顺序和类型都按 Google 原文执行；普通对象默认花括号属于 Google 允许的本地选择，不单列为偏离；本地习惯不能悄悄覆盖它。
 
 ## 语言版本
 
@@ -13,10 +13,10 @@
 
 ## 头文件
 
-- 每个头文件用 `#define` 守卫，符号由项目源码树全路径生成：`<PROJECT>_<PATH>_<FILE>_H_`，例如 `FOO_BAR_BAZ_H_`。不要用 `#pragma once`，也不要两者并存；模板见 `references/layout/02-file-template.md`。
+- 每个头文件用一行 `#pragma once` 去重，写在文件头之后、第一组 `#include` 之前；不写 `#ifndef` / `#define` 宏守卫。Google 要求路径式守卫，本工作流明确偏离，原因是宏名要把项目名、目录名和文件名拼在一起，组件改名或头文件跨工程复用时宏名会失效，而 `#pragma once` 按文件身份判断；GCC、Clang、MSVC 都支持。模板见 `references/layout/02-file-template.md`。
 - 头文件必须自包含：自己用到的类型、宏、标准库头都直接包含，不依赖调用方的包含顺序。
 - `.cpp` 第一个包含自己的配对头，然后按下面的顺序包含。
-- 包含顺序：配对头 → C 系统头 → C++ 标准库头 → 其他库头 → 本项目头。每组之间空一行，组内按字母序。clang-format 的 Google 预设自带 `IncludeCategories`（`^<.*\.h>` 第一组、其余尖括号头第二组、引号头最后）并开了 `IncludeBlocks: Regroup`，配置里不写 `SortIncludes: false` 时这份分组与排序会自动落实。clang-format 按 `IncludeIsMainRegex` 从文件名推断配对头（`board_test.cpp` 配 `board.h`）；文件名不遵循 `<name>` 或 `<name>_test` 时要自己把配对头放在第一条。`#include` 之间夹独立注释或 `#if` 会切断分组，这类位置要自己保持次序。需要把第三方库单独成组（例如 `<gtest/gtest.h>` 与标准库之间空一行）时，才在工程 `.clang-format` 里追加优先于 `^<.*` 的类别，并说明理由；预设已覆盖的分组不要重复手写。`clang-tidy` 的 `llvm-include-order` 按 LLVM 分组，与这条不同，不要拿来替代 clang-format。
+- 包含顺序：配对头 → C 系统头 → C++ 标准库头 → 其他库头 → 本项目头。每组之间空一行，组内按字母序。clang-format 的 Google 预设自带 `IncludeCategories`（`^<.*\.h>` 第一组、其余尖括号头第二组、引号头最后）并开了 `IncludeBlocks: Regroup`，配置里不写 `SortIncludes: false` 时这份分组与排序会自动落实。模板资产把 `IncludeBlocks` 设为 `Preserve`，保留手写空行分组，组内仍按上述类别排序。clang-format 按 `IncludeIsMainRegex` 从文件名推断配对头（`board_test.cpp` 配 `board.h`）；文件名不遵循 `<name>` 或 `<name>_test` 时要自己把配对头放在第一条。`#include` 之间夹独立注释或 `#if` 会切断分组，这类位置要自己保持次序。需要把第三方库单独成组（例如 `<gtest/gtest.h>` 与标准库之间空一行）时，才在工程 `.clang-format` 里追加优先于 `^<.*` 的类别，并说明理由；预设已覆盖的分组不要重复手写。`clang-tidy` 的 `llvm-include-order` 按 LLVM 分组，与这条不同，不要拿来替代 clang-format。
 - 本项目头用引号写裸文件名，例如 `#include "logging.h"`。构建时把该组件的 `include/` 加入 include 搜索路径（`target_include_directories(<target> PUBLIC .../include)`），不要写 `"base/logging.h"` 这种从源码根起的长路径。
 - 公共头文件直接放在组件的 `include/` 下；不要为了「整齐」再加一层命名空间目录。
 - 跨文件共享的常量用 `inline constexpr`，放在命名空间里并带 `k` 前缀；头文件里不要定义非 inline 的普通全局变量。
@@ -83,7 +83,7 @@ Google 原文不使用 C++ 异常；本工作流只在开发阶段的源码指�
 - 组合消息以 `std::format` 为主：`std::format("任务 {} 进入状态 {}", task, state)`。
 - 写到已有的 `std::ostream` 用 `<<`；没有流对象时，默认用 `std::print` 与 `std::println`，它们只在 C++23 且标准库支持时可用；见 `references/language/standard-library/06-format.md`。
 - 简单字面量输出可以直接用 `std::cout << "..."`；需要拼接变量、对齐、数值格式时用 `std::format`。
-- 列宽跟工程根 `.clang-format` 的 `ColumnLimit` 走；工程未声明时按 120 列，模板资产固定 `ColumnLimit: 120`。每级缩进用 1 个 tab（宽 4 列），续行与行内对齐用空格；缩进与对齐由 `.clang-format` 统一，不在条文里另定一套。
+- 列宽跟工程根 `.clang-format` 的 `ColumnLimit` 走；工程未声明时按 120 列，模板资产固定 `ColumnLimit: 120`。每级缩进用 4 个空格，续行与行内对齐也用空格；缩进与对齐由 `.clang-format` 统一，不在条文里另定一套。
 - 浮点输出固定精度，整数不依赖隐式格式；`std::format` 的格式串写全。
 
 ## 注释

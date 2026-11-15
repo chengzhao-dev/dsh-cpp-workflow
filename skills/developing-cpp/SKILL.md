@@ -12,7 +12,7 @@ metadata:
 ## 适用场景
 
 - **负责**：类型、函数与文件的行为和契约；声明与实现；命名；异常；源码注释。
-- **不负责**：`CMakeLists.txt` 与 `cmake/` 开 `engineering`；`running-build.sh`、`.clang-*`、`.vscode/`、`environment.json` 开 `building-cpp`，本技能只读其中的 `standard`；`.qmd`、仓库 README、Python 与其他文档不打开本技能。
+- **不负责**：`CMakeLists.txt` 与 `cmake/` 开 `engineering`；`running-build.sh`、`.clang-*`、`.vscode/`、`environment.json` 开 `building-cpp`，本技能只读其 `standard`；`.qmd`、仓库 README、Python 与其他文档不打开本技能。
 - **交接**：一次改动跨域时按「源码 → engineering → building-cpp」逐段进入，前一段结论落下再开下一段。只改函数体、命名、异常或注释且入口命令可运行时，第 4 步后只开 `building-cpp` 的通过检查；新增或移动源文件、改库与程序的边界、补测试 target 时，完成前必须开 `engineering` 把文件写进 CMake。
 - **前置**：存在项目技能 `cpp-workflow-project` 时先读它的 `SKILL.md`：工程名、库与程序的边界、阶段表、术语增补、入口命令与语言档位。项目技能没写档位才读 `environment.json` 的 `standard`，两者都没有时才用新工程默认 C++23；声明 C++20 的工程里不写 C++23 才有的设施。没有项目技能时门禁不会放出本技能，不猜项目约定。
 - **编码**：源码与构建文件的编码以 `../engineering/references/formatting/01-encoding.md` 为准；行尾与 `.clang-format` 的 `LineEnding` 跟仓库根 `.gitattributes` 与 `.editorconfig`。
@@ -55,7 +55,7 @@ metadata:
 | 会话层、选着与程序边界 | `references/design/session-layer.md`；领域规则见 `references/design/01-project-design.md` |
 | 复杂能力、三方库选型 | `references/design/03-third-party.md` |
 | RAII、资源寿命与析构 | `references/design/02-raii.md` |
-| 文件槽位、包含守卫、声明顺序 | `references/layout/02-file-template.md`、`references/layout/03-declaration-order.md` |
+| 文件槽位、头文件去重、声明顺序 | `references/layout/02-file-template.md`、`references/layout/03-declaration-order.md` |
 | 命名与改名 | `references/naming/01-identifier-names.md`；案例在 `references/naming/examples/`；术语在 `references/naming/glossary/` |
 | 声明注释与实现注释 | `references/comments/01-comment-rules.md`（写什么）与 `references/comments/02-style.md`（结构、版式、措辞）；案例在 `references/comments/examples/` |
 | 异常规则与异常案例 | `references/exceptions/01-exception-rules.md`；案例在 `references/exceptions/examples/` |

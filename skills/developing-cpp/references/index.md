@@ -8,7 +8,7 @@
 | 文件 | 读取时机 | 读完能回答 | 预算 |
 | --- | --- | --- | --- |
 | `comments/01-comment-rules.md` | 写或改注释时 | 注释：写什么 | 一次只开这一份（213 行），不自动串联。 |
-| `comments/02-style.md` | 写或改注释时 | 注释的结构、版式与措辞 | 一次只开这一份（79 行），不自动串联。 |
+| `comments/02-style.md` | 写或改注释时 | 注释的结构、版式与措辞 | 一次只开这一份（80 行），不自动串联。 |
 | `comments/examples/01-declaration-class.md` | 写或改注释的示例时 | 正反例：类型注释：概念与约定，不是功能清单 | 一次只开这一份（65 行），不自动串联。 |
 | `comments/examples/02-declaration-constructor.md` | 写或改注释的示例时 | 正反例：构造函数与析构函数：标签 + 职责 | 一次只开这一份（22 行），不自动串联。 |
 | `comments/examples/03-declaration-enum.md` | 写或改注释的示例时 | 正反例：枚举 | 一次只开这一份（47 行），不自动串联。 |
@@ -102,8 +102,8 @@
 | 文件 | 读取时机 | 读完能回答 | 预算 |
 | --- | --- | --- | --- |
 | `layout/01-source-layout.md` | 排声明顺序时 | 源码布局 | 一次只开这一份（78 行），不自动串联。 |
-| `layout/02-file-template.md` | 排声明顺序时 | 文件模板 | 一次只开这一份（137 行），不自动串联。 |
-| `layout/03-declaration-order.md` | 排声明顺序时 | 声明顺序与定义签名 | 一次只开这一份（159 行），不自动串联。 |
+| `layout/02-file-template.md` | 排声明顺序时 | 文件模板 | 一次只开这一份（123 行），不自动串联。 |
+| `layout/03-declaration-order.md` | 排声明顺序时 | 声明顺序与定义签名 | 一次只开这一份（156 行），不自动串联。 |
 
 ## naming
 
@@ -129,7 +129,7 @@
 | `naming/glossary/05-scoring.md` | 统一命名术语时 | 终局评分与搜索分 | 一次只开这一份（26 行），不自动串联。 |
 | `naming/glossary/06-difficulty.md` | 统一命名术语时 | 电脑难度与对局模式 | 一次只开这一份（25 行），不自动串联。 |
 | `naming/glossary/07-stream.md` | 统一命名术语时 | 流的 input、output 与 diagnostics 写法 | 一次只开这一份（20 行），不自动串联。 |
-| `naming/01-identifier-names.md` | 命名或统一术语时 | 命名 | 一次只开这一份（130 行），不自动串联。 |
+| `naming/01-identifier-names.md` | 命名或统一术语时 | 命名 | 一次只开这一份（136 行），不自动串联。 |
 
 ## style
 

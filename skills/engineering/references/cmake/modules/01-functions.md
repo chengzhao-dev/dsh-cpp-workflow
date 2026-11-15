@@ -1,4 +1,4 @@
-<!-- 读取时机：配 CMake 或工具链时；读完能回答：CMake 模块与函数；预算：一次只开这一份（117 行），不自动串联。 -->
+<!-- 读取时机：配 CMake 或工具链时；读完能回答：CMake 模块与函数；预算：一次只开这一份（118 行），不自动串联。 -->
 # CMake 模块与函数
 
 目标：同一段构建逻辑只有一份权威，函数可导入、可校验、可测试，目标目录只表达差异。
@@ -21,6 +21,7 @@ project/
   cmake/
     CompileSettings.cmake
     LinkSettings.cmake
+    OutputSettings.cmake
   component/
     CMakeLists.txt
   app/
@@ -28,7 +29,7 @@ project/
 ```
 
 - 一个文件放一组语义相近的函数，不为每个函数建单独文件；文件过大或出现无关职责时再拆。
-- 文件名用 UpperCamelCase，与 CMake 官方 `Modules/` 一致；按职责命名，例如 `CompileSettings.cmake`、`LinkSettings.cmake`。不用 kebab-case，也不用现在分词。
+- 文件名用 UpperCamelCase，与 CMake 官方 `Modules/` 一致；按职责命名，例如 `CompileSettings.cmake`、`LinkSettings.cmake`、`OutputSettings.cmake`。不用 kebab-case，也不用现在分词。
 - 函数名用 snake_case，按“动词 + 对象”直接描述动作，例如
   `set_target_cxx_standard`、`set_target_warnings`、`set_output_directories`；
   不要机械重复模块名。CMake 没有命名空间，函数全局可见；确有重名风险时

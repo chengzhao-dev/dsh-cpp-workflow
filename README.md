@@ -66,9 +66,9 @@ dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.6
 | `compiler` | `clang`、`gcc` | 一次配置一个编译器 |
 | `standard` | `c++11`、`c++14`、`c++17`、`c++20`、`c++23` | 新工程默认 `c++23`；一个工程一个标准 |
 
-标准写在 `environment.json` 的 `standard`，并同步到 CMake target 和编译数据库；CMake 侧优先调用 `engineering` 提供的 `compile_settings_set_cxx_standard` 函数。新工程默认 C++23；C++11–C++20 工程把 `standard`、`cxx_std_*`、`CXX_STANDARD` 和 `.clang-format` 的解析档位一起降级，不要只改一处。每档的设施、工具和降档表见 [标准目录](skills/engineering/references/cmake/standards/index.md)，CMake 两层声明见 [01-cxx-standard.md](skills/engineering/references/cmake/standards/01-cxx-standard.md)。
+标准写在 `environment.json` 的 `standard`，并同步到 CMake target 和编译数据库；CMake 侧优先调用 `engineering` 提供的 `set_target_cxx_standard` 函数。新工程默认 C++23；C++11–C++20 工程把 `standard`、`cxx_std_*`、`CXX_STANDARD` 和 `.clang-format` 的解析档位一起降级，不要只改一处。每档的设施、工具和降档表见 [标准目录](skills/engineering/references/cmake/standards/index.md)，CMake 两层声明见 [01-cxx-standard.md](skills/engineering/references/cmake/standards/01-cxx-standard.md)。
 
-生成器固定 Ninja，构建目录是 `build/clang/` 与 `build/gcc/`，不共用 `build/`。诊断工具固定 `clang-format`、`clang-tidy`、`clangd`；GCC 模式也不换成别的分析器。
+生成器固定 Ninja，默认构建目录是 `build/clang/` 与 `build/gcc/`，不共用同一目录；项目技能声明单一构建目录时（本书 `games/tictactoe/build/`）以项目为准。诊断工具固定 `clang-format`、`clang-tidy`、`clangd`；GCC 模式也不换成别的分析器。
 
 构建前先跑声明校验，再在构建宿主上跑活动校验。`<skill-dir>` 是插件安装后的 `building-cpp` 目录，不是目标工程里的目录：
 

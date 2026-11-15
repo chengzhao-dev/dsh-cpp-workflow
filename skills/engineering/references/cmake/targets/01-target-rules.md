@@ -5,11 +5,11 @@
 
 ## 排版
 
-CMake 没有单独的官方风格指南文档，官方仓库的 [.editorconfig](https://raw.githubusercontent.com/Kitware/CMake/master/.editorconfig) 规定 `CMakeLists.txt`、`*.cmake`、`*.rst` 使用 `indent_size = 2`、`indent_style = space`；本机 `cmake 4.2` 的 359 个官方模块没有一个文件含 tab。本仓为了跟 C++ 源码的 4 列 tab 层级一致，把 `CMakeLists.txt` 与 `*.cmake` 统一为 tab 缩进（宽 4 列），行内对齐用空格；这是有意偏离官方空格约定。官方文档块内部仍按 RST 的 2 空格，块内不 tab 化。行宽上限取 120 列，中文字符按 2 列计，tab 按 4 列展开后计宽；命令行、列表和注释一视同仁，官方文档块的分隔行固定 79 列，不跟着加宽。
+CMake 没有单独的官方风格指南文档，官方仓库的 [.editorconfig](https://raw.githubusercontent.com/Kitware/CMake/master/.editorconfig) 规定 `CMakeLists.txt`、`*.cmake`、`*.rst` 使用 `indent_size = 2`、`indent_style = space`；本机 `cmake 4.2` 的 359 个官方模块没有一个文件含 tab。本仓与 C++ 源码统一为 4 个空格缩进，行内对齐也用空格；官方文档块内部仍按 RST 的 2 空格。行宽上限取 120 列，中文字符按 2 列计，既有 Tab 按 4 列展开后计宽；命令行、列表和注释一视同仁，官方文档块的分隔行固定 79 列，不跟着加宽。
 
 注释用官方文档块。CMake 官方模块在文件开头放一个 `#[=======================================================================[.rst:` 块：模块名下一行画标题线，命令用 `.. command::`，签名用 `.. code-block:: cmake`，参数在正文里用双反引号包住（Kitware 的 [documentation.rst](https://github.com/Kitware/CMake/blob/master/Help/dev/documentation.rst) 与 [GoogleTest.cmake](https://github.com/Kitware/CMake/blob/master/Modules/GoogleTest.cmake) 都是这个形）。本仓照这个形写，块内散文用中文：模块名、`Commands`、`.. command::`、`.. code-block::` 这些标记保留英文，功能、边界与参数说明写中文句子。签名仍留在 `function()` 那一行，块里只抄调用形式，不重复参数表；CMake 函数没有返回值，不写 `:return:`，也不把 C++ 的 `@param`、`@return` 搬进来。模块文件不再画 `#---` 函数分隔线，一个文件的多个命令在 `Commands` 段落里逐个列出。`CMakeLists.txt` 以文件头开头：标题一行、`#` 一行、再用 1–2 行写用途，空一行后接命令；命令之间空一行，按“项目、模块、产物、子目录”的顺序自然分组，不画框线、不写段落标题；小文件可只留一行标题；工程模板提供最小形状，从 `cmake_minimum_required` 开始，注释保持最少，使用者按本段补齐；`CMakeLists.txt` 在每条命令上方写一句说明，子目录文件同样；同一文件保持同一句式，句子的主语按命令的实际对象（工程、目标、产物）写，不要每条都以「本工程」「本项目」开头。中文注释用全角标点，用书面语，避免口语词与网络用语；中文与英文、数字之间留一个空格，句子写完整并说明职责或原因，不复述命令名与模块名。模块文件（`*.cmake`）把说明写进 RST 文档块，函数体内不写行注释；子目录 `CMakeLists.txt` 用普通 `#` 注释。官方 [GoogleTest.cmake](https://github.com/Kitware/CMake/blob/master/Modules/GoogleTest.cmake) 在一个文件里放多个测试命令，可作“文件按职责聚合”的参照；社区 [CompilerWarnings.cmake](https://github.com/cpp-best-practices/cmake_template/blob/main/cmake/CompilerWarnings.cmake) 在每个警告 flag 后写它抓什么问题；本仓把这类说明收进文档块，函数体内不留行注释。
 
-Shell 脚本同样用 tab 缩进（宽 4 列），行内对齐用空格；Google Shell Style Guide 用 2 个空格，本仓为单仓统一而有意偏离。
+Shell 脚本同样用 4 个空格缩进；Google Shell Style Guide 用 2 个空格，本仓为单仓统一而有意偏离。
 
 ## 最小可用形状
 
@@ -61,9 +61,9 @@ set_target_warnings(greeting PRIVATE LEVEL standard)
 ```
 
 - 库的 `PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include` 让程序与链接它的测试写 `#include "greeting.h"` 就能找到公共头，不需要各自再写 include 路径。
-- 标准用 `set_target_cxx_standard`：库用 `PUBLIC` 传播“至少 C++NN”，程序用 `PRIVATE`；`CXX_STANDARD`/`CXX_EXTENSIONS` 不传播，每个会编译的 target 都要自己调用一次。
+- 标准用 `set_target_cxx_standard`：库用 `PUBLIC` 传播“至少 C++NN”，程序用 `PRIVATE`；`CXX_STANDARD`/`CXX_EXTENSIONS` 是 target 属性，不是 INTERFACE 属性，不会跨 target 传播；每个会编译的 target 都要自己调用一次。
 - `CXX_STANDARD_REQUIRED ON` 防止 CMake 在编译器不支持时静默降级；`CXX_EXTENSIONS OFF` 把 `-std=gnu++NN` 收成 `-std=c++NN`。configure 后检查 `compile_commands.json` 的最后一条 `-std=`。
-- 程序 target 固定 `app`；库 target 用组件名。
+- 程序 target 用项目技能点名的名字（模板默认 `app`，本书 `terminal`）；库 target 用组件名。
 
 ## 标准与复用
 
@@ -91,7 +91,7 @@ MSVC 分支用 `/W4`、`/permissive-`、`/WX`；其他编译器直接报错，�
 - 每个 target 自己声明 include、标准、编译选项、链接库；不要用全局 `include_directories()`、`add_definitions()`、`CMAKE_CXX_FLAGS` 给所有 target 加料。
 - `target_include_directories(<target> PUBLIC|PRIVATE <dir>)`：公共头给 `PUBLIC`，私有实现目录给 `PRIVATE`。
 - `target_compile_features(<target> PUBLIC|PRIVATE cxx_std_NN)`：只传播“至少 C++NN”的最低要求；精确 `-std` 由 `set_target_cxx_standard` 在会编译的 target 上设置，不靠这一步锁死。
-- `target_link_libraries(<target> PRIVATE|PUBLIC <lib>)`：实现依赖用 `PRIVATE`，接口依赖用 `PUBLIC`。CMake 只硬性要求第一个参数已创建；被链接的库可以稍后定义，CMake 会补 ordering dependency。工程约定仍是先定义后引用，避免靠隐式排序。
+- `target_link_libraries(<target> PRIVATE|PUBLIC <lib>)`：实现依赖用 `PRIVATE`，接口依赖用 `PUBLIC`。官方文档只保证第一个参数已创建；当前 CMake 实现能解析稍后定义的库，但这不是文档承诺，拼错库名还会退化成 `-lname`。工程约定先定义库、再定义程序，不依赖隐式排序。
 - 不要 `file(GLOB ...)`；显式列源文件，新增文件时改 CMake，构建系统才知道。`CONFIGURE_DEPENDS` 依赖构建系统每次检查目录，跨生成器行为也不完全一致，不作为工程规则。
 - 不把 `main()` 编进库；程序只做装配和 I/O。
 - 头文件不参与编译时，不需要 `target_sources` 列出；需要 IDE 展示时再列。
@@ -109,7 +109,7 @@ MSVC 分支用 `/W4`、`/permissive-`、`/WX`；其他编译器直接报错，�
 project(TaskList VERSION 0.1.0 LANGUAGES CXX)
 ```
 
-目录 `task-list/` 对应 `project(TaskList ...)`。派生规则是「按 `-` 切分、每段首字母大写、其余保留」，不要直接照抄目录名，也不要把 `{{PROJECT_NAME}}` 留在模板里。库 target 用组件名的小写形式（`task_list` 或 `tasks`），程序 target 固定 `app`。
+目录 `task-list/` 对应 `project(TaskList ...)`。派生规则是「按 `-` 切分、每段首字母大写、其余保留」，不要直接照抄目录名，也不要把 `{{PROJECT_NAME}}` 留在模板里。库 target 用组件名的小写形式（`task_list` 或 `tasks`），程序 target 由项目技能点名，模板默认 `app`。
 
 ## 编译数据库
 
@@ -242,4 +242,4 @@ function(set_target_warnings target visibility)
 - [CMake: `CMAKE_EXPORT_COMPILE_COMMANDS`](https://cmake.org/cmake/help/latest/variable/CMAKE_EXPORT_COMPILE_COMMANDS.html)：生成 `compile_commands.json`。
 - [CMake: `CMAKE_CXX_STANDARD`](https://cmake.org/cmake/help/latest/variable/CMAKE_CXX_STANDARD.html)：标准版本与 `CXX_STANDARD_REQUIRED`。
 - [CMake `documentation.rst`](https://github.com/Kitware/CMake/blob/master/Help/dev/documentation.rst)：官方文档块、`.. command::` 与参数段的写法。
-- [CMake `.editorconfig`](https://raw.githubusercontent.com/Kitware/CMake/master/.editorconfig)：官方取 2 个空格、不用 tab；本仓在此之上改为 tab（宽 4 列）。
+- [CMake `.editorconfig`](https://raw.githubusercontent.com/Kitware/CMake/master/.editorconfig)：官方取 2 个空格、不用 tab；本仓改为 4 个空格，仍不用 tab。

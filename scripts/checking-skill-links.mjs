@@ -595,8 +595,9 @@ for (const cmakeFile of listFiles(assetRoot).filter((file) => basename(file) ===
   const text = read(rel(cmakeFile))
   for (const [index, line] of text.split(/\r?\n/).entries()) {
     const indent = line.match(/^[\t ]*/)[0]
-    ok(!indent.includes(' '), `${rel(cmakeFile)}:${index + 1}: 缩进只能使用 tab`)
-    ok(line.replace(/\t/g, '    ').length <= 120, `${rel(cmakeFile)}:${index + 1}: 行宽超过 120 列`)
+    ok(!indent.includes('\t'), `${rel(cmakeFile)}:${index + 1}: 缩进只能使用空格`)
+    ok(indent.length % 4 === 0, `${rel(cmakeFile)}:${index + 1}: 缩进必须是 4 个空格的倍数`)
+    ok(line.length <= 120, `${rel(cmakeFile)}:${index + 1}: 行宽超过 120 列`)
   }
   ok(/target_compile_features\s*\(/.test(text), `${rel(cmakeFile)}: 缺少 target_compile_features`)
   ok(/cxx_std_23/.test(text), `${rel(cmakeFile)}: 缺少 cxx_std_23`)
@@ -620,22 +621,23 @@ for (const cmakeFile of listFiles(join(ROOT, 'skills', 'engineering', 'reference
       continue
     }
     const indent = line.match(/^[\t ]*/)[0]
-    ok(!indent.includes(' '), `${rel(cmakeFile)}:${index + 1}: 缩进只能使用 tab`)
-    ok(line.replace(/\t/g, '    ').length <= 120, `${rel(cmakeFile)}:${index + 1}: 行宽超过 120 列`)
+    ok(!indent.includes('\t'), `${rel(cmakeFile)}:${index + 1}: 缩进只能使用空格`)
+    ok(indent.length % 4 === 0, `${rel(cmakeFile)}:${index + 1}: 缩进必须是 4 个空格的倍数`)
+    ok(line.length <= 120, `${rel(cmakeFile)}:${index + 1}: 行宽超过 120 列`)
   }
 }
 
 const clangFormat = read('skills/building-cpp/assets/config/.clang-format')
 ok(clangFormat.includes('BasedOnStyle: Google'), 'clang-format 未采用 Google 预设')
 ok(clangFormat.includes('Standard: Latest'), 'clang-format 未使用 Latest（兼容 C++23）')
-ok(clangFormat.includes('UseTab: ForIndentation'), 'clang-format 未只用 tab 做缩进')
-ok(clangFormat.includes('TabWidth: 4'), 'clang-format 未使用 4 列 tab')
+ok(clangFormat.includes('UseTab: Never'), 'clang-format 未关闭 Tab 缩进')
+ok(clangFormat.includes('TabWidth: 4'), 'clang-format 未使用 4 列 Tab 宽度')
 ok(clangFormat.includes('IndentWidth: 4'), 'clang-format 未使用 4 列缩进')
 ok(clangFormat.includes('ContinuationIndentWidth: 8'), 'clang-format 未使用 8 个空格续行')
 ok(clangFormat.includes('AccessModifierOffset: -4'), 'clang-format 访问修饰符未对齐到 0 列')
 ok(clangFormat.includes('ColumnLimit: 120'), 'clang-format 未使用 120 列')
 ok(clangFormat.includes('PackConstructorInitializers: BinPack'), 'clang-format 未采用构造初始化列表 BinPack')
-ok(clangFormat.includes('IncludeBlocks: Preserve'), 'clang-format 未保留人工包含分块')
+ok(clangFormat.includes('IncludeBlocks: Preserve'), 'clang-format 未保留 include 空行分组')
 ok(!/IncludeCategories/.test(clangFormat), 'clang-format 不应覆盖包含顺序')
 const clangTidy = read('skills/building-cpp/assets/config/.clang-tidy')
 ok(/Checks:/.test(clangTidy), 'clang-tidy 缺少 Checks')
@@ -675,7 +677,7 @@ ok(read('scripts/checking-standard-matrix.sh').startsWith('#!/usr/bin/env bash')
 
 const buildScript = read('skills/building-cpp/assets/templates/projects/common/running-build.sh')
 ok(buildScript.includes('COMPILER="${1:-clang}"'), '构建脚本省略参数时应默认 clang')
-ok(buildScript.includes('BUILD_DIR="${BUILD_ROOT}/${COMPILER}"'), '构建脚本必须按编译器分目录')
+ok(buildScript.includes('BUILD_DIR="${BUILD_DIR:-${BUILD_ROOT}/${COMPILER}}"'), '构建脚本必须按编译器分目录，并允许 BUILD_DIR 覆盖')
 ok(buildScript.includes('compile_commands.json'), '构建脚本缺少编译数据库链接')
 ok(buildScript.includes('ctest --test-dir'), '构建脚本缺少 CTest')
 ok(buildScript.includes('--output-on-failure'), '构建脚本缺少 CTest 失败输出')

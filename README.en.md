@@ -66,9 +66,9 @@ Keep one `environment.json` per repository. Its first three environment axes are
 | `compiler` | `clang`, `gcc` | One compiler per configuration |
 | `standard` | `c++11`, `c++14`, `c++17`, `c++20`, `c++23` | New projects default to `c++23`; one standard per project |
 
-The standard lives in `environment.json` as `standard` and must match the CMake target and compile database; on the CMake side, prefer `engineering`'s `compile_settings_set_cxx_standard` function. New projects default to C++23; for C++11–C++20, lower `standard`, `cxx_std_*`, `CXX_STANDARD`, and the `.clang-format` parsing level together, not one at a time. Per-standard facilities, tooling, and downgrade tables are in the [standard directory](skills/engineering/references/cmake/standards/index.md); the CMake two-layer declaration is in [01-cxx-standard.md](skills/engineering/references/cmake/standards/01-cxx-standard.md).
+The standard lives in `environment.json` as `standard` and must match the CMake target and compile database; on the CMake side, prefer `engineering`'s `set_target_cxx_standard` function. New projects default to C++23; for C++11–C++20, lower `standard`, `cxx_std_*`, `CXX_STANDARD`, and the `.clang-format` parsing level together, not one at a time. Per-standard facilities, tooling, and downgrade tables are in the [standard directory](skills/engineering/references/cmake/standards/index.md); the CMake two-layer declaration is in [01-cxx-standard.md](skills/engineering/references/cmake/standards/01-cxx-standard.md).
 
-The generator is always Ninja. Build directories are `build/clang/` and `build/gcc/`; they are never shared. Analysis tools are always `clang-format`, `clang-tidy`, and `clangd`; GCC mode does not switch to another analyzer.
+The generator is always Ninja. Build directories default to `build/clang/` and `build/gcc/` and are never shared; a project skill may declare a single build directory (this book uses `games/tictactoe/build/`). Analysis tools are always `clang-format`, `clang-tidy`, and `clangd`; GCC mode does not switch to another analyzer.
 
 Run the declaration check first, then the live check on the build host. `<skill-dir>` is the installed `building-cpp` directory, not a directory in the target project:
 

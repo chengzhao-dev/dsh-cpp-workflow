@@ -37,7 +37,7 @@ metadata:
 | 步 | 名称 | 文件 | 一句话 |
 | --- | --- | --- | --- |
 | 1 | 定 target 与标准 | `steps/01-targets.md` | target 图、PUBLIC/PRIVATE、标准、输出目录与编译数据库 |
-| 2 | 定模块与函数 | `steps/02-modules.md` | 何时抽函数、文件与命名、导入、官方文档块与 tab（宽 4 列）、120 列排版 |
+| 2 | 定模块与函数 | `steps/02-modules.md` | 何时抽函数、文件与命名、导入、官方文档块与 4 空格缩进、120 列排版 |
 | 3 | 通过检查 | `steps/03-check.md` | configure、构建、编译数据库与实际 `-std` 核对 |
 
 每步只打开同号的一个步骤文件。步骤只覆盖 CMake；编码与 clang 工具没有步骤，按入口表直接打开那一份文件。
@@ -56,7 +56,7 @@ metadata:
 | clang-format | `references/formatting/02-clang-format.md`；案例 `references/formatting/examples/01-clang-format.md` |
 | clang-tidy 与检查分级 | `references/formatting/03-clang-tidy.md`；案例 `references/formatting/examples/02-clang-tidy.md` |
 | clangd 与编辑器补全 | `references/formatting/04-clangd.md`；案例 `references/formatting/examples/03-clangd.md` |
-| 可复制的 CMake 函数 | `references/cmake/assets/CompileSettings.cmake`、`references/cmake/assets/LinkSettings.cmake` |
+| 可复制的 CMake 函数 | `references/cmake/assets/CompileSettings.cmake`、`references/cmake/assets/LinkSettings.cmake`、`references/cmake/assets/OutputSettings.cmake` |
 | 操作判不准、规则冲突 | `../shared/operations.md`、`../shared/rule-priority.md` |
 
 ## 加载预算
@@ -73,15 +73,15 @@ metadata:
 | --- | --- | --- |
 | 内容 | 新增 target、改公共 include 或链接边界、换语言标准 | `steps/01-targets.md` |
 | 结构 | 抽函数、拆模块、调导入位置 | `steps/02-modules.md` |
-| 版式 | 只改 tab（宽 4 列）、行宽、注释形态或工具配置 | `steps/02-modules.md`；工具配置见 `references/formatting/02-clang-format.md` |
+| 版式 | 只改缩进、行宽、注释形态或工具配置 | `steps/02-modules.md`；工具配置见 `references/formatting/02-clang-format.md` |
 | 措辞 | 只改函数名、注释措辞或错误消息 | `steps/02-modules.md` |
 
 ## 完成判据
 
-- [ ] target 图显式：程序 target 叫 `app`，库 target 用组件名，程序链接库，库的公共 include 用 `PUBLIC`；没有全局 include、全局编译选项或 GLOB。
+- [ ] target 图显式：程序 target 用项目技能点名的名字（模板默认 `app`，本书 `terminal`），库 target 用组件名，程序链接库，库的公共 include 用 `PUBLIC`；没有全局 include、全局编译选项或 GLOB。
 - [ ] 每个 target 的标准来自 `environment.json`；`target_compile_features` 与 `CXX_STANDARD`、`CXX_STANDARD_REQUIRED ON`、`CXX_EXTENSIONS OFF` 同时存在，live 的 `compile_commands.json` 中每个 target 的 `-std=` 都与声明一致，且每个 target 只有一条、不同值即失败，不是 `gnu++NN`。
 - [ ] 复用的 CMake 函数放在工程根的 `cmake/` 模块里（模板源在 `references/cmake/assets/`），文件名用 UpperCamelCase，函数名用 snake_case，有目标与参数校验，根 `CMakeLists.txt` 通过 `CMAKE_MODULE_PATH` 导入；没有重复片段和未使用的旧模块。
 - [ ] 公开函数上方写官方文档块（`#[=======================================================================[.rst:` 加 `.. command::` 与 `.. code-block:: cmake`，块内散文写中文），完整写法见 `references/cmake/targets/01-target-rules.md`；模块文件不画 `#---` 与 `#===...===#` 分隔线。
-- [ ] `CMakeLists.txt` 与 `*.cmake` 用 UTF-8 无 BOM、LF；缩进只用 tab（宽 4 列），行内对齐用空格；行宽上限 120 列，中文字符按 2 列计。
+- [ ] `CMakeLists.txt` 与 `*.cmake` 用 UTF-8 无 BOM、LF；缩进用 4 个空格，行内对齐也用空格；行宽上限 120 列，中文字符按 2 列计。
 - [ ] 编码与排版工具各管一段：`.clang-format` 管空白与包含顺序，`.clang-tidy` 管检查分级，`.clangd` 管编辑器补全；三份都不把标准写死成与 `environment.json` 冲突的值，也不把 clang-format 塞进构建脚本。
 - [ ] configure 与构建通过，构建产物不落在源码目录；没有改源码语义，也没有覆盖已有工程文件。

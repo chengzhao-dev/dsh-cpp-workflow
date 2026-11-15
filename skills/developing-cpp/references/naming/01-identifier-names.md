@@ -1,4 +1,4 @@
-<!-- 读取时机：命名或统一术语时；读完能回答：命名；预算：一次只开这一份（130 行），不自动串联。 -->
+<!-- 读取时机：命名或统一术语时；读完能回答：命名；预算：一次只开这一份（136 行），不自动串联。 -->
 # 命名
 
 命名先回答「它是什么角色」，再选词。规则表是底线，语义角色表决定用哪个动词。
@@ -38,6 +38,12 @@
 - 不删字母缩写：`distribution` 不写 `dist`；`position` 在需要完整名词时写全，`pos` 只作局部坐标缩写。
 - 可能选不中时返回 `std::optional`：`ChoosePosition`、`ChooseRandomPosition`、`ChooseBestPosition` 没有合法选择时返回 `std::nullopt`，不返回哨兵位置。
 - 共享资源访问器用名词短语（`RandomEngine`），不写 `GetRandomEngine`；`Get` 留给类里直接返回成员的查询。
+
+### 界面与索引
+
+- 界面组件名先写职责，再写形态：`ListMenu` 是以列表呈现的菜单，`MenuList` 是多个菜单的列表；`MainMenu`、`DifficultyMenu` 用界面职责命名，不用 `MenuModel` 泛称多个菜单的模型。
+- 多个菜单共享同一套列表选择逻辑时，把状态模型命名为 `ListMenuModel`；只有一个菜单时不单独造模型名。字段保存下标时写 `selected_index_`，保存被选对象时写 `selected_`；注释写“当前选中标签在标签列表中的下标”。
+- 非拥有视图成员按内容命名（`labels_`、`history_`），不写 `labels_view_` 重复类型；成员注释写清它不拥有什么、生命周期由谁保证。
 
 ## 字符集与保留标识符
 

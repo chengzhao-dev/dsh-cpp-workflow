@@ -50,7 +50,7 @@ app/
 
 ## 文件扩展名与归属
 
-扩展名、槽位与守卫名以 `references/layout/02-file-template.md` 为准；本文只定位置：公共头放 `include/`，私有头放 `src/`，实现文件放 `src/`，测试放 `tests/`。
+扩展名、槽位与 `#pragma once` 的写法以 `references/layout/02-file-template.md` 为准；本文只定位置：公共头放 `include/`，私有头放 `src/`，实现文件放 `src/`，测试放 `tests/`。
 
 ## 头文件契约
 

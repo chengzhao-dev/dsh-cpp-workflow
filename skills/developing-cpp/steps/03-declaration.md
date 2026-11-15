@@ -7,7 +7,7 @@
 ## 通用情况
 
 - 语言标准由项目声明决定，新工程默认 C++23（C++11–C++23）；`environment.json` 的 `standard` 是唯一来源。
-- 文件槽位、包含守卫与扩展名以 `references/layout/02-file-template.md` 为准；本步只决定声明写什么。
+- 文件槽位、`#pragma once` 与扩展名以 `references/layout/02-file-template.md` 为准；本步只决定声明写什么。
 - 命名以 `references/naming/01-identifier-names.md` 为准：规则表、语义角色、谓词与查询命名都在那里；字符集、保留标识符与不向 `std` 添加声明见同文件的「字符集与保留标识符」。
 - 声明顺序以 `references/layout/03-declaration-order.md` 为准：类型 → 静态常量 → 工厂 → 构造/赋值/析构 → 其他函数 → 数据成员。组内次序也按同一份的「其他函数的组内次序」：`operator==` 开头、`Get` 按数据成员顺序、先 `ClearSquare` 后 `Clear`；声明区空行按「空行」表，组间 1 行、数据成员间 0 行、`private:` 前 1 行、连续两空行是缺陷。数据成员按初始化依赖、逻辑分组和阅读顺序排列，不按字母序；先声明先初始化，初始化器只能安全使用已经完成初始化的成员。
 - 公共头自包含：自己用到的类型、宏和标准库头都直接包含。验证方式：建一个只包含该头的空 `.cpp` 编译一次，不通过就补 include；五条自检见 `references/layout/02-file-template.md` 的「自检」。

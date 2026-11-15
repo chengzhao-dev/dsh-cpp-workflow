@@ -39,6 +39,6 @@
 
 - 能用：C++20 的全部内容；`std::print`/`std::println`、`std::expected`、`std::stacktrace`、`if consteval`、显式对象参数（deducing this）、`std::mdspan`、`std::flat_map`、ranges 的 C++23 增补（工具链实现为准）。
 - 不能假设：C++23 在 GCC/Clang 上仍是 Partial，具体设施要查编译器状态页；`std::print` 的库门槛是 libstdc++ 14+ / libc++ 19+；`std::stacktrace` 还要链接对应库；`std::expected` 的 monadic 接口、`std::flat_map` 等设施在旧标准库上可能缺失；模板只用 `std::format`，不因为默认 C++23 就强依赖 `print`/`stacktrace`。
-- 降档/升级：从 C++23 降到 C++20 见上一节；升级到 C++26 前先确认 CMake 3.25+、编译器/标准库支持、clang-format 的 `c++26` 枚举，并按 [index.md](index.md#新增标准) 的流程新增片段与矩阵行。
+- 降档/升级：从 C++23 降到 C++20 见上一节；升级到 C++26 前先确认 CMake 3.30+（首次接受 CXX_STANDARD 26/cxx_std_26）、编译器/标准库支持、clang-format 的 `c++26` 枚举，并按 [index.md](index.md#新增标准) 的流程新增片段与矩阵行。
 - 验证：`compile_commands.json` 的最后一个 `-std=` 必须是 `-std=c++23`；模板在 C++23 下走 `std::format` 分支；若使用 `print`/`stacktrace`，另做链接测试。
 - 片段：[cmake-snippet.cmake](c++23/cmake-snippet.cmake)。

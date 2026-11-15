@@ -36,32 +36,32 @@ Commands
 include_guard(GLOBAL)
 
 function(set_target_build_rpath target)
-	if(NOT TARGET "${target}")
-		message(FATAL_ERROR
-			"set_target_build_rpath: target '${target}' does not exist")
-	endif()
+    if(NOT TARGET "${target}")
+        message(FATAL_ERROR
+            "set_target_build_rpath: target '${target}' does not exist")
+    endif()
 
-	if(APPLE)
-		set_target_properties("${target}" PROPERTIES
-			BUILD_RPATH "@loader_path/../lib")
-	else()
-		set_target_properties("${target}" PROPERTIES BUILD_RPATH "$ORIGIN/../lib")
-	endif()
+    if(APPLE)
+        set_target_properties("${target}" PROPERTIES
+            BUILD_RPATH "@loader_path/../lib")
+    else()
+        set_target_properties("${target}" PROPERTIES BUILD_RPATH "$ORIGIN/../lib")
+    endif()
 endfunction()
 
 function(fetch_googletest)
-	include(FetchContent)
+    include(FetchContent)
 
-	if(POLICY CMP0135)
-		cmake_policy(SET CMP0135 NEW)
-	endif()
+    if(POLICY CMP0135)
+        cmake_policy(SET CMP0135 NEW)
+    endif()
 
-	FetchContent_Declare(
-		googletest
-		URL https://codeload.github.com/google/googletest/tar.gz/refs/tags/v1.17.0
-		URL_HASH
-			SHA256=65fab701d9829d38cb77c14acdc431d2108bfdbf8979e40eb8ae567edf10b27c
-	)
-	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-	FetchContent_MakeAvailable(googletest)
+    FetchContent_Declare(
+        googletest
+        URL https://codeload.github.com/google/googletest/tar.gz/refs/tags/v1.17.0
+        URL_HASH
+            SHA256=65fab701d9829d38cb77c14acdc431d2108bfdbf8979e40eb8ae567edf10b27c
+    )
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
 endfunction()

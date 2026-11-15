@@ -37,4 +37,4 @@
 
 ## 退出
 
-模块可被根文件导入且函数签名稳定后，进 `03-check.md` 跑 configure、构建与数据库核对。排版、tab（宽 4 列）、120 列与文档块形态按 `../references/cmake/targets/01-target-rules.md`。
+模块可被根文件导入且函数签名稳定后，进 `03-check.md` 跑 configure、构建与数据库核对。排版、4 空格缩进、120 列与文档块形态按 `../references/cmake/targets/01-target-rules.md`。

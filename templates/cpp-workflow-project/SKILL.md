@@ -37,9 +37,9 @@ metadata:
 - `.clang-format`、`.clang-tidy`、`.clangd`、`.vscode/` 随工程存放，不继承仓库根或用户主目录。
 - 库与程序分开 target；程序链接库，终端输入输出留在程序。
 - CTest 在工程内注册并运行；仓库根不构建、不注册测试。
-- 头文件用路径式包含守卫，不用 `#pragma once`。
+- 头文件用 `#pragma once`，不写路径式包含守卫。
 - 命名按 Google C++ 风格与工程白名单执行；谓词用 `Is/Has/Can/Completes` 等肯定式。
-- 标准与警告由 `cmake/CompileSettings.cmake` 的 `compile_settings_set_cxx_standard`、`compile_settings_set_warnings` 统一施加；`environment.json` 的 `standard` 与 `.clang-format` 同步。
+- 标准由 `cmake/CompileSettings.cmake` 的 `set_target_cxx_standard` 统一施加；工程需要警告时再调用 `set_target_warnings`，不默认给所有 target 加 `-Werror`。`environment.json` 的 `standard` 与 `.clang-format` 同步。
 - 每个可独立构建、运行的程序一个工程；共享库等第二个真实使用方出现、语义稳定后再抽。
 - 阶段表、代码目录与文档章节保持对齐；没有阶段表时只写用户点名的行为。
 
@@ -73,6 +73,7 @@ metadata:
 - [ ] `clang-format --dry-run --Werror` 与 `clang-tidy` 无新告警。
 - [ ] 阶段表、代码目录与文档章节的实际状态一致。
 - [ ] 有文档检查时，项目声明的检查命令通过；跨域改动也跑同一条。
+- [ ] `git status --porcelain` 只剩本轮有意改动的文件；检查命令只写终端，需要留证据时写已忽略的 `temp/`。
 
 ## 可选约定
 

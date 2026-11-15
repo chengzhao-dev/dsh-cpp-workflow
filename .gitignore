@@ -7,4 +7,4 @@ coverage/
 build/
 
 # Scratch files from local verification.
-temp/
+/temp/

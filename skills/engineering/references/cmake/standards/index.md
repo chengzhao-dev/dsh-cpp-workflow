@@ -46,7 +46,7 @@ Google C++ Style Guide 上游仍写 “target C++20”，本工作流默认 C++2
 | --- | --- | --- |
 | `std::string_view`、`std::optional`、`std::variant`、`if constexpr` | C++17 | 随语言核心 |
 | `std::format` | C++20 | libstdc++ 13+；libc++ 14+（特性宏到 19 才稳定） |
-| `std::print`、`std::expected`、`std::stacktrace` | C++23 | `std::print`：libstdc++ 14+、libc++ 19+；`std::expected` 随各库 C++23 实现；`std::stacktrace` 还要链接对应库 |
+| `std::print`、`std::expected`、`std::stacktrace` | C++23 | `std::print`：libstdc++ 14+、libc++ 18+；`std::expected` 随各库 C++23 实现；`std::stacktrace` 还要链接对应库 |
 
 Clang/GCC 的 “Partial” 状态意味着 C++23 不是全量实现。用到具体设施前，先查：
 
@@ -105,7 +105,7 @@ CompileFlags:
 `.clang-tidy` 不写标准，标准来自编译数据库。检查项保持 Google 基线：
 
 ```yaml
-Checks: '-*, google-*, portability-avoid-pragma-once, readability-identifier-naming'
+Checks: '-*, google-*, readability-identifier-naming'
 WarningsAsErrors: '*'
 FormatStyle: file
 ```

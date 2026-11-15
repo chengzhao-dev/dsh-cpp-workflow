@@ -15,10 +15,10 @@
 - 备用屏幕的进入、退出与清屏交给终端类型（如 `Terminal`）；会话在循环外进入，每条返回路径先退出，不另加只转调的 `ConsoleSession`，也不在 `RunGame` 内声明局部类。
 - RAII 只覆盖对象寿命等于资源占用的情形；备用屏幕跨越多局，进入与退出不放进构造析构，边界见 [02-raii.md](02-raii.md)。异常路径交给 `main`，不额外恢复屏幕。
 - 状态数得清的画面写成 `constexpr std::string_view` 原始字符串，每种状态一份完整画面。会话按当前状态选出一份，清屏后写出。由对局填格的画面（棋盘、一行状态、回放步数）用 `std::format` 拼成 `std::string`，仍然是一段文本。案例见 [09-option-menu.md](examples/09-option-menu.md)。
-- 不新增边框、列宽、面板、前缀这类可复用界面类型。画面需要滚动、鼠标或随窗口重排时，按 [03-third-party.md](03-third-party.md) 接入 FTXUI 这类控件库；井字棋把界面接口放在 `apps/`，规则库不依赖终端。
+- 不新增边框、列宽、面板、前缀这类可复用界面类型。画面需要滚动、鼠标或随窗口重排时，按 [03-third-party.md](03-third-party.md) 接入 FTXUI 这类控件库；井字棋把界面接口放在 `terminal/`，规则库不依赖终端。
 - 注入流仍走整行协议；只有连到终端时才读方向键，非 tty 不输出控制序列。
 
-tictactoe 的会话是 `GameSession`（`games/tictactoe/tictactoe/include/game_session.h`、`src/game_session.cpp`）：构造函数只绑定 `Game&`、`Terminal&` 与 `InputHandler&`，不读、不写、不打印；`RunGame` 先进入备用屏幕，循环「清屏、写出当前画面、读一个字节」，`W`/`S` 在两张 `constexpr std::string_view` 主菜单画面之间移动选中项，`Enter` 记录选择，`Q` 或输入结束退出，最后退出备用屏幕。`Console` 装配 `Terminal`、`InputHandler`、`Game` 与 `GameSession`；`main` 只有构造 `Console`、调用 `Run` 与返回退出码三件事。对局与回放画面尚未接入。
+tictactoe 当前没有独立会话对象：`main` 构造 `Terminal` 并调用 `RunGame`；`Terminal` 持有 `Screen`，`Screen::ShowMainMenu`、`ShowDifficultyMenu`、`ShowGame` 分别驱动 FTXUI 全屏；主菜单由 `Menu` 持有，棋盘交互由 `BoardScreen` 持有。`Terminal` 的构造函数只取得输入输出对象，不解析规则；对局与回放画面尚未接入。
 
 ## 选择
 
@@ -31,7 +31,7 @@ tictactoe 的会话是 `GameSession`（`games/tictactoe/tictactoe/include/game_s
 - 没有第二个真实实现之前不加抽象基类或策略工厂；先把一个具体类写对，调用方只依赖它的公开接口。
 - 选着层不读终端、不打印、不读环境；随机源由构造函数注入或播种，测试用固定种子复现同一序列。
 
-tictactoe 的选着层尚未重建：`computer.h` 与 `Computer` 随上一轮重构删除，阶段表把这一层记在 `06-computer`；重建时按上面的接口、回溯与随机源要求落地。
+tictactoe 的电脑选着目前写在 `BoardScreen` 内：`kEasy` 随机、`kNormal` 胜/堵/中心/随机、`kHard` 十层 minimax；尚未抽成独立的 `Computer` 类型，阶段表把独立类型记在 `06-computer`。
 
 ## 规则
 
@@ -47,22 +47,22 @@ tictactoe 的选着层尚未重建：`computer.h` 与 `Computer` 随上一轮重
 
 构建边界让「规则库」「会话程序」「测试」各自独立编译，依赖方向与源码一致。
 
-- 规则、会话与控制台一起编成动态库：`add_library(tictactoe SHARED src/board.cpp src/console.cpp src/game.cpp src/game_session.cpp src/input_handler.cpp src/menu.cpp src/terminal.cpp)`，不再拆静态库。
-- 程序目标只编入口：`games/tictactoe/CMakeLists.txt` 的 `app` 编 `main.cpp`，再 `target_link_libraries(app PRIVATE tictactoe)`；会话与控制台由动态库提供。
-- 测试目标链接同一个动态库，不再直接编会话或控制台源文件；规则测试与终端测试都从库取实现。
+- 规则编成动态库：`add_library(tictactoe SHARED src/board.cpp)`，公开头文件目录是 `tictactoe/include/`。
+- 终端程序单独编：`terminal/CMakeLists.txt` 把 `main.cpp`、`menu.cpp`、`screen.cpp`、`terminal.cpp`、`board_screen.cpp` 编成 `terminal`，再链接 `tictactoe` 与 FTXUI；不把终端源文件编进规则库。
+- 测试目标尚未重建；重建时链接同一个 `tictactoe` 动态库，不直接编终端源文件。
 - `target_link_libraries` 的硬性要求只有第一个参数已由 `add_executable` 或 `add_library` 创建；被链接的库目标可以在本次 configure 稍后出现，CMake 会自动补 ordering dependency。项目仍约定先定义库、再定义程序，这是可读性与顺序一致，不是 CMake 规范。
 - 构建树的 RPATH 与安装树分开：`BUILD_RPATH` 可用 `$ORIGIN/../lib` 指向构建产物；`INSTALL_RPATH` 为空时安装后的可执行文件不会沿用构建树路径。
 - 程序边界由 `main` 定义；库不定义 `main`。头文件自包含、每个符号由直接包含的头导出（SF.11 与 IWYU）是编译单元边界，不是链接边界，放在本节作为「库能独立编译」的旁证，不替代目标依赖规则。
 
-tictactoe 的两份 CMake 是这条边界的实物：`games/tictactoe/tictactoe/CMakeLists.txt` 把七个源文件编成动态库；`games/tictactoe/CMakeLists.txt` 先 `add_subdirectory(tictactoe)`，再让 `app` 编 `main.cpp` 并链接该库。
+tictactoe 的两份 CMake 是这条边界的实物：`games/tictactoe/tictactoe/CMakeLists.txt` 把 `board.cpp` 编成 `tictactoe` 动态库；`games/tictactoe/terminal/CMakeLists.txt` 把五个终端源文件编成 `terminal`，根 `CMakeLists.txt` 依次 `add_subdirectory(tictactoe)` 与 `add_subdirectory(terminal)`。
 
 ## 迭代记录
 
 这条原则不是一次设计完的，而是每轮实现暴露缺口后回改接口：
 
-- 先写 `game_session.h`，把会话入口、终端与输入处理定成接口；`main.cpp` 只装配。
-- 再写 `terminal.h` 与 `input_handler.h`，把控制序列与读字节收进各自类型，`Console` 只把它们与对局、会话装在一起。
-- 当前停在主菜单：`game_session.cpp` 画出两份 `constexpr std::string_view` 画面并循环读键；对局、电脑与测试按阶段表 03–09 重建后再接进来。
+- 先写 `board.h`，把棋盘状态、光标、落子与胜负判断收进 `BoardModel`；规则库不包含终端代码。
+- 再写 `terminal.h`、`screen.h`、`menu.h`、`board_screen.h`，把输入输出、主菜单、难度菜单与棋盘交互分开；`main.cpp` 只构造 `Terminal` 并调用 `RunGame`。
+- 当前停在简化实现：`BoardModel` 与终端对局已能运行，独立 `Game`、`Computer`、回放与测试按阶段表 03–09 重建后再接进来。
 
 ## 依据
 

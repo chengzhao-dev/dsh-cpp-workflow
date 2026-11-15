@@ -30,7 +30,7 @@ build/
 
 ## 规则
 
-- 生成器固定单配置 Ninja，不用 Ninja Multi-Config：同一源文件会写多条命令，clangd 默认只取第一条，容易读错数据库；构建目录固定 `build/clang` 或 `build/gcc`。
+- 生成器固定单配置 Ninja，不用 Ninja Multi-Config：同一源文件会写多条命令，读数据库时容易误选；构建目录固定 `build/clang` 或 `build/gcc`。
 - 一个 configure 只用一个编译器：`-DCMAKE_CXX_COMPILER=clang++` 或 `g++`；确有 C 源时 C 编译器与 C++ 编译器同属一套。
 - `set(CMAKE_EXPORT_COMPILE_COMMANDS ON)` 由 `engineering` 写在顶层；Ninja 下产出 `compile_commands.json`。
 - 输出目录由 `engineering` 统一设到 `build/<compiler>/bin` 与 `build/<compiler>/lib`；本步只核对，不重复设。

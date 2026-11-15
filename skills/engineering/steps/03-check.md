@@ -23,7 +23,7 @@ GCC 模式把目录和编译器换成 `build/gcc`、`g++`。每次检查都重�
 - **标准**：读 `build/clang/compile_commands.json` 中每个 target 的 `-std=`；每个 target 只能有一条，必须与 `environment.json` 的 `standard` 一致，不能是 `gnu++NN` 或更高默认标准，不同值即失败。
 - **没有全局污染**：全仓搜索 `include_directories`、`add_definitions`、`CMAKE_CXX_FLAGS`、`file(GLOB`，命中就回第 1 步。
 - **模块导入**：根 `CMakeLists.txt` 只导入一次；函数名与文件名可追溯；删除旧模块后没有残留 `include()`。
-- **排版**：`CMakeLists.txt` 与 `*.cmake` 缩进只用 tab（宽 4 列），行内对齐用空格，UTF-8 无 BOM、LF；抽查 120 列（中文按 2 列计）以上的行是否有必要。
+- **排版**：`CMakeLists.txt` 与 `*.cmake` 缩进用 4 个空格，行内对齐也用空格，UTF-8 无 BOM、LF；抽查 120 列（中文按 2 列计）以上的行是否有必要。
 - **文档块**：每个模块文件开头有 `#[=` 文档块与 `.. command::`，块内散文写中文，签名留在 `function()` 那一行。
 - **产物位置**：可执行文件在 `build/<compiler>/bin`，库在 `build/<compiler>/lib`；源码目录没有新增构建产物。
 - **产物可加载**：对 `build/<compiler>/bin/app` 跑 `file` 与 `ldd`（macOS 用 `otool -L`），不得出现 `not found`；出现缺失按 RPATH 回第 1 步。启动检查由 `building-cpp` 的入口命令负责。见 `../references/cmake/linking/04-inspect.md`。

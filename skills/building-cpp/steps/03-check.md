@@ -15,6 +15,8 @@
 5. **核对产物**：`build/<compiler>/compile_commands.json` 存在；`build/compile_commands.json` 指向当前编译器；`app` 可执行文件在 `build/<compiler>/bin`。对 `app` 跑 `file` 与 `ldd`（macOS 用 `otool -L`），`ldd` 不得出现 `not found`，并做一次最小启动；见 `../../engineering/references/cmake/linking/04-inspect.md`。
 6. **记录结果**：通过时记录编译器版本、构建目录、测试数量；失败时记录命令、退出码、第一条根因诊断。
 
+检查命令只写终端输出，不落盘：不要用重定向在仓库根生成 `temp-enc.log` 这类文件。需要留证据时写已忽略的 `temp/`，没有就只引用终端输出。收尾核 `git status --porcelain`，只应剩下本轮有意改动的文件。
+
 编码检查与环境校验脚本（`<skill-dir>` 换成插件里 `building-cpp` 的实际目录）：
 
 ```bash

@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | `llvm-vs-code-extensions.vscode-clangd` | 补全、跳转、诊断、格式化 | 配置与构建 |
 | `ms-vscode.cmake-tools` | 配置、构建、运行、调试入口 | 语言服务 |
-| `ms-vscode.cpptools` | 只作为 `CMake: Debug` 的调试后端 | IntelliSense 与格式化（关闭） |
+| `ms-vscode.cpptools` | 只作为 `CMake: Debug` 的调试后端；这是对 clangd 默认建议的明确例外 | IntelliSense 与格式化（关闭） |
 
 不要同时开两套语言服务；C/C++ 扩展的 IntelliSense 必须关闭，否则会和 clangd 抢编译数据库。
 

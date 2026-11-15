@@ -9,7 +9,7 @@
 | --- | --- | --- |
 | `host` | `windows` / `linux` / `macos` | 编辑器与代理壳所在的系统 |
 | `build_host` | `native` / `wsl` | 编译在哪执行；`wsl` 只对 `host=windows` 合法 |
-| `compiler` | `clang` / `gcc` | 一次只配一个；不支持 MSVC、clang-cl，也不把 C 编译器单独作为一个轴 |
+| `compiler` | `clang` / `gcc` | 一次只配一个；不支持 MSVC、clang-cl，也不把 C 编译器单独作为一个轴；资产里的 MSVC 分支只供阅读，不进入声明 |
 | `standard` | `c++11` / `c++14` / `c++17` / `c++20` / `c++23` | 一个工程一个标准；新工程默认 `c++23`，旧声明缺字段时也按 `c++23` 处理 |
 
 ```json
@@ -40,7 +40,7 @@
 - `host=windows` + `build_host=native`：本版本不支持，静态校验直接返回失败。
 - `compiler=msvc`、`compiler=clang-cl`、`compiler=c`。
 
-`windows` + `native` 不再作为「合法但不能构建」的声明保留。声明校验直接返回 `ok: false`，`issues` 只有一句「本版本不能在 Windows 原生壳里构建」；不要建议改 WSL，也不要临时写 PowerShell 脚本伪装成已支持。
+`windows` + `native` 不再作为「合法但不能构建」的声明保留；CMake 资产里的 MSVC 分支不是受支持的环境，不能据此写 `compiler=msvc`。声明校验直接返回 `ok: false`，`issues` 只有一句「本版本不能在 Windows 原生壳里构建」；不要建议改 WSL，也不要临时写 PowerShell 脚本伪装成已支持。
 
 ## 工具角色
 
@@ -52,7 +52,7 @@
 | 语言服务 | `clangd` | `clangd` |
 | 构建 | `cmake` + `ninja` | `cmake` + `ninja` |
 | 测试 | `ctest` | `ctest` |
-| 程序 | `app` | `app` |
+| 程序 | 项目技能点名的 target | 同一名字 |
 
 工具角色与编译器解耦：GCC 模式下仍用 Clang 的格式化、静态检查和语言服务。不要因为编译器是 GCC 就换成 `gcc-format` 之类不存在的工具。工程确有 C 源时，C 编译器用同一套的 `clang` 或 `gcc`，不能与 C++ 编译器分属两套；`--live` 的 compiler 角色核对的是 C++ 驱动，C 驱动缺失时由 configure 报错。
 
@@ -73,7 +73,7 @@
 | gcc | `build/gcc/` | `build/gcc/compile_commands.json` |
 | 当前 | `build/` | `build/compile_commands.json` → 上面之一的符号链接 |
 
-一次 configure 只用一个编译器；切换编译器时用另一个目录，不要在同一目录里改 `CMAKE_CXX_COMPILER` 后复用缓存。
+一次 configure 只用一个编译器；切换编译器时用另一个目录，不要在同一目录里改 `CMAKE_CXX_COMPILER` 后复用缓存。项目技能声明单一构建目录时以项目为准（本书 `games/tictactoe/build/`），此时不建 `build/clang` 与 `build/gcc`，编译数据库仍在 `<build-dir>/compile_commands.json`。
 
 ## 活动校验
 

@@ -9,9 +9,9 @@ namespace greeting {
 
 std::string MakeGreeting(const std::string& name) {
 #if __cplusplus >= 202002L
-  return std::format("Hello, {}!", name);
+    return std::format("Hello, {}!", name);
 #else
-  return "Hello, " + name + "!";
+    return "Hello, " + name + "!";
 #endif
 }
 

@@ -1,4 +1,4 @@
-<!-- 读取时机：排声明顺序时；读完能回答：声明顺序与定义签名；预算：一次只开这一份（159 行），不自动串联。 -->
+<!-- 读取时机：排声明顺序时；读完能回答：声明顺序与定义签名；预算：一次只开这一份（156 行），不自动串联。 -->
 # 声明顺序
 
 顺序的作用是让读者先看类型和契约，再看数据。`clang-format` 不管顺序，靠人工和 review 维持。
@@ -68,11 +68,10 @@ Google、LLVM、OpenCV 都没有规定这一组内部的次序；本工作流补
 
 ## 命名空间作用域的头文件
 
-文件槽位与守卫名以 `references/layout/02-file-template.md` 为准；本节只看命名空间作用域内的排列顺序。
+文件槽位与 `#pragma once` 的写法以 `references/layout/02-file-template.md` 为准；本节只看命名空间作用域内的排列顺序。
 
 ```cpp
-#ifndef TASKFLOW_INCLUDE_TASK_TABLE_H_
-#define TASKFLOW_INCLUDE_TASK_TABLE_H_
+#pragma once
 
 #include <array>
 #include <cstdint>
@@ -100,8 +99,6 @@ class TaskTable {
 };
 
 }  // namespace taskflow
-
-#endif  // TASKFLOW_INCLUDE_TASK_TABLE_H_
 ```
 
 顺序：包含 → 命名空间 → `inline constexpr` 常量 → `enum class` → `struct`（被依赖的在前）→ 自由函数 → 类。类的公共接口类型放在类内最前。
