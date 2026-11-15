@@ -113,7 +113,8 @@ developing-cpp/
 │   │   │   ├── 07-declaration-predicate.md
 │   │   │   ├── 08-declaration-struct.md
 │   │   │   ├── 09-implementation-body.md
-│   │   │   └── 10-implementation-todo.md
+│   │   │   ├── 10-implementation-todo.md
+│   │   │   └── 11-declaration-constant.md
 │   │   ├── glossary/
 │   │   │   └── 01-comment-terms.md
 │   │   ├── 01-comment-rules.md
@@ -127,8 +128,11 @@ developing-cpp/
 │   │   │   ├── 05-library-split.md
 │   │   │   ├── 06-move-result.md
 │   │   │   ├── 07-preview-read.md
-│   │   │   └── 08-screen-enter-exit.md
+│   │   │   ├── 08-screen-enter-exit.md
+│   │   │   └── 09-option-menu.md
 │   │   ├── 01-project-design.md
+│   │   ├── 02-raii.md
+│   │   ├── 03-third-party.md
 │   │   └── session-layer.md
 │   ├── exceptions/
 │   │   ├── examples/

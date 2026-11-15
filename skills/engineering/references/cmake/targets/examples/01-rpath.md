@@ -19,7 +19,7 @@ set_target_properties(greeting PROPERTIES
 
 add_executable(app src/main.cpp)
 target_link_libraries(app PRIVATE greeting)
-LinkSettings_SetBuildRpath(app)
+set_target_build_rpath(app)
 ```
 
 从 `build/<compiler>/bin/app` 直接启动即可找到同级 `../lib` 下的共享库；安装场景另配 RPATH。

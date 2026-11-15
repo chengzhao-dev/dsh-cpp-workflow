@@ -1,7 +1,31 @@
-# Google 预设给 80 列、2 空格、不用 tab、包含顺序。
-# clang-format 21/22 不接受 Standard: c++23；Latest 会按当前工具支持的最高标准解析。
+# C++ 代码排版配置。
+#
+# Google 基线，缩进用 Tab（4 列），对齐用空格，列宽 120。
+
+# 只处理 C++ 源文件。
 Language: Cpp
+# 以 Google 预设为基线，只覆盖本文件写出的项。
 BasedOnStyle: Google
+# 工具不接受 c++23 取值，改用 Latest 跟随其支持的最高标准。
 Standard: Latest
-# 与根 .gitattributes 和 .editorconfig 同档：格式化不把行尾改回 CRLF。
+
+# 包含分块保持人工分组，块内按 Google 预设排序。
+IncludeBlocks: Preserve
+
+# 每行最多 120 列。
+ColumnLimit: 120
+# 一级缩进 4 列；与 TabWidth 相同，每级恰好一个 Tab。
+IndentWidth: 4
+# Tab 按 4 列显示。
+TabWidth: 4
+# 只有缩进用 Tab，行内对齐仍用空格。
+UseTab: ForIndentation
+# 续行多缩进 8 个空格。
+ContinuationIndentWidth: 8
+# 访问修饰符不缩进，与 class/struct 左对齐。
+AccessModifierOffset: -4
+# 构造函数初始化列表尽量排在一行。
+PackConstructorInitializers: BinPack
+
+# 行尾统一为 LF，格式化不会改回 CRLF。
 LineEnding: LF

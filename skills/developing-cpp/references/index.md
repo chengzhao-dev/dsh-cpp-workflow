@@ -7,7 +7,7 @@
 
 | 文件 | 读取时机 | 读完能回答 | 预算 |
 | --- | --- | --- | --- |
-| `comments/01-comment-rules.md` | 写或改注释时 | 注释：写什么 | 一次只开这一份（199 行），不自动串联。 |
+| `comments/01-comment-rules.md` | 写或改注释时 | 注释：写什么 | 一次只开这一份（213 行），不自动串联。 |
 | `comments/02-style.md` | 写或改注释时 | 注释的结构、版式与措辞 | 一次只开这一份（79 行），不自动串联。 |
 | `comments/examples/01-declaration-class.md` | 写或改注释的示例时 | 正反例：类型注释：概念与约定，不是功能清单 | 一次只开这一份（65 行），不自动串联。 |
 | `comments/examples/02-declaration-constructor.md` | 写或改注释的示例时 | 正反例：构造函数与析构函数：标签 + 职责 | 一次只开这一份（22 行），不自动串联。 |
@@ -19,6 +19,7 @@
 | `comments/examples/08-declaration-struct.md` | 写或改注释的示例时 | 正反例：完整声明：后置条件与轴向 | 一次只开这一份（18 行），不自动串联。 |
 | `comments/examples/09-implementation-body.md` | 写或改注释的示例时 | 正反例：实现注释 | 一次只开这一份（113 行），不自动串联。 |
 | `comments/examples/10-implementation-todo.md` | 写或改注释的示例时 | 正反例：TODO | 一次只开这一份（16 行），不自动串联。 |
+| `comments/examples/11-declaration-constant.md` | 写或改注释的示例时 | 正反例：控制序列常量 | 一次只开这一份（25 行），不自动串联。 |
 | `comments/glossary/01-comment-terms.md` | 统一注释术语时 | 注释术语与用词 | 一次只开这一份（92 行），不自动串联。 |
 
 ## design
@@ -33,8 +34,11 @@
 | `design/examples/06-move-result.md` | 看设计案例时 | 正反例：落子结果用返回值回答 | 一次只开这一份（41 行），不自动串联。 |
 | `design/examples/07-preview-read.md` | 看设计案例时 | 正反例：推演一步读原数据 | 一次只开这一份（36 行），不自动串联。 |
 | `design/examples/08-screen-enter-exit.md` | 看设计案例时 | 正反例：进入与退出显式配对 | 一次只开这一份（39 行），不自动串联。 |
+| `design/examples/09-option-menu.md` | 看设计案例时 | 正反例：状态数得清用字符串，控件库能力用 FTXUI | 一次只开这一份（35 行），不自动串联。 |
 | `design/01-project-design.md` | 设计类型、接口或目录时 | 领域建模与项目设计 | 一次只开这一份（160 行），不自动串联。 |
-| `design/session-layer.md` | 设计会话、选着、规则与构建边界时 | 会话层与程序边界 | 一次只开这一份（90 行），不自动串联。 |
+| `design/02-raii.md` | 设计资源所有权、析构或作用域保护时 | RAII 的适用边界 | 一次只开这一份（41 行），不自动串联。 |
+| `design/03-third-party.md` | 设计超出标准库的能力时 | 三方库的判据、选型与接入边界 | 一次只开这一份（34 行），不自动串联。 |
+| `design/session-layer.md` | 设计会话、选着、规则与构建边界时 | 会话层与程序边界 | 一次只开这一份（93 行），不自动串联。 |
 
 ## exceptions
 
@@ -99,7 +103,7 @@
 | --- | --- | --- | --- |
 | `layout/01-source-layout.md` | 排声明顺序时 | 源码布局 | 一次只开这一份（78 行），不自动串联。 |
 | `layout/02-file-template.md` | 排声明顺序时 | 文件模板 | 一次只开这一份（137 行），不自动串联。 |
-| `layout/03-declaration-order.md` | 排声明顺序时 | 声明顺序 | 一次只开这一份（151 行），不自动串联。 |
+| `layout/03-declaration-order.md` | 排声明顺序时 | 声明顺序与定义签名 | 一次只开这一份（159 行），不自动串联。 |
 
 ## naming
 

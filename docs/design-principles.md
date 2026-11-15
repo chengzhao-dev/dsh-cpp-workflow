@@ -6,6 +6,7 @@
 
 - 会话层、选择、规则与构建的完整说明：`skills/developing-cpp/references/design/session-layer.md`
 - 领域值、结果类型、函数契约：`skills/developing-cpp/references/design/01-project-design.md`
+- RAII、资源寿命与析构：`skills/developing-cpp/references/design/02-raii.md`
 - 文件槽位、头文件模板：`skills/developing-cpp/references/layout/`
 - 命名与术语：`skills/developing-cpp/references/naming/`
 - 构建目标与 RPATH：`skills/engineering/references/cmake/`

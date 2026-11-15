@@ -2,7 +2,7 @@
 // 只读注释审计：按 references/comments/01-comment-rules.md 的硬规则检查 C/C++ 源文件。
 //
 // 检查项：Doxygen 文件头、注释行宽度、列表缩进、标签、标签间空行、注释与声明的贴合、
-// 类型注释存在性、成员功能清单、设计论证（方案对比）、否定式边界、领域尺寸、谓词首句、@param 完整性、摘要裸参数名、枚举成员注释一致性、枚举行尾句式、数据成员主注释位置、定义处重复声明注释、只在 .cpp 出现的函数契约。
+// 类型注释存在性、成员功能清单、设计论证（方案对比）、否定式边界、领域尺寸、谓词首句、@param 完整性、摘要裸参数名、枚举成员注释一致性、枚举行尾句式、数据成员主注释位置、控制序列常量注释、定义处重复声明注释、只在 .cpp 出现的函数契约。
 // 不重写任何文件。
 //
 // 用法：
@@ -41,6 +41,10 @@ const FORWARD_REF = /(?:留在|归|交给|由)\s*`?[A-Z][A-Za-z0-9_]*`?/
 const TYPE_SYSTEM = /值语义|自由拷贝/
 const NEGATED_BOUNDARY = /只保存|不拥有|不含/
 const NEGATIVE_SCOPE = /不(?:检查|校验|验证|负责|判断)/
+const ESCAPE_SEQUENCE = /\\033|\\x1[bB]|\\e(?![A-Za-z0-9])/
+const STRING_SEQUENCE_CONSTANT = /^(?:static\s+)?(?:inline\s+)?constexpr\s+(?:std::string_view|(?:const\s+)?char\s*(?:const\s*)?\*)\s+([A-Za-z_]\w*)\s*=\s*"((?:[^"\\]|\\.)*)"\s*;/
+const CHAR_SEQUENCE_CONSTANT = /^(?:static\s+)?(?:inline\s+)?constexpr\s+char\s+([A-Za-z_]\w*)\s*=\s*'(\\033|\\x1[bB]|\\e)'\s*;/
+const SEQUENCE_FIRST = /的(?:控制|转义)序列(?:：.+)?。$/
 const DOMAIN_SIZE = /\d+\s*[×xX]\s*\d+|九格|九个格子/
 const PREDICATE_DECL = /^(?:\[\[nodiscard\]\]\s*)?(?:static\s+)?bool\s+(?:Is|Has|Can|Completes|Would)[A-Za-z0-9_]*\s*\(|operator==/
 const PREDICATE_BANNED_PREFIX = /^(?:检查|判断|校验|验证)/
@@ -57,7 +61,7 @@ function usage(message) {
 }
 
 function parseArgs(argv) {
-  const options = { root: undefined, width: 80, widthExplicit: false, commentStyle: 'slash', requireHeader: true, requireBrief: true, allowTags: new Set(), json: false, quiet: false }
+  const options = { root: undefined, width: 120, widthExplicit: false, commentStyle: 'slash', requireHeader: true, requireBrief: true, allowTags: new Set(), json: false, quiet: false }
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index]
     if (arg === '--root') {
@@ -123,10 +127,14 @@ function readColumnLimitNear(file, root) {
   }
 }
 
-/** 中文按两列计宽，用于判断渲染后的行宽。 */
+/** 中文按两列、tab 按 4 列计宽，用于判断渲染后的行宽。 */
 export function displayWidth(text) {
   let width = 0
   for (const char of text) {
+    if (char === '\t') {
+      width += 4 - (width % 4)
+      continue
+    }
     const code = char.codePointAt(0)
     const wide =
       (code >= 0x1100 && code <= 0x115f) ||
@@ -269,6 +277,7 @@ function definitionAt(lines, index) {
   const line = lines[index]
   if (/^\s*(if|for|while|switch|catch|else|return|case|default|do)\b/.test(line)) return undefined
   if (/^\s*[A-Z][A-Z0-9_]*\s*\(/.test(line)) return undefined
+  if (/^\s*~[A-Za-z_]\w*\s*\(/.test(line)) return undefined
   const match = line.match(/^(\s*)(.*?)\b([A-Za-z_]\w*)\s*\(([^)]*)\)\s*(?:const\s*)?(?:noexcept\s*)?(?:->\s*[^{]+)?\{\s*.*$/)
   if (!match) return undefined
   const prefix = match[2].trim()
@@ -324,6 +333,30 @@ export function checkDefinitionDocs(text, headerNames = new Set()) {
     }
   }
   return issues
+}
+
+/**
+ * 识别保存控制序列的常量声明，返回常量名；不是则返回 undefined。
+ * 只认 `constexpr std::string_view`、`constexpr char*` 与 `constexpr char`，
+ * 且字面量里出现 ESC（`\\033`、`\\x1b`、`\\e`）。
+ */
+function escapedControlConstant(declaration) {
+  const text = declaration.trim()
+  const string = STRING_SEQUENCE_CONSTANT.exec(text)
+  if (string && ESCAPE_SEQUENCE.test(string[2])) return string[1]
+  const character = CHAR_SEQUENCE_CONSTANT.exec(text)
+  return character ? character[1] : undefined
+}
+
+/** 取紧贴在声明上方的文档注释；块注释与 `///` 都认。 */
+function attachedDoc(lines, index, style) {
+  if (style !== 'block') return docAbove(lines, index)
+  let end = index - 1
+  if (end < 0 || !lines[end].trim().endsWith('*/')) return undefined
+  let start = end
+  while (start >= 0 && !lines[start].trim().startsWith('/**')) start -= 1
+  if (start < 0) return undefined
+  return blockDocAt(lines, start)
 }
 
 /** 取函数注释第一段：遇到空行或 Doxygen 标签就结束。 */
@@ -397,7 +430,7 @@ export function blockDocAt(lines, index) {
 
 /** 检查一段文本，返回问题列表；每个问题带 1 起始的行号。 */
 export function checkText(text, options = {}) {
-  const width = options.width ?? 80
+  const width = options.width ?? 120
   const requireHeader = options.requireHeader ?? true
   const lines = text.split(/\r?\n/)
   const issues = []
@@ -610,6 +643,23 @@ export function checkText(text, options = {}) {
       for (const name of documented) {
         if (!params.includes(name)) add(doc.start + 1, 'param-extra', `@param ${name} 在声明里不存在`)
       }
+    }
+  }
+
+  for (let index = 0; index < lines.length; index += 1) {
+    if (doxyHeaderEnd !== -1 && index <= doxyHeaderEnd) continue
+    if (/^\s/.test(lines[index])) continue
+    const name = escapedControlConstant(lines[index])
+    if (!name) continue
+    const doc = attachedDoc(lines, index, style)
+    if (!doc) {
+      add(index + 1, 'constant-comment-missing', `控制序列常量 ${name} 缺少注释：在声明上一行写「……的控制序列：……。」`)
+      continue
+    }
+    const summary = summaryParagraph(doc.contents)
+    const firstSentence = summary.match(/[^。]*。/)?.[0] ?? summary
+    if (!SEQUENCE_FIRST.test(firstSentence)) {
+      add(doc.start + 1, 'constant-sequence-first', `控制序列常量 ${name} 的第一句要写成名词短语「……的控制序列：……。」：先说是哪个序列，再写名字和转义写法看不出的事实`)
     }
   }
 

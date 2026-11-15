@@ -29,6 +29,7 @@ metadata:
 
 - 不发明阶段表和用户请求里没有的行为、类型与命令；选类型与写法时以项目声明的语言标准为上限。
 - 只改注释或格式时不改可观察行为；不覆盖已有源码；不安装工具链；代理侧不写 `wsl` 或 `bash -lc`。
+- 标准库无法在合理工作量内完成的能力（复杂终端界面、滚动、鼠标），先选用维护中的开源三方库，接在直接使用它的 target；选型与接入见 `references/design/03-third-party.md`。
 - 计划、命名方案或注释措辞与条文、项目技能或用户明确要求冲突时，先列冲突位置、原文与出处，由用户选一条；不自行取舍，也不默认采用计划。
 - 后一步发现前一步没做完，退回那一步，不在当前步补结构；拿不准先用单点修正，边界被打破则退回整段重构。
 
@@ -52,6 +53,8 @@ metadata:
 | 不知道开哪一份条文 | `references/index.md` |
 | 行为、库与程序的边界 | `steps/01-behavior.md`、`steps/02-boundary.md`；案例在 `references/design/examples/` |
 | 会话层、选着与程序边界 | `references/design/session-layer.md`；领域规则见 `references/design/01-project-design.md` |
+| 复杂能力、三方库选型 | `references/design/03-third-party.md` |
+| RAII、资源寿命与析构 | `references/design/02-raii.md` |
 | 文件槽位、包含守卫、声明顺序 | `references/layout/02-file-template.md`、`references/layout/03-declaration-order.md` |
 | 命名与改名 | `references/naming/01-identifier-names.md`；案例在 `references/naming/examples/`；术语在 `references/naming/glossary/` |
 | 声明注释与实现注释 | `references/comments/01-comment-rules.md`（写什么）与 `references/comments/02-style.md`（结构、版式、措辞）；案例在 `references/comments/examples/` |
@@ -68,7 +71,7 @@ metadata:
 
 加载预算见 [budget.md](../shared/budget.md)。
 
-项目技能列出了检查命令时先跑它；无论有没有项目命令，都再跑本技能的 `scripts/checking-declaration-order.mjs`（定义顺序）与 `scripts/checking-comments.mjs`（注释）；两者退出码为 0 后停在这一步，不再继续走没有失败的步骤。
+项目技能列出了检查命令时先跑它；无论有没有项目命令，都再跑本技能的 `scripts/checking-declaration-order.mjs`（定义顺序与签名）与 `scripts/checking-comments.mjs`（注释）；两者退出码为 0 后停在这一步，不再继续走没有失败的步骤。
 
 ## 四类改动
 
@@ -87,8 +90,9 @@ metadata:
 
 - [ ] 第 1 步的行为句能被用户或测试验收；有阶段表时只覆盖对应行，没有时只覆盖用户点名的行为。
 - [ ] 第 2 步的库 target 不依赖终端、GUI 或脚本；程序 target 只做装配和输入输出；共享抽象有第二个真实使用方。
+- [ ] 超出标准库的能力用维护中的三方库完成，库只出现在直接使用它的 target，规则库不依赖终端、GUI 或库类型。
 - [ ] 第 3 步的公共头文件自包含，命名、声明顺序和异常声明符合 `references/` 的条文；类型注释只写本类型，纯值容器一句，初始状态归默认构造函数。
-- [ ] 第 4 步的实现只兑现声明；`.cpp` 定义顺序与头文件声明同序；同一文件里的函数按同一套分段约定，需要分阶段的都有阶段注释与空行；资源由 RAII 管理；失败是正常结果时用返回值，函数无法完成任务时抛异常，不拿异常做正常分支。
-- [ ] `.cpp` 定义顺序检查通过：`node "<skill-dir>/scripts/checking-declaration-order.mjs" --root <项目根>` 退出码为 0；有乱序先修，不能跳过。
+- [ ] 第 4 步的实现只兑现声明；`.cpp` 定义顺序与头文件声明同序，参数类型、限定符与返回类型同声明一致；同一文件里的函数按同一套分段约定，需要分阶段的都有阶段注释与空行；资源由 RAII 管理；失败是正常结果时用返回值，函数无法完成任务时抛异常，不拿异常做正常分支。
+- [ ] `.cpp` 定义顺序与签名检查通过：`node "<skill-dir>/scripts/checking-declaration-order.mjs" --root <项目根>` 退出码为 0；有乱序或签名不一致先修，不能跳过。
 - [ ] 源码注释符合 `references/comments/01-comment-rules.md` 与 `02-style.md` 的规范，`node "<skill-dir>/scripts/checking-comments.mjs" --root <项目根>` 退出码为 0，末行是「注释检查通过：N 个文件。」。
 - [ ] 没有改 `CMakeLists.txt`、`.clang-*`、构建脚本，也没有把外部资料路径或项目专属类名写进通用条文。

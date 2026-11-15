@@ -1,15 +1,15 @@
-<!-- 读取时机：配 CMake 或工具链时；读完能回答：CMake；预算：一次只开这一份（230 行），不自动串联。 -->
+<!-- 读取时机：配 CMake 或工具链时；读完能回答：CMake；预算：一次只开这一份（244 行），不自动串联。 -->
 # CMake
 
 目标：一个编译器、Ninja、target-based 规则、可用的编译数据库。下面是最小形状和常见边界；工程模板仍由 `building-cpp` 提供，在 `../../../../building-cpp/assets/templates/projects/`，可复用的 CMake 函数在本技能的 `assets/`：`CompileSettings.cmake` 收标准与警告，`LinkSettings.cmake` 收构建期 RPATH 与 GoogleTest 依赖。
 
 ## 排版
 
-CMake 没有单独的官方风格指南文档，但官方仓库的 [.editorconfig](https://raw.githubusercontent.com/Kitware/CMake/master/.editorconfig) 明确规定：`CMakeLists.txt`、`*.cmake`、`*.rst` 使用 `indent_size = 2`、`indent_style = space`。这是官方代码风格的直接依据。行宽 80 列来自社区 `cmake-format` 约定（[or-tools](https://github.com/google/or-tools/blob/stable/.cmake-format.py)、[draco](https://github.com/google/draco/blob/master/.cmake-format.py) 都设 `tab_size=2`、`line_width=80`），不是 CMake 官方强制值。命令行、列表和注释都按项目约定的宽度换行；`CMakeLists.txt` 与 `*.cmake` 一视同仁。
+CMake 没有单独的官方风格指南文档，官方仓库的 [.editorconfig](https://raw.githubusercontent.com/Kitware/CMake/master/.editorconfig) 规定 `CMakeLists.txt`、`*.cmake`、`*.rst` 使用 `indent_size = 2`、`indent_style = space`；本机 `cmake 4.2` 的 359 个官方模块没有一个文件含 tab。本仓为了跟 C++ 源码的 4 列 tab 层级一致，把 `CMakeLists.txt` 与 `*.cmake` 统一为 tab 缩进（宽 4 列），行内对齐用空格；这是有意偏离官方空格约定。官方文档块内部仍按 RST 的 2 空格，块内不 tab 化。行宽上限取 120 列，中文字符按 2 列计，tab 按 4 列展开后计宽；命令行、列表和注释一视同仁，官方文档块的分隔行固定 79 列，不跟着加宽。
 
-注释不用 `#[[.rst:`。那层标记只属于要进 CMake 手册的模块：Kitware 在 [documentation.rst](https://github.com/Kitware/CMake/blob/master/Help/dev/documentation.rst) 里用 `.. command::` 与参数段，供 Sphinx 从源码抽进手册；本仓的模块不进手册，读者也读不懂这层标记。公开函数上方写中文 `#` 契约：第一句说功能，空一行写边界，再用 `:param 名字:` 标位置参数、`:keyword 名字:` 标 `cmake_parse_arguments` 的关键字；CMake 函数没有返回值，不写 `:return:`，也不把 C++ 的 `@param`、`@return` 搬进来。字段取自 [CMinx](https://cmakepp.github.io/CMinx/documenting/function.html)；本仓不跑 CMinx，注释保持普通 `#` 行。签名留在 `function()` 那一行，同一文件的函数组之间用一条 `#---` 短横线分隔；行注释只写原因，不画 `#===...===#` 方框。官方 [GoogleTest.cmake](https://github.com/Kitware/CMake/blob/master/Modules/GoogleTest.cmake) 在一个文件里放多个测试函数，可作“文件按职责聚合”的参照；社区 [CompilerWarnings.cmake](https://github.com/cpp-best-practices/cmake_template/blob/main/cmake/CompilerWarnings.cmake) 在每个警告 flag 后写它抓什么问题，可作参数注释的参照。
+注释用官方文档块。CMake 官方模块在文件开头放一个 `#[=======================================================================[.rst:` 块：模块名下一行画标题线，命令用 `.. command::`，签名用 `.. code-block:: cmake`，参数在正文里用双反引号包住（Kitware 的 [documentation.rst](https://github.com/Kitware/CMake/blob/master/Help/dev/documentation.rst) 与 [GoogleTest.cmake](https://github.com/Kitware/CMake/blob/master/Modules/GoogleTest.cmake) 都是这个形）。本仓照这个形写，块内散文用中文：模块名、`Commands`、`.. command::`、`.. code-block::` 这些标记保留英文，功能、边界与参数说明写中文句子。签名仍留在 `function()` 那一行，块里只抄调用形式，不重复参数表；CMake 函数没有返回值，不写 `:return:`，也不把 C++ 的 `@param`、`@return` 搬进来。模块文件不再画 `#---` 函数分隔线，一个文件的多个命令在 `Commands` 段落里逐个列出。`CMakeLists.txt` 以文件头开头：标题一行、`#` 一行、再用 1–2 行写用途，空一行后接命令；命令之间空一行，按“项目、模块、产物、子目录”的顺序自然分组，不画框线、不写段落标题；小文件可只留一行标题；工程模板提供最小形状，从 `cmake_minimum_required` 开始，注释保持最少，使用者按本段补齐；`CMakeLists.txt` 在每条命令上方写一句说明，子目录文件同样；同一文件保持同一句式，句子的主语按命令的实际对象（工程、目标、产物）写，不要每条都以「本工程」「本项目」开头。中文注释用全角标点，用书面语，避免口语词与网络用语；中文与英文、数字之间留一个空格，句子写完整并说明职责或原因，不复述命令名与模块名。模块文件（`*.cmake`）把说明写进 RST 文档块，函数体内不写行注释；子目录 `CMakeLists.txt` 用普通 `#` 注释。官方 [GoogleTest.cmake](https://github.com/Kitware/CMake/blob/master/Modules/GoogleTest.cmake) 在一个文件里放多个测试命令，可作“文件按职责聚合”的参照；社区 [CompilerWarnings.cmake](https://github.com/cpp-best-practices/cmake_template/blob/main/cmake/CompilerWarnings.cmake) 在每个警告 flag 后写它抓什么问题；本仓把这类说明收进文档块，函数体内不留行注释。
 
-Shell 脚本用 2 个空格缩进、不用 tab，来源是 [Google Shell Style Guide](https://google.github.io/styleguide/shellguide.html#indentation)。
+Shell 脚本同样用 tab 缩进（宽 4 列），行内对齐用空格；Google Shell Style Guide 用 2 个空格，本仓为单仓统一而有意偏离。
 
 ## 最小可用形状
 
@@ -26,8 +26,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 include(CompileSettings)
 
 add_executable(app src/main.cpp)
-CompileSettings_SetCxxStandard(app PRIVATE c++23)
-CompileSettings_SetWarnings(app PRIVATE LEVEL standard)
+set_target_cxx_standard(app PRIVATE c++23)
+set_target_warnings(app PRIVATE LEVEL standard)
 ```
 
 ### 库 + 程序
@@ -47,8 +47,8 @@ include(CompileSettings)
 add_subdirectory(greeting)
 
 add_executable(app src/main.cpp)
-CompileSettings_SetCxxStandard(app PRIVATE c++23)
-CompileSettings_SetWarnings(app PRIVATE LEVEL standard)
+set_target_cxx_standard(app PRIVATE c++23)
+set_target_warnings(app PRIVATE LEVEL standard)
 target_link_libraries(app PRIVATE greeting)
 ```
 
@@ -56,29 +56,29 @@ target_link_libraries(app PRIVATE greeting)
 # greeting/CMakeLists.txt
 add_library(greeting STATIC src/greeting.cpp)
 target_include_directories(greeting PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-CompileSettings_SetCxxStandard(greeting PUBLIC c++23)
-CompileSettings_SetWarnings(greeting PRIVATE LEVEL standard)
+set_target_cxx_standard(greeting PUBLIC c++23)
+set_target_warnings(greeting PRIVATE LEVEL standard)
 ```
 
 - 库的 `PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include` 让程序与链接它的测试写 `#include "greeting.h"` 就能找到公共头，不需要各自再写 include 路径。
-- 标准用 `CompileSettings_SetCxxStandard`：库用 `PUBLIC` 传播“至少 C++NN”，程序用 `PRIVATE`；`CXX_STANDARD`/`CXX_EXTENSIONS` 不传播，每个会编译的 target 都要自己调用一次。
+- 标准用 `set_target_cxx_standard`：库用 `PUBLIC` 传播“至少 C++NN”，程序用 `PRIVATE`；`CXX_STANDARD`/`CXX_EXTENSIONS` 不传播，每个会编译的 target 都要自己调用一次。
 - `CXX_STANDARD_REQUIRED ON` 防止 CMake 在编译器不支持时静默降级；`CXX_EXTENSIONS OFF` 把 `-std=gnu++NN` 收成 `-std=c++NN`。configure 后检查 `compile_commands.json` 的最后一条 `-std=`。
 - 程序 target 固定 `app`；库 target 用组件名。
 
 ## 标准与复用
 
-C++11–C++23 的两层声明、可见性、常见错误与验证见 `../standards/01-cxx-standard.md`。通用函数 `CompileSettings_SetCxxStandard(target visibility c++NN)` 在 `../assets/CompileSettings.cmake`：
+C++11–C++23 的两层声明、可见性、常见错误与验证见 `../standards/01-cxx-standard.md`。通用函数 `set_target_cxx_standard(target visibility c++NN)` 在 `../assets/CompileSettings.cmake`：
 
 ```cmake
-CompileSettings_SetCxxStandard(app PRIVATE c++23)
-CompileSettings_SetCxxStandard(greeting PUBLIC c++20)
+set_target_cxx_standard(app PRIVATE c++23)
+set_target_cxx_standard(greeting PUBLIC c++20)
 ```
 
 函数名不绑定单一标准；新增档位只改函数里的支持列表。模块何时抽、文件怎么放、怎么导入与测试见 `../modules/01-functions.md`。
 
 ## 警告等级
 
-`references/cmake/assets/CompileSettings.cmake` 的 `CompileSettings_SetWarnings(<target> <visibility> LEVEL basic|standard|strict)` 把常用 flag 收成三档；`visibility` 用 `PRIVATE` 或 `INTERFACE`，`PRIVATE` 不向使用方传播。警告与标准写在同一份编译设置模块里。
+`references/cmake/assets/CompileSettings.cmake` 的 `set_target_warnings(<target> <visibility> LEVEL basic|standard|strict)` 把常用 flag 收成三档；`visibility` 用 `PRIVATE` 或 `INTERFACE`，`PRIVATE` 不向使用方传播。警告与标准写在同一份编译设置模块里。
 
 - `basic`：`-Wall -Wextra`；适合刚开始接 CI 的旧代码。
 - `standard`：`basic` 加 `-Werror`、`-Wshadow`、`-Wold-style-cast`、`-Wpedantic`、`-Wnon-virtual-dtor`、`-Woverloaded-virtual`；默认档。
@@ -90,7 +90,7 @@ MSVC 分支用 `/W4`、`/permissive-`、`/WX`；其他编译器直接报错，�
 
 - 每个 target 自己声明 include、标准、编译选项、链接库；不要用全局 `include_directories()`、`add_definitions()`、`CMAKE_CXX_FLAGS` 给所有 target 加料。
 - `target_include_directories(<target> PUBLIC|PRIVATE <dir>)`：公共头给 `PUBLIC`，私有实现目录给 `PRIVATE`。
-- `target_compile_features(<target> PUBLIC|PRIVATE cxx_std_NN)`：只传播“至少 C++NN”的最低要求；精确 `-std` 由 `CompileSettings_SetCxxStandard` 在会编译的 target 上设置，不靠这一步锁死。
+- `target_compile_features(<target> PUBLIC|PRIVATE cxx_std_NN)`：只传播“至少 C++NN”的最低要求；精确 `-std` 由 `set_target_cxx_standard` 在会编译的 target 上设置，不靠这一步锁死。
 - `target_link_libraries(<target> PRIVATE|PUBLIC <lib>)`：实现依赖用 `PRIVATE`，接口依赖用 `PUBLIC`。CMake 只硬性要求第一个参数已创建；被链接的库可以稍后定义，CMake 会补 ordering dependency。工程约定仍是先定义后引用，避免靠隐式排序。
 - 不要 `file(GLOB ...)`；显式列源文件，新增文件时改 CMake，构建系统才知道。`CONFIGURE_DEPENDS` 依赖构建系统每次检查目录，跨生成器行为也不完全一致，不作为工程规则。
 - 不把 `main()` 编进库；程序只做装配和 I/O。
@@ -98,7 +98,7 @@ MSVC 分支用 `/W4`、`/permissive-`、`/WX`；其他编译器直接报错，�
 - 组件多起来时，一个组件一个 `CMakeLists.txt`：库放 `<component>/include` 与 `<component>/src`，程序放 `app/include` 与 `app/src`；`app/include` 只给程序内部用，不要被库 `PUBLIC` 导出。
 - 源文件只列在它所在目录的 target 里；子目录的程序或测试用 `target_link_libraries` 链接该 target，不写 `../other/src/*.cpp`；跨目录共用代码时，先让源目录提供可链接的 target。
 - CMake 注释只写 target 的职责、可见性和使用条件，不写「源码留在本目录」「子目录不写 ../other/src/*.cpp」这类目录边界；源文件列表与链接关系已经表达边界。
-- 一个 target 的配置连续成块：按 `add_*`、`target_include_directories`、`CompileSettings_SetCxxStandard`、`CompileSettings_SetWarnings`、其它 `target_*` 编译选项、`target_link_libraries`、`set_target_properties` 的顺序写；标准与警告必须相邻，`target_link_libraries` 与 `set_target_properties` 也必须相邻，中间不插其它调用。
+- 一个 target 的配置连续成块：按 `add_*`、`target_include_directories`、`set_target_cxx_standard`、`set_target_warnings`、其它 `target_*` 编译选项、`target_link_libraries`、`set_target_properties` 的顺序写；模板尚未引入设置函数时，`target_compile_features` 与设置 `CXX_STANDARD` 的 `set_target_properties` 占标准的位置，警告的 `target_compile_options` 占警告的位置。标准与警告必须相邻，`target_link_libraries` 与 `set_target_properties` 也必须相邻，中间不插其它调用。
 - 测试 target 等出现第二个消费者时再加，不要为单个 `main()` 提前引入测试框架；测试只链接库的公共接口。
 
 ## 工程名
@@ -126,11 +126,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 ```cmake
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 ```
 
-- 可执行文件统一到 `build/<compiler>/bin`；库到 `build/<compiler>/lib`。
+- 可执行文件统一到 `build/<compiler>/bin`。
+- 库统一到 `build/<compiler>/lib`。
 - 不要输出到源码目录；`git status` 不应出现构建产物。
 - 运行程序时从 `build/<compiler>/bin` 启动，或由脚本设置工作目录。
 
@@ -138,7 +141,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
 ```cmake
 include(LinkSettings)
-LinkSettings_SetBuildRpath(app)
+set_target_build_rpath(app)
 ```
 
 - 函数按平台写 `BUILD_RPATH`：Linux 用 `$ORIGIN/../lib`，Apple 用 `@loader_path/../lib`。
@@ -156,18 +159,18 @@ LinkSettings_SetBuildRpath(app)
 
 ## 警告与静态检查
 
-- 警告选项统一由 `CompileSettings_SetWarnings` 按 `basic` / `standard` / `strict` 施加，不要另写一套 `-Wall -Wextra -Werror` 列表；各档的具体 flag 见上文「警告等级」。
+- 警告选项统一由 `set_target_warnings` 按 `basic` / `standard` / `strict` 施加，不要另写一套 `-Wall -Wextra -Werror` 列表；各档的具体 flag 见上文「警告等级」。
 - 不要把警告选项加到全局 `CMAKE_CXX_FLAGS`；每个 target 显式加，或用一个函数统一施加。
 - `clang-tidy` 在构建后单独跑，不挂进 CMake 的编译命令；这样编译数据库稳定，诊断可复现。
 - 需要 `clang-tidy` 集成时用 `CMAKE_CXX_CLANG_TIDY`，但本项目默认不启用，避免构建与检查耦合。
 
 ## GoogleTest
 
-需要测试框架时，用固定版本的 `LinkSettings_FetchGoogleTest`：
+需要测试框架时，用固定版本的 `fetch_googletest`：
 
 ```cmake
 include(LinkSettings)
-LinkSettings_FetchGoogleTest()
+fetch_googletest()
 ```
 
 - 函数内部固定 GoogleTest v1.17.0 的 URL 与 SHA-256，避免供应链漂移；版本升级只改一处。
@@ -199,29 +202,38 @@ LinkSettings_FetchGoogleTest()
 
 ### CMake 函数注释
 
-**差**：
+**好**：
 
 ```cmake
-#[[.rst:
-CompileSettings_SetWarnings
----------------------------
-]]
+#[=======================================================================[.rst:
+CompileSettings
+---------------
+
+.. command:: set_target_cxx_standard
+
+  .. code-block:: cmake
+
+    set_target_cxx_standard(<target> <visibility> <standard>)
+
+  让已存在的 ``<target>`` 使用 ``<standard>`` 指定的语言标准。
+  本命令只改传入的目标，不设全局变量。
+#]=======================================================================]
 ```
 
-`#[[.rst:` 与 `.. command::` 只给要进 CMake 手册的模块用；`@param`、`@return` 是 C++ 的 Doxygen 标签，CMake 里不用；CMake 函数没有返回值，也不写 `:return:`。
+模块名、`Commands` 与 `.. code-block::` 这些标记保留英文，块内散文用中文；签名留在 `function()` 那一行，块里只抄调用形式。
 
-**好**：
+**差**：
 
 ```cmake
 # 给一个目标加上编译警告。
 #
-# 只改传入的目标。PRIVATE 不向使用方传播。
-#
 # :param target: 已经存在的 CMake 目标。
 # :param visibility: 取 PRIVATE 或 INTERFACE。
-# :keyword LEVEL: 可省略。取 basic、standard 或 strict；省略时按 standard。
-function(CompileSettings_SetWarnings target visibility)
+# :keyword LEVEL: 可省略。取 basic、standard 或 strict。
+function(set_target_warnings target visibility)
 ```
+
+`:param`、`:keyword` 是 CMinx 的 Sphinx 字段，官方模块不用；`@param`、`@return` 是 C++ 的 Doxygen 标签，CMake 里也不用；CMake 函数没有返回值，不写 `:return:`。
 
 ## 依据
 
@@ -229,3 +241,5 @@ function(CompileSettings_SetWarnings target visibility)
 - [CMake: `target_include_directories`](https://cmake.org/cmake/help/latest/command/target_include_directories.html)：`PUBLIC` / `PRIVATE` / `INTERFACE` 的传递。
 - [CMake: `CMAKE_EXPORT_COMPILE_COMMANDS`](https://cmake.org/cmake/help/latest/variable/CMAKE_EXPORT_COMPILE_COMMANDS.html)：生成 `compile_commands.json`。
 - [CMake: `CMAKE_CXX_STANDARD`](https://cmake.org/cmake/help/latest/variable/CMAKE_CXX_STANDARD.html)：标准版本与 `CXX_STANDARD_REQUIRED`。
+- [CMake `documentation.rst`](https://github.com/Kitware/CMake/blob/master/Help/dev/documentation.rst)：官方文档块、`.. command::` 与参数段的写法。
+- [CMake `.editorconfig`](https://raw.githubusercontent.com/Kitware/CMake/master/.editorconfig)：官方取 2 个空格、不用 tab；本仓在此之上改为 tab（宽 4 列）。

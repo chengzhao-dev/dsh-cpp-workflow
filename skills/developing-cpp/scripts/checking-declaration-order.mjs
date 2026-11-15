@@ -1,17 +1,18 @@
 #!/usr/bin/env node
-// 只读检查 `.cpp` 中成员函数的定义顺序是否跟随配对头文件的声明顺序。
+// 只读检查 `.cpp` 中成员函数的定义顺序与签名是否跟随配对头文件。
 //
-// 规则见 references/layout/03-declaration-order.md「`.cpp` 的定义顺序」：
-// 先类型常量、再自由函数、再成员函数；成员按类内声明顺序；构造函数、析构函数、
-// 拷贝与移动放在成员组最前；不为先编译而重排。
+// 规则见 references/layout/03-declaration-order.md「`.cpp` 的定义顺序」与
+// 「声明与定义的签名」：先类型常量、再自由函数、再成员函数；成员按类内声明顺序；
+// 构造函数、析构函数、拷贝与移动放在成员组最前；参数类型、限定符与返回类型必须
+// 与声明一致；不为先编译而重排。
 //
-// 本脚本只比较能在配对头文件里找到声明的类成员；自由函数与匿名命名空间不参与，
-// 头文件里没有声明的定义直接跳过，避免把另一个头文件的实现误报成乱序。
+// 本脚本只比较配对头文件里存在的类；自由函数与匿名命名空间不参与。类内没有声明
+// 的成员定义报 definition-undeclared，签名不一致报 definition-signature。
 //
 // 用法：
 //   node checking-declaration-order.mjs [--root DIR] [--json] [--quiet]
 //
-// 退出码：0 无问题，1 发现乱序，2 用法或读取错误。
+// 退出码：0 无问题，1 发现定义顺序或签名问题，2 用法或读取错误。
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -224,18 +225,180 @@ export function cppDefinitions(text) {
   const code = stripCommentsAndStrings(text)
   const definitions = []
   const lines = code.split('\n')
+  const lineStarts = []
+  let offset = 0
+  for (const line of lines) {
+    lineStarts.push(offset)
+    offset += line.length + 1
+  }
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index]
-    const match = /^\s*(?:template\s*<[^>]*>\s*)?(?:[A-Za-z_][\w:<>,\s*&]*?\s+)?([A-Za-z_]\w*)::(~?[A-Za-z_]\w*|operator\s*[^\s(]+)\s*\(/.exec(line)
+    const match = /^(\s*)(.*?)\b([A-Za-z_]\w*)::(~?[A-Za-z_]\w*|operator\s*[^\s(]+)\s*\(/.exec(line)
     if (!match) continue
+    if (/^\s*(?:return|if|while|for|switch|throw|case|else|do)\b/.test(match[2])) continue
+    const open = lineStarts[index] + match.index + match[0].lastIndexOf('(')
+    const close = matchParen(code, open)
+    if (close === -1) continue
+    let suffixEnd = close + 1
+    let depth = 0
+    for (let cursor = close + 1; cursor < code.length; cursor += 1) {
+      const char = code[cursor]
+      if (char === '(') depth += 1
+      else if (char === ')') depth = Math.max(0, depth - 1)
+      else if (depth === 0 && (char === '{' || char === ';' || char === ':')) {
+        suffixEnd = cursor
+        break
+      }
+    }
     definitions.push({
-      className: match[1],
-      name: match[2].replace(/\s+/g, ' '),
+      className: match[3],
+      name: match[4].replace(/\s+/g, ' '),
       line: index + 1,
       text: line.trim(),
+      params: code.slice(open + 1, close),
+      suffix: code.slice(close + 1, suffixEnd),
+      returnType: match[2],
     })
+    const closeLine = code.slice(0, close).split('\n').length - 1
+    if (closeLine > index) index = closeLine
   }
   return definitions
+}
+
+const PARAM_TYPE_WORDS = new Set([
+  'auto', 'bool', 'char', 'char8_t', 'char16_t', 'char32_t', 'double', 'float',
+  'int', 'long', 'short', 'signed', 'unsigned', 'void', 'volatile', 'const',
+  'wchar_t',
+])
+
+function matchParen(text, open) {
+  let depth = 0
+  for (let index = open; index < text.length; index += 1) {
+    if (text[index] === '(') depth += 1
+    else if (text[index] === ')') {
+      depth -= 1
+      if (depth === 0) return index
+    }
+  }
+  return -1
+}
+
+function splitTopLevel(text, separator = ',') {
+  const parts = []
+  let depth = 0
+  let start = 0
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index]
+    if (char === '(' || char === '<' || char === '[' || char === '{') depth += 1
+    else if (char === ')' || char === '>' || char === ']' || char === '}') {
+      depth = Math.max(0, depth - 1)
+    } else if (char === separator && depth === 0) {
+      parts.push(text.slice(start, index))
+      start = index + 1
+    }
+  }
+  parts.push(text.slice(start))
+  return parts
+}
+
+function stripParamName(parameter) {
+  let text = parameter.replace(/\[\[[^\]]*\]\]/g, ' ').replace(/\s+/g, ' ').trim()
+  const equal = text.indexOf('=')
+  if (equal !== -1) text = text.slice(0, equal).trim()
+  text = text.replace(/\s+([A-Za-z_]\w*)\s*((?:\[[^\]]*\]\s*)+)$/, (match, name, suffix) =>
+    PARAM_TYPE_WORDS.has(name) ? match : ` ${suffix.trim()}`,
+  )
+  text = text.replace(/([&*])\s*([A-Za-z_]\w*)\s*$/, (match, symbol, name) =>
+    PARAM_TYPE_WORDS.has(name) ? match : symbol,
+  )
+  text = text.replace(/\s+([A-Za-z_]\w*)\s*$/, (match, name) =>
+    PARAM_TYPE_WORDS.has(name) ? match : '',
+  )
+  return text
+    .replace(/\s*([&*])\s*/g, '$1')
+    .replace(/\s*,\s*/g, ',')
+    .replace(/\s*<\s*/g, '<')
+    .replace(/\s*>\s*/g, '>')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function normalizeParams(params) {
+  const text = params.trim()
+  if (!text || text === 'void') return ''
+  return splitTopLevel(text)
+    .map((parameter) => stripParamName(parameter))
+    .filter(Boolean)
+    .join(',')
+}
+
+function normalizeReturnType(text) {
+  return text
+    .replace(/\[\[[^\]]*\]\]/g, ' ')
+    .replace(/\b(?:static|inline|virtual|explicit|friend|extern|constexpr|consteval)\b/g, ' ')
+    .replace(/\s*([&*])\s*/g, '$1')
+    .replace(/\s*<\s*/g, '<')
+    .replace(/\s*>\s*/g, '>')
+    .replace(/\s*::\s*/g, '::')
+    .replace(/\s*,\s*/g, ',')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function qualifierText(suffix) {
+  const text = suffix.replace(/=.*$/s, ' ').replace(/\b(?:override|final)\b/g, ' ')
+  const qualifiers = []
+  if (/\bconst\b/.test(text)) qualifiers.push('const')
+  if (/\bvolatile\b/.test(text)) qualifiers.push('volatile')
+  if (/\bnoexcept\b/.test(text)) qualifiers.push('noexcept')
+  if (/&&/.test(text)) qualifiers.push('&&')
+  else if (/(^|[^&])&(?!&)/.test(text)) qualifiers.push('&')
+  return qualifiers.join(' ')
+}
+
+function declarationSignature(text, className) {
+  const value = text.replace(/\[\[[^\]]*\]\]/g, ' ').replace(/\s+/g, ' ').trim()
+  if (!value || value.includes('{')) return undefined
+  if (/^template\b/.test(value)) return undefined
+  const match = /(~?[A-Za-z_]\w*|operator\s*[^\s(]+)\s*\(/.exec(value)
+  if (!match) return undefined
+  const name = match[1].replace(/\s+/g, ' ')
+  const open = value.indexOf('(', match.index)
+  const close = matchParen(value, open)
+  if (close === -1) return undefined
+  const before = value.slice(0, match.index)
+  const suffix = value.slice(close + 1)
+  const isSpecial = name === className || name === `~${className}`
+  return {
+    name,
+    params: normalizeParams(value.slice(open + 1, close)),
+    qualifiers: qualifierText(suffix),
+    returnType: isSpecial ? '' : normalizeReturnType(before),
+  }
+}
+
+function definitionSignature(definition) {
+  const arrow = /->\s*([^;{]+)/.exec(definition.suffix)
+  const baseReturn = normalizeReturnType(definition.returnType)
+  return {
+    name: definition.name,
+    params: normalizeParams(definition.params),
+    qualifiers: qualifierText(definition.suffix),
+    returnType: baseReturn === 'auto' && arrow ? normalizeReturnType(arrow[1]) : baseReturn,
+  }
+}
+
+function sameSignature(left, right) {
+  if (left.params !== right.params || left.qualifiers !== right.qualifiers) return false
+  if (left.returnType === right.returnType) return true
+  if (!left.returnType || !right.returnType) return false
+  return left.returnType === 'auto' || right.returnType === 'auto'
+}
+
+function formatSignature(signature) {
+  const head = signature.returnType ? `${signature.returnType} ` : ''
+  const tail = signature.qualifiers ? ` ${signature.qualifiers}` : ''
+  return `${head}${signature.name}(${signature.params})${tail}`
 }
 
 /** 检查头文件类内谓词是否排在 Get 之后。 */
@@ -263,7 +426,44 @@ export function checkHeaderOrder(headerText) {
   return issues
 }
 
-/** 比较一个头文件与一个实现文件；返回乱序问题。 */
+/** 检查类内定义是否都有声明，且参数与返回类型和声明一致。 */
+function checkDefinitionSignatures(headerText, cppText) {
+  const definitions = cppDefinitions(cppText)
+  const issues = []
+  for (const item of findClasses(headerText)) {
+    const members = classMembers(item.body)
+    const templateNames = new Set(
+      members
+        .filter((member) => /^template\b/.test(member.text))
+        .map((member) => member.name),
+    )
+    const declarations = members
+      .map((member) => ({ ...member, signature: declarationSignature(member.text, item.name) }))
+      .filter((member) => member.signature)
+    for (const definition of definitions.filter((entry) => entry.className === item.name)) {
+      if (templateNames.has(definition.name)) continue
+      const candidates = declarations.filter((member) => member.signature.name === definition.name)
+      if (candidates.length === 0) {
+        issues.push({
+          line: definition.line,
+          rule: 'definition-undeclared',
+          message: `${item.name}::${definition.name} 在配对头文件中没有声明。`,
+        })
+        continue
+      }
+      const actual = definitionSignature(definition)
+      if (candidates.some((member) => sameSignature(member.signature, actual))) continue
+      issues.push({
+        line: definition.line,
+        rule: 'definition-signature',
+        message: `${item.name}::${definition.name} 的定义与头文件声明不一致：声明为 ${formatSignature(candidates[0].signature)}，定义为 ${formatSignature(actual)}。`,
+      })
+    }
+  }
+  return issues
+}
+
+/** 比较一个头文件与一个实现文件；返回乱序与签名问题。 */
 export function checkPair(headerText, cppText, fileName = '') {
   const classes = findClasses(headerText)
   const definitions = cppDefinitions(cppText)
@@ -290,6 +490,7 @@ export function checkPair(headerText, cppText, fileName = '') {
       previous = definition.name
     }
   }
+  issues.push(...checkDefinitionSignatures(headerText, cppText))
   return issues.map((issue) => ({ file: fileName, ...issue }))
 }
 
@@ -371,9 +572,9 @@ function main(argv) {
     process.stdout.write(`${JSON.stringify({ root, pairs: result.pairs.length, issues: result.issues }, null, 2)}\n`)
   } else if (result.issues.length > 0) {
     for (const issue of result.issues) process.stdout.write(`${issue.file}:${issue.line}: [${issue.rule}] ${issue.message}\n`)
-    process.stdout.write(`发现 ${result.issues.length} 处定义顺序问题。\n`)
+    process.stdout.write(`发现 ${result.issues.length} 处声明与定义问题。\n`)
   } else if (!options.quiet) {
-    process.stdout.write(`定义顺序检查通过：${result.pairs.length} 对头文件与实现文件。\n`)
+    process.stdout.write(`声明与定义检查通过：${result.pairs.length} 对头文件与实现文件。\n`)
   }
   return result.issues.length === 0 ? EXIT.ok : EXIT.issues
 }

@@ -1,4 +1,4 @@
-<!-- 读取时机：配 CMake 或工具链时；读完能回答：CMake 模块与函数；预算：一次只开这一份（108 行），不自动串联。 -->
+<!-- 读取时机：配 CMake 或工具链时；读完能回答：CMake 模块与函数；预算：一次只开这一份（117 行），不自动串联。 -->
 # CMake 模块与函数
 
 目标：同一段构建逻辑只有一份权威，函数可导入、可校验、可测试，目标目录只表达差异。
@@ -29,8 +29,11 @@ project/
 
 - 一个文件放一组语义相近的函数，不为每个函数建单独文件；文件过大或出现无关职责时再拆。
 - 文件名用 UpperCamelCase，与 CMake 官方 `Modules/` 一致；按职责命名，例如 `CompileSettings.cmake`、`LinkSettings.cmake`。不用 kebab-case，也不用现在分词。
-- 函数名用 `<ModuleName>_` 加 PascalCase：`CompileSettings_SetCxxStandard`、`LinkSettings_FetchGoogleTest`。前缀取模块文件名的原样大小写，复制到工程后不改名。
-- 工程自己新增、不准备回流的函数才用项目前缀加 snake_case，例如 `my_project_do_something`。
+- 函数名用 snake_case，按“动词 + 对象”直接描述动作，例如
+  `set_target_cxx_standard`、`set_target_warnings`、`set_output_directories`；
+  不要机械重复模块名。CMake 没有命名空间，函数全局可见；确有重名风险时
+  再加短项目前缀，而不是完整模块名。
+- 工程自己新增、不准备回流的函数同样先取动作名；与外部模块可能冲突时再加短项目前缀，例如 `my_project_do_something`。
 - 只有项目真的需要时才建工程根的 `cmake/` 模块目录；一个函数都没有时不建空目录。
 
 ## 导入
@@ -52,31 +55,37 @@ include(CompileSettings)
 ```cmake
 include_guard(GLOBAL)
 
-function(CompileSettings_SetCxxStandard target visibility standard)
-  if(NOT TARGET ${target})
-    message(FATAL_ERROR "目标 ${target} 尚未创建")
-  endif()
-  # 校验 visibility 与 standard，再设置 target 属性。
+function(set_target_cxx_standard target visibility standard)
+	if(NOT TARGET "${target}")
+		message(FATAL_ERROR "目标 ${target} 尚未创建")
+	endif()
+
+	string(SUBSTRING "${standard}" 3 -1 number)
+
+	target_compile_features("${target}" "${visibility}" "cxx_std_${number}")
+
+	set_target_properties("${target}" PROPERTIES CXX_STANDARD "${number}")
 endfunction()
 
-# 同一文件的第二组函数前再放一条 #--- 分隔线。
-function(CompileSettings_SetWarnings target visibility)
-  cmake_parse_arguments(PARSE_ARGV 2 arg "" "LEVEL" "")
-  # 校验 LEVEL 与可见性，再调用 target_compile_options。
+function(set_target_warnings target visibility)
+	cmake_parse_arguments(PARSE_ARGV 2 arg "" "LEVEL" "")
+
+	target_compile_options("${target}" "${visibility}" -Wall -Wextra)
 endfunction()
 ```
 
 规则：
 
-- 参数顺序稳定，调用处不靠位置猜；参数多时在注释里列出类型与取值范围。
+- 参数顺序稳定，调用处不靠位置猜；参数多时在文档块里列出类型与取值范围。
 - 先校验目标存在、可见性合法、标准在支持列表内，再调用 `target_*`。
 - 失败用 `FATAL_ERROR`，消息带函数名与非法值；不要 `WARNING` 后继续。
-- 只改传入 target 的属性；不写全局变量，不读环境变量，不下载依赖。`LinkSettings_FetchGoogleTest` 是唯一例外，调用点限制在测试需要它的时候。
+- 只改传入 target 的属性；不写全局变量，不读环境变量，不下载依赖。`fetch_googletest` 是唯一例外，调用点限制在测试需要它的时候。
 - 函数体保持幂等：同一目标重复调用不产生两份冲突属性。
+- 函数体内并列的同类调用（如同一组 `set()`）各占一行，之间空一行；校验与执行等不同阶段之间也空一行。
 
 ## 契约注释
 
-公开函数上方写中文 `#` 契约：一句功能、空行、边界，再用 `:param` 标位置参数、`:keyword` 标关键字参数；不写 `#[[.rst:` 与 `.. command::`，那是进 CMake 手册的模块才用的标记。同一文件的函数组之间用一条 `#---` 分隔，行注释只写原因，不画 `#===...===#` 方框。完整写法见 `../targets/01-target-rules.md`。
+公开函数上方写官方文档块：文件开头一个 `#[=======================================================================[.rst:` 块，模块名下一行画标题线，命令用 `.. command::`、签名用 `.. code-block:: cmake`，块内散文写中文。同一文件不再画 `#---` 分隔线，函数体内不写行注释，说明都写进文档块，不画 `#===...===#` 方框。完整写法见 `../targets/01-target-rules.md`。
 
 ## 测试
 

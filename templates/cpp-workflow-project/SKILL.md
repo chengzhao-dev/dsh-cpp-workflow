@@ -39,7 +39,7 @@ metadata:
 - CTest 在工程内注册并运行；仓库根不构建、不注册测试。
 - 头文件用路径式包含守卫，不用 `#pragma once`。
 - 命名按 Google C++ 风格与工程白名单执行；谓词用 `Is/Has/Can/Completes` 等肯定式。
-- 标准与警告由 `cmake/CompileSettings.cmake` 的 `CompileSettings_SetCxxStandard`、`CompileSettings_SetWarnings` 统一施加；`environment.json` 的 `standard` 与 `.clang-format` 同步。
+- 标准与警告由 `cmake/CompileSettings.cmake` 的 `compile_settings_set_cxx_standard`、`compile_settings_set_warnings` 统一施加；`environment.json` 的 `standard` 与 `.clang-format` 同步。
 - 每个可独立构建、运行的程序一个工程；共享库等第二个真实使用方出现、语义稳定后再抽。
 - 阶段表、代码目录与文档章节保持对齐；没有阶段表时只写用户点名的行为。
 

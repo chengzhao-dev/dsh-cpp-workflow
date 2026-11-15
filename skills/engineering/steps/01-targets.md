@@ -20,12 +20,12 @@ target 规则：
 
 - 程序 target 固定叫 `app`；库 target 用组件名，程序链接库；不把 `main()` 编进库。
 - 每个 target 自己声明 include、标准、编译选项和链接库；公共头用 `PUBLIC`，实现目录用 `PRIVATE`。
-- 用 `target_include_directories`、`target_compile_features`、`target_link_libraries`；禁止全局 `include_directories()`、`add_definitions()`、`CMAKE_CXX_FLAGS`。
+- 用 `target_include_directories`、`target_compile_features`、`target_link_libraries`；禁止全局 `include_directories()`、`add_definitions()`、`CMAKE_CXX_FLAGS`。target 内的命令按 `../references/cmake/targets/01-target-rules.md` 的块顺序写，标准与警告放在链接之前。
 - 源文件显式列出；不写 `file(GLOB ...)`，新增文件时改 CMake。
 - `set(CMAKE_EXPORT_COMPILE_COMMANDS ON)`；可执行文件输出到 `build/<compiler>/bin`，库到 `build/<compiler>/lib`。
-- 需要直接运行构建产物的共享库程序，调用 `LinkSettings_SetBuildRpath(app)`；函数在 Linux 写 `$ORIGIN/../lib`，Apple 写 `@loader_path/../lib`。
-- 标准用工程根 `cmake/` 里的 `CompileSettings_SetCxxStandard(target visibility c++NN)`；没有这个函数时先从 `../references/cmake/assets/CompileSettings.cmake` 复制到工程根 `cmake/` 并导入，不要在每个 target 重复三属性。需要 `LinkSettings_SetBuildRpath` 或 `LinkSettings_FetchGoogleTest` 时，把同目录的 `LinkSettings.cmake` 一并复制并 `include(LinkSettings)`。
-- 警告用同一份 `CompileSettings.cmake` 里的 `CompileSettings_SetWarnings(target visibility LEVEL basic|standard|strict)`；`visibility` 用 `PRIVATE` 或 `INTERFACE`，不要在每个 target 重复 `-Wall` 列表。
+- 需要直接运行构建产物的共享库程序，调用 `set_target_build_rpath(app)`；函数在 Linux 写 `$ORIGIN/../lib`，Apple 写 `@loader_path/../lib`。
+- 标准用工程根 `cmake/` 里的 `set_target_cxx_standard(target visibility c++NN)`；没有这个函数时先从 `../references/cmake/assets/CompileSettings.cmake` 复制到工程根 `cmake/` 并导入，不要在每个 target 重复三属性。需要 `set_target_build_rpath` 或 `fetch_googletest` 时，把同目录的 `LinkSettings.cmake` 一并复制并 `include(LinkSettings)`。
+- 警告用同一份 `CompileSettings.cmake` 里的 `set_target_warnings(target visibility LEVEL basic|standard|strict)`；`visibility` 用 `PRIVATE` 或 `INTERFACE`，不要在每个 target 重复 `-Wall` 列表。
 
 ## 命令形状
 
@@ -47,7 +47,7 @@ GCC 模式把目录和编译器换成 `build/gcc`、`g++`（C 驱动换成 `gcc`
 
 **库 + 程序**：库的公共 include 用 `PUBLIC` 传播；程序不直接包含库的 `src/`。静态库与动态库的 target 写法相同，动态库额外设运行时路径。
 
-**测试**：确有第二个消费者时再加 `enable_testing()` 与 `add_subdirectory(tests)`；测试 target 用 `LinkSettings_FetchGoogleTest()` 取固定版本框架，并用 `gtest_discover_tests(<target> DISCOVERY_TIMEOUT 30 PROPERTIES LABELS unit TIMEOUT 10)` 注册；不得用 `add_test(NAME all ...)` 包整个可执行文件。测试 target 只链接被测库的公共接口，没有测试时不加空测试。
+**测试**：确有第二个消费者时再加 `enable_testing()` 与 `add_subdirectory(tests)`；测试 target 用 `fetch_googletest()` 取固定版本框架，并用 `gtest_discover_tests(<target> DISCOVERY_TIMEOUT 30 PROPERTIES LABELS unit TIMEOUT 10)` 注册；不得用 `add_test(NAME all ...)` 包整个可执行文件。测试 target 只链接被测库的公共接口，没有测试时不加空测试。
 
 **预设**：使用 preset 时名称固定 `clang` / `gcc`，与构建目录一致；没有 preset 时直接用上面的命令，不要两套并存。
 

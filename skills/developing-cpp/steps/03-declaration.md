@@ -14,8 +14,8 @@
 - 单参数构造函数写 `explicit`；查询成员函数尾部写 `const`；返回结果对象的 API 加 `[[nodiscard]]`，标注位置与 `friend` 的例外见 `references/language/value-types/07-nodiscard.md`；默认成员初始化写在声明处。初始化默认用花括号，详见 `references/language/language-basics/02-initialization.md`；该页说明 `std::vector<int>(n)` 这类容量构造为什么保留 `()`。特殊成员（含 `= default`）按声明顺序放在成员组最前，定义位置见 `references/layout/03-declaration-order.md`。
 - 头文件只就地定义约 10 行以内的短函数；模板与 `constexpr` 例外，其余函数体在 `.cpp`。头文件里不写 `using namespace`、非 `inline` 普通全局变量、匿名命名空间或 `static` 定义。
 - 失败是调用方的正常结果时，用结果类型或 `std::optional` 表达；输出参数只留给热循环里复用 `std::string` 或 `std::vector` 容量的例外，终端读入不使用。函数无法完成自己的任务、或构造函数无法建立不变量时才抛，异常类型的选择与消息见 `references/exceptions/01-exception-rules.md`。析构与 `swap` 标 `noexcept`，异常类型的拷贝/移动不抛；「拒绝」与「抛」并存时在公共头各写一行。
-- 一次操作有多种必须区分的正常结果时用 `enum class` 返回（如落子：成功、玩家不对、终局、占用），不用 `bool` 把原因压掉；成功还要附带数据时再考虑 `std::expected` 或结果结构。纯查询谓词仍用 `bool`。枚举项逐个写值，状态与结果枚举把 0 留给正常态（空、进行中或成功），失败态按固定顺序随后；身份枚举按领域编号（如 X=1、O=2），不套用 0 = 正常态；封闭状态码的枚举默认写 `: std::uint8_t` 并逐个写值，普通枚举用默认底层类型；确需其他 ABI 宽度时写明理由；都不靠第一项默认为 0（见 `references/language/value-types/04-enum.md`）；不要用 `bool` 开关参数承载两种以上行为（见 `references/language/value-types/10-float-bool.md`）。
-- 声明注释按 `references/comments/01-comment-rules.md`（内容）与 `references/comments/02-style.md`（结构、版式、措辞）写：类型注释、特殊成员、函数注释、数据成员。本步只决定「写哪些事实」：结果、失败方式、检查项、参数与返回值契约；句式、标签、宽度和示例由后两份定，行宽跟 `.clang-format` 的 `ColumnLimit`（默认 80，中文按两列），枚举项与 `struct` 短字段的行尾注释用 `///<` 并与声明对齐。判不准用词时再开 `references/comments/glossary/01-comment-terms.md`，它只列词表，不重复句式。私有函数同样写声明契约，不能默认调用者知道前置条件；输出参数标 `[out]`，既读又写标 `[in,out]`。
+- 一次操作有多种必须区分的正常结果时用 `enum class` 返回（如落子：成功、玩家不对、终局、占用），不用 `bool` 把原因压掉；成功还要附带数据时再考虑 `std::expected` 或结果结构。纯查询谓词仍用 `bool`。枚举项只在必要时显式写值；默认的连续值有利于 `switch` 的实现，也能避免因手写数值出错（C++ Core Guidelines Enum.8）。需要显式编号时，状态与结果枚举把 0 留给正常态（空、进行中或成功），失败态按固定顺序随后；身份枚举按领域编号（如 X=1、O=2），不套用 0 = 正常态；封闭状态码的枚举默认写 `: std::uint8_t`，普通枚举用默认底层类型；确需其他 ABI 宽度时写明理由（见 `references/language/value-types/04-enum.md`）；不要用 `bool` 开关参数承载两种以上行为（见 `references/language/value-types/10-float-bool.md`）。
+- 声明注释按 `references/comments/01-comment-rules.md`（内容）与 `references/comments/02-style.md`（结构、版式、措辞）写：类型注释、特殊成员、函数注释、数据成员。本步只决定「写哪些事实」：结果、失败方式、检查项、参数与返回值契约；句式、标签、宽度和示例由后两份定，行宽跟 `.clang-format` 的 `ColumnLimit`（默认 120，中文按两列、tab 按 4 列），枚举项与 `struct` 短字段的行尾注释用 `///<` 并与声明对齐。判不准用词时再开 `references/comments/glossary/01-comment-terms.md`，它只列词表，不重复句式。私有函数同样写声明契约，不能默认调用者知道前置条件；输出参数标 `[out]`，既读又写标 `[in,out]`。
 - 自定义类型的 `std::formatter` 特化放在类型头文件；`parse` 的默认格式限制、`format` 的复用与非法值回退见 `references/language/standard-library/06-format.md` 的「自定义类型的格式化」。
 - 写到已有的 `std::ostream` 用 `<<`；没有流对象时，默认用 `std::print` 与 `std::println`，它们只在 C++23 且标准库支持时可用；见 `references/language/standard-library/06-format.md`。
 
@@ -23,7 +23,7 @@
 
 **新增类型**：先判断是聚合 `struct`、有不变量的 `class`，还是 `enum class`；接口多于数据且有 invariant 时用 `class`，纯数据传递用 `struct`。
 
-**改公共接口**：先找所有调用方；改签名、改返回类型、改异常声明都算破坏性变更。能加默认参数或重载时优先加，不静默改变旧调用的含义。
+**改公共接口**：先找所有调用方；改签名、改返回类型、改异常声明都算破坏性变更。配对 `.cpp` 的定义、构造函数初始化列表与调用点在同一轮同步改。能加默认参数或重载时优先加，不静默改变旧调用的含义。
 
 **改名**：改名是一次独立改动，先搜全部调用点，再改声明、定义、测试和注释；不与改行为混，改完测试保持绿色；公共 API 改名按破坏性变更处理。
 

@@ -19,19 +19,15 @@ The exception material follows the C++ Core Guidelines' Error handling section a
 Fixed-version npm install:
 
 ```bash
-dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.1
+dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.6
 ```
 
-The latest published version is `0.7.1`; `0.7.5` exists only in the working tree and is not published yet, so use `0.7.1` above until it is released. `0.7.3` is skipped and will not be published. After the working-tree version is published, switch the npm command to:
+This page follows each release; run `npm view @chengzhao-dev/dsh-cpp-workflow version` if you need to confirm the current version on the registry.
+
+GitHub tag installs use the tag with the same version number:
 
 ```bash
-dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.5
-```
-
-GitHub tag installs require the matching tag; once `v0.7.5` is created, the version in the address matches the tag:
-
-```bash
-dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.5
+dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.6
 ```
 
 Replace `--profile` with the profile you actually run. The desktop app always runs the `desktop` profile, and that profile is owned by the app; if the command-line `add` is rejected, add the plugin in the app settings and use the same pinned npm version. A Git tag install uses the prebuilt `lib/` committed in the repository and runs no build on the target machine; the package has no install script that needs approval.
@@ -70,7 +66,7 @@ Keep one `environment.json` per repository. Its first three environment axes are
 | `compiler` | `clang`, `gcc` | One compiler per configuration |
 | `standard` | `c++11`, `c++14`, `c++17`, `c++20`, `c++23` | New projects default to `c++23`; one standard per project |
 
-The standard lives in `environment.json` as `standard` and must match the CMake target and compile database; on the CMake side, prefer `engineering`'s `CompileSettings_SetCxxStandard` function. New projects default to C++23; for C++11–C++20, lower `standard`, `cxx_std_*`, `CXX_STANDARD`, and the `.clang-format` parsing level together, not one at a time. Per-standard facilities, tooling, and downgrade tables are in the [standard directory](skills/engineering/references/cmake/standards/index.md); the CMake two-layer declaration is in [01-cxx-standard.md](skills/engineering/references/cmake/standards/01-cxx-standard.md).
+The standard lives in `environment.json` as `standard` and must match the CMake target and compile database; on the CMake side, prefer `engineering`'s `compile_settings_set_cxx_standard` function. New projects default to C++23; for C++11–C++20, lower `standard`, `cxx_std_*`, `CXX_STANDARD`, and the `.clang-format` parsing level together, not one at a time. Per-standard facilities, tooling, and downgrade tables are in the [standard directory](skills/engineering/references/cmake/standards/index.md); the CMake two-layer declaration is in [01-cxx-standard.md](skills/engineering/references/cmake/standards/01-cxx-standard.md).
 
 The generator is always Ninja. Build directories are `build/clang/` and `build/gcc/`; they are never shared. Analysis tools are always `clang-format`, `clang-tidy`, and `clangd`; GCC mode does not switch to another analyzer.
 

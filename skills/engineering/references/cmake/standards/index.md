@@ -77,15 +77,15 @@ set_target_properties(app PROPERTIES
 
 ### clang-format
 
-clang-format 21/22 的 `Standard` 只到 `c++20`，23 起接受 `c++23`。为兼容旧工具，映射如下：
+并非所有 clang-format 版本都接受 `c++23`；遇到不识别该值的工具会报 `unknown enumerated scalar`。为兼容这些工具，映射如下：
 
 | 声明 | 配置 |
 | --- | --- |
 | `c++11`–`c++20` | 对应 `Standard: c++NN` |
-| `c++23` | `Standard: Latest`（21/22 没有 `c++23`；23 起也可写 `c++23`） |
+| `c++23` | `Standard: Latest`（由工具取支持的最高标准；工具接受时也可直接写 `c++23`） |
 | `c++26`（未来） | 工具支持时写 `c++26`，否则 `Latest` |
 
-在 21/22 上不要为了“看起来精确”写 `c++23`，会报 `unknown enumerated scalar` 并退出 1；23 起可以直接写。
+写 `c++23` 前先确认工具接受该值；不确定时用 `Latest`。
 
 ### clangd
 

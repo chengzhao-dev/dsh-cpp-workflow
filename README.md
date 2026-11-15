@@ -19,19 +19,15 @@
 npm 安装固定版本：
 
 ```bash
-dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.1
+dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.6
 ```
 
-npm 当前最新发布是 `0.7.1`；仓库工作区里的 `0.7.5` 尚未发布，发布前请用上面的 0.7.1。`0.7.3` 已跳过、不再发布。工作区版本发布后，把 npm 命令换成：
+本页版本号随发布更新；安装前可用 `npm view @chengzhao-dev/dsh-cpp-workflow version` 确认 registry 上的最新版本。
+
+GitHub 标签安装使用同一版本号的标签，地址中的版本与标签同号：
 
 ```bash
-dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.5
-```
-
-GitHub 标签安装要等 `v0.7.5` 创建后再用；标签创建后，地址中的版本号与标签同号：
-
-```bash
-dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.5
+dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.6
 ```
 
 `--profile` 换成你实际运行的那个 profile。桌面应用固定跑 `desktop` profile，且该 profile 由应用独占管理；命令行 `add` 被拒绝时，在应用设置里添加插件，地址填同一个 npm 版本。Git 标签安装使用仓库内已构建的 `lib/`，不在目标机器上重新构建；包内也不含需要授权执行的安装脚本。
@@ -70,7 +66,7 @@ dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.5
 | `compiler` | `clang`、`gcc` | 一次配置一个编译器 |
 | `standard` | `c++11`、`c++14`、`c++17`、`c++20`、`c++23` | 新工程默认 `c++23`；一个工程一个标准 |
 
-标准写在 `environment.json` 的 `standard`，并同步到 CMake target 和编译数据库；CMake 侧优先调用 `engineering` 提供的 `CompileSettings_SetCxxStandard` 函数。新工程默认 C++23；C++11–C++20 工程把 `standard`、`cxx_std_*`、`CXX_STANDARD` 和 `.clang-format` 的解析档位一起降级，不要只改一处。每档的设施、工具和降档表见 [标准目录](skills/engineering/references/cmake/standards/index.md)，CMake 两层声明见 [01-cxx-standard.md](skills/engineering/references/cmake/standards/01-cxx-standard.md)。
+标准写在 `environment.json` 的 `standard`，并同步到 CMake target 和编译数据库；CMake 侧优先调用 `engineering` 提供的 `compile_settings_set_cxx_standard` 函数。新工程默认 C++23；C++11–C++20 工程把 `standard`、`cxx_std_*`、`CXX_STANDARD` 和 `.clang-format` 的解析档位一起降级，不要只改一处。每档的设施、工具和降档表见 [标准目录](skills/engineering/references/cmake/standards/index.md)，CMake 两层声明见 [01-cxx-standard.md](skills/engineering/references/cmake/standards/01-cxx-standard.md)。
 
 生成器固定 Ninja，构建目录是 `build/clang/` 与 `build/gcc/`，不共用 `build/`。诊断工具固定 `clang-format`、`clang-tidy`、`clangd`；GCC 模式也不换成别的分析器。
 

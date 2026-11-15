@@ -36,7 +36,7 @@
 
 - 纯数据聚合用 `struct`；有不变量的类型用 `class`，不变量在构造函数和公共成员函数里维持。
 - 单参数构造函数写 `explicit`；零参数构造函数不写。
-- 默认成员初始化写在声明处（NSDMI），不要在构造函数初始化列表里重复。
+- 默认成员初始化写在声明处（NSDMI），不要在构造函数初始化列表里重复；初始值来自构造参数或工厂调用时，改在构造函数初始化列表用花括号写一次，如 `screen_{MakeScreen()}`。
 - 普通对象默认用花括号初始化：`int count{};`、`std::vector<int> values{1, 2, 3};`。成员声明处也默认写 `{}`；拷贝初始化或 `auto` 推导用 `=`；`name = {{` 只用于多行聚合常量表，单个对象和空初始化仍写 `count{}`；容量构造等 `()` 例外见 `references/language/language-basics/02-initialization.md`。
 - 类声明顺序：public → protected → private；类型与别名 → 静态常量 → 工厂 → 构造/赋值/析构 → 其他函数 → 数据成员。
 - 用户声明的拷贝/移动/析构函数在头文件声明、在 `.cpp` 定义；只有零参数且默认实现足够时才写 `= default`。
@@ -67,7 +67,7 @@
 - 半开区间写成两个「变量在左」的比较：`id >= 0 && id < kTaskCount`；不要写 `0 <= id`。
 - 混合优先级算术加显式括号，消除 `readability-math-missing-parentheses`。
 - 内建整数默认用 `int`；需要确定宽度时用 `<cstdint>` 的 `std::int32_t`、`std::int64_t` 等（可省略 `std::` 前缀），可能到 2^31 的值用 64 位；`std::size_t` / `std::ptrdiff_t` 只用于大小和指针差。不要用无符号类型表达「这个值不会为负」。
-- 封闭状态码用 `enum class`；本项目固定写 `: std::uint8_t` 并逐个写出枚举值（见 `references/language/value-types/04-enum.md`，有意偏离 Google 的默认 `int`），普通枚举用默认底层类型。枚举值总是带作用域：`OrderResult::kSuccess`。
+- 封闭状态码用 `enum class`；本项目固定写 `: std::uint8_t`（见 `references/language/value-types/04-enum.md`，有意偏离 Google 的默认 `int`），普通枚举用默认底层类型。枚举值只在必要时显式指定；默认的连续值有利于 `switch` 的实现，也能避免因手写数值而出错（C++ Core Guidelines Enum.8）。枚举值总是带作用域：`OrderResult::kSuccess`。
 - 枚举的尾随注释要么全写要么全不写；两种句式与禁止项见 `references/comments/01-comment-rules.md`「枚举项与 `struct` 短字段：两种句式」。
 - 浮点不用 `==` 比较计算结果；按量纲给容差，金额用最小货币单位的整数。
 - 数值宽度、符号、整数角色、枚举、强类型、`const` 成员和下标访问的完整规则见 `references/language/value-types/01-width.md`、`02-signed.md`、`03-integer-roles.md`、`04-enum.md`、`05-strong-type.md`、`06-const-method.md`、`09-subscript.md`；初始化、RAII、移动和模板见 `references/language/language-basics/`。
@@ -83,7 +83,7 @@ Google 原文不使用 C++ 异常；本工作流只在开发阶段的源码指�
 - 组合消息以 `std::format` 为主：`std::format("任务 {} 进入状态 {}", task, state)`。
 - 写到已有的 `std::ostream` 用 `<<`；没有流对象时，默认用 `std::print` 与 `std::println`，它们只在 C++23 且标准库支持时可用；见 `references/language/standard-library/06-format.md`。
 - 简单字面量输出可以直接用 `std::cout << "..."`；需要拼接变量、对齐、数值格式时用 `std::format`。
-- 列宽跟工程根 `.clang-format` 的 `ColumnLimit` 走；项目已声明 100 时按 100，模板资产不写 `ColumnLimit`。每级缩进 2 个空格，代码不用 tab；缩进与对齐由 `.clang-format` 统一，不在条文里另定一套。
+- 列宽跟工程根 `.clang-format` 的 `ColumnLimit` 走；工程未声明时按 120 列，模板资产固定 `ColumnLimit: 120`。每级缩进用 1 个 tab（宽 4 列），续行与行内对齐用空格；缩进与对齐由 `.clang-format` 统一，不在条文里另定一套。
 - 浮点输出固定精度，整数不依赖隐式格式；`std::format` 的格式串写全。
 
 ## 注释

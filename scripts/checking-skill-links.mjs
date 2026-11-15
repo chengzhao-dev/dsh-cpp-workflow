@@ -593,6 +593,11 @@ ok(stageRows.length === 2, '模板阶段表必须为空表，只留表头与分�
 const assetRoot = join(ROOT, 'skills', 'building-cpp', 'assets')
 for (const cmakeFile of listFiles(assetRoot).filter((file) => basename(file) === 'CMakeLists.txt')) {
   const text = read(rel(cmakeFile))
+  for (const [index, line] of text.split(/\r?\n/).entries()) {
+    const indent = line.match(/^[\t ]*/)[0]
+    ok(!indent.includes(' '), `${rel(cmakeFile)}:${index + 1}: 缩进只能使用 tab`)
+    ok(line.replace(/\t/g, '    ').length <= 120, `${rel(cmakeFile)}:${index + 1}: 行宽超过 120 列`)
+  }
   ok(/target_compile_features\s*\(/.test(text), `${rel(cmakeFile)}: 缺少 target_compile_features`)
   ok(/cxx_std_23/.test(text), `${rel(cmakeFile)}: 缺少 cxx_std_23`)
   ok(/CXX_EXTENSIONS\s+OFF/.test(text), `${rel(cmakeFile)}: 缺少 CXX_EXTENSIONS OFF`)
@@ -602,10 +607,36 @@ for (const cmakeFile of listFiles(assetRoot).filter((file) => basename(file) ===
   ok(!/-march|-ffast-math/.test(text), `${rel(cmakeFile)}: 不应写死优化/架构参数`)
 }
 
+for (const cmakeFile of listFiles(join(ROOT, 'skills', 'engineering', 'references', 'cmake')).filter((file) => file.endsWith('.cmake'))) {
+  const text = read(rel(cmakeFile))
+  let inDoc = false
+  for (const [index, line] of text.split(/\r?\n/).entries()) {
+    if (line.startsWith('#[')) {
+      inDoc = true
+      continue
+    }
+    if (inDoc) {
+      if (line.startsWith('#]')) inDoc = false
+      continue
+    }
+    const indent = line.match(/^[\t ]*/)[0]
+    ok(!indent.includes(' '), `${rel(cmakeFile)}:${index + 1}: 缩进只能使用 tab`)
+    ok(line.replace(/\t/g, '    ').length <= 120, `${rel(cmakeFile)}:${index + 1}: 行宽超过 120 列`)
+  }
+}
+
 const clangFormat = read('skills/building-cpp/assets/config/.clang-format')
 ok(clangFormat.includes('BasedOnStyle: Google'), 'clang-format 未采用 Google 预设')
 ok(clangFormat.includes('Standard: Latest'), 'clang-format 未使用 Latest（兼容 C++23）')
-ok(!/ColumnLimit|TabWidth|IncludeCategories/.test(clangFormat), 'clang-format 不应覆盖 Google 预设')
+ok(clangFormat.includes('UseTab: ForIndentation'), 'clang-format 未只用 tab 做缩进')
+ok(clangFormat.includes('TabWidth: 4'), 'clang-format 未使用 4 列 tab')
+ok(clangFormat.includes('IndentWidth: 4'), 'clang-format 未使用 4 列缩进')
+ok(clangFormat.includes('ContinuationIndentWidth: 8'), 'clang-format 未使用 8 个空格续行')
+ok(clangFormat.includes('AccessModifierOffset: -4'), 'clang-format 访问修饰符未对齐到 0 列')
+ok(clangFormat.includes('ColumnLimit: 120'), 'clang-format 未使用 120 列')
+ok(clangFormat.includes('PackConstructorInitializers: BinPack'), 'clang-format 未采用构造初始化列表 BinPack')
+ok(clangFormat.includes('IncludeBlocks: Preserve'), 'clang-format 未保留人工包含分块')
+ok(!/IncludeCategories/.test(clangFormat), 'clang-format 不应覆盖包含顺序')
 const clangTidy = read('skills/building-cpp/assets/config/.clang-tidy')
 ok(/Checks:/.test(clangTidy), 'clang-tidy 缺少 Checks')
 const clangd = read('skills/building-cpp/assets/config/.clangd')
@@ -635,7 +666,7 @@ for (const standard of standardIds) {
   ok(snippet.includes('CXX_STANDARD_REQUIRED ON'), `${standard}/cmake-snippet.cmake 缺少 CXX_STANDARD_REQUIRED ON`)
   ok(snippet.includes('CXX_EXTENSIONS OFF'), `${standard}/cmake-snippet.cmake 缺少 CXX_EXTENSIONS OFF`)
 }
-ok(standards.includes('Latest'), 'standards/index.md 未说明 clang-format 21/22 的 Latest fallback')
+ok(standards.includes('Latest'), 'standards/index.md 未说明 clang-format 的 Latest fallback')
 ok(standards.includes('CXX_STANDARD_REQUIRED ON'), 'standards/index.md 未说明 CXX_STANDARD_REQUIRED')
 ok(standards.includes('三个规划粒度'), 'standards/index.md 未说明项目/target/代码/验证粒度')
 ok(existsSync(join(ROOT, 'scripts', 'checking-standard-matrix.sh')), 'scripts/checking-standard-matrix.sh 不存在')

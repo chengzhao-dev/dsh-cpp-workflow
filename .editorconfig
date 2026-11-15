@@ -8,3 +8,27 @@ trim_trailing_whitespace = true
 
 [*.{bat,cmd}]
 end_of_line = crlf
+
+[CMakeLists.txt]
+indent_style = tab
+indent_size = 4
+tab_width = 4
+max_line_length = 120
+
+[*.cmake]
+indent_style = tab
+indent_size = 4
+tab_width = 4
+max_line_length = 120
+
+[*.{c,cc,cpp,cxx,h,hpp}]
+indent_style = tab
+indent_size = 4
+tab_width = 4
+max_line_length = 120
+
+[*.sh]
+indent_style = tab
+indent_size = 4
+tab_width = 4
+max_line_length = 120

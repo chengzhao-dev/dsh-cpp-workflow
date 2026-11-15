@@ -20,7 +20,7 @@
 - 写到已有的 `std::ostream` 用 `<<`；没有流对象时，默认用 `std::print` 与 `std::println`，它们只在 C++23 且标准库支持时可用；见 `references/language/standard-library/06-format.md`。
 - 转换用具名转换 `static_cast` / `std::bit_cast`，不用 C 风格强制转换。
 - 所有权用 `std::unique_ptr`；禁止裸 `new` / `delete`，没有共享所有权的理由时不用 `std::shared_ptr`。
-- 只改注释时，不改可观察行为；只改实现时，不改公共声明。两者同时需要时，先改声明，再改实现。
+- 只改注释时，不改可观察行为；只改实现时，不改公共声明。改签名、返回类型或限定符时，同一轮同步头文件声明、`.cpp` 定义、构造函数初始化列表与所有调用点；两者同时需要时，先改声明，再改实现。
 - 清空成员数组：元素类型只提供赋值入口时（如 `Square::SetValue`），容器的 `ClearSquare` 调用 `SetValue(kEmpty)`，`Clear` 再逐格调用 `ClearSquare`；不要把清空操作放回值对象。不要直接写 `squares_ = {}`，也不要从外部把枚举赋成空值。撤销只回退受影响的那一处，不清空整个容器再重放全部历史，见 `references/design/01-project-design.md` 的「撤销与回退」。
 - 默认构造只做「建立初值」时用成员初值（如 `squares_{}`），不在构造函数里再调一遍 `Clear()`；`Clear()` 只负责把已经写入的值清空为 `kEmpty`。
 
@@ -36,7 +36,7 @@
 
 ## 交回构建
 
-实现改完，先对照配对头文件自检：每个声明都有定义，定义顺序与声明顺序一致；新增或改动的函数按同一套分段约定，需要分阶段的都有阶段注释与空行；只改过语言细节时再过对应目录的完成清单（`references/language/value-types/11-checklist.md`、`language-basics/10-language-checklist.md`、`standard-library/10-library-checklist.md`、`performance/07-checklist.md`）；行宽与缩进以工程根 `.clang-format` 为准，注释版式见 `references/comments/02-style.md`。再跑 `node <skill-dir>/scripts/checking-declaration-order.mjs --root .`（`<skill-dir>` 换成插件 `developing-cpp` 的实际目录），有乱序先修再交回下游：需要新增或移动源文件时，先由 `engineering` 的 `steps/01-targets.md` 把文件显式写进 target；target 齐了再由 `building-cpp` 的 `steps/01-build.md` configure、构建，最后走 `steps/03-check.md`。不要只改完函数体就宣称完成。
+实现改完，先对照配对头文件自检：每个声明都有定义，定义顺序、参数类型、限定符与返回类型和声明一致；新增或改动的函数按同一套分段约定，需要分阶段的都有阶段注释与空行；只改过语言细节时再过对应目录的完成清单（`references/language/value-types/11-checklist.md`、`language-basics/10-language-checklist.md`、`standard-library/10-library-checklist.md`、`performance/07-checklist.md`）；行宽与缩进以工程根 `.clang-format` 为准，注释版式见 `references/comments/02-style.md`。再跑 `node <skill-dir>/scripts/checking-declaration-order.mjs --root .`（`<skill-dir>` 换成插件 `developing-cpp` 的实际目录；它同时检查定义顺序与签名），有乱序或签名不一致先修再交回下游：需要新增或移动源文件时，先由 `engineering` 的 `steps/01-targets.md` 把文件显式写进 target；target 齐了再由 `building-cpp` 的 `steps/01-build.md` configure、构建，最后走 `steps/03-check.md`。不要只改完函数体就宣称完成。
 
 ## 正反例指针
 

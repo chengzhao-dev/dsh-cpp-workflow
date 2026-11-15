@@ -29,7 +29,7 @@ clang-format --dry-run --Werror src/*.cpp include/*.h
 
 ## 结构
 
-1. **shebang + 文件头**：说明用途、支持的 build host、参数。
+1. **shebang + 文件头**：标题一行、`#` 一行，再用「用法」「依赖」「构建目录」等行说明参数与支持的 build host；段落用单行注释，不画 `#===` 横幅。
 2. **严格模式与目录**：`set -euo pipefail`；`cd "$(dirname "$0")"`；`readonly BUILD_DIR`、`readonly APP_NAME="app"`。
 3. **输出辅助**：`header()` 打印阶段名，`err()` 打印到 stderr；`trap ERR` 打印失败命令。
 4. **configure**：每次运行都重新 configure，不复用缓存；传 `-G Ninja`、`-DCMAKE_BUILD_TYPE=Debug`、`-DCMAKE_C_COMPILER`、`-DCMAKE_CXX_COMPILER`、`-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`。C 与 C++ 使用同一套编译器；没有 C 语言的工程会忽略 C 编译器设置。

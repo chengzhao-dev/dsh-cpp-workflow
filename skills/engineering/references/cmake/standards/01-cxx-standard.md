@@ -25,8 +25,8 @@ CMake 有两套相关机制，必须同时写：
 `../assets/CompileSettings.cmake` 提供：
 
 ```cmake
-CompileSettings_SetCxxStandard(app PRIVATE c++23)
-CompileSettings_SetCxxStandard(greeting PUBLIC c++20)
+set_target_cxx_standard(app PRIVATE c++23)
+set_target_cxx_standard(greeting PUBLIC c++20)
 ```
 
 第一个参数是已由 `add_library` 或 `add_executable` 创建的目标，第二个是 `PUBLIC` / `PRIVATE` / `INTERFACE`，第三个是 `c++11`–`c++23`。函数内部做三步：校验目标与参数，调用 `target_compile_features`，再设置 `CXX_STANDARD` 三属性。

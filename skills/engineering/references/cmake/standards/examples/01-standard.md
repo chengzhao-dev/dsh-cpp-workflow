@@ -14,7 +14,7 @@ set_target_properties(app PROPERTIES CXX_STANDARD 20)
 **好**：
 
 ```cmake
-CompileSettings_SetCxxStandard(app PRIVATE c++20)
+set_target_cxx_standard(app PRIVATE c++20)
 ```
 
 两套声明同时写；`CXX_STANDARD_REQUIRED ON` 禁止降级，`CXX_EXTENSIONS OFF` 把 `gnu++20` 收成 `c++20`。

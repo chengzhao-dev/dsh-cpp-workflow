@@ -16,8 +16,11 @@
 
 - 一个文件放一组语义相近的函数，不为每个函数建单独文件；文件过大或出现无关职责时再拆。
 - 文件名用 UpperCamelCase，按职责命名，例如 `CompileSettings.cmake`、`LinkSettings.cmake`。
-- 函数名用 `<ModuleName>_` 加 PascalCase，例如 `CompileSettings_SetCxxStandard`；前缀取模块文件名的原样大小写，复制到工程后不改名。
-- 工程自己新增、不准备回流的函数才用项目前缀加 snake_case。
+- 函数名用 snake_case，按“动词 + 对象”直接描述动作，例如
+  `set_target_cxx_standard`、`set_target_warnings`、`set_output_directories`；
+  不要机械重复模块名。CMake 没有命名空间，函数全局可见；确有重名风险时
+  再加短项目前缀，而不是完整模块名。
+- 工程自己新增、不准备回流的函数同样先取动作名；与外部模块可能冲突时再加短项目前缀，例如 `my_project_do_something`。
 - 模块开头写 `include_guard(GLOBAL)`，避免重复导入时重定义函数。
 
 ## 导入
@@ -26,12 +29,12 @@
 
 ## 契约
 
-- 公开函数上方写中文 `#` 契约：一句功能、空行、边界，再用 `:param` / `:keyword` 标参数；不写 `#[[.rst:` 与 `.. command::`。
+- 公开函数上方写官方文档块：`#[=======================================================================[.rst:` 开头，模块名与 `---` 标题线，命令用 `.. command::`，签名用 `.. code-block:: cmake`，块内散文写中文。
 - 完整写法见 `../references/cmake/targets/01-target-rules.md`；签名留在 `function()` 那一行。
 - 签名、警告等级与错误消息以 `../references/cmake/assets/` 和 `../references/cmake/modules/01-functions.md` 为准；本步不复制第二份。
-- 普通函数只改传入 target 的属性，不写全局变量、不读环境变量、不下载依赖；唯一例外是 `LinkSettings_FetchGoogleTest`，只在测试需要时调用。
+- 普通函数只改传入 target 的属性，不写全局变量、不读环境变量、不下载依赖；唯一例外是 `fetch_googletest`，只在测试需要时调用。
 - 先校验 target、可见性与标准，再调用 `target_*` 或 `set_target_properties`；失败用 `FATAL_ERROR`，消息带函数名与非法值。
 
 ## 退出
 
-模块可被根文件导入且函数签名稳定后，进 `03-check.md` 跑 configure、构建与数据库核对。排版、2 空格与注释形态按 `../references/cmake/targets/01-target-rules.md`。
+模块可被根文件导入且函数签名稳定后，进 `03-check.md` 跑 configure、构建与数据库核对。排版、tab（宽 4 列）、120 列与文档块形态按 `../references/cmake/targets/01-target-rules.md`。

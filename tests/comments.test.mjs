@@ -1,6 +1,6 @@
 // 注释检查器锁定 references/comments/01-comment-rules.md 的硬规则：文件头、标签、标签间空行、注释与声明的贴合、
 // 列表缩进、成员清单、设计论证、跨类分工、类型系统复述、否定式边界、领域尺寸、谓词首句、
-// @param 完整性、摘要裸参数名与枚举行尾注释。规则改动时必须同步这里的用例。
+// 控制序列常量首句、@param 完整性、摘要裸参数名与枚举行尾注释。规则改动时必须同步这里的用例。
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
 import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs'
@@ -77,11 +77,16 @@ test('块注释在 --comment-style block 下收口', () => {
   assert.ok(rules(missingBrief, { commentStyle: 'block' }).includes('header-brief'))
 })
 
+test('tab 缩进按 4 列计宽', () => {
+  assert.equal(displayWidth('\tab'), 6)
+  assert.equal(displayWidth('\t\t中'), 10)
+})
+
 test('块注释同样检查禁止标签与行宽', () => {
   const block = ['/**', ' * @file board.h', ' * @brief 定义棋盘。', ' */', '', '/**', ' * 函数。', ' * @returns 结果', ' */', 'int F();', ''].join('\n')
   assert.ok(rules(block, { commentStyle: 'block' }).includes('forbidden-tag'))
   const wide = ['/**', ` * @file board.h`, ` * @brief ${'中'.repeat(45)}`, ' */', ''].join('\n')
-  assert.ok(rules(wide, { commentStyle: 'block' }).includes('comment-width'))
+  assert.ok(rules(wide, { commentStyle: 'block', width: 80 }).includes('comment-width'))
 })
 
 test('文件头提到别的源文件或目录时报错', () => {
@@ -164,6 +169,36 @@ test('注释不写否定式能力边界', () => {
   assert.deepEqual(rules(text), ['negative-scope'])
   const state = file('/// 清空棋盘。', '///', '/// 未变更时保持原值，不做修改。', 'void Clear();')
   assert.deepEqual(rules(state), [])
+})
+
+test('控制序列常量写名词短语并补出额外效果', () => {
+  const action = file(
+    '/// 进入备用屏幕，保存光标并切到备用缓冲区。',
+    'inline constexpr std::string_view kEnterAlternateScreen = "\\033[?1049h";',
+  )
+  assert.deepEqual(rules(action), ['constant-sequence-first'])
+  const missing = file('inline constexpr std::string_view kHideCursor = "\\033[?25l";')
+  assert.deepEqual(rules(missing), ['constant-comment-missing'])
+  const good = file(
+    '/// 进入备用屏幕的控制序列：保存光标后切换到备用缓冲区。',
+    'inline constexpr std::string_view kEnterAlternateScreen = "\\033[?1049h";',
+    '/// 隐藏光标的控制序列。',
+    'inline constexpr std::string_view kHideCursor = "\\033[?25l";',
+  )
+  assert.deepEqual(rules(good), [])
+  const blockBad = [
+    '/**',
+    ' * @file terminal.h',
+    ' * @brief 终端控制序列。',
+    ' */',
+    '',
+    '/**',
+    ' * 清屏。',
+    ' */',
+    'inline constexpr std::string_view kClearDisplay = "\\033[2J";',
+    '',
+  ].join('\n')
+  assert.ok(rules(blockBad, { commentStyle: 'block' }).includes('constant-sequence-first'))
 })
 
 test('同一分组内的 Doxygen 标签之间不空行', () => {
@@ -606,6 +641,34 @@ test('只在 .cpp 出现的函数需要完整契约', () => {
     )
     const ok = JSON.parse(runCli(['--root', dir, '--json']).stdout)
     assert.ok(!ok.issues.some((issue) => issue.rule === 'cpp-contract-missing'))
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('类内析构函数不按普通函数要求 @return', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
+  try {
+    writeFileSync(
+      path.join(dir, 'scope.cpp'),
+      [
+        '/// @file scope.cpp',
+        '/// @brief 作用域实现。',
+        '',
+        '/// 进入原始终端模式，析构时恢复。',
+        'class ScopedRawMode {',
+        ' public:',
+        '  /// 保存终端设置并切换到原始模式。',
+        '  ScopedRawMode() {}',
+        '',
+        '  /// 恢复保存的终端设置。',
+        '  ~ScopedRawMode() {}',
+        '};',
+        '',
+      ].join('\n'),
+    )
+    const report = JSON.parse(runCli(['--root', dir, '--json']).stdout)
+    assert.ok(!report.issues.some((issue) => issue.rule === 'cpp-contract-missing'))
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }
