@@ -1,4 +1,4 @@
-<!-- 读取时机：配 CMake 或工具链时；读完能回答：CMake；预算：一次只开这一份（244 行），不自动串联。 -->
+<!-- 读取时机：配 CMake 或工具链时；读完能回答：target、标准与产物目录怎么配；预算：一次只开这一份（234 行），不自动串联。 -->
 # CMake
 
 目标：一个编译器、Ninja、target-based 规则、可用的编译数据库。下面是最小形状和常见边界；工程模板仍由 `building-cpp` 提供，在 `../../../../building-cpp/assets/templates/projects/`，可复用的 CMake 函数在本技能的 `assets/`：`CompileSettings.cmake` 收标准与警告，`LinkSettings.cmake` 收构建期 RPATH 与 GoogleTest 依赖。
@@ -187,16 +187,6 @@ fetch_googletest()
 | `shared-library` | 需要运行时加载/替换 | 同上，`SHARED` + RPATH |
 
 模板里的 `{{PROJECT_NAME}}` 必须替换；不要留下占位符。
-
-## 反模式
-
-- 全局 `include_directories(include)`：所有 target 共享，边界消失。
-- `file(GLOB sources "src/*.cpp")`：新增文件不触发重新配置。
-- 把库和 `main()` 编进同一个 target：测试无法只链接库。
-- 在源码目录生成 `compile_commands.json` 或可执行文件。
-- 同时设 `CMAKE_CXX_COMPILER` 和 `CXX` 环境变量，互相覆盖。
-- 在 `CMakeLists.txt` 里 `execute_process` 下载依赖或改源码。
-- 用 `CMAKE_CXX_FLAGS` 加 `-std=c++23` 之类与声明不符的标准。
 
 ## 正反例
 

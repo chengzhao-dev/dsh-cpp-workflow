@@ -14,18 +14,12 @@
 
 ## 文件与命名
 
+- 文件名用 UpperCamelCase、函数名用 snake_case；命名细则、模块划分与 `include_guard(GLOBAL)` 写法见 `../references/cmake/modules/01-functions.md`「文件布局」。
 - 一个文件放一组语义相近的函数，不为每个函数建单独文件；文件过大或出现无关职责时再拆。
-- 文件名用 UpperCamelCase，按职责命名，例如 `CompileSettings.cmake`、`LinkSettings.cmake`。
-- 函数名用 snake_case，按“动词 + 对象”直接描述动作，例如
-  `set_target_cxx_standard`、`set_target_warnings`、`set_output_directories`；
-  不要机械重复模块名。CMake 没有命名空间，函数全局可见；确有重名风险时
-  再加短项目前缀，而不是完整模块名。
-- 工程自己新增、不准备回流的函数同样先取动作名；与外部模块可能冲突时再加短项目前缀，例如 `my_project_do_something`。
-- 模块开头写 `include_guard(GLOBAL)`，避免重复导入时重定义函数。
 
 ## 导入
 
-根 `CMakeLists.txt` 在 `project()` 之后、`add_subdirectory()` 之前追加一次 `CMAKE_MODULE_PATH`，再 `include()` 需要的模块。子目录只调用函数，不再次导入。
+根 `CMakeLists.txt` 在 `project()` 之后、`add_subdirectory()` 之前追加一次 `CMAKE_MODULE_PATH`，再 `include()` 需要的模块；子目录只调用函数，不再次导入。
 
 ## 契约
 

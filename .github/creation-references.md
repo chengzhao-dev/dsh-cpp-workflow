@@ -38,7 +38,7 @@
 - 本地扫描 rank：`project-dsh` 100、`project-agents` 200、`custom` 300、`user-dsh` 400、`user-agents` 500、`bundled` 600；同层内才按 rank、provider 注册序、本地序决胜，跨层是更近的层直接覆盖。
 - 名称 kebab-case；只接受 `<name>/SKILL.md` 或 `<name>.md`，不递归 `**/SKILL.md`；provider 名在同一层内唯一。
 - 采用：三个技能继续保持独立目录，rank 低于项目层；三个 `description` 是唯一常驻成本，写触发条件而不是四步摘要；`standards/` 只打开项目技能声明的那一档。
-- 采用：`examples/comments.md` 已拆成 `comments-declaration.md` 与 `comments-implementation.md`，步骤分别点名，避免改声明时读完整份实现案例。
+- 采用：注释规则收在 `skills/developing-cpp/references/comments/01-comment-rules.md`，声明与实现案例分别放在 `comments/examples/04-declaration-file.md` 与 `05-declaration-function.md`，步骤按改动面点名，避免改声明时读完整份实现案例。
 
 ### 渐进披露与 token
 

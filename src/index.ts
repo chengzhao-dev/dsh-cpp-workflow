@@ -5,7 +5,8 @@
 // 示例与资产都由安装后的包内解析。
 //
 // 门禁只认显式启用的工作区：会话 cwd 到 git 根的路径上必须有
-// `.agents/skills/cpp-workflow-project/SKILL.md`，否则 `list()` 返回空。
+// `.agents/skills/cpp-workflow-project/SKILL.md`（或下划线目录 `cpp_workflow_project`），
+// 否则 `list()` 返回空。
 // C++ 或 CMake 证据刻意不参与：刚复制的模板还没有源码，空工程也可以停在
 // 构建步骤；检出之外的 C++ 示例看不到这些技能名，标记查找也不进兄弟目录。
 //

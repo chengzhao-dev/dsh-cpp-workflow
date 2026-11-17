@@ -30,7 +30,7 @@
 | warning-as-error | 警告即错误 | 把警告当失败处理，避免积累 |
 | undefined behavior | 未定义行为 | 标准不规定结果，必须避免 |
 | half-open range | 半开区间 | `[begin, end)`，包含 begin 不包含 end |
-| Yoda condition | 尤达条件 | 常量写在左侧的比较，如 `0 == x`，本项目禁止 |
+| Yoda condition | 尤达条件 | 常量写在左侧的比较，如 `0 == x`；写法规则见 `references/language/language-basics/05-expressions.md` |
 | out-parameter | 输出参数 | 通过引用/指针返回结果；优先用返回值替代 |
 | access control | 访问控制 | `public` / `protected` / `private` 决定谁能使用成员 |
 | data member | 数据成员 | 属于对象的数据；不要叫「成员变量」 |
@@ -47,7 +47,7 @@
 | qualified name | 限定名 | 带命名空间或类前缀的名字，如 `inventory::Item` |
 | namespace | 命名空间 | 给名字分组、避免冲突的作用域 |
 | forward declaration | 前向声明 | 只声明名字不给出定义，减少头文件依赖 |
-| include guard | 包含守卫 | 防止头文件重复展开；本项目用 `#pragma once`，不写 `#define` 宏守卫，避免宏名与项目路径绑定 |
+| include guard | 包含守卫 | 防止头文件重复展开；写法规则见 `references/layout/02-file-template.md` |
 | ODR | 单一定义规则 | 一个实体在整个程序中至多一个定义，内联实体例外 |
 | overload | 重载 | 同名但参数不同的函数 |
 | template | 模板 | 按类型或值参数生成代码的机制 |

@@ -41,7 +41,7 @@ GCC 模式把目录和编译器换成 `build/gcc`、`g++`（C 驱动换成 `gcc`
 
 ## 情况
 
-**新工程**：工程模板仍由 `building-cpp` 提供，从 `../../building-cpp/assets/templates/projects/` 选形态，只复制目标工程缺的文件；模板里的三属性与 `-Wall -Wextra -Werror` 只是可运行的最小形状，接管时按本节换成 `set_target_cxx_standard`；需要警告时再加 `set_target_warnings`；模板里的 `{{PROJECT_NAME}}` 换成真实工程名，再按本节改 target 与标准。
+**新工程**：工程模板仍由 `building-cpp` 提供，从 `../../building-cpp/assets/templates/projects/` 选形态，只复制目标工程缺的文件；模板里的三属性只是可运行的最小形状，接管时按本节换成 `set_target_cxx_standard`；警告与 `-Werror` 由 `set_target_warnings` 按需打开，模板不默认加；模板里的 `{{PROJECT_NAME}}` 换成真实工程名，再按本节改 target 与标准。
 
 **已有工程**：先读现有 `CMakeLists.txt`，找出全局设置、GLOB、输出目录和 target 命名；只改与当前任务相关的一处。大改前先让现有构建跑通，保留可回退点。
 

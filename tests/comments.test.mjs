@@ -48,6 +48,10 @@ test('缺少文件头时报错', () => {
 test('文件头用 /// @file 与 @brief 收口', () => {
   const doxy = ['/// @file board.h', '/// @brief 定义棋盘。', '', 'class Board {};', ''].join('\n')
   assert.deepEqual(rules(doxy), [])
+  const doxyGap = ['/// @file board.h', '///', '/// @brief 定义棋盘。', '', 'class Board {};', ''].join('\n')
+  assert.deepEqual(rules(doxyGap), [])
+  const tooManyGaps = ['/// @file board.h', '///', '///', '/// @brief 定义棋盘。', '', 'class Board {};', ''].join('\n')
+  assert.deepEqual(rules(tooManyGaps), ['header-brief'])
   assert.deepEqual(rules('/// @file board.h\n\nclass Board {};\n'), ['header-brief'])
   assert.ok(rules('/// @brief 定义棋盘。\n\nclass Board {};\n').includes('header-missing'))
   const cross = ['/// @file board.h', '/// @brief 定义棋盘。', '///', '/// 对局在 game.h。', '', 'class Board {};', ''].join('\n')
@@ -70,6 +74,20 @@ test('块注释在 --comment-style block 下收口', () => {
     '',
   ].join('\n')
   assert.deepEqual(rules(block, { commentStyle: 'block', fileName: 'board.h' }), [])
+  const blockGap = [
+    '/**',
+    ' * @file board.h',
+    ' *',
+    ' * @brief 定义棋盘。',
+    ' */',
+    '',
+    '/**',
+    ' * 棋盘。',
+    ' */',
+    'class Board {};',
+    '',
+  ].join('\n')
+  assert.deepEqual(rules(blockGap, { commentStyle: 'block', fileName: 'board.h' }), [])
   assert.ok(rules(block, { fileName: 'board.h' }).includes('header-missing'))
   const wrong = block.replace('@file board.h', '@file game.h')
   assert.ok(rules(wrong, { commentStyle: 'block', fileName: 'board.h' }).includes('header-file-name'))
@@ -246,13 +264,13 @@ test('类型注释不写领域尺寸', () => {
 })
 
 test('谓词首句写主体是否状态', () => {
-  const bad = file('/// 检查坐标是否在棋盘内。', 'bool IsInRange(CellPosition position) const;')
+  const bad = file('/// 检查坐标是否在棋盘内。', '///', '/// @param position 目标坐标。', 'bool IsInRange(CellPosition position) const;')
   assert.deepEqual(rules(bad), ['predicate-first'])
-  const opBad = file('/// 比较两个坐标。', 'bool operator==(const CellPosition& other) const;')
+  const opBad = file('/// 比较两个坐标。', '///', '/// @param other 另一个坐标。', 'bool operator==(const CellPosition& other) const;')
   assert.deepEqual(rules(opBad), ['predicate-first'])
-  const ok = file('/// 坐标是否在棋盘内。', 'bool IsInRange(CellPosition position) const;')
+  const ok = file('/// 坐标是否在棋盘内。', '///', '/// @param position 目标坐标。', 'bool IsInRange(CellPosition position) const;')
   assert.deepEqual(rules(ok), [])
-  const opOk = file('/// 相等运算符。', 'bool operator==(const CellPosition& other) const;')
+  const opOk = file('/// 相等运算符。', '///', '/// @param other 另一个坐标。', 'bool operator==(const CellPosition& other) const;')
   assert.deepEqual(rules(opOk), [])
 })
 
@@ -261,13 +279,15 @@ test('函数注释不点名调用者', () => {
     '/// 读取指定坐标的方格。',
     '///',
     '/// 供需要先检查再读写的调用方直接使用；`GetSquare`、`SetSquare` 与 `ClearSquare` 内部也调用它。',
+    '///',
+    '///', '/// @param position 目标坐标。',
     'Square GetSquare(Position position) const;',
   )
   assert.deepEqual(rules(caller, { width: 200 }), ['caller-list'])
   const ok = file(
     '/// 读取指定坐标的方格。',
     '///',
-    '/// @param position 目标坐标。',
+    '///', '/// @param position 目标坐标。',
     'Square GetSquare(Position position) const;',
   )
   assert.deepEqual(rules(ok), [])

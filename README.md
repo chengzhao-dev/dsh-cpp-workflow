@@ -19,7 +19,7 @@
 npm 安装固定版本：
 
 ```bash
-dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.7
+dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.8
 ```
 
 本页版本号随发布更新；安装前可用 `npm view @chengzhao-dev/dsh-cpp-workflow version` 确认 registry 上的最新版本。
@@ -27,28 +27,28 @@ dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.7
 GitHub 标签安装使用同一版本号的标签，地址中的版本与标签同号：
 
 ```bash
-dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.7
+dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.8
 ```
 
 `--profile` 换成你实际运行的那个 profile。桌面应用固定跑 `desktop` profile，且该 profile 由应用独占管理；命令行 `add` 被拒绝时，在应用设置里添加插件，地址填同一个 npm 版本。Git 标签安装使用仓库内已构建的 `lib/`，不在目标机器上重新构建；包内也不含需要授权执行的安装脚本。
 
 ### 设置
 
-插件页的「C++ 工程流程」是唯一入口：注释符号可选 `///` 或 `/** ... */`，页面按注释符号、文件头、类型、函数声明与只读预览分块。`@file` 固定为文件名；除它和函数体 `//` 外，文件头、类型与函数声明标签的开关出厂全开，空值跳过。函数参数要求 `@param`，返回值要求 `@return`（成立条件自明时可省），会抛才要求 `@throws`；`@pre`、`@post`、`@retval` 与类型块的 `@tparam`、`@note`、`@see` 也出厂开启，需要时可逐项关掉。函数体固定用 `//`。预览随改动即时更新，保存后下一次读取技能即生效，已有源码不会被改写。插件页不再重复列一份导航。
+插件页的「C++ 工程流程」是唯一入口：注释符号可选 `///` 或 `/** ... */`，页面按注释符号、文件头、类型、函数声明与只读预览分块。标签开关、`@param` / `@return` / `@throws` 的要求、预览生效时机与导航行为见 [docs/plugin-flow.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-flow.md)。
 
-升级插件后如果这一页暂时只显示出厂值，说明当前窗口还挂着旧的前端产物：重启 DeepSeek Harness，或在插件页点“重新载入页面”即可编辑，不需要重装插件。页面会在打开后自动重试连接，拿到表单就切换为可编辑；保存成功后，状态行会显示写入的 `~/.dsh/profiles/<profile>/cordis.patch.yml`。保存、撤销修改与恢复默认值分三个按钮：撤销只回到最近一次读到的值，恢复默认值只填草稿，点保存才写盘。
+升级插件后如果这一页暂时只显示出厂值，说明当前窗口还挂着旧的前端产物：重启 DeepSeek Harness，或在插件页点“重新载入页面”即可编辑，不需要重装插件。页面不会轮询重试；表单仍只读时重启宿主或点“重新载入页面”。保存成功后，状态行会显示写入的 `~/.dsh/profiles/<profile>/cordis.patch.yml`。保存、撤销修改与恢复默认值分三个按钮：撤销只回到最近一次读到的值，恢复默认值只填草稿，点保存才写盘。
 
 ## 工作区门禁
 
-会话满足一个条件，技能就会出现：从当前目录向上、停在 git 根，沿途有 `.agents/skills/cpp-workflow-project/SKILL.md`。
+会话满足一个条件，技能就会出现：从当前目录向上、停在 git 根，沿途有 `.agents/skills/cpp-workflow-project/SKILL.md`（新仓库可把目录名写成下划线 `cpp_workflow_project`，两种都认）。
 
 项目技能标记就是仓库选择加入本工作流的声明。插件不再要求同一仓库里已经有第一方 `CMakeLists.txt` 或 C++ 源文件：纯文档仓库、只复制了模板、还没有任何源文件的仓库也会出现；环境轴为空时，源码四步仍能做，但定构建会停。没有标记就返回空列表，即使仓库里有 CMake 或 `.cpp`。扫描上限和边界情形见 [docs/plugin-boundaries.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-boundaries.md)。
 
-插件技能 rank 550。项目自己的 `.agents/skills` 技能 rank 200、用户级技能 rank 500，两者都会以同名覆盖插件；不要在项目或用户目录里复制 `developing-cpp`、`engineering` 或 `building-cpp`。
+插件技能与项目 `.agents/skills`、用户级技能的同名覆盖顺序见 [docs/plugin-boundaries.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-boundaries.md#覆盖关系)；不要在项目或用户目录里复制 `developing-cpp`、`engineering` 或 `building-cpp`。
 
 ## 项目级约定
 
-把 [templates/cpp-workflow-project](templates/cpp-workflow-project) 整个复制到目标仓库的 `.agents/skills/` 下，目录名保持 `cpp-workflow-project`；只补还不存在的文件，不覆盖已有的源码、`CMakeLists.txt` 或 `.clang-*`。项目技能写本工程特有的事实；通用工作流、编辑器与完成判据由模板的「通用工作流约定」承担，不在项目技能里重复：
+把 [templates/cpp-workflow-project](templates/cpp-workflow-project) 整个复制到目标仓库的 `.agents/skills/` 下，目录名保持 `cpp-workflow-project`（插件同时接受下划线目录名 `cpp_workflow_project`，改了名的仓库也能通过门禁）；只补还不存在的文件，不覆盖已有的源码、`CMakeLists.txt` 或 `.clang-*`。项目技能写本工程特有的事实；通用工作流、编辑器与完成判据由模板的「通用工作流约定」承担，不在项目技能里重复：
 
 - 工程名、组件名和源码根；
 - 库与程序的边界、公共头位置；
@@ -96,7 +96,7 @@ npm ci
 npm test              # 提交前主门：构建、结构/编码/工作流检查与单元测试
 npm run test:matrix   # 四套模板 × 五档标准的真实构建矩阵
 npm run pack:check    # 核对 npm 包内容
-npm run ci            # 复现 Ubuntu CI：安装、测试、打包检查（不含标准矩阵）
+npm run ci            # 本地复现：安装、测试、打包检查（不含标准矩阵；Ubuntu CI 另跑 test:matrix）
 npm run ci:full       # 在 ci 之上再跑标准矩阵，需 POSIX 宿主
 ```
 

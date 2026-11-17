@@ -6,5 +6,19 @@ coverage/
 # Local build output produced while exercising the templates.
 build/
 
-# Scratch files from local verification.
+# Stray C/C++ artifacts outside build/.
+*.o
+*.obj
+*.exe
+a.out
+
+# Editor and OS files. VS Code settings belong to the project root, not this repo root.
+/.vscode/
+Thumbs.db
+[Dd]esktop.ini
+
+# Scratch files from local verification and local caches.
 /temp/
+.cache/
+/.zcode/
+/.zcodeignore

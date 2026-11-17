@@ -1,4 +1,4 @@
-<!-- 读取时机：排声明顺序时；读完能回答：声明顺序与定义签名；预算：一次只开这一份（156 行），不自动串联。 -->
+<!-- 读取时机：排声明顺序时；读完能回答：声明顺序与定义签名；预算：一次只开这一份（157 行），不自动串联。 -->
 # 声明顺序
 
 顺序的作用是让读者先看类型和契约，再看数据。`clang-format` 不管顺序，靠人工和 review 维持。
@@ -24,9 +24,9 @@ class TaskTable {
   ~TaskTable();
 
   // 5. 其他成员函数
-  [[nodiscard]] bool HasTask(int id) const;
   [[nodiscard]] TaskState GetTaskState(int id) const;
   void SetTaskState(int id, TaskState state);
+  [[nodiscard]] bool HasTask(int id) const;
 
   // 6. 数据成员
  private:
@@ -55,9 +55,10 @@ class TaskTable {
 
 Google、LLVM、OpenCV 都没有规定这一组内部的次序；本工作流补上：
 
-- 有比较运算符时，开头是 `operator==`：成员默认比较和 `friend` 都放这里，然后才是谓词 `Is` / `Has` / `Can`、`Get`、普通函数按使用先后。`friend` 不再放到这一组末尾。
+- 有比较运算符时，开头是 `operator==`：成员默认比较和 `friend` 都放这里，然后按属性/概念分组：同一属性的 `Get`/`Set` 成对相邻，`Is` / `Has` / `Can` 放在这对之后；再放普通函数，按使用先后。不要把谓词插进 `Get`/`Set` 之间，也不要把全部谓词提前到全部 `Get` 之前。
 - 不属于 `Is` / `Get` / `Set` 的流程函数按调用层次排：入口操作在前，它调用的显示 helper 紧随其后；`DisplayOptions`、`Note` 等共享 helper 放在调用它们的流程之后；终端进入、退出与清屏可集中在组首，按进入、退出、清屏排。
-- `CheckInRange` 是诊断函数，紧挨 `IsInRange` 写，排在 `Get` 之前；它是本条谓词顺序的例外，见 `references/exceptions/01-exception-rules.md`。
+- `CheckInRange` 是诊断函数，紧挨 `IsInRange` 写，不参与 `Get`/`Set` 的分组；它是诊断函数的相邻例外，见 `references/exceptions/01-exception-rules.md`。
+- 没有 `Set` 配对时，谓词放在读取接口之后、修改接口之前。例：`GetOptionCount`、`GetSelectedIndex`、`OptionAt` 之后是 `IsSelected`，再是 `Select` / `MovePrevious` / `MoveNext` / `Reset`。
 - 多个直接返回成员的 `Get` 按对应数据成员的声明顺序排列，不按调用频率或字母序：成员依次是 `current_player_`、`board_`、`history_`，getter 就依次是 `GetCurrentPlayer()`、`GetBoard()`、`GetHistory()`；成员顺序调整时 getter 一起改，一个类里只留一套顺序。
 - 直接返回成员的 `Get` 按成员顺序；没有独立成员的派生查询排在直接 `Get` 之后，按「先局部元素、后整体状态」阅读，不插进直接 `Get` 之间。例：`Game` 的 `GetResult()` 扫描棋盘后才得到结果，排在直接返回成员的 `GetCurrentPlayer()`、`GetBoard()`、`GetHistory()` 之后。
 - 成对的局部/整体操作沿用同一方向：先 `ClearSquare(pos)` 清一格，再 `Clear()` 清整盘；局部操作在前，整体操作在后，不按调用频率互换。
@@ -133,7 +134,7 @@ class TaskTable {
 
 ### 函数体内的空行
 
-- 连续的守卫检查连成一组：都以 `return` / `throw` 结束或都是前置判断时，组内不空行；守卫组与后续处理之间空 1 行。
+- 每个以 `return` / `throw` 结束的守卫各自成组，守卫组之间空 1 行；同一次检查拆成取值、判断与返回多条语句时组内不空行；守卫组与后续处理之间空 1 行。
 - 取回一个结果并按结果分支的语句连成一组（声明、`if`、`throw` / `return`），组内不空行；这一组与收尾（记录这一步、轮到对方、返回成功）之间空 1 行。
 - 同一组语句不拆：三个校验之后的赋值与 `return` 之间不空行。
 - 只有次序依赖的一对 `if`（`GetWinner`、`JudgeAfterPlace`）之间空 1 行。

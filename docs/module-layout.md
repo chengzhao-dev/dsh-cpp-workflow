@@ -176,7 +176,8 @@ developing-cpp/
 │   │   │   ├── 07-time.md
 │   │   │   ├── 08-random.md
 │   │   │   ├── 09-files.md
-│   │   │   └── 10-library-checklist.md
+│   │   │   ├── 10-library-checklist.md
+│   │   │   └── 11-format-ecosystem.md
 │   │   └── value-types/
 │   │       ├── 01-width.md
 │   │       ├── 02-signed.md
@@ -239,7 +240,8 @@ engineering/
 │   ├── cmake/
 │   │   ├── assets/
 │   │   │   ├── CompileSettings.cmake
-│   │   │   └── LinkSettings.cmake
+│   │   │   ├── LinkSettings.cmake
+│   │   │   └── OutputSettings.cmake
 │   │   ├── linking/
 │   │   │   ├── 01-libraries.md
 │   │   │   ├── 02-rpath.md
@@ -273,7 +275,8 @@ engineering/
 │       ├── examples/
 │       │   ├── 01-clang-format.md
 │       │   ├── 02-clang-tidy.md
-│       │   └── 03-clangd.md
+│       │   ├── 03-clangd.md
+│       │   └── 04-config-comments.md
 │       ├── 01-encoding.md
 │       ├── 02-clang-format.md
 │       ├── 03-clang-tidy.md

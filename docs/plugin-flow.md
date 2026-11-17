@@ -10,13 +10,13 @@
 
 ## 第二层：门禁
 
-`list({ cwd })` 只检查一件事：从 `cwd` 向上、停在 git 根，沿途存在 `.agents/skills/cpp-workflow-project/SKILL.md`。项目技能标记就是仓库选择加入本工作流的声明；不再要求同一仓库里已经有 `CMakeLists.txt` 或 C++ 源文件。只复制了模板、还没有源文件的仓库也要出现，轴为空时停在定构建。
+`list({ cwd })` 只检查一件事：从 `cwd` 向上、停在 git 根，沿途存在 `.agents/skills/cpp-workflow-project/SKILL.md`（也接受下划线写法 `cpp_workflow_project`，两种等价）。项目技能标记就是仓库选择加入本工作流的声明；不再要求同一仓库里已经有 `CMakeLists.txt` 或 C++ 源文件。只复制了模板、还没有源文件的仓库也要出现，轴为空时停在定构建。
 
 没有标记就返回空列表。`get()` 带 `cwd` 时重新判断；不带 `cwd` 时只服务已经加载的 candidate。边界情形和扫描上限见 [plugin-boundaries.md](plugin-boundaries.md)。
 
 ## 开销（实测）
 
-在本仓库上实测（Node 26，重复测量）：门禁通过时 `list()` 约 1 ms（热缓存 50 次均值 0.999 ms），门禁不通过时 0.11 ms，`get()` 每份约 0.4–1.3 ms；宿主按 `cwd`、作用域与修订号缓存完成的目录，同一工作区不会每轮重扫。模型侧的三行目录共 590 个字符（按中文约 1.8 字符一个 token 估算约 328 tokens，下同）；三份技能文件分别为 5,272、5,285 与 4,861 个字符，合计 15,418 个字符，约 8.6k tokens；`get()` 时 `developing-cpp` 另附注释配置快照，加载字符数随快照变化，不在此重复；正文不常驻，只有目录行常驻，加载时才进上下文，改正文也不产生目录消息；`references/` 在入口表或步骤点名时打开，判不准、规则冲突或排错时按需读取。运行时不写盘、不建缓存，见 [plugin-storage.md](plugin-storage.md)。
+在本仓库上实测（Node 26，重复测量）：门禁通过时 `list()` 约 1 ms（热缓存 50 次均值 0.999 ms），门禁不通过时 0.11 ms，`get()` 每份约 0.4–1.3 ms；宿主按 `cwd`、作用域与修订号缓存完成的目录，同一工作区不会每轮重扫。模型侧的三行目录共 590 个字符（按中文约 1.8 字符一个 token 估算约 328 tokens，下同）；三份技能文件（developing-cpp / engineering / building-cpp）分别为 5,218、5,466 与 5,020 个字符，合计 15,704 个字符，约 8.7k tokens；`get()` 时 `developing-cpp` 另附注释配置快照，加载字符数随快照变化，不在此重复；正文不常驻，只有目录行常驻，加载时才进上下文，改正文也不产生目录消息；`references/` 在入口表或步骤点名时打开，判不准、规则冲突或排错时按需读取。运行时不写盘、不建缓存，见 [plugin-storage.md](plugin-storage.md)。
 
 ### 失败路径
 

@@ -2,7 +2,7 @@
 // 只读注释审计：按 references/comments/01-comment-rules.md 的硬规则检查 C/C++ 源文件。
 //
 // 检查项：Doxygen 文件头、注释行宽度、列表缩进、标签、标签间空行、注释与声明的贴合、
-// 类型注释存在性、成员功能清单、设计论证（方案对比）、否定式边界、领域尺寸、谓词首句、@param 完整性、摘要裸参数名、枚举成员注释一致性、枚举行尾句式、数据成员主注释位置、控制序列常量注释、定义处重复声明注释、只在 .cpp 出现的函数契约。
+// 成员功能清单、设计论证（方案对比）、否定式边界、领域尺寸、谓词首句、@param 完整性、摘要裸参数名、枚举成员注释一致性、枚举行尾句式、数据成员主注释位置、控制序列常量注释、定义处重复声明注释、只在 .cpp 出现的函数契约。
 // 不重写任何文件。
 //
 // 用法：
@@ -467,8 +467,8 @@ export function checkText(text, options = {}) {
     while (doxyHeaderEnd + 1 < lines.length && lines[doxyHeaderEnd + 1].trim().startsWith('///')) doxyHeaderEnd += 1
   }
   if (requireHeader && firstContent !== -1 && !hasDoxyHeader) {
-    if (style === 'block') add(firstContent + 1, 'header-missing', '文件开头缺少文件头：写 /** ... */，第一行 @file <文件名>，下一行 @brief')
-    else add(firstContent + 1, 'header-missing', '文件开头缺少文件头：写 /// @file <文件名>，下一行写 /// @brief')
+    if (style === 'block') add(firstContent + 1, 'header-missing', '文件开头缺少文件头：写 /** ... */，第一行 @file <文件名>，随后写 @brief')
+    else add(firstContent + 1, 'header-missing', '文件开头缺少文件头：写 /// @file <文件名>，随后写 /// @brief')
   }
   if (firstContent !== -1 && hasDoxyHeader) {
     const own = options.fileName ? options.fileName.split(/[\\/]/).pop() : ''
@@ -480,11 +480,15 @@ export function checkText(text, options = {}) {
       }
     }
     if (options.requireBrief !== false) {
+      const slashBrief = (lines[firstContent + 1] ?? '').trim()
+      const slashGap = /^\/\/\/\s*$/.test(slashBrief)
+      const blockBrief = headerBlock?.contents[1] ?? ''
+      const blockGap = style === 'block' && blockBrief.trim() === ''
       const hasBrief = style === 'block'
-        ? BLOCK_BRIEF.test(headerBlock.contents[1] ?? '')
-        : DOXY_BRIEF.test((lines[firstContent + 1] ?? '').trim())
+        ? BLOCK_BRIEF.test(blockBrief) || (blockGap && BLOCK_BRIEF.test(headerBlock?.contents[2] ?? ''))
+        : DOXY_BRIEF.test(slashBrief) || (slashGap && DOXY_BRIEF.test((lines[firstContent + 2] ?? '').trim()))
       if (!hasBrief) {
-        add(style === 'block' ? headerBlock.start + 3 : firstContent + 2, 'header-brief', '文件头第二行缺少 @brief 一句话说明')
+        add(style === 'block' ? headerBlock.start + 3 : firstContent + 2, 'header-brief', '文件头在 @file 之后缺少 @brief 一句话说明')
       }
     }
     const headerLines = style === 'block'
@@ -608,7 +612,6 @@ export function checkText(text, options = {}) {
       add(start + 1, 'param-in-summary', `函数摘要直接写了参数名 ${named.join('、')}：改用「指定坐标」「传入的值」这类语义名词，参数名只放在 @param 行`)
     }
     const documented = [...block.matchAll(/@param(?:\[[^\]]*\])?\s+(\w+)/g)].map((match) => match[1])
-    if (documented.length === 0) continue
     for (const name of params) {
       if (!documented.includes(name)) add(start + 1, 'param-missing', `参数 ${name} 没有 @param 说明`)
     }
@@ -657,7 +660,6 @@ export function checkText(text, options = {}) {
         add(doc.start + 1, 'param-in-summary', `函数摘要直接写了参数名 ${named.join('、')}：改用「指定坐标」「传入的值」这类语义名词，参数名只放在 @param 行`)
       }
       const documented = [...block.matchAll(/@param(?:\[[^\]]*\])?\s+(\w+)/g)].map((match) => match[1])
-      if (documented.length === 0) continue
       for (const name of params) {
         if (!documented.includes(name)) add(doc.start + 1, 'param-missing', `参数 ${name} 没有 @param 说明`)
       }

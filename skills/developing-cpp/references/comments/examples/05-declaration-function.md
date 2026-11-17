@@ -59,7 +59,7 @@ friend bool operator==(const Position&, const Position&) = default;
 
 `@param move 落子` 是把参数名翻译成中文，没有信息；`@returns` 与 `@return` 同义，本契约统一写 `@return`；没有说被拒绝的条件，调用方只能读实现。
 
-**合格（简单示例）**：
+**差**（多值却只写一个 `@return`）：
 
 ```cpp
 /// 执行一次落子。

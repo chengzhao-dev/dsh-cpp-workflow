@@ -55,6 +55,7 @@ jobs:
         run: |
           npm ci
           npm test
+          git diff --exit-code -- lib
       - name: Publish to npm with provenance
         if: steps.release.outputs.published == 'false'
         # main 推送与手动标签推送可能同时触发发布；后到的 run 可能读到缓存里的旧状态，
@@ -77,6 +78,8 @@ jobs:
           echo "::error::npm publish failed and ${PACKAGE}@${VERSION} is still absent"
           exit 1
       - name: Ensure tag and GitHub Release
+        # 已发布版本被 main 推送触发时不要给 HEAD 补旧版本 tag；手动推同版本 tag 时仍允许补 Release。
+        if: steps.release.outputs.published == 'false' || github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.release.outputs.tag }}

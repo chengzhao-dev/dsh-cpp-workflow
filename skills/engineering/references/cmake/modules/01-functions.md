@@ -57,21 +57,21 @@ include(CompileSettings)
 include_guard(GLOBAL)
 
 function(set_target_cxx_standard target visibility standard)
-	if(NOT TARGET "${target}")
-		message(FATAL_ERROR "目标 ${target} 尚未创建")
-	endif()
+    if(NOT TARGET "${target}")
+        message(FATAL_ERROR "目标 ${target} 尚未创建")
+    endif()
 
-	string(SUBSTRING "${standard}" 3 -1 number)
+    string(SUBSTRING "${standard}" 3 -1 number)
 
-	target_compile_features("${target}" "${visibility}" "cxx_std_${number}")
+    target_compile_features("${target}" "${visibility}" "cxx_std_${number}")
 
-	set_target_properties("${target}" PROPERTIES CXX_STANDARD "${number}")
+    set_target_properties("${target}" PROPERTIES CXX_STANDARD "${number}")
 endfunction()
 
 function(set_target_warnings target visibility)
-	cmake_parse_arguments(PARSE_ARGV 2 arg "" "LEVEL" "")
+    cmake_parse_arguments(PARSE_ARGV 2 arg "" "LEVEL" "")
 
-	target_compile_options("${target}" "${visibility}" -Wall -Wextra)
+    target_compile_options("${target}" "${visibility}" -Wall -Wextra)
 endfunction()
 ```
 

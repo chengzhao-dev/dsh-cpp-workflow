@@ -5,7 +5,7 @@
 ## 扫描范围
 
 - 从 `cwd` 向上最多 64 层找 git 根（`.git` 文件或目录都算）。
-- 从 `cwd` 到 git 根逐层找 `.agents/skills/cpp-workflow-project/SKILL.md`；找到最近的一份就停止向上找，不看兄弟目录。
+- 从 `cwd` 到 git 根逐层找 `.agents/skills/cpp-workflow-project/SKILL.md`（也接受 `cpp_workflow_project`）；找到最近的一份就停止向上找，不看兄弟目录。
 - 项目技能标记就是仓库选择加入本工作流的唯一门禁。找到标记后不再扫描 `CMakeLists.txt` 或源文件，因此空的、只复制了模板的、以及还在设计阶段的仓库都能看到三个技能。
 - 查找标记不越过 git 根。
 
@@ -29,4 +29,4 @@
 
 ## get 与 abort
 
-`list()` 返回空列表时，没有 candidate，`get()` 也不会被调用。只有调用方传 `cwd` 时才重查门禁；不传时继续服务已经加载的 candidate。插件本身不抛错：调用方传 `AbortSignal` 时，已中止的 `list()` 返回空列表，`get()` 返回 `undefined`；宿主在调用前后检查 abort 并抛出 `AbortError`，所以用户侧看到的仍是中止。
+`list()` 返回空列表时，没有 candidate，`get()` 也不会被调用。只有调用方传 `cwd` 时才重查门禁；不传时继续服务已经加载的 candidate。插件本身不抛错：调用方传 `AbortSignal` 时，已中止的 `list()` 返回 `{ candidates: [], complete: false }`，`get()` 返回 `undefined`；宿主在调用前后检查 abort 并抛出 `AbortError`，所以用户侧看到的仍是中止。

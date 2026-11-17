@@ -1,7 +1,7 @@
-<!-- 读取时机：配环境或检查工具时；读完能回答：环境组合；预算：一次只开这一份（115 行），不自动串联。 -->
+<!-- 读取时机：配环境或检查工具时；读完能回答：环境组合；预算：一次只开这一份（116 行），不自动串联。 -->
 # 环境组合
 
-环境是**声明**，不是探测结果。项目技能 `cpp-workflow-project` 的 `environment.json` 写清楚三个环境轴和一个语言标准；构建规则、工具配置和检查都按这个声明执行。声明为空或组合非法时，先修声明，不要靠猜。
+环境是**声明**，不是探测结果。项目技能 `cpp-workflow-project`（目录名也接受 `cpp_workflow_project`）的 `environment.json` 写清楚三个环境轴和一个语言标准；构建规则、工具配置和检查都按这个声明执行。声明为空或组合非法时，先修声明，不要靠猜。
 
 ## 四个轴
 
@@ -72,6 +72,7 @@
 | clang | `build/clang/` | `build/clang/compile_commands.json` |
 | gcc | `build/gcc/` | `build/gcc/compile_commands.json` |
 | 当前 | `build/` | `build/compile_commands.json` → 上面之一的符号链接 |
+| 单一目录 | 项目声明的目录（如 `games/tictactoe/build/`） | `<build-dir>/compile_commands.json`，不建符号链接 |
 
 一次 configure 只用一个编译器；切换编译器时用另一个目录，不要在同一目录里改 `CMAKE_CXX_COMPILER` 后复用缓存。项目技能声明单一构建目录时以项目为准（本书 `games/tictactoe/build/`），此时不建 `build/clang` 与 `build/gcc`，编译数据库仍在 `<build-dir>/compile_commands.json`。
 
@@ -79,8 +80,8 @@
 
 `<skill-dir>/scripts/checking-environment.mjs` 做两件事：
 
-1. **静态**（默认）：读 `environment.json`，检查三个环境轴、`standard` 和组合。轴为空或组合非法时以退出码 2 结束，不查找任何可执行文件。
-2. **活动**（`--live`）：先做声明校验，再核对当前进程是否在声明的 build host 上，然后查 PATH、角色和版本。声明本身不合法时仍以退出码 2 结束；声明合法但活动核对失败时以退出码 3 结束。
+1. **静态**（默认）：读声明文件，检查三个环境轴、`standard` 和组合。轴为空或组合非法时以退出码 2 结束，不查找任何可执行文件。默认路径是 `.agents/skills/cpp-workflow-project/environment.json`（向上到 git 根）；其他位置用 `--environment <file>` 指定。
+2. **活动**（`--live`）：先做声明校验，再核对当前进程是否在声明的 build host 上，然后查 PATH、角色和版本，并用 `-std=<standard> -fsyntax-only` 空编译确认编译器接受该标准。声明本身不合法时仍以退出码 2 结束；声明合法但活动核对失败时以退出码 3 结束。
 
 ```bash
 node "<skill-dir>/scripts/checking-environment.mjs" --project . --json

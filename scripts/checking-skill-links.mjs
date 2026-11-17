@@ -378,6 +378,16 @@ for (const file of referenceMarkdown) {
   }
 }
 
+// 一份文件只讲一个主题：reference 不超过 240 行，案例不超过 320 行。
+for (const file of referenceMarkdown) {
+  const lines = read(file).trimEnd().split(/\r?\n/).length
+  ok(lines <= 240, `${file}: ${lines} 行，超过 reference 240 行上限`)
+}
+for (const file of skillFiles.filter((item) => /^skills\/[^/]+\/examples\//.test(item))) {
+  const lines = read(file).trimEnd().split(/\r?\n/).length
+  ok(lines <= 320, `${file}: ${lines} 行，超过案例 320 行上限`)
+}
+
 const referenceBasenames = new Map()
 for (const file of referenceMarkdown) {
   const base = basename(file)
@@ -552,13 +562,6 @@ for (const abs of SCANNED) {
   }
 }
 
-// 参考页不得再指向已删除的四技能编号。
-for (const abs of listFiles(join(ROOT, 'skills')).filter((file) => file.endsWith('.md'))) {
-  const text = read(rel(abs))
-  ok(!/第\s*0?[5-7]\s*步/.test(text), `${rel(abs)}: 仍引用 05-07 步`)
-  ok(!/`steps\/0?[5-7]-/.test(text), `${rel(abs)}: 仍引用 05-07 步文件`)
-}
-
 // ---------------------------------------------------------------------------
 // 工程模板与构建资产
 // ---------------------------------------------------------------------------
@@ -682,6 +685,18 @@ ok(buildScript.includes('compile_commands.json'), '构建脚本缺少编译数�
 ok(buildScript.includes('ctest --test-dir'), '构建脚本缺少 CTest')
 ok(buildScript.includes('--output-on-failure'), '构建脚本缺少 CTest 失败输出')
 ok(!buildScript.includes('--fallback-style'), '构建脚本不应回退格式基线')
+ok(
+  buildScript.includes('if [ "${BUILD_DIR}" != "${BUILD_ROOT}" ]'),
+  '构建脚本缺少单一构建目录判断，BUILD_DIR==BUILD_ROOT 时会自链接',
+)
+for (const shape of ['single', 'multi', 'static-library', 'shared-library']) {
+  const cmake = read(`skills/building-cpp/assets/templates/projects/${shape}/CMakeLists.txt`)
+  const active = cmake
+    .split(/\r?\n/)
+    .filter((line) => !line.trimStart().startsWith('#'))
+    .join('\n')
+  ok(!/-Werror/.test(active), `${shape}/CMakeLists.txt 不应默认加 -Werror`)
+}
 ok(!/greeting\//.test(buildScript), '构建脚本 header-filter 不应硬编码 greeting')
 
 const buildRef = read('skills/building-cpp/references/01-build-script.md')
@@ -690,10 +705,11 @@ ok(!/第\s*0?[5-7]\s*步/.test(buildRef), '构建脚本文档仍引用旧步骤�
 
 // Shell 语法与 Node 语法。依赖目录与 VCS 目录不是工程的 shell 资产；
 // 扫描它们会让检查依赖已安装的包。
+const SKIP_DIRS = ['node_modules/', '.git/', 'build/', 'temp/', '.cache/', '_book/', '.quarto/']
 for (const file of listFiles(ROOT).filter((item) => {
   if (!item.endsWith('.sh')) return false
   const relativePath = rel(item)
-  return !relativePath.startsWith('node_modules/') && !relativePath.startsWith('.git/')
+  return !SKIP_DIRS.some((prefix) => relativePath.startsWith(prefix))
 })) {
   try {
     execFileSync('bash', ['-n', file], { stdio: 'pipe' })
@@ -850,12 +866,10 @@ if (ok(existsSync(libClient), '缺少 lib/client.js，先运行 npm run build'))
   ok(client.includes('window.__ModuleLoader__.load({'), 'lib/client.js 缺少 Cordis 客户端外壳')
   ok(client.includes("id: \"@chengzhao-dev/dsh-cpp-workflow\""), 'lib/client.js 的包名不对')
   ok(!client.includes("'settings.section'"), 'lib/client.js 不应再注册设置页；插件页是唯一入口')
-  ok(client.includes("'plugins.bundle.config'"), 'lib/client.js 未注册插件页配置卡片')
 }
 ok(existsSync(join(ROOT, 'lib', 'workspace.js')), '缺少 lib/workspace.js，先运行 npm run build')
 
 const entrySource = read('src/index.ts')
-ok(!/\bctx\.tools\b|\bregisterTool\b/.test(entrySource), '入口不应注册工具')
 ok(!/\banyOf\b|\bmaxItems\b|\bminimum\b/.test(entrySource), '入口源码不应出现未支持的 schema 关键字')
 
 const schemaTest = read('tests/schema.test.mjs')

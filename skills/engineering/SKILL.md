@@ -56,6 +56,7 @@ metadata:
 | clang-format | `references/formatting/02-clang-format.md`；案例 `references/formatting/examples/01-clang-format.md` |
 | clang-tidy 与检查分级 | `references/formatting/03-clang-tidy.md`；案例 `references/formatting/examples/02-clang-tidy.md` |
 | clangd 与编辑器补全 | `references/formatting/04-clangd.md`；案例 `references/formatting/examples/03-clangd.md` |
+| 配置文件里的注释 | `references/formatting/examples/04-config-comments.md` |
 | 可复制的 CMake 函数 | `references/cmake/assets/CompileSettings.cmake`、`references/cmake/assets/LinkSettings.cmake`、`references/cmake/assets/OutputSettings.cmake` |
 | 操作判不准、规则冲突 | `../shared/operations.md`、`../shared/rule-priority.md` |
 
@@ -63,7 +64,7 @@ metadata:
 
 加载预算见 [budget.md](../shared/budget.md)；engineering 的步骤固定 3 份。
 
-项目技能列出了检查命令时只跑那一条，没有时按 `steps/03-check.md` 的 configure 与构建命令跑；退出码为 0 后停在这一步，不再继续走没有失败的步骤。五档标准的语言设施、工具映射与降档由 `references/cmake/standards/` 维护；本技能只负责这些标准在 CMake 里怎么写，以及三份工具配置各自的最低版本。
+项目技能列出了检查命令时先跑那一条；没有时按 `steps/03-check.md` 的 configure 与构建命令跑。项目命令只覆盖构建，target 图、标准、全局污染、模块导入、排版与产物位置仍按 `steps/03-check.md` 的核对项确认，全部满足再停在这一步。五档标准的语言设施、工具映射与降档由 `references/cmake/standards/` 维护；本技能只负责这些标准在 CMake 里怎么写，以及三份工具配置各自的最低版本。
 
 ## 四类改动
 

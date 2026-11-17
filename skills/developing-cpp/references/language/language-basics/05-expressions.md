@@ -8,8 +8,8 @@
 - 条件不是枚举，或枚举只处理一部分常见值时，写 `default` 并在里面做真正的处理。域已经在前面收窄、又不是枚举时，才在 `default` 里写 `std::unreachable()`。非法枚举值要报告时，在 `switch` 后写正常返回，不用 `std::unreachable()`。不依赖隐式穿透；确实要穿透时写 `[[fallthrough]]`。
 - 条件是比较范围、布尔组合，或只有 1–2 个分支时用 `if`；一个函数里有多条拒绝分支时，每条各写一条独立 `if` 并提前返回，成功路径留在函数末尾，不串 `else if`，也不用 `else` 包住。
 - 否定按「类型有什么谓词」决定，不按个人习惯：类型提供 `IsEmpty()`、`IsFull()` 这类肯定式查询时，条件直接从肯定式写起，如 `if (square.IsEmpty())`。被拒绝的情形没有对应谓词时才用 `!`，如占用检查只能写成 `if (!square.IsEmpty())`；这种 `!` 只套一层，不写 `!!`，也不把 `!(value != SquareValue::kEmpty)` 这类双重否定留给读者。枚举比较同样先写正向判断：判空写 `value == SquareValue::kEmpty`，判非空写 `value != SquareValue::kEmpty`。同一个状态的比较只写在谓词定义里；调用处写 `IsInProgress()` 或 `!IsInProgress()`，不把 `GetResult() != GameResult::kInProgress` 再写一遍。
-- 同一类值有 3 个以上时用数组加下标，不写 `value0`、`value1`、`value2`：`std::array<SquareValue, 3> values{};` 配合 `values[i]`；成组的常量数据写成 `std::array<Line, 8> kLines` 再由循环消费。只有 1–2 个语义各自独立的值才各起名字。
-- 混合优先级的算术表达式加括号：`(a + b) * c`，不依赖读者记忆优先级。`readability-math-missing-parentheses` 会检查。
+- 同一类值有 3 个以上时用数组加下标，不写 `value0`、`value1`、`value2`：`std::array<SquareValue, 3> values{};` 配合 `values.at(i)`；成组的常量数据写成 `std::array<Line, 8> kLines` 再由循环消费。只有 1–2 个语义各自独立的值才各起名字。
+- 混合优先级的算术表达式加括号：`(a + b) * c`，不依赖读者记忆优先级。括号是否表达了分组意图，评审时逐条核对。
 - 区间用半开区间 `[low, high)`；判空用 `empty()`，不要用 `size() == 0`。
 - 逻辑表达式按语义分组，一组一个括号；组内的单个比较不再加括号，`&&` 的优先级已经清楚，多加一层反而难核对。
 - 整行在列宽内时写一行；放不下时按组换行，各组对齐。不要把多个否定串成一行。

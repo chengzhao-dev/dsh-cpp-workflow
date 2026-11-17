@@ -48,6 +48,6 @@
 ## 验证与维护
 
 - 结构检查：`scripts/checking-skill-links.mjs` 要求本页存在、三个技能的 description 关键词（`CMake`、`Ninja`、`clang-format`、`clang-tidy`、`clangd`、`C++23`、`注释`、`异常`、`命名`）都能在本页找到；触发矩阵与反例的编号行合计不少于 12 行，其中「都不出现」的反例不少于 6 条。
-- 人工抽样：改 description 或步骤表后，用 8–10 条正例、8–10 条反例各跑 3 次，触发率低于一半就改 description 的信号词，不改正文。
+- 人工抽样：改 description 或步骤表后，用矩阵里的正例与 6 条反例各跑 3 次，触发率低于一半就改 description 的信号词，不改正文。
 - 改 `SKILL.md` 的 `description` 必须同改本页的判据表与矩阵；只改矩阵不改 description，等于没改。
 - 四类改动（即四个域）的域表在每个技能的 `SKILL.md`，本页不复制；三种操作与四个域的定义在 `skills/shared/operations.md`，改域划分时只改该模型与各技能的表，本页只判技能是否该出现。

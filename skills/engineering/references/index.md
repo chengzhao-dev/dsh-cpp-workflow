@@ -15,7 +15,7 @@
 | `cmake/standards/01-cxx-standard.md` | C++ 标准与 CMake | 一次只开这一份（68 行），不自动串联。 |
 | `cmake/standards/versions.md` | C++11–C++23 各档差异 | 一次只开这一份（43 行），不自动串联。 |
 | `cmake/standards/examples/01-standard.md` | 正反例：标准只写一半 | 一次只开这一份（19 行），不自动串联。 |
-| `cmake/targets/01-target-rules.md` | CMake | 一次只开这一份（244 行），不自动串联。 |
+| `cmake/targets/01-target-rules.md` | target、标准与产物目录 | 一次只开这一份（234 行），不自动串联。 |
 | `cmake/targets/examples/01-rpath.md` | 正反例：共享库运行时路径 | 一次只开这一份（24 行），不自动串联。 |
 | `cmake/testing/01-ctest.md` | 测试与 CTest | 一次只开这一份（61 行），不自动串联。 |
 
@@ -30,3 +30,4 @@
 | `formatting/examples/01-clang-format.md` | 正反例：clang-format | 一次只开这一份（47 行），不自动串联。 |
 | `formatting/examples/02-clang-tidy.md` | 正反例：clang-tidy | 一次只开这一份（43 行），不自动串联。 |
 | `formatting/examples/03-clangd.md` | 正反例：clangd | 一次只开这一份（109 行），不自动串联。 |
+| `formatting/examples/04-config-comments.md` | 正反例：配置文件注释 | 一次只开这一份（42 行），不自动串联。 |

@@ -8,7 +8,7 @@
 | 种类 | 规则 | 好 | 差 |
 | --- | --- | --- | --- |
 | 类型 / 类 / 结构 / 枚举 | PascalCase | `TaskTable`, `Order`, `TaskState` | `task_table_t`, `order_result` |
-| 函数 / 成员函数 | PascalCase | `Contains`, `GetTaskState` | `contains`, `gettaskstate` |
+| 函数 / 成员函数 | PascalCase | `GetTaskState`, `PlayerToOpponent` | `contains`, `gettaskstate` |
 | 变量 / 参数 | snake_case | `task_count`, `order` | `TaskCount`, `o` |
 | 类成员 | snake_case + `_` | `tasks_`, `orders_` | `m_tasks`, `tasks` |
 | 结构体成员 | snake_case，无尾随 `_` | `name`, `priority` | `name_`, `priority_` |
@@ -20,7 +20,7 @@
 | 概念 | PascalCase | `Sortable`, `Hashable` | `sortable`, `is_hashable` |
 
 - 文件名用 snake_case：`order_result.h`、`task_table.cpp`；测试文件 `task_table_test.cpp`。Google 也允许 `-`，本项目统一 `_`，与 target 和测试名保持一致。
-- 查询名与返回类型一致：返回方格的值时写 `GetCurrentValue`，返回玩家时写 `GetCurrentPlayer`；不写项目里没有对应类型的 `GetPlayer`。
+- 查询名与返回类型一致：返回方格的值时写 `GetValue`，返回玩家时写 `GetCurrentPlayer`；不写项目里没有对应类型的 `GetPlayer`。
 - 命名空间的自由函数用 `来源To结果` 加返回值类型，不用 `Get`：玩家换方写 `PlayerToOpponent`，玩家变成方格的值写 `PlayerToSquareValue`，不写 `SquareValueOf`。`Get` 留给类里直接返回成员的查询，如 `GetCurrentPlayer`。`To` 后面先写结果类型再写角色，`PlayerToOpponent` 不带重复的 `Player`；没有 `To` 承接时单个 `Opponent` 读不出是玩家还是方格，`To` 语境下反而清楚。名字要点明两端角色，与注释同一个说法。
 - 布尔变量用 `is_` / `has_` / `can_` 开头：`is_valid`、`has_stock`；不要用 `flag`、`status`。
 - 容器用复数：`tasks`、`orders`；单个元素用单数。

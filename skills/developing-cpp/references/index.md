@@ -1,18 +1,18 @@
 <!-- 读取时机：入口表点名或判不准时；读完能回答：每份条文的读取时机、产出与预算；预算：一次只开这一份，按需再开单份。 -->
 # 条文索引
 
-先读本页，再按主题或语义开一份；不要一次打开多份。
+先读本页，再按主题或语义开一份；不要一次打开多份。「预算」里的行数是正文行数，不含首行的读取时机注释；改动条文后同步更新本页的数字。
 
 ## comments
 
 | 文件 | 读取时机 | 读完能回答 | 预算 |
 | --- | --- | --- | --- |
 | `comments/01-comment-rules.md` | 写或改注释时 | 注释：写什么 | 一次只开这一份（213 行），不自动串联。 |
-| `comments/02-style.md` | 写或改注释时 | 注释的结构、版式与措辞 | 一次只开这一份（80 行），不自动串联。 |
+| `comments/02-style.md` | 写或改注释时 | 注释的结构、版式与措辞 | 一次只开这一份（92 行），不自动串联。 |
 | `comments/examples/01-declaration-class.md` | 写或改注释的示例时 | 正反例：类型注释：概念与约定，不是功能清单 | 一次只开这一份（65 行），不自动串联。 |
 | `comments/examples/02-declaration-constructor.md` | 写或改注释的示例时 | 正反例：构造函数与析构函数：标签 + 职责 | 一次只开这一份（22 行），不自动串联。 |
 | `comments/examples/03-declaration-enum.md` | 写或改注释的示例时 | 正反例：枚举 | 一次只开这一份（47 行），不自动串联。 |
-| `comments/examples/04-declaration-file.md` | 写或改注释的示例时 | 正反例：文件头与注释边界 | 一次只开这一份（66 行），不自动串联。 |
+| `comments/examples/04-declaration-file.md` | 写或改注释的示例时 | 正反例：文件头与注释边界 | 一次只开这一份（68 行），不自动串联。 |
 | `comments/examples/05-declaration-function.md` | 写或改注释的示例时 | 正反例：函数声明注释 | 一次只开这一份（115 行），不自动串联。 |
 | `comments/examples/06-declaration-member.md` | 写或改注释的示例时 | 正反例：数据成员 | 一次只开这一份（23 行），不自动串联。 |
 | `comments/examples/07-declaration-predicate.md` | 写或改注释的示例时 | 正反例：布尔查询写主体是否状态 | 一次只开这一份（14 行），不自动串联。 |
@@ -63,13 +63,13 @@
 | `language/language-basics/03-deduction.md` | 查语言细节时 | `auto` 与类型推导 | 一次只开这一份（12 行），不自动串联。 |
 | `language/language-basics/04-const.md` | 查语言细节时 | `const`、`constexpr`、`consteval`、`constinit` | 一次只开这一份（25 行），不自动串联。 |
 | `language/language-basics/05-expressions.md` | 查语言细节时 | 表达式与比较 | 一次只开这一份（31 行），不自动串联。 |
-| `language/language-basics/06-functions.md` | 查语言细节时 | 函数、参数与返回值 | 一次只开这一份（19 行），不自动串联。 |
+| `language/language-basics/06-functions.md` | 查语言细节时 | 函数、参数与返回值 | 一次只开这一份（20 行），不自动串联。 |
 | `language/language-basics/07-classes.md` | 查语言细节时 | 类、结构体与特殊成员 | 一次只开这一份（15 行），不自动串联。 |
 | `language/language-basics/08-raii.md` | 查语言细节时 | RAII、所有权与移动 | 一次只开这一份（15 行），不自动串联。 |
 | `language/language-basics/09-templates.md` | 查语言细节时 | 模板、概念与 CTAD | 一次只开这一份（26 行），不自动串联。 |
 | `language/language-basics/10-language-checklist.md` | 查语言细节时 | 检查清单 | 一次只开这一份（11 行），不自动串联。 |
 | `language/performance/01-measure.md` | 查语言细节时 | 测量顺序 | 一次只开这一份（22 行），不自动串联。 |
-| `language/performance/02-complexity.md` | 查语言细节时 | 复杂度与数据结构 | 一次只开这一份（13 行），不自动串联。 |
+| `language/performance/02-complexity.md` | 查语言细节时 | 复杂度与数据结构 | 一次只开这一份（12 行），不自动串联。 |
 | `language/performance/03-memory.md` | 查语言细节时 | 内存与缓存 | 一次只开这一份（14 行），不自动串联。 |
 | `language/performance/04-undefined-behavior.md` | 查语言细节时 | 未定义行为与安全 | 一次只开这一份（28 行），不自动串联。 |
 | `language/performance/05-pitfalls.md` | 查语言细节时 | 常见性能陷阱 | 一次只开这一份（17 行），不自动串联。 |
@@ -80,14 +80,15 @@
 | `language/standard-library/03-iteration.md` | 查语言细节时 | 迭代与失效 | 一次只开这一份（18 行），不自动串联。 |
 | `language/standard-library/04-algorithms.md` | 查语言细节时 | 算法优先于手写循环 | 一次只开这一份（26 行），不自动串联。 |
 | `language/standard-library/05-string.md` | 查语言细节时 | `std::string` 与 `std::string_view` | 一次只开这一份（13 行），不自动串联。 |
-| `language/standard-library/06-format.md` | 查语言细节时 | `std::format` 与输出 | 一次只开这一份（116 行），不自动串联。 |
+| `language/standard-library/06-format.md` | 查语言细节时 | `std::format` 与输出 | 一次只开这一份（86 行），不自动串联。 |
+| `language/standard-library/11-format-ecosystem.md` | 查语言细节时 | `std::format` 的生态、提案与 fmt 关系 | 一次只开这一份（31 行），不自动串联。 |
 | `language/standard-library/07-time.md` | 查语言细节时 | 时间 | 一次只开这一份（13 行），不自动串联。 |
 | `language/standard-library/08-random.md` | 查语言细节时 | 随机 | 一次只开这一份（14 行），不自动串联。 |
 | `language/standard-library/09-files.md` | 查语言细节时 | 文件 | 一次只开这一份（14 行），不自动串联。 |
 | `language/standard-library/10-library-checklist.md` | 查语言细节时 | 检查清单 | 一次只开这一份（9 行），不自动串联。 |
 | `language/value-types/01-width.md` | 查语言细节时 | 宽度、范围与 `std::size_t` | 一次只开这一份（17 行），不自动串联。 |
 | `language/value-types/02-signed.md` | 查语言细节时 | 有符号、无符号与溢出 | 一次只开这一份（26 行），不自动串联。 |
-| `language/value-types/03-integer-roles.md` | 查语言细节时 | 项目对整型角色的约定 | 一次只开这一份（38 行），不自动串联。 |
+| `language/value-types/03-integer-roles.md` | 查语言细节时 | 整型的角色与选型 | 一次只开这一份（39 行），不自动串联。 |
 | `language/value-types/04-enum.md` | 查语言细节时 | 枚举类与返回值选型 | 一次只开这一份（35 行），不自动串联。 |
 | `language/value-types/05-strong-type.md` | 查语言细节时 | 强类型包装 | 一次只开这一份（17 行），不自动串联。 |
 | `language/value-types/06-const-method.md` | 查语言细节时 | 成员函数尾部的 `const` | 一次只开这一份（22 行），不自动串联。 |
@@ -101,9 +102,9 @@
 
 | 文件 | 读取时机 | 读完能回答 | 预算 |
 | --- | --- | --- | --- |
-| `layout/01-source-layout.md` | 排声明顺序时 | 源码布局 | 一次只开这一份（78 行），不自动串联。 |
-| `layout/02-file-template.md` | 排声明顺序时 | 文件模板 | 一次只开这一份（123 行），不自动串联。 |
-| `layout/03-declaration-order.md` | 排声明顺序时 | 声明顺序与定义签名 | 一次只开这一份（156 行），不自动串联。 |
+| `layout/01-source-layout.md` | 决定源文件放哪时 | 源码布局 | 一次只开这一份（78 行），不自动串联。 |
+| `layout/02-file-template.md` | 写头文件或实现文件时 | 文件模板 | 一次只开这一份（124 行），不自动串联。 |
+| `layout/03-declaration-order.md` | 排声明顺序时 | 声明顺序与定义签名 | 一次只开这一份（157 行），不自动串联。 |
 
 ## naming
 

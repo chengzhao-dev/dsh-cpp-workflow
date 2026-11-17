@@ -13,7 +13,7 @@ Diagnostics:
     - pp_file_not_found
 ```
 
-- `CompilationDatabase` 指向当前编译器目录；GCC 模式改 `build/gcc`。
+- `CompilationDatabase` 指向当前编译器目录；GCC 模式改 `build/gcc`。项目技能声明单一构建目录时指向该目录（如 `games/tictactoe/build`），不再按编译器分目录。
 - 不要在 `.clangd` 写 `-std`：它会覆盖 `compile_commands.json`，把 C++23 工程降成旧标准。标准只由构建声明和编译数据库决定。
 - 静态检查规则只在 `.clang-tidy` 里维护；clangd 读取同一份配置，不要在这里复制检查列表。
 - `Suppress` 只放确实无法避免的解析噪声（如 `pp_file_not_found`），并写理由。
@@ -34,7 +34,7 @@ Diagnostics:
 }
 ```
 
-- 路径用绝对路径；多个驱动用逗号分隔。GCC 模式指向 `/usr/bin/g++`。
+- 路径用绝对路径；多个驱动用逗号分隔。GCC 模式指向真实 GCC 驱动；macOS 的 `/usr/bin/g++` 是 Apple clang 别名，不能用。
 - 不要写 `--query-driver=*` 或宽泛的 glob；这等于允许 clangd 执行任意匹配的驱动。
 - 如果编译数据库里的编译器是相对路径，clangd 可能拒绝执行；用绝对路径重新 configure。
 - `--query-driver` 只影响 clangd，不影响 clang-tidy；tidy 用编译数据库里的命令。

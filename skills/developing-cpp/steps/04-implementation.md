@@ -7,7 +7,7 @@
 ## 通用情况
 
 - 函数保持短小，一个函数只做一件事。超过约 40 行时先找可以命名的中间步骤，不靠注释把长函数切成几段。
-- 按「准备 → 操作 → 收尾」排列语句，用空行分组；组与组之间的空行表达阶段，同一组内的守卫与结果处理不插空行。
+- 按「准备 → 操作 → 收尾」排列语句，用空行分组；组与组之间的空行表达阶段，同一次检查的取值、判断与返回不插空行，守卫之间怎么空见 `references/layout/03-declaration-order.md`「函数体内的空行」。
 - `.cpp` 里的定义顺序跟配对头文件：先类型与常量，再自由函数，再成员函数；成员函数按类内声明顺序。头文件把构造函数、析构函数、拷贝/移动声明在成员组最前时，定义也放最前；如果头文件把它们声明在别的成员之后，仍按头文件顺序，不硬提。不为先编译重排，也不按调用频率重排。`.cpp` 里不需要外部引用的 `constexpr` 放具名命名空间，仅一个函数使用时才用函数内 `static constexpr`；函数与类型放唯一的匿名命名空间，公开函数定义放在其后；不另开具名子命名空间，也不用类的 `static` 成员来隐藏函数。见 `references/layout/03-declaration-order.md`「`.cpp` 的定义顺序」与 `references/style/01-google-cpp-style.md`。
 - 同一文件里的函数按同一套分段约定：需要分阶段的非单表达式函数按空行分段、每段上方一句；读入、单值转换、一行输出这类一条直路的短函数不加分段注释；不能结构相近的函数一半分段、一半完全不留注释。阶段怎么分见 `references/layout/03-declaration-order.md`「函数体内的空行」。
 - `.cpp` 的第一个 include 是自己的配对头，然后直接包含本文件用到的标准库头，不依赖公共头转发声明。包含顺序见 `references/style/01-google-cpp-style.md`，文件槽位见 `references/layout/02-file-template.md`。
@@ -16,7 +16,7 @@
 - 枚举全覆盖不写 `default`，单条 `return` 不加花括号，`std::unreachable()` 紧跟 `switch` 右花括号；细节见 `references/language/language-basics/05-expressions.md`。
 - 失败是调用方正常结果时返回结果类型、`bool` 或 `std::optional`；函数无法完成自己的任务时抛异常，不拿异常做正常分支。Debug 与 Release 用同一套返回值与抛出条件，只有诊断详略不同。两种模式都要守的不变量用 `Check`（项目保留时），只在开发期做的自检用 `DebugCheck`；项目没有这两个宏时，`Check` 用 `std::terminate()` 兜底，`DebugCheck` 用 `assert`；`assert` 在 Release 不求值，不能代替 `Check`。`Check` 不是 `[[noreturn]]`，条件成立时正常返回；`DebugCheck` 的参数在 Release 不求值，不能放入有副作用的表达式。捕获时按 `const` 引用，只处理能处理的类型，其余继续抛。异常类型、消息格式与「不抛的边界」见 `references/exceptions/01-exception-rules.md`。
 - 参数校验、调用方状态检查与正常结果返回的次序见 `references/exceptions/01-exception-rules.md` 的「检查次序」：先整局状态，再进行中的玩家，最后交给下层检查坐标与占用，下层检查不重复。改完 `throw` 再走同文件的「检查清单」：异常类型、消息标签、跨行消息先存变量、不吞异常。
-- 声明 `noexcept` 前核对函数体：出现 `at()` 或其他可能抛出的调用就去掉。越界用 `at()` 抛 `std::out_of_range`，这个函数就不能标 `noexcept`。普通查询和返回结果枚举的函数，不因为当前函数体不抛就补 `noexcept`；它留给移动、交换、析构，以及已经标上的纯谓词。
+- 声明 `noexcept` 前核对函数体：出现 `at()` 或其他可能抛出的调用就去掉。越界用 `at()` 抛 `std::out_of_range`，这个函数就不能标 `noexcept`。`noexcept` 不是默认标注项：没有明确收益（ABI、泛型/容器行为、接口契约）就不补；普通查询和返回结果枚举的函数，不因为当前函数体不抛就补 `noexcept`；它留给移动、交换、析构，以及已经标上的纯谓词。
 - 写到已有的 `std::ostream` 用 `<<`；没有流对象时，默认用 `std::print` 与 `std::println`，它们只在 C++23 且标准库支持时可用；见 `references/language/standard-library/06-format.md`。
 - 转换用具名转换 `static_cast` / `std::bit_cast`，不用 C 风格强制转换。
 - 所有权用 `std::unique_ptr`；禁止裸 `new` / `delete`，没有共享所有权的理由时不用 `std::shared_ptr`。
@@ -36,7 +36,7 @@
 
 ## 交回构建
 
-实现改完，先对照配对头文件自检：每个声明都有定义，定义顺序、参数类型、限定符与返回类型和声明一致；新增或改动的函数按同一套分段约定，需要分阶段的都有阶段注释与空行；只改过语言细节时再过对应目录的完成清单（`references/language/value-types/11-checklist.md`、`language-basics/10-language-checklist.md`、`standard-library/10-library-checklist.md`、`performance/07-checklist.md`）；行宽与缩进以工程根 `.clang-format` 为准，注释版式见 `references/comments/02-style.md`。再跑 `node <skill-dir>/scripts/checking-declaration-order.mjs --root .`（`<skill-dir>` 换成插件 `developing-cpp` 的实际目录；它同时检查定义顺序与签名），有乱序或签名不一致先修再交回下游：需要新增或移动源文件时，先由 `engineering` 的 `steps/01-targets.md` 把文件显式写进 target；target 齐了再由 `building-cpp` 的 `steps/01-build.md` configure、构建，最后走 `steps/03-check.md`。不要只改完函数体就宣称完成。
+实现改完，先对照配对头文件自检：每个声明都有定义，定义顺序、参数类型、限定符与返回类型和声明一致；新增或改动的函数按同一套分段约定，需要分阶段的都有阶段注释与空行；只改过语言细节时再过对应目录的完成清单（`references/language/value-types/11-checklist.md`、`language-basics/10-language-checklist.md`、`standard-library/10-library-checklist.md`、`performance/07-checklist.md`）；行宽与缩进以文件最近的 `.clang-format` 为准，注释版式见 `references/comments/02-style.md`。再跑 `node <skill-dir>/scripts/checking-declaration-order.mjs --root .`（`<skill-dir>` 换成插件 `developing-cpp` 的实际目录；它同时检查定义顺序与签名），有乱序或签名不一致先修再交回下游：需要新增或移动源文件时，先由 `engineering` 的 `steps/01-targets.md` 把文件显式写进 target；target 齐了再由 `building-cpp` 的 `steps/01-build.md` configure、构建，最后走 `steps/03-check.md`。不要只改完函数体就宣称完成。
 
 ## 正反例指针
 

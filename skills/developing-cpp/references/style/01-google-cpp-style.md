@@ -20,7 +20,7 @@
 - 本项目头用引号写裸文件名，例如 `#include "logging.h"`。构建时把该组件的 `include/` 加入 include 搜索路径（`target_include_directories(<target> PUBLIC .../include)`），不要写 `"base/logging.h"` 这种从源码根起的长路径。
 - 公共头文件直接放在组件的 `include/` 下；不要为了「整齐」再加一层命名空间目录。
 - 跨文件共享的常量用 `inline constexpr`，放在命名空间里并带 `k` 前缀；头文件里不要定义非 inline 的普通全局变量。
-- 头文件里只放模板、`constexpr`、类内联小函数和声明；普通函数的函数体放 `.cpp`。
+- 头文件里只放模板、`constexpr`、类内联的短动作函数和声明；只读访问器与查询即使很短也放 `.cpp`；普通函数体放 `.cpp`。
 - 头文件里不要用匿名命名空间或 `static` 隐藏定义；内部链接的实现放 `.cpp`。
 
 ## 命名
@@ -35,11 +35,11 @@
 ## 类型与声明
 
 - 纯数据聚合用 `struct`；有不变量的类型用 `class`，不变量在构造函数和公共成员函数里维持。
-- 单参数构造函数写 `explicit`；零参数构造函数不写。
+- 单参数构造函数默认写 `explicit`，例外见 `references/language/language-basics/06-functions.md`；零参数构造函数不写。
 - 默认成员初始化写在声明处（NSDMI），不要在构造函数初始化列表里重复；初始值来自构造参数或工厂调用时，改在构造函数初始化列表用花括号写一次，如 `screen_{MakeScreen()}`。
 - 普通对象默认用花括号初始化：`int count{};`、`std::vector<int> values{1, 2, 3};`。成员声明处也默认写 `{}`；拷贝初始化或 `auto` 推导用 `=`；`name = {{` 只用于多行聚合常量表，单个对象和空初始化仍写 `count{}`；容量构造等 `()` 例外见 `references/language/language-basics/02-initialization.md`。
-- 类声明顺序：public → protected → private；类型与别名 → 静态常量 → 工厂 → 构造/赋值/析构 → 其他函数 → 数据成员。
-- 用户声明的拷贝/移动/析构函数在头文件声明、在 `.cpp` 定义；只有零参数且默认实现足够时才写 `= default`。
+- 类内声明顺序（public → protected → private，类型、常量、工厂、构造、函数、数据成员）以 `references/layout/03-declaration-order.md` 为准，本文不复述。
+- 用户声明的拷贝/移动/析构函数在头文件声明、在 `.cpp` 定义；默认实现足够时写 `= default`（默认构造无参数，拷贝/移动构造与赋值按各自的签名）。
 - 查询成员函数标尾部 `const`；返回结果对象的 API 加 `[[nodiscard]]`，不要给所有非 `void` 函数机械添加。标注位置与 `friend` 的例外见 `references/language/value-types/07-nodiscard.md`。
 - 所有权优先 `std::unique_ptr`；没有共享所有权的理由时不用 `std::shared_ptr`。禁止裸 `new` / `delete`。
 - 禁止 C 风格强制转换；用 `static_cast`、`const_cast`、`reinterpret_cast`，C++20 起可用 `std::bit_cast`，低标准用 `std::memcpy`；并让 `clang-tidy` 的 `google-readability-casting` 兜底。
@@ -55,7 +55,7 @@
 - 优先返回值，不用输出参数：返回 `std::string`、`std::vector<T>`、结果结构体。
 - 已有成员按 `const` 引用返回，例如 `GetHistory()`；不要返回内部容器的可变引用。
 - 函数保持短小；没有硬上限，超过约 40 行时先拆出有名字的步骤，而不是加注释分节。
-- 头文件里只把大约 10 行以内、确实适合内联的短函数就地定义；更长或需要完整定义的函数放 `.cpp`，避免头文件膨胀和重复编译。
+- 头文件里只把大约 10 行以内、确实适合内联的短动作函数就地定义；只读访问器与查询即使很短也放 `.cpp`；更长或需要完整定义的函数放 `.cpp`，避免头文件膨胀和重复编译。
 - 虚函数不用默认参数；默认参数只用于非虚的便利接口。
 - 尾置返回类型只在普通语法不可行或明显更难读时使用，例如返回类型依赖参数；不要为了风格统一全面改写。
 - `if` / `for` / `while` / `do` 总是写花括号；`case` 的取舍见 `references/language/language-basics/05-expressions.md`。
@@ -65,7 +65,7 @@
 
 - 比较不写 Yoda 形式：`x == 0`、`task == TaskState::kPending`；不要写 `0 == x`、`nullptr == p`。
 - 半开区间写成两个「变量在左」的比较：`id >= 0 && id < kTaskCount`；不要写 `0 <= id`。
-- 混合优先级算术加显式括号，消除 `readability-math-missing-parentheses`。
+- 混合优先级算术加显式括号，让读代码的人不必先还原优先级；默认 Checks 不含 `readability-math-missing-parentheses`，这条靠评审。
 - 内建整数默认用 `int`；需要确定宽度时用 `<cstdint>` 的 `std::int32_t`、`std::int64_t` 等（可省略 `std::` 前缀），可能到 2^31 的值用 64 位；`std::size_t` / `std::ptrdiff_t` 只用于大小和指针差。不要用无符号类型表达「这个值不会为负」。
 - 封闭状态码用 `enum class`；本项目固定写 `: std::uint8_t`（见 `references/language/value-types/04-enum.md`，有意偏离 Google 的默认 `int`），普通枚举用默认底层类型。枚举值只在必要时显式指定；默认的连续值有利于 `switch` 的实现，也能避免因手写数值而出错（C++ Core Guidelines Enum.8）。枚举值总是带作用域：`OrderResult::kSuccess`。
 - 枚举的尾随注释要么全写要么全不写；两种句式与禁止项见 `references/comments/01-comment-rules.md`「枚举项与 `struct` 短字段：两种句式」。
@@ -83,7 +83,7 @@ Google 原文不使用 C++ 异常；本工作流只在开发阶段的源码指�
 - 组合消息以 `std::format` 为主：`std::format("任务 {} 进入状态 {}", task, state)`。
 - 写到已有的 `std::ostream` 用 `<<`；没有流对象时，默认用 `std::print` 与 `std::println`，它们只在 C++23 且标准库支持时可用；见 `references/language/standard-library/06-format.md`。
 - 简单字面量输出可以直接用 `std::cout << "..."`；需要拼接变量、对齐、数值格式时用 `std::format`。
-- 列宽跟工程根 `.clang-format` 的 `ColumnLimit` 走；工程未声明时按 120 列，模板资产固定 `ColumnLimit: 120`。每级缩进用 4 个空格，续行与行内对齐也用空格；缩进与对齐由 `.clang-format` 统一，不在条文里另定一套。
+- 列宽跟文件最近的 `.clang-format` 的 `ColumnLimit` 走（从文件目录向上查到工程根）；工程未声明时按 120 列，模板资产固定 `ColumnLimit: 120`。每级缩进用 4 个空格，续行与行内对齐也用空格；缩进与对齐由 `.clang-format` 统一，不在条文里另定一套。
 - 浮点输出固定精度，整数不依赖隐式格式；`std::format` 的格式串写全。
 
 ## 注释

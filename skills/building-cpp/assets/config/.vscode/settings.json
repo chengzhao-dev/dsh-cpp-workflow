@@ -9,9 +9,13 @@
   // VSCode 的配置、构建、运行和调试入口都留在 CMake Tools。
   // 不另建 launch.json / tasks.json，避免出现第二套构建或启动路径。
   "cmake.buildDirectory": "${workspaceFolder}/build/clang",
+  // 构建固定用 Ninja，与工程入口脚本一致；换生成器要同步脚本。
   "cmake.generator": "Ninja",
+  // 打开工程时不自动配置，配置时机由入口脚本决定。
   "cmake.configureOnOpen": false,
+  // 运行前先构建，避免跑到旧产物。
   "cmake.buildBeforeRun": true,
+  // 生成 compile_commands.json，供 clangd 与 clang-tidy 读取。
   "cmake.exportCompileCommandsFile": true,
   // CMake Tools 的快速调试默认使用 C/C++ 扩展的 cppdbg 适配器；
   // 这里只把它的调试后端改成 LLDB。GCC 模式改成 gdb + /usr/bin/gdb。
@@ -26,22 +30,29 @@
   // cpptools 只作为 CMake 的调试后端，不再提供 IntelliSense；
   // 补全、跳转、诊断和格式化都由读取 compile_commands.json 的 clangd 负责。
   "C_Cpp.intelliSenseEngine": "disabled",
+  // 保存即格式化；实际排版交给 clangd，不在构建脚本里跑 clang-format -i。
   "editor.formatOnSave": true,
+  // C/C++ 的默认格式化器都交给 clangd。
   "[cpp]": {
     "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
   },
   "[c]": {
     "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
   },
+  // 项目头文件统一按 C++ 解析，避免被当成 C。
   "files.associations": {
     "*.h": "cpp"
   },
+  // 文件统一按 UTF-8 保存，与 .editorconfig 的 charset 一致。
   "files.encoding": "utf8",
+  // 行尾统一 LF，与 .gitattributes 和 .clang-format 的 LineEnding 一致。
   "files.eol": "\n",
+  // 构建产物与本地缓存不显示在资源管理器里。
   "files.exclude": {
     "**/build": true,
     "**/.cache": true
   },
+  // 同一批目录也不进入搜索结果。
   "search.exclude": {
     "**/build": true,
     "**/.cache": true

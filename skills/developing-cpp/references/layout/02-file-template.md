@@ -1,4 +1,4 @@
-<!-- 读取时机：排声明顺序时；读完能回答：文件模板；预算：一次只开这一份（123 行），不自动串联。 -->
+<!-- 读取时机：写头文件或实现文件时；读完能回答：文件模板；预算：一次只开这一份（124 行），不自动串联。 -->
 # 文件模板
 
 本文件是头文件与实现文件槽位的唯一权威。`references/style/01-google-cpp-style.md` 的头文件节保留文件级规则（头文件去重、自包含、包含顺序），槽位细节以本文件为准；`references/layout/01-source-layout.md` 只定文件放在哪；`steps/03-declaration.md` 指向这里。类内声明顺序仍只写在 `references/layout/03-declaration-order.md`，本文件不复制。
@@ -36,9 +36,10 @@
 
 ```cpp
 /// @file thing_table.h
-/// @brief 定义 ThingTable 与它用到的状态。
 ///
-/// 头文件放常量、枚举、结构体与类声明。
+/// @brief `ThingTable` 相关类型定义。
+///
+/// 封装了状态 `ThingState`、表项 `Thing` 与表 `ThingTable`。
 
 #pragma once
 
@@ -51,10 +52,10 @@ namespace project {
 
 inline constexpr int kThingCount = 3;
 
-enum class ThingState { kIdle, kBusy };
+enum class ThingState : std::uint8_t { kIdle, kBusy };
 
 struct Thing {
-  int id;
+  int id{};
 };
 
 class ThingTable {
@@ -71,8 +72,8 @@ class ThingTable {
 - 文件头不写版权、作者或变更日志；文件头之后紧跟 `#pragma once`，再进入包含。
 - 头文件自包含：自己用到的类型、宏和标准库头都直接包含，不依赖调用方先包含什么。
 - 不把 `using namespace`、非 inline 普通全局变量、匿名命名空间或 `static` 定义放进头文件。
-- 模板、`constexpr` 和类内短函数可以留在头文件；普通函数体放实现文件。
-- 构造函数即使很短，只要带成员初始化列表或函数体，头文件只留声明，定义放 `.cpp`；`= default`、`= delete`、空体且无初始化列表的转发构造，以及 `constexpr` 需要的定义可留在类内。
+- 模板、`constexpr` 和类内短动作函数可以留在头文件；只读访问器与查询（`Get*`、`Is*` 等）即使只有一行，头文件只留声明，定义放 `.cpp`；其他普通函数体放实现文件。
+- 只读访问器与查询统一放 `.cpp`，不要一部分内联、一部分外移；构造函数即使很短，只要带成员初始化列表或函数体，头文件只留声明，定义放 `.cpp`；`= default`、`= delete`、空体且无初始化列表的转发构造，以及 `constexpr` 需要的定义可留在类内。
 - `.hpp` 完全套用 `.h` 的槽位，只换扩展名，不换顺序。
 
 ## `.cpp`

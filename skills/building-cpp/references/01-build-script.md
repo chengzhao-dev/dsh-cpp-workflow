@@ -1,4 +1,4 @@
-<!-- 读取时机：写构建脚本时；读完能回答：构建脚本；预算：一次只开这一份（88 行），不自动串联。 -->
+<!-- 读取时机：写构建脚本时；读完能回答：构建脚本；预算：一次只开这一份（73 行），不自动串联。 -->
 # 构建脚本
 
 `assets/templates/projects/common/running-build.sh` 是 POSIX build-host 脚本，适用于 Linux、macOS 和 Windows + WSL。`host=windows` + `build_host=native` 不是本版本支持的组合：声明校验会直接拒绝，脚本也不会在原生 Windows 壳里运行。脚本只做配置、构建、CTest 与运行；格式化与静态检查在编辑时手动跑，不混进构建入口。
@@ -7,13 +7,7 @@
 
 不在 `running-build.sh` 里跑。构建脚本只做配置、构建、CTest 与运行；格式化是编辑时动作，不能让构建顺手改动源码。检查放在编辑器保存时或 CI 的独立步骤里。
 
-检查（按工程实际源码根替换 `src/`、`include/`、`app/`、`tests/`）：
-
-```bash
-clang-format --dry-run --Werror src/*.cpp include/*.h
-```
-
-需要修复时单独运行 `clang-format -i`，再回看 diff。`clang-format` 只排版，不会把行尾注释搬到上一行；数据成员注释位置按 `../../developing-cpp/references/comments/01-comment-rules.md` 的规则和 `checking-comments.mjs` 检查。
+检查命令与顺序以 `../steps/03-check.md` 第 4 步为唯一出处：那里列出 `clang-format` 与 `clang-tidy` 的完整调用，本文件不再重复。需要修复时单独运行 `clang-format -i`，再回看 diff。`clang-format` 只排版，不会把行尾注释搬到上一行；数据成员注释位置按 `../../developing-cpp/references/comments/01-comment-rules.md` 的规则和 `checking-comments.mjs` 检查。
 
 ## 用法
 
@@ -24,18 +18,18 @@ clang-format --dry-run --Werror src/*.cpp include/*.h
 
 - 参数是编译器名，只接受 `clang` / `gcc`；省略时默认 `clang`。
 - 脚本以自身所在目录为工程根；把它放在工程根，从其他目录调用时会先 `cd` 到脚本目录。
-- 构建目录由参数决定：`build/clang` 或 `build/gcc`；不要用环境变量临时改目录。
+- 构建目录默认 `build/clang` 或 `build/gcc`；脚本头声明的 `BUILD_DIR`、`BUILD_ROOT`、`APP_NAME` 只覆盖这一次运行，默认值不变。单一构建目录时把 `BUILD_ROOT` 设为与 `BUILD_DIR` 相同，脚本就不再补 `build/compile_commands.json` 链接；构建目录的取值以 `02-environment.md`「构建目录」的「单一目录」行为准。
 - 脚本不安装依赖、不下载工具、不改 PATH；缺工具时让命令失败，由 `building-cpp` 的通过检查分诊。
 
 ## 结构
 
 1. **shebang + 文件头**：标题一行、`#` 一行，再用「用法」「依赖」「构建目录」等行说明参数与支持的 build host；段落用单行注释，不画 `#===` 横幅。
-2. **严格模式与目录**：`set -euo pipefail`；`cd "$(dirname "$0")"`；`readonly BUILD_DIR`、`readonly APP_NAME="app"`。
+2. **严格模式与目录**：`set -euo pipefail`；`cd "$(dirname "$0")"`；`APP_NAME`、`BUILD_ROOT` 取环境变量默认值，`BUILD_DIR` 由编译器名推导；`COMPILER` 与 `CXX` 用 `readonly`。
 3. **输出辅助**：`header()` 打印阶段名，`err()` 打印到 stderr；`trap ERR` 打印失败命令。
 4. **configure**：每次运行都重新 configure，不复用缓存；传 `-G Ninja`、`-DCMAKE_BUILD_TYPE=Debug`、`-DCMAKE_C_COMPILER`、`-DCMAKE_CXX_COMPILER`、`-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`。C 与 C++ 使用同一套编译器；没有 C 语言的工程会忽略 C 编译器设置。
 5. **build**：`cmake --build "$BUILD_DIR"`。
-6. **编译数据库链接**：先 `rm -f build/compile_commands.json`，再 `ln -s "${COMPILER}/compile_commands.json" build/compile_commands.json`；不用 `ln -n`，它在 BSD/macOS 上不可移植。
-7. **test**：有 `tests/` 目录时 `ctest --test-dir "$BUILD_DIR" --output-on-failure --no-tests=error`，防止测试 discovery 失败后 0 条也算通过；没有测试目录时 `ctest --test-dir "$BUILD_DIR" --output-on-failure`，0 条不算失败。
+6. **编译数据库链接**：`BUILD_DIR` 与 `BUILD_ROOT` 相同时数据库就在该目录，不建链接；否则先 `rm -f "${BUILD_ROOT}/compile_commands.json"`，再用 `realpath --relative-to="${BUILD_ROOT}" "${BUILD_DIR}/compile_commands.json"` 求相对路径后 `ln -s` 到 `${BUILD_ROOT}/compile_commands.json`；不用 `ln -n`，它在 BSD/macOS 上不可移植。
+7. **test**：有 `tests/` 目录时 `ctest --test-dir "$BUILD_DIR" --output-on-failure --no-tests=error`，防止测试 discovery 失败后 0 条也算通过；没有测试目录时 `ctest --test-dir "$BUILD_DIR" --output-on-failure --no-tests=ignore`，0 条不算失败；不写 `--no-tests=ignore` 时 ctest 会把 0 条当失败（退出码 8）。
 8. **run**：`(cd "$BUILD_DIR/bin" && "./$APP_NAME")`；共享库的运行时路径由定构建的 CMake RPATH 负责，不在脚本里设全局 `LD_LIBRARY_PATH`。
 
 最后一行是 `main "$@"`；函数定义在 `main()` 之前，`set` / `readonly` 在最前。
@@ -50,16 +44,7 @@ clang-format --dry-run --Werror src/*.cpp include/*.h
 - 失败时保留原始命令输出；不要在脚本里 `2>/dev/null` 吞掉诊断。
 - 脚本自身用 `bash -n` 检查语法；文件权限保持可执行。
 
-## 构建模式的错误合同
-
-工程需要 Release 时另建构建目录；模式只改变诊断详略，不改变失败方式：
-
-- 返回值：两种模式的返回值相同，调用方不按 `NDEBUG` 分支。
-- 自定义异常：两种模式都抛；Debug 的 `what()` 可以带 `file:line`，Release 只留值。
-- `Check`：两种模式都在条件不成立时打印诊断并终止。
-- `DebugCheck`：只在 Debug 生效，`NDEBUG` 后展开为空，参数不能带副作用。
-
-不要写成 Debug 抛异常、Release 返回 false 的模式分支；这会把调用方逼成两套逻辑。规则详见 `../../developing-cpp/references/exceptions/01-exception-rules.md`。
+Debug 与 Release 的返回值、异常与 `Check` / `DebugCheck` 合同见 `../../developing-cpp/references/exceptions/01-exception-rules.md`；构建脚本只换诊断详略，不改失败方式。
 
 ## 失败分诊
 
@@ -76,7 +61,7 @@ clang-format --dry-run --Werror src/*.cpp include/*.h
 
 - `bash -n running-build.sh` 通过。
 - 在声明的 build host 上，`./running-build.sh clang` 与 `./running-build.sh gcc` 都能从 configure 走到 run。
-- 从工程根直接 `./build/clang/bin/app` 能启动（共享库场景由 RPATH 保证）。
+- 从工程根直接 `./build/clang/bin/<入口 target>` 能启动（模板默认 `app`，本书是 `terminal`；共享库场景由 RPATH 保证）。
 - 切换编译器后 `build/compile_commands.json` 指向新数据库。
 - 调用者的 `LD_LIBRARY_PATH` 在脚本结束后不变。
 - Windows 原生：声明校验已拒绝该组合；不要伪造 PowerShell 脚本，也不要绕过声明。

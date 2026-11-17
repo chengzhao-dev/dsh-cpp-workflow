@@ -14,10 +14,10 @@ metadata:
 - **负责**：环境四轴与构建入口；工具配置的复制、落地与检查（规则条文归 `engineering`）；编码、声明校验、活动校验、项目入口命令的次序。
 - **不负责**：`CMakeLists.txt` 与 `cmake/` 下的 target、属性、标准与模块开 `engineering`，本技能只读它们来配置和检查，不在这一步改 target 图；函数体、类型、命名、异常与源码注释开 `developing-cpp`。
 - **交接**：一次改动同时碰到源码和构建文件时，先开 `developing-cpp` 定行为、边界与实现；需要新增或移动源文件、改库与程序的边界、补测试 target 时，转 `engineering` 把文件写进 CMake；最后回到本技能定工具配置并通过检查。只改函数体、命名、异常或注释且入口命令可运行时，定实现后只开本技能的通过检查。
-- **前置**：存在项目技能 `cpp-workflow-project` 时先读它的 `SKILL.md`、`environment.json` 和 `stages/stage-table.md`。三个环境轴为空、`standard` 非法或组合非法时停在定构建，不猜 WSL、Clang 或构建目录；`standard` 缺失或为空时按默认 `c++23` 继续并提示声明升级；`windows` + `native` 直接拒绝，提示「本版本不能在 Windows 原生壳里构建」，不给补 PowerShell 的路线。
+- **前置**：存在项目技能 `cpp-workflow-project` 时先读它的 `SKILL.md`、`environment.json` 和 `stages/stage-table.md`。声明非法时停在定构建，不猜 WSL、Clang 或构建目录；判定规则与取值见 `../building-cpp/references/02-environment.md`「合法组合」。
 - **分因**：编译失败时先看诊断指向哪一层。函数体问题回 `developing-cpp` 的定实现；找不到头、链接失败、target 不存在或标准不对转 `engineering` 的对应步骤；没有编译数据库、format/tidy 不在 PATH 或配置不生效留在本技能的定工具配置。
 - **编码**：源码与构建文件用 UTF-8 无 BOM、检出 LF，`.bat` / `.cmd` 用 CRLF，`.clang-format` 写 `LineEnding: LF`；MSVC 不是受支持的环境轴；`/utf-8` 配方只留在资产注释里，当前构建仍用 clang/gcc。完整规则见 `../engineering/references/formatting/01-encoding.md`，机器规则以仓库根 `.gitattributes` 与 `.editorconfig` 为准。
-- **编辑器**：工程根已有 `.vscode/` 时按 `steps/04-vscode.md` 接线；从当前目录向上到 git 根都没有 `.vscode/` 时不打开、也不新建。配置、构建、运行和调试都从 CMake Tools 进入，构建仍以 `running-build.sh` 为准。
+- **编辑器**：工程根已有 `.vscode/` 时按 `steps/04-vscode.md` 接线；从当前目录向上到工程根（含 `CMakeLists.txt` 的目录）都没有 `.vscode/` 时不打开、也不新建，外层仓库根或书根的 `.vscode/` 不算工程配置。配置、构建、运行和调试都从 CMake Tools 进入，构建仍以 `running-build.sh` 为准。
 
 ## 三种操作
 
@@ -61,7 +61,7 @@ metadata:
 
 加载预算见 [budget.md](../shared/budget.md)；building-cpp 的步骤固定 4 份。
 
-项目技能列出了检查命令时只跑那一条，没有时跑本技能自己的 `scripts/checking-environment.mjs` 与 `../engineering/scripts/checking-encoding.mjs`；退出码为 0 后停在这一步，不再继续走没有失败的步骤。入口脚本只做配置、构建、CTest 与最小运行；`clang-format` 与 `clang-tidy` 的手动检查留在定工具配置，不塞进入口脚本。`environment.json` 的三个环境轴与 `standard` 是唯一来源，缺项就停。
+项目技能列出了检查命令时先跑那一条；没有时跑本技能自己的 `scripts/checking-environment.mjs` 与 `../engineering/scripts/checking-encoding.mjs`。这些命令只覆盖各自那一段，完成判据还要求入口命令、CTest 与格式化检查，按 `steps/03-check.md` 的顺序跑完再停在这一步。入口脚本只做配置、构建、CTest 与最小运行；`clang-format` 与 `clang-tidy` 的手动检查留在定工具配置，不塞进入口脚本。`environment.json` 的三个环境轴是唯一来源；取值与合法性见 `references/02-environment.md`「合法组合」，脚本行为见 `scripts/checking-environment.mjs`。
 
 ## 四类改动
 
@@ -77,7 +77,7 @@ metadata:
 ## 完成判据
 
 - [ ] 项目 `environment.json` 的三个环境轴齐全且是合法组合，`standard` 在 `c++11`–`c++23` 内；新工程默认 `c++23`，没有靠猜。
-- [ ] 配置命令固定 Ninja 和单一编译器，`build/<compiler>/compile_commands.json` 存在，根 `build/compile_commands.json` 指向当前编译器。
+- [ ] 配置命令固定 Ninja 和单一编译器，`build/<compiler>/compile_commands.json` 存在；项目技能没有声明单一构建目录时，根 `build/compile_commands.json` 还要指向当前编译器。
 - [ ] target 契约已经成立：程序 target（模板默认 `app`，本书 `terminal`）、库 target、公共 include、标准与输出目录都已由 `engineering` 写好；本技能没有偷偷改 CMake 来绕过失败。
 - [ ] `clang-format --dry-run --Werror` 与 `clang-tidy` 在项目源码上零告警；只扫描项目源码和项目头。
 - [ ] CTest 全绿，程序从该编译器的构建目录启动；有测试时注册用 `gtest_discover_tests` 或项目既有机制，运行带 `--output-on-failure --no-tests=error`，失败时报告的是具体角色和原因。

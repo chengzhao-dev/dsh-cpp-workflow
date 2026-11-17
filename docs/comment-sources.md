@@ -6,7 +6,7 @@
 
 ## 一、检索量
 
-2026-11-08 实际检索 510 个独立页面，分五个方向：
+2026-11-08 分五个方向检索，原始清单 510 行记录（下表按方向合计 510）：
 
 | 方向 | 页面数 | 内容 |
 | --- | --- | --- |
@@ -16,7 +16,7 @@
 | Rust | 100 | Rust API Guidelines、Rust Style Guide、rustdoc、RFC 430/344/505/1574、Clippy、rustfmt |
 | AI | 100 | Google 各语言风格、TensorFlow/PyTorch/JAX/HF、OpenAI/Anthropic、Copilot/Cursor、注释可读性论文 |
 
-原始清单 510 行，按 URL 去重后 466 个唯一页面；另补 34 个官方或工具页面（Go、Oracle、Python、Rust、Doxygen 等），合计 500。只按独立页面计数：同一页面的不同章节算一页，镜像、转载与同一译文不算新页。
+按 URL 去重后 466 个唯一页面；另补 34 个官方或工具页面（Go、Oracle、Python、Rust、Doxygen 等），去重后合计 500 个独立页面。只按独立页面计数：同一页面的不同章节算一页，镜像、转载与同一译文不算新页。
 
 原始 URL 清单是临时材料，放在 `temp/`，不入库：`cpp_urls.txt`、`naming_urls.txt`、`python_urls.txt`、`rust_urls.txt`、`ai_urls.txt`、`supplement_urls.txt`。
 

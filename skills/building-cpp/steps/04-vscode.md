@@ -1,6 +1,6 @@
 # 第 4 步：VS Code 接线
 
-只在工程已经有 `.vscode/` 时读本页；从当前目录向上到 git 根都没有 `.vscode/` 时，不打开本页，也不新建目录。新工程从 `../assets/config/.vscode/` 复制时除外。
+只在工程根已经有 `.vscode/` 时读本页；从当前目录向上到工程根（含 `CMakeLists.txt` 的目录）都没有 `.vscode/` 时，不打开本页，也不新建目录；外层仓库根或书根的 `.vscode/` 不算工程配置。新工程从 `../assets/config/.vscode/` 复制时除外。
 
 ## 三个角色
 
@@ -24,14 +24,14 @@
 | 键 | clang 模式 | gcc 模式 |
 | --- | --- | --- |
 | `cmake.buildDirectory` | `${workspaceFolder}/build/clang` | `${workspaceFolder}/build/gcc` |
-| `clangd.arguments` 的 `--query-driver` | `/usr/bin/clang++` | `/usr/bin/g++` |
+| `clangd.arguments` 的 `--query-driver` | `/usr/bin/clang++` | 真实 GCC 的绝对路径（如 Homebrew `gcc-14`）；`/usr/bin/g++` 在 macOS 是 Apple clang 别名，不能用 |
 | `cmake.debugConfig` | `MIMode: lldb`、`miDebuggerPath: /usr/bin/lldb` | `MIMode: gdb`、`miDebuggerPath: /usr/bin/gdb` |
 
 只改与 `environment.json` 冲突的键；其余保持工程原值。`.clangd` 的 `CompilationDatabase` 也随编译器改，见 `../../engineering/references/formatting/04-clangd.md`。
 
 ## 各键分工
 
-- `cmake.buildDirectory`：与定构建的 `build/<compiler>` 一致；不要在 CMake Tools 里再选第二个构建目录。
+- `cmake.buildDirectory`：与定构建的 `build/<compiler>` 一致；不要在 CMake Tools 里再选第二个构建目录。项目技能声明单一构建目录时，这里与 `.clangd` 的 `CompilationDatabase` 都指向该目录（如 `games/tictactoe/build`），不再按编译器分子目录。
 - `cmake.generator: Ninja`、`cmake.configureOnOpen: false`、`cmake.buildBeforeRun: true`、`cmake.exportCompileCommandsFile: true`：构建仍由入口脚本和 CMake 决定，编辑器只消费同一份数据库。
 - `clangd.arguments`：`--query-driver` 写绝对路径且只列一个驱动，不用 `*`；`--header-insertion=never` 与 `--background-index` 沿用模板。
 - `cmake.debugConfig`：只改调试后端；`type` 仍是 `cppdbg`。

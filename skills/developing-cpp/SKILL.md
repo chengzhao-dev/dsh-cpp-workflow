@@ -55,13 +55,13 @@ metadata:
 | 会话层、选着与程序边界 | `references/design/session-layer.md`；领域规则见 `references/design/01-project-design.md` |
 | 复杂能力、三方库选型 | `references/design/03-third-party.md` |
 | RAII、资源寿命与析构 | `references/design/02-raii.md` |
-| 文件槽位、头文件去重、声明顺序 | `references/layout/02-file-template.md`、`references/layout/03-declaration-order.md` |
+| 文件放哪、文件槽位、头文件去重、声明顺序 | `references/layout/01-source-layout.md`、`references/layout/02-file-template.md`、`references/layout/03-declaration-order.md` |
 | 命名与改名 | `references/naming/01-identifier-names.md`；案例在 `references/naming/examples/`；术语在 `references/naming/glossary/` |
 | 声明注释与实现注释 | `references/comments/01-comment-rules.md`（写什么）与 `references/comments/02-style.md`（结构、版式、措辞）；案例在 `references/comments/examples/` |
 | 异常规则与异常案例 | `references/exceptions/01-exception-rules.md`；案例在 `references/exceptions/examples/` |
 | 结果类型与值类型 | `references/language/value-types/`：宽度、符号、整数角色、枚举、强类型、const 成员、`[[nodiscard]]`、比较、下标、float/bool |
 | 语言基础 | `references/language/language-basics/`：对象、初始化、推导、const、表达式、函数、类、RAII、模板 |
-| 标准库 | `references/language/standard-library/`：容器、访问、迭代、算法、string、format、time、random、files |
+| 标准库 | `references/language/standard-library/`：容器、访问、迭代、算法、string、format、格式生态、time、random、files |
 | 性能与陷阱 | `references/language/performance/`：测量、复杂度、内存、未定义行为、陷阱、伪优化 |
 | 操作判不准、规则冲突 | `../shared/operations.md`、`../shared/rule-priority.md` |
 
@@ -70,8 +70,6 @@ metadata:
 ## 加载预算
 
 加载预算见 [budget.md](../shared/budget.md)。
-
-项目技能列出了检查命令时先跑它；无论有没有项目命令，都再跑本技能的 `scripts/checking-declaration-order.mjs`（定义顺序与签名）与 `scripts/checking-comments.mjs`（注释）；两者退出码为 0 后停在这一步，不再继续走没有失败的步骤。
 
 ## 四类改动
 
@@ -88,6 +86,7 @@ metadata:
 
 ## 完成判据
 
+- [ ] 项目技能列出了检查命令时先跑它，再跑本技能的两个检查；退出码为 0 后停在这一步。
 - [ ] 第 1 步的行为句能被用户或测试验收；有阶段表时只覆盖对应行，没有时只覆盖用户点名的行为。
 - [ ] 第 2 步的库 target 不依赖终端、GUI 或脚本；程序 target 只做装配和输入输出；共享抽象有第二个真实使用方。
 - [ ] 超出标准库的能力用维护中的三方库完成，库只出现在直接使用它的 target，规则库不依赖终端、GUI 或库类型。

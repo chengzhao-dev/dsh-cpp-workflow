@@ -1,12 +1,12 @@
 # 技能架构
 
-本包在已经声明 C++ 工作流的仓库里注册三个技能：`developing-cpp` 管源码四步，`engineering` 管 target、CMake 模块与排版工具，`building-cpp` 管构建宿主、工具配置与通过检查。三者共享同一道前置：从会话 cwd 向上到 git 根，存在 `.agents/skills/cpp-workflow-project/SKILL.md`。目录与逐文件清单以 [module-layout.md](module-layout.md) 为准；本页解释分层、加载顺序、文件放在哪一份，以及维护本包时的写作约定。
+本包在已经声明 C++ 工作流的仓库里注册三个技能：`developing-cpp` 管源码四步，`engineering` 管 target、CMake 模块与排版工具，`building-cpp` 管构建宿主、工具配置与通过检查。三者共享同一道前置：从会话 cwd 向上到 git 根，存在 `.agents/skills/cpp-workflow-project/SKILL.md`；目录名也接受下划线写法 `cpp_workflow_project`，两种等价。目录与逐文件清单以 [module-layout.md](module-layout.md) 为准；本页解释分层、加载顺序、文件放在哪一份，以及维护本包时的写作约定。
 
 ## 数据流
 
 ```mermaid
 flowchart TD
-    A["会话 cwd"] --> B{"向上到 git 根，<br/>有 .agents/skills/cpp-workflow-project/SKILL.md？"}
+    A["会话 cwd"] --> B{"向上到 git 根，<br/>有 .agents/skills/cpp-workflow-project/SKILL.md<br/>（或下划线写法）？"}
     B -- 没有 --> C["返回空列表：三个技能都不出现"]
     B -- 有 --> D["注册 developing-cpp、engineering、building-cpp"]
     D --> E["项目技能：工程名、边界、阶段表、入口命令"]
@@ -71,13 +71,13 @@ flowchart TD
 
 | 层 | 行为 | 代码位置 |
 | --- | --- | --- |
-| 文件 frontmatter | `name` 与目录不同、`description` 为空、名字不在白名单、块标量不支持：静默跳过，`complete` 仍为 true | `src/index.ts:167-172` |
+| 文件 frontmatter | `name` 与目录不同、`description` 为空、名字不在白名单、块标量不支持：静默跳过，`complete` 仍为 true | `src/index.ts:167-173` |
 | 候选对象 | `description` 不是字符串或为空：`dsh-skill` 抛错，整次发现失败 | `dsh-skill:455-456` |
-| 目录/文件读取 | `skills/` 读不出：`{ candidates: [], complete: false }`；单份 `SKILL.md` 读不出：保留其余候选，`complete: false` | `src/index.ts:203-215` |
+| 目录/文件读取 | `skills/` 读不出：`{ candidates: [], complete: false }`；单份 `SKILL.md` 读不出：保留其余候选，`complete: false` | `src/index.ts:160-166`、`:202-215` |
 
 本包自身不抛错：门禁不通过、没传 `cwd` 等确定性空目录返回 `[]`（完整观察）；`skills/` 或某份 `SKILL.md` 读不出来时返回 `{ candidates, complete: false }`，有可用候选时保留其余候选，宿主不会缓存这次结果。`get()` 失败一律返回 `undefined`。
 
-- cwd 没有工作流门禁、没传 `cwd`、收到已中止的 `AbortSignal`：`list()` 返回 `[]`；abort 时宿主还会在调用前后抛出 `AbortError`，用户侧看到的仍是中止。
+- cwd 没有工作流门禁、没传 `cwd`：`list()` 返回 `[]`；收到已中止的 `AbortSignal`：返回 `{ candidates: [], complete: false }`，宿主还会在调用前后抛出 `AbortError`，用户侧看到的仍是中止。
 - `skills/` 读不出来：`list()` 返回 `{ candidates: [], complete: false }`；某份 `SKILL.md` 读不出来：其余候选照常返回，观察标为 `complete: false`。这两种情况宿主都不会缓存，下一轮重试。
 - `get()` 的候选不属于本包、名字不在三个之内、locator 解析后越出 `skills/`、目录名或 frontmatter 的 `name` 与候选名不符：返回 `undefined`。
 - 带 cwd 加载时重新核对门禁；门禁在会话中途消失后，旧候选不再加载。
@@ -114,4 +114,4 @@ flowchart TD
 
 ## 检查
 
-`npm test` 先跑客户端与源一致性检查，再构建 `lib/`，然后跑 `scripts/checking-skill-links.mjs`、编码检查、工作流检查与单元测试；结构检查要求本页存在、mermaid 数据流块存在且含 flowchart 关键字、三个技能名与三个检查器名（`checking-comments.mjs`、`checking-environment.mjs`、`checking-declaration-order.mjs`）齐全，并要求 `docs/module-layout.md` 的树按文件名覆盖每个技能 Markdown/脚本文件；目录层级与放置位置以该页为准。新增或移动文件时先改 module-layout 的树，再改结构检查，最后跑 `npm test`。
+`npm test` 先跑客户端与源一致性检查，再构建 `lib/`；CI 另跑 `git diff --exit-code -- lib` 确认产物已提交，然后跑 `scripts/checking-skill-links.mjs`、编码检查、工作流检查与单元测试；结构检查要求本页存在、mermaid 数据流块存在且含 flowchart 关键字、三个技能名与三个检查器名（`checking-comments.mjs`、`checking-environment.mjs`、`checking-declaration-order.mjs`）齐全，并要求 `docs/module-layout.md` 的树按文件名覆盖每个技能 Markdown/脚本文件；目录层级与放置位置以该页为准。新增或移动文件时先改 module-layout 的树，再改结构检查，最后跑 `npm test`。

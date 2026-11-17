@@ -34,7 +34,8 @@ metadata:
 以下约定不随工程变化；与本工程的真实情况冲突时，在项目技能里写一行偏离和理由。
 
 - 环境以 `environment.json` 为唯一来源；新工程默认 C++23，不猜轴、不猜编译器。
-- `.clang-format`、`.clang-tidy`、`.clangd`、`.vscode/` 随工程存放，不继承仓库根或用户主目录。
+- `.clang-format`、`.clang-tidy`、`.clangd`、`.vscode/` 随工程存放（工程根＝含 `CMakeLists.txt` 的目录）；三件 clang 工具会从文件所在目录向上查找配置，工程根必须自带这三份，不依赖仓库根、书根或用户主目录的那份；`.vscode/` 只对打开为工作区的那个目录生效，不开在仓库根或书根。
+- `.editorconfig`、`.gitattributes`、`.gitignore` 与三个 clang 配置不同：它们按目录向上查找，工程根没有自己的副本时用仓库根那份；`.gitignore` 的前导 `/` 锚定到该文件所在目录，仓库根与工程根各自解释，同一路径在两级都忽略时两级都要写。
 - 库与程序分开 target；程序链接库，终端输入输出留在程序。
 - CTest 在工程内注册并运行；仓库根不构建、不注册测试。
 - 头文件用 `#pragma once`，不写路径式包含守卫。

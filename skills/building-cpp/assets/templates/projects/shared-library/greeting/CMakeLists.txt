@@ -6,10 +6,3 @@ set_target_properties(greeting PROPERTIES
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
 )
-target_compile_options(greeting PRIVATE
-    -Wall
-    -Wextra
-    -Werror
-    -Wold-style-cast
-    -Wshadow
-)

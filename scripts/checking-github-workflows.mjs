@@ -6,11 +6,12 @@
 // action 必须存在，action 引用不得漂在 main/master/latest 上。
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import process from 'node:process'
+import { fileURLToPath } from 'node:url'
 import { parseDocument } from 'yaml'
 
-const ROOT = process.cwd()
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const WORKFLOWS = join(ROOT, '.github', 'workflows')
 const failures = []
 
@@ -23,8 +24,8 @@ function isObject(value) {
 }
 
 if (!existsSync(WORKFLOWS)) {
-  console.error('GitHub workflows OK: 0 files (.github/workflows 不存在)')
-  process.exit(0)
+  console.error(`GitHub workflows 检查失败：${WORKFLOWS} 不存在`)
+  process.exit(1)
 }
 
 const files = readdirSync(WORKFLOWS)
@@ -63,7 +64,19 @@ for (const file of files) {
       continue
     }
     if (typeof job.uses === 'string') {
-      if (job.uses.trim() === '') fail(`${rel}: jobs.${jobId}.uses 为空`)
+      const uses = job.uses.trim()
+      if (uses === '') {
+        fail(`${rel}: jobs.${jobId}.uses 为空`)
+      } else if (uses.startsWith('./')) {
+        if (!existsSync(resolve(ROOT, uses.slice(2)))) fail(`${rel}: jobs.${jobId}: 本地 action 不存在：${uses}`)
+      } else if (uses.startsWith('docker://')) {
+        if (uses.endsWith(':latest')) fail(`${rel}: jobs.${jobId}: docker action 不应使用 latest：${uses}`)
+      } else {
+        const match = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+@[^\s]+$/.exec(uses)
+        const ref = match ? uses.slice(uses.indexOf('@') + 1) : ''
+        if (!match) fail(`${rel}: jobs.${jobId}: action 引用格式不合法：${uses}`)
+        else if (ref === 'main' || ref === 'master' || ref === 'latest') fail(`${rel}: jobs.${jobId}: action 引用不应跟随分支或 latest：${uses}`)
+      }
       continue
     }
     if (job['runs-on'] === undefined) {

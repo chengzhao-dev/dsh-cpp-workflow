@@ -6,7 +6,7 @@
 - 小对象按值传递通常比堆分配快；不要为了“避免拷贝”给所有参数加指针。
 - `reserve` 减少 `vector` 扩容和搬移；只有已知上界或能准确估算时才用。`reserve` 只改容量、不改 size；`shrink_to_fit` 不保证真正释放。
 - 移动大对象比拷贝便宜，但移动不是免费；不要把 `std::move` 当成优化开关。
-- 返回局部对象直接 `return value;`，依赖 RVO / NRVO；`return std::move(value);` 会阻止优化。
+- 返回局部对象直接 `return value;`，RVO 与移动规则见 `../language-basics/08-raii.md`。
 
 ## 依据
 

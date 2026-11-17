@@ -6,11 +6,18 @@
 import { access } from 'node:fs/promises'
 import path from 'node:path'
 
-export const PROJECT_SKILL = path.join('.agents', 'skills', 'cpp-workflow-project', 'SKILL.md')
+/** 项目技能目录名，按优先顺序排列；下划线与连字符两种写法等价，连字符是模板与文档的默认写法。 */
+export const PROJECT_SKILL_DIRS = ['cpp_workflow_project', 'cpp-workflow-project'] as const
+/** 首选标记文件；查找时按 `PROJECT_SKILL_MARKERS` 逐个尝试。 */
+export const PROJECT_SKILL = path.join('.agents', 'skills', PROJECT_SKILL_DIRS[0], 'SKILL.md')
+/** 所有可接受的标记文件，顺序同 `PROJECT_SKILL_DIRS`。 */
+export const PROJECT_SKILL_MARKERS = PROJECT_SKILL_DIRS.map((name) =>
+  path.join('.agents', 'skills', name, 'SKILL.md'),
+)
 export const MAX_ASCENT = 64
 
 export interface ProjectSkillMarker {
-  /** `.agents/skills/cpp-workflow-project/SKILL.md` 的绝对路径。 */
+  /** `.agents/skills/<目录名>/SKILL.md` 的绝对路径。 */
   file: string
   /** 直接包含 `.agents` 的目录；不是仓库边界。 */
   root: string
@@ -23,6 +30,15 @@ async function exists(target: string): Promise<boolean> {
   } catch {
     return false
   }
+}
+
+/** 在一层目录里按优先顺序找项目技能标记，返回第一个存在的。 */
+async function findMarker(root: string): Promise<string | undefined> {
+  for (const marker of PROJECT_SKILL_MARKERS) {
+    const file = path.join(root, marker)
+    if (await exists(file)) return file
+  }
+  return undefined
 }
 
 /** 最近的上级 git 检出；worktree 的 `.git` 文件也算。 */
@@ -69,8 +85,8 @@ export async function findProjectSkill(
     }
   }
   for (let depth = 0; depth < MAX_ASCENT; depth += 1) {
-    const file = path.join(cursor, PROJECT_SKILL)
-    if (await exists(file)) return { file, root: cursor }
+    const file = await findMarker(cursor)
+    if (file !== undefined) return { file, root: cursor }
     if (cursor === gitRoot) return undefined
     const parent = path.dirname(cursor)
     if (parent === cursor) return undefined

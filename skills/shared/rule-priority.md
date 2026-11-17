@@ -17,7 +17,7 @@
 
 规则依据的效力顺序是 ISO C++ 标准、Google C++ Style、Stack Overflow。标准定义语言语义，Google 规定本工作流采用的工程风格，Stack Overflow 只补例子与常见误解；三者冲突时，前面的覆盖后面的。
 
-已写明的局部偏离高于 Google 对应条款，但不得越过 ISO 标准语义。先读本页和 `02-initialization.md` 这类专项页，再按 Google 原文补齐未覆盖的部分。新增或改写的依据节按 Stack Overflow、Google、ISO 的顺序书写，先给可读解释，再落到权威条文。
+已写明的局部偏离高于 Google 对应条款，但不得越过 ISO 标准语义。先读本页和 `02-initialization.md` 这类专项页，再按 Google 原文补齐未覆盖的部分。依据节直接列实际采用的来源，不按固定顺序凑三种来源。
 
 ## 常见冲突
 

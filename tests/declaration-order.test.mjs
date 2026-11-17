@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { checkPair, cppDefinitions, findClasses } from '../skills/developing-cpp/scripts/checking-declaration-order.mjs'
+import { checkHeaderOrder, checkPair, cppDefinitions, findClasses } from '../skills/developing-cpp/scripts/checking-declaration-order.mjs'
 
 const HEADER = `class Board {
  public:
@@ -12,6 +12,7 @@ const HEADER = `class Board {
   Board() = default;
   Square GetSquare(Position position) const;
   BoardStatus GetStatus() const;
+  void SetStatus(BoardStatus status);
   Square::PlaceResult Place(Position position, SquareValue value);
   void ClearSquare(Position position);
   void Clear();
@@ -25,6 +26,7 @@ const CPP = `bool Board::IsInRange(Position position) noexcept { return true; }
 Board::Board() = default;
 Square Board::GetSquare(Position position) const { return squares_[0]; }
 BoardStatus Board::GetStatus() const { return BoardStatus::kInProgress; }
+void Board::SetStatus(BoardStatus status) {}
 Square::PlaceResult Board::Place(Position position, SquareValue value) { return {}; }
 void Board::ClearSquare(Position position) {}
 void Board::Clear() {}
@@ -35,21 +37,51 @@ test('定义顺序与头文件声明一致时通过', () => {
   assert.deepEqual(checkPair(HEADER, CPP), [])
 })
 
-test('头文件里谓词排在 Get 之后时报错', () => {
+test('谓词放在 Get/Set 成对之后时通过', () => {
+  const good = HEADER.replace(
+    '  Square::PlaceResult Place(Position position, SquareValue value);\n',
+    '  bool IsFull() const noexcept;\n  Square::PlaceResult Place(Position position, SquareValue value);\n',
+  )
+  assert.deepEqual(checkPair(good, CPP), [])
+})
+
+test('谓词插在 Get/Set 之间时报错', () => {
   const bad = HEADER.replace(
-    '  void Clear();\n',
-    '  void Clear();\n  static bool IsFull() noexcept;\n',
+    '  void SetStatus(BoardStatus status);\n',
+    '  bool IsFull() const noexcept;\n  void SetStatus(BoardStatus status);\n',
   )
   const issues = checkPair(bad, CPP)
   assert.ok(issues.some((issue) => issue.rule === 'header-order' && /IsFull/.test(issue.message)))
 })
 
-test('谓词在 Get 之前时通过', () => {
-  const good = HEADER.replace(
-    '  static bool IsInRange(Position position) noexcept;\n',
-    '  static bool IsInRange(Position position) noexcept;\n  static bool IsFull() noexcept;\n',
+test('谓词排在读取接口之前时报错', () => {
+  const bad = HEADER.replace(
+    '  Square GetSquare(Position position) const;\n',
+    '  bool IsFull() const noexcept;\n  Square GetSquare(Position position) const;\n',
   )
-  assert.deepEqual(checkPair(good, CPP), [])
+  const issues = checkPair(bad, CPP)
+  assert.ok(issues.some((issue) => issue.rule === 'header-order' && /IsFull/.test(issue.message)))
+})
+
+test('没有 Set 配对时谓词在读取接口之后通过', () => {
+  const header = `class Selector {
+ public:
+  int GetCount() const;
+  bool IsSelected(int index) const;
+  void Select(int index);
+};`
+  assert.deepEqual(checkHeaderOrder(header), [])
+})
+
+test('没有 Set 配对时谓词排在修改接口之后报错', () => {
+  const header = `class Selector {
+ public:
+  int GetCount() const;
+  void Select(int index);
+  bool IsSelected(int index) const;
+};`
+  const issues = checkHeaderOrder(header)
+  assert.ok(issues.some((issue) => issue.rule === 'header-order' && /IsSelected/.test(issue.message)))
 })
 
 test('成员定义乱序时报出被跳过的成员', () => {

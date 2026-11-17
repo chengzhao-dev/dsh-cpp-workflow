@@ -118,7 +118,8 @@ function isBinary(buffer) {
 
 function inspect(file, root, profile) {
   const rel = path.relative(root, file).split(path.sep).join('/')
-  const extension = path.extname(file).toLowerCase()
+  const base = path.basename(file).toLowerCase()
+  const extension = base.startsWith('.') ? base : path.extname(file).toLowerCase()
   const source = MSVC_SOURCE.has(extension)
   const alwaysLf = ALWAYS_LF.has(extension) || NO_EXTENSION_LF.has(path.basename(file))
   const issues = []

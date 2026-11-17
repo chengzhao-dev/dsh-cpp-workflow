@@ -6,7 +6,7 @@
 ## 规则
 
 - 文本文件用 UTF-8，不带 BOM。JSON 按 RFC 8259；YAML 按 YAML 1.2.2；不要 GBK、UTF-16 或 Latin-1。
-- 所有文本文件用 LF，包括 `.sh`、Python、C++、Markdown、YAML、CMake 和配置文件。
+- 除 `.bat` / `.cmd` 外，所有文本文件用 LF，包括 `.sh`、Python、C++、Markdown、YAML、CMake 和配置文件。
 - `.sh` 必须 LF：内核会把 shebang 末尾的 CR 当作解释器路径的一部分，导致 `bad interpreter`。
 - `.bat` / `.cmd` 必须 CRLF：`cmd.exe` 对纯 LF 批处理不稳定。
 - 每个文本文件末尾一个换行；文件中间不混用 LF 和 CRLF。
@@ -14,7 +14,7 @@
 
 ## MSVC 原生
 
-MSVC 默认按 BOM 判断源码编码。源码没有 BOM 时，它按当前用户代码页解释，除非显式传入 `/utf-8` 或 `/source-charset:utf-8`。因此 BOM 不是 MSVC 的硬要求。
+本工作流不在 MSVC 上构建，本节只用于阅读或校验外部 MSVC 工程。MSVC 默认按 BOM 判断源码编码。源码没有 BOM 时，它按当前用户代码页解释，除非显式传入 `/utf-8` 或 `/source-charset:utf-8`。因此 BOM 不是 MSVC 的硬要求。
 
 - 首选做法是加编译选项：在目标上写 `target_compile_options(<target> PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)`，源码继续 UTF-8 无 BOM、LF。
 - 只有在无法改编译选项时，才把 MSVC 编译的 C/C++ 源文件保存为 UTF-8 BOM。BOM 只允许出现在这类源文件里。

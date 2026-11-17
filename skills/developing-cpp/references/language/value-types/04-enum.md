@@ -19,11 +19,11 @@
 
 ## 什么时候不用枚举
 
-- 每个取值都真实存在，调用方要 `switch`，成功本身不另带数据：`enum class`。`MatchMode`、`LoopResult`、`PlaceResult`、`Player`、`SquareValue` 留在这里。
-- 要么有一个 `T`，要么没有，没有值不需要第二种原因：`std::optional<T>`。`PromptMatchMode`、`PromptDifficulty` 与 `PromptHumanSide` 分别返回 `optional<MatchMode>`、`optional<Difficulty>`、`optional<Player>`。不为「没有」再造 `kEnd`、`kNone`，也不写枚举加出参。
-- 成功带 `T`，失败带调用方要读的原因：C++23 用 `std::expected<T, E>`，`E` 仍可以是 `enum class`。本工程的落子没有额外载荷，继续用 `PlaceResult`，不改成 `expected`。
+- 每个取值都真实存在，调用方要 `switch`，成功本身不另带数据：`enum class`。状态、模式与结果类型留在这里。
+- 要么有一个 `T`，要么没有，没有值不需要第二种原因：`std::optional<T>`。需要「有值 / 无值」的模式或选项返回 `optional<Mode>`。不为「没有」再造 `kEnd`、`kNone`，也不写枚举加出参。
+- 成功带 `T`，失败带调用方要读的原因：C++23 用 `std::expected<T, E>`，`E` 仍可以是 `enum class`。成功没有额外载荷时继续用枚举，不改成 `expected`。
 - 一次交出多份互相独立的数据：具名 `struct`。
-- 只有是否，没有载荷，两种含义写在 `@return`：`bool`。`Replay` 留在这里。
+- 只有是否，没有载荷，两种含义写在 `@return`：`bool`。
 - 函数完不成自己的合同：沿用异常规则。
 
 依据：Google C++ Style「Inputs and Outputs」、Abseil TotW 176、C++ Core Guidelines F.20/F.21、cppreference `std::optional` 与 `std::expected`。

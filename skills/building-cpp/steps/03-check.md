@@ -8,11 +8,11 @@
 
 按固定顺序跑，前一步失败就停，不要带着失败继续：
 
-1. **校验编码与行尾**：在仓库根跑编码检查。默认 UTF-8 无 BOM、LF；MSVC 原生工程加 `--profile msvc`。有问题先按 `../../engineering/references/formatting/01-encoding.md` 修正，不带着 BOM 或混用行尾继续；脚本退出码为 0 后再跑 `git diff --check`，有空白错误同样停在这里。
-2. **校验环境声明（不带 `--live`）**：读 `environment.json`，检查三个环境轴、`standard` 和组合是否合法。三个环境轴为空、`standard` 取值不在 `c++11`–`c++23` 内或组合非法时，停在这里，不找可执行文件；`standard` 缺失或为空时按默认 `c++23` 继续并提示声明升级。
+1. **校验编码与行尾**：在仓库根跑编码检查。默认 UTF-8 无 BOM、LF；不是本工作流构建的 MSVC 源码库加 `--profile msvc`（本工作流拒绝 `windows + native`）。有问题先按 `../../engineering/references/formatting/01-encoding.md` 修正，不带着 BOM 或混用行尾继续；脚本退出码为 0 后再跑 `git diff --check`，有空白错误同样停在这里。
+2. **校验环境声明（不带 `--live`）**：读 `environment.json`，按 `../references/02-environment.md`「合法组合」的规则判定；非法时停在这里，不找可执行文件。
 3. **活动校验**：在声明的 build host 上跑 `--live`，核对 PATH 中的角色和版本。`windows` + `native` 在声明校验阶段就返回失败，不会进入这一步。
-4. **跑项目入口命令**：项目技能里写的入口命令（如 `./running-build.sh clang`）。入口命令仍是 `<entry-command>` 或空白时，停在这里，不要猜命令；是真实命令才跑。入口内部依次 configure → build → ctest → run；每一步失败都保留原始输出。有 `tests/` 目录时，脚本里的 ctest 必须带 `--output-on-failure --no-tests=error`；缺参数时按 `ctest --test-dir build/<compiler> --output-on-failure --no-tests=error` 补跑，并以补跑的退出码为准；没有测试目录时按「没有测试」情形处理，不补 `--no-tests=error`。入口通过后，再对项目源码跑 `clang-format --dry-run --Werror` 与 `clang-tidy -p build/<compiler> --header-filter="^$(pwd -P)/(include|src|app|tests)/" --warnings-as-errors='*'`；任一非零即失败，命令细节见 `../../engineering/references/formatting/02-clang-format.md` 与 `03-clang-tidy.md`。
-5. **核对产物**：`build/<compiler>/compile_commands.json` 存在；`build/compile_commands.json` 指向当前编译器；`app` 可执行文件在 `build/<compiler>/bin`。对 `app` 跑 `file` 与 `ldd`（macOS 用 `otool -L`），`ldd` 不得出现 `not found`，并做一次最小启动；见 `../../engineering/references/cmake/linking/04-inspect.md`。
+4. **跑项目入口命令**：项目技能里写的入口命令（如 `./running-build.sh clang`）。入口命令仍是 `<entry-command>` 或空白时，停在这里，不要猜命令；是真实命令才跑。入口内部依次 configure → build → ctest → run；每一步失败都保留原始输出。有 `tests/` 目录时，脚本里的 ctest 必须带 `--output-on-failure --no-tests=error`；缺参数时按 `ctest --test-dir <build-dir> --output-on-failure --no-tests=error` 补跑，并以补跑的退出码为准；没有测试目录时按「没有测试」情形处理，不补 `--no-tests=error`。入口通过后，再对项目源码跑 `clang-format --dry-run --Werror <源码根>/*.cpp <源码根>/*.h`（只列工程实际存在的源码根，目录不存在就不写这一项）与 `clang-tidy -p <build-dir> --header-filter="^$(pwd -P)/(include|src|app|tests|greeting)/" --warnings-as-errors='*' <源码根>/*.cpp`（clang-tidy 必须显式列出源文件，否则报 no input files；模板的 `greeting/` 也要覆盖）；任一非零即失败，命令细节见 `../../engineering/references/formatting/02-clang-format.md` 与 `03-clang-tidy.md`。
+5. **核对产物**：`<build-dir>/compile_commands.json` 存在（默认 `build/<compiler>`，项目声明单一目录时用该目录）；没有声明单一目录时，`build/compile_commands.json` 还要指向当前数据库；入口 target（模板默认 `app`，本书是 `terminal`）的可执行文件在 `<build-dir>/bin`。对它跑 `file` 与 `ldd`（macOS 用 `otool -L`），`ldd` 不得出现 `not found`，并做一次最小启动；见 `../../engineering/references/cmake/linking/04-inspect.md`。
 6. **记录结果**：通过时记录编译器版本、构建目录、测试数量；失败时记录命令、退出码、第一条根因诊断。
 
 检查命令只写终端输出，不落盘：不要用重定向在仓库根生成 `temp-enc.log` 这类文件。需要留证据时写已忽略的 `temp/`，没有就只引用终端输出。收尾核 `git status --porcelain`，只应剩下本轮有意改动的文件。
@@ -37,7 +37,7 @@ node "<skill-dir>/scripts/checking-environment.mjs" --project . --live   # 活�
 | clangd 跳转失败、数据库指向旧编译器 | `.clangd` 的 `CompilationDatabase`、`build/compile_commands.json` 链接 | 定工具配置 |
 | 编译错误指向函数体 | 实现 | `developing-cpp` 的定实现；先修语义，再重跑 |
 | CTest 失败 | 测试断言、行为句 | `developing-cpp` 的定行为 / 定实现 |
-| `app` 启动失败、找不到共享库 | 输出目录、RPATH / 运行时库路径 | `engineering` 的定 target（输出目录与 RPATH） |
+| 入口程序启动失败、找不到共享库 | 输出目录、RPATH / 运行时库路径 | `engineering` 的定 target（输出目录与 RPATH） |
 
 分诊只定位，不自动改。一次只改一类问题；改完从失败的那一步重跑，只有行为或边界也变了才回到定行为。
 
@@ -60,5 +60,5 @@ node "<skill-dir>/scripts/checking-environment.mjs" --project . --live   # 活�
 ## 正反例指针
 
 - 环境组合与 `--live` 输出：`../examples/environment.md`。
-- 失败分诊的具体命令：`../references/01-build-script.md`「失败分诊」。
+- 构建输出的失败分诊：`../references/01-build-script.md`「失败分诊」（按输出定位先看哪一层）。
 - 工具调用细节：`../../engineering/references/formatting/03-clang-tidy.md`。

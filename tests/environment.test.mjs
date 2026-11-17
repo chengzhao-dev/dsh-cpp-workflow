@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url'
 import {
   checkLive,
   findProjectEnvironment,
+  standardFlag,
   validateEnvironment,
 } from '../skills/building-cpp/scripts/checking-environment.mjs'
 
@@ -422,6 +423,24 @@ test('live mode rejects a Linux declaration on another platform before PATH', ()
   assert.equal(result.ok, false)
   assert.match(result.issues.join('\n'), /请在 Linux 上运行/)
   assert.equal(result.checks.length, 0)
+})
+
+test('Clang 16 的 c++23 探测改用 c++2b 拼写', () => {
+  assert.equal(standardFlag('clang', 16, 'c++23'), 'c++2b')
+  assert.equal(standardFlag('clang', 17, 'c++23'), 'c++23')
+  assert.equal(standardFlag('gcc', 12, 'c++23'), 'c++23')
+  assert.equal(standardFlag('clang', 16, 'c++20'), 'c++20')
+})
+
+test('CLI exits 1 for an empty --environment value', () => {
+  const root = workspace({ host: 'linux', build_host: 'native', compiler: 'clang', standard: 'c++23' })
+  try {
+    const result = spawnSync(process.execPath, [script, '--environment='], { cwd: root, encoding: 'utf8' })
+    assert.equal(result.status, 1)
+    assert.match(`${result.stderr}${result.stdout}`, /--environment 不能为空/)
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
 })
 
 test('CLI rejects malformed JSON as an invalid declaration', () => {

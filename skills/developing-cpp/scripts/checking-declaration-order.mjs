@@ -401,29 +401,87 @@ function formatSignature(signature) {
   return `${head}${signature.name}(${signature.params})${tail}`
 }
 
-/** 检查头文件类内谓词是否排在 Get 之后。 */
+/** 检查头文件类内谓词位置：Get/Set 成对相邻，谓词在成对之后；没有 Set 配对时在读取接口之后。 */
 export function checkHeaderOrder(headerText) {
   const classes = findClasses(headerText)
   const issues = []
   for (const item of classes) {
     const members = classMembers(item.body)
-    let seenGet = false
-    for (const member of members) {
-      if (member.name.startsWith('Get')) {
-        seenGet = true
+    const isPredicate = (member) => PREDICATE_NAME.test(member.name) && !/\bstatic\b/.test(member.text)
+    const isGet = (member) => /^Get[A-Z0-9_]/.test(member.name)
+    const firstGet = members.findIndex(isGet)
+    for (let index = 0; index < members.length; index += 1) {
+      const member = members[index]
+      if (!isPredicate(member)) continue
+      const line = memberLine(headerText, member)
+      if (firstGet !== -1 && index < firstGet) {
+        issues.push({
+          line,
+          rule: 'header-order',
+          message: `${item.name}::${member.name} 是谓词，却排在读取接口之前；谓词 Is / Has / Can / Completes / Would 应在读取接口之后。`,
+        })
         continue
       }
-      if (!seenGet || !PREDICATE_NAME.test(member.name)) continue
-      const index = headerText.search(new RegExp(`\\b${member.name}\\s*\\(`))
-      const line = index === -1 ? 1 : headerText.slice(0, index).split('\n').length
+      const pair = findGetSetPairAround(members, index)
+      if (!pair) {
+        const isConstMember = (member) => /\bconst\b\s*;/.test(member.text.trim())
+        const hasAdjacentPair = members.some(
+          (candidate, candidateIndex) =>
+            isGet(candidate) &&
+            candidateIndex + 1 < members.length &&
+            /^Set[A-Z0-9_]/.test(members[candidateIndex + 1].name) &&
+            getSetSuffix(candidate.name) === getSetSuffix(members[candidateIndex + 1].name),
+        )
+        const modifier = hasAdjacentPair
+          ? -1
+          : members.findIndex(
+              (candidate, candidateIndex) =>
+                candidateIndex < index &&
+                !isPredicate(candidate) &&
+                !isGet(candidate) &&
+                candidate.text.includes('(') &&
+                !isConstMember(candidate) &&
+                members.slice(0, candidateIndex).some(isGet),
+            )
+        if (modifier !== -1) {
+          issues.push({
+            line,
+            rule: 'header-order',
+            message: `${item.name}::${member.name} 是谓词，却排在修改接口 ${members[modifier].name} 之后；没有 Set 配对时，谓词应在读取接口之后、修改接口之前。`,
+          })
+        }
+        continue
+      }
       issues.push({
         line,
         rule: 'header-order',
-        message: `${item.name}::${member.name} 是谓词，却排在 Get 之后；谓词 Is / Has / Can / Completes / Would 应放在 Get 之前。`,
+        message: `${item.name}::${member.name} 是谓词，却排在 ${pair.get.name} 与 ${pair.set.name} 之间；Get/Set 成对相邻，谓词应放在 ${pair.set.name} 之后。`,
       })
     }
   }
   return issues
+}
+
+function memberLine(headerText, member) {
+  const position = headerText.search(new RegExp(`\\b${member.name}\\s*\\(`))
+  return position === -1 ? 1 : headerText.slice(0, position).split('\n').length
+}
+
+function getSetSuffix(name) {
+  return name.replace(/^(?:Get|Set)/, '')
+}
+
+function findGetSetPairAround(members, predicateIndex) {
+  for (let getIndex = predicateIndex - 1; getIndex >= 0; getIndex -= 1) {
+    if (!/^Get[A-Z0-9_]/.test(members[getIndex].name)) continue
+    const suffix = getSetSuffix(members[getIndex].name)
+    for (let setIndex = predicateIndex + 1; setIndex < members.length; setIndex += 1) {
+      if (/^Set[A-Z0-9_]/.test(members[setIndex].name) && getSetSuffix(members[setIndex].name) === suffix) {
+        return { get: members[getIndex], set: members[setIndex] }
+      }
+    }
+  }
+  return undefined
 }
 
 /** 检查类内定义是否都有声明，且参数与返回类型和声明一致。 */
@@ -536,7 +594,16 @@ export function checkRoot(root) {
   for (const file of files.sources) {
     const stem = path.basename(file, path.extname(file))
     const candidates = headers.get(stem) ?? []
-    if (candidates.length !== 1) continue
+    if (candidates.length === 0) continue
+    if (candidates.length > 1) {
+      issues.push({
+        file: path.relative(root, file) || file,
+        line: 1,
+        rule: 'header-ambiguous',
+        message: `同名头文件不唯一，无法配对：${candidates.map((item) => path.relative(root, item) || item).join('、')}`,
+      })
+      continue
+    }
     const header = candidates[0]
     const headerText = readFileSync(header, 'utf8')
     const cppText = readFileSync(file, 'utf8')

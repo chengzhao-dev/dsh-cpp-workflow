@@ -5,8 +5,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
-enable_testing()
-
 add_subdirectory(greeting)
 
 add_executable(app src/main.cpp)
@@ -16,7 +14,5 @@ set_target_properties(app PROPERTIES
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
 )
-target_compile_options(app PRIVATE -Wall -Wextra -Werror)
+# 警告与 -Werror 由工程按需要打开（set_target_warnings），模板不默认加在 target 上。
 target_link_libraries(app PRIVATE greeting)
-
-add_test(NAME app_smoke COMMAND app)

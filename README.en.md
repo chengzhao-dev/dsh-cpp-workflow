@@ -19,7 +19,7 @@ The exception material follows the C++ Core Guidelines' Error handling section a
 Fixed-version npm install:
 
 ```bash
-dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.7
+dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.8
 ```
 
 This page follows each release; run `npm view @chengzhao-dev/dsh-cpp-workflow version` if you need to confirm the current version on the registry.
@@ -27,7 +27,7 @@ This page follows each release; run `npm view @chengzhao-dev/dsh-cpp-workflow ve
 GitHub tag installs use the tag with the same version number:
 
 ```bash
-dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.7
+dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.8
 ```
 
 Replace `--profile` with the profile you actually run. The desktop app always runs the `desktop` profile, and that profile is owned by the app; if the command-line `add` is rejected, add the plugin in the app settings and use the same pinned npm version. A Git tag install uses the prebuilt `lib/` committed in the repository and runs no build on the target machine; the package has no install script that needs approval.
@@ -36,11 +36,11 @@ Replace `--profile` with the profile you actually run. The desktop app always ru
 
 The plugin page's "C++ Workflow" card is the only entry point and manages the comment symbol and file-header tags: the symbol is `///` or `/** ... */`, `@file` is always the file name, and every file-header, type, and declaration tag is on by default except the fixed `//` body symbol; empty values are skipped. `@param` is required for every parameter; `@return` may be omitted when the condition is self-evident; `@throws` only when the function throws; `@pre`, `@post`, `@retval`, `@tparam`, `@note`, and `@see` are on by default and can be switched off individually. The preview follows the switches, saving takes effect on the next skill read, and existing sources are never rewritten. The plugin page no longer duplicates navigation.
 
-If the page still reports that it is not connected to a configuration form after an upgrade, the window is still running the previous client bundle: restart DeepSeek Harness or select "Reload page" on the plugin page. The page retries the connection while open and switches to the editable form as soon as the host serves it; reinstalling is unnecessary. After a successful save, the status line shows the written `~/.dsh/profiles/<profile>/cordis.patch.yml`. Discard changes, Restore defaults and Save are separate: discard returns to the last value read from the host, restore fills the draft, and only Save writes it.
+If the page still reports that it is not connected to a configuration form after an upgrade, the window is still running the previous client bundle: restart DeepSeek Harness or select "Reload page" on the plugin page. The page does not poll or retry; restart the host or select "Reload page" while the form is read-only. Reinstalling is unnecessary. After a successful save, the status line shows the written `~/.dsh/profiles/<profile>/cordis.patch.yml`. Discard changes, Restore defaults and Save are separate: discard returns to the last value read from the host, restore fills the draft, and only Save writes it.
 
 ## Workspace gate
 
-Only one condition must hold before any of the three skills appears: walking up from the current directory to the Git root, the path contains `.agents/skills/cpp-workflow-project/SKILL.md`.
+Only one condition must hold before any of the three skills appears: walking up from the current directory to the Git root, the path contains `.agents/skills/cpp-workflow-project/SKILL.md` (a repository may instead name that directory `cpp_workflow_project`; both are accepted).
 
 The project skill marker is the repository's opt-in declaration. The plugin no longer requires a first-party `CMakeLists.txt` or C++ source file in the same repository: a docs-only repository, a repository that only copied the template, or a repository with no source files yet still matches; with an empty environment axis, the four source steps still work but build setup stops. Without the marker the list is empty, even when the repository contains CMake or `.cpp` files. Scan limits and boundary cases are in [docs/plugin-boundaries.md](https://github.com/chengzhao-dev/dsh-cpp-workflow/blob/main/docs/plugin-boundaries.md).
 
@@ -48,7 +48,7 @@ The packaged skills use rank 550. A project `.agents/skills` skill uses rank 200
 
 ## Project conventions
 
-Copy [templates/cpp-workflow-project](templates/cpp-workflow-project) into the target repository's `.agents/skills/` directory, keeping the `cpp-workflow-project` directory name. Add only files that do not exist; do not overwrite existing source, `CMakeLists.txt`, or `.clang-*` files. The project skill records project-specific facts; the template's "common workflow conventions" carry the shared workflow, editor, and completion rules, so the project skill does not repeat them:
+Copy [templates/cpp-workflow-project](templates/cpp-workflow-project) into the target repository's `.agents/skills/` directory, keeping the `cpp-workflow-project` directory name (the plugin also accepts the underscore form `cpp_workflow_project`, so a repository that renamed it still passes the gate). Add only files that do not exist; do not overwrite existing source, `CMakeLists.txt`, or `.clang-*` files. The project skill records project-specific facts; the template's "common workflow conventions" carry the shared workflow, editor, and completion rules, so the project skill does not repeat them:
 
 - project and component names, source root;
 - library/program boundary and public header location;
@@ -96,7 +96,7 @@ npm ci
 npm test              # main pre-commit gate: build, structural/encoding/workflow checks, and unit tests
 npm run test:matrix   # real build matrix: 4 templates x 5 standards
 npm run pack:check    # inspect the npm package contents
-npm run ci            # replay the Ubuntu CI job: install, test, package check
+npm run ci            # local replay: install, test, package check (no matrix; the Ubuntu CI job also runs test:matrix)
 npm run ci:full       # ci plus the standard matrix; needs a POSIX host
 ```
 

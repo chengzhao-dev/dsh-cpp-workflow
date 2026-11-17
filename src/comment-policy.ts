@@ -2,7 +2,7 @@
  * 注释标签策略：设置页的预览、技能快照与检查器参数共用这一份。
  *
  * 配置只描述「写注释时默认带哪些标签、声明用哪种注释符号」，不描述写法本身；
- * 写法在 `skills/developing-cpp/references/comments/01-rules.md`。设置页保存的值由宿主
+ * 写法在 `skills/developing-cpp/references/comments/01-comment-rules.md`。设置页保存的值由宿主
  * 写回插件 Config，服务端 `apply(ctx, config)` 用它生成本页快照与检查器参数。
  *
  * 这份文件被 `tsc` 编进 `lib/comment-policy.js`，打包客户端半侧时再内联进
@@ -195,7 +195,10 @@ export function previewParts(
     header[briefIndex] = header[briefIndex].replace(/@brief$/, `@brief ${SAMPLE_BRIEF}`)
   }
   const contract: string[] = []
-  if (config.param) contract.push('@param row 目标行号。')
+  if (config.param) {
+    contract.push('@param row 目标行号。')
+    contract.push('@param column 目标列号。')
+  }
   if (config.returns) contract.push('@return 放置成功时为 true。')
   if (config.throws) contract.push('@throws std::out_of_range 行号越界时抛出。')
   return { header, contract, declaration: '[[nodiscard]] bool Place(int row, int column);' }
@@ -266,6 +269,8 @@ export function snapshotText(raw: unknown): string {
     else off.push(TAG_LABEL[tag])
   }
   const style = config.commentStyle === 'block' ? '/** ... */' : '///'
-  const line = `- 声明符号：${style}（函数体固定 //）；开启 ${on.join('、')}；未填值 ${unset.join('、') || '无'}；关闭 ${off.join('、') || '无'}。`
+  const args = checkerArgs(config)
+  const argLine = args.length > 0 ? args.join(' ') : '无'
+  const line = `- 声明符号：${style}（函数体固定 //）；开启 ${on.join('、')}；未填值 ${unset.join('、') || '无'}；关闭 ${off.join('、') || '无'}；检查器参数：${argLine}。`
   return `## 当前注释配置（profile）\n\n${line}`
 }

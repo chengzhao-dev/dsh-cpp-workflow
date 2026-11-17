@@ -3,8 +3,9 @@
 # 配置、构建、测试并运行当前 C++11–C++23 工程（默认 C++23）。
 #
 # 用法：./running-build.sh [clang|gcc]；省略时用 clang。
-# 程序名与构建目录可用 APP_NAME、BUILD_DIR 覆盖；默认 app 与 build/<compiler>。
-# 编译数据库：build/<compiler>/compile_commands.json。
+# 程序名、构建目录与构建根可用 APP_NAME、BUILD_DIR、BUILD_ROOT 覆盖；默认 app、build/<compiler> 与 build。
+# 单一构建目录时把 BUILD_ROOT 设为与 BUILD_DIR 相同，脚本不再补 build/compile_commands.json 链接。
+# 编译数据库：默认 build/<compiler>/compile_commands.json，随 BUILD_DIR 走。
 # 适用于 Linux、macOS 和 Windows + WSL，不支持 Windows 原生壳。
 
 set -euo pipefail
@@ -60,15 +61,21 @@ main() {
     cmake --build "${BUILD_DIR}"
 
     header "编译数据库"
-    rm -f "${BUILD_ROOT}/compile_commands.json"
-    ln -s "${COMPILER}/compile_commands.json" \
-        "${BUILD_ROOT}/compile_commands.json"
+    if [ "${BUILD_DIR}" != "${BUILD_ROOT}" ]; then
+        rm -f "${BUILD_ROOT}/compile_commands.json"
+        target="${BUILD_DIR}/compile_commands.json"
+        case "${target}" in
+            "${BUILD_ROOT}"/*) relative="${target#"${BUILD_ROOT}/"}" ;;
+            *) relative="${target}" ;;
+        esac
+        ln -s "${relative}" "${BUILD_ROOT}/compile_commands.json"
+    fi
 
     header "测试"
     if [ -d tests ]; then
         ctest --test-dir "${BUILD_DIR}" --output-on-failure --no-tests=error
     else
-        ctest --test-dir "${BUILD_DIR}" --output-on-failure
+        ctest --test-dir "${BUILD_DIR}" --output-on-failure --no-tests=ignore
     fi
 
     header "运行 ${APP_NAME}"

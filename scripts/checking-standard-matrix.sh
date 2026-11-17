@@ -3,7 +3,7 @@
 # 逐个语言标准验证每个工程模板。
 #
 # 用法：./scripts/checking-standard-matrix.sh
-# 依赖：cmake、ninja、perl 与 C++ 编译器；在 Linux、macOS 或 WSL 上运行。
+# 依赖：cmake、ninja、perl、node 与 C++ 编译器；在 Linux、macOS 或 WSL 上运行。
 
 set -euo pipefail
 
@@ -60,16 +60,26 @@ for shape in "${shapes[@]}"; do
             continue
         fi
 
-        # 编译选项必须正好是 -std=c++NN，不能落到 gnu++NN。
-        flags="$(grep -o -- '-std=c++[0-9][0-9]' "$dest/build/compile_commands.json" | sort -u | tr '\n' ' ')"
-        expected="-std=c++$std"
-        if [[ "$flags" != *"$expected"* ]] || grep -q -- 'gnu++' "$dest/build/compile_commands.json"; then
-            echo "FAIL flags $shape c++$std: $flags" >&2
+        # 逐条编译命令核对：每条恰好一个 -std，值等于本档期望，且不落 gnu++NN。
+        if ! DB="$dest/build/compile_commands.json" STD="$std" node -e '
+const fs = require("fs");
+const db = JSON.parse(fs.readFileSync(process.env.DB, "utf8"));
+const expected = "-std=c++" + process.env.STD;
+const bad = [];
+for (const entry of db) {
+  const args = entry.arguments || String(entry.command || "").split(/\s+/);
+  const stds = args.filter((arg) => arg.startsWith("-std="));
+  if (stds.length !== 1 || stds[0] !== expected) bad.push(`${entry.file || "?"}: ${stds.join(",") || "none"}`);
+}
+if (db.length === 0) bad.push("compile_commands.json 为空");
+if (bad.length) { console.error(`std 不符: ${bad.slice(0, 3).join("; ")}`); process.exit(1); }
+'; then
+            echo "FAIL flags $shape c++$std" >&2
             failures=$((failures + 1))
             continue
         fi
 
-        printf 'PASS %-15s c++%s  %s\n' "$shape" "$std" "$flags"
+        printf 'PASS %-15s c++%s\n' "$shape" "$std"
     done
 done
 

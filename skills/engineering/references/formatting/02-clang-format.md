@@ -4,14 +4,15 @@
 三件语言工具各管一段：`clang-format` 排版、`clang-tidy` 诊断、`clangd` 提供补全/跳转/诊断。它们都读同一份编译数据库，但职责不重叠。编辑器侧只保留 CMake Tools 作为配置、构建、运行和调试入口；C/C++ 扩展只做 `CMake: Debug` 的调试后端，不参与语言服务。
 
 ```bash
-clang-format --dry-run --Werror src/*.cpp include/*.h app/*.cpp tests/*.cpp
+# 只列工程实际存在的源码根；目录不存在就删掉对应参数，不把 glob 原样留给工具。
+clang-format --dry-run --Werror src/*.cpp include/*.h
 ```
 
 - 检查用 `--dry-run --Werror`；需要自动修复时单独跑 `clang-format -i`，不要在构建脚本里悄悄改源码。
 - 工程必须有根 `.clang-format`；缺失时先复制配置，不要回退到内置风格，回退会掩盖配置缺失。
 - 只扫描项目源码：`src/`、`include/`、`app/`、`tests/` 等实际存在的目录；不扫描 `build/`、第三方、生成文件。
 - 配置文件在工程根 `.clang-format`；不要依赖用户主目录或编辑器内置配置。
-- `BasedOnStyle: Google`、`Standard: Latest`；clang-format 21/22 不认 `c++23`，直接写会报 `error: unknown enumerated scalar`；23 起支持，但统一用 `Latest` 兼容旧版，由工具取它支持的最高标准。列宽、缩进与包含分块以工程根 `.clang-format` 为准；模板资产固定 `UseTab: Never`、`TabWidth: 4`、`IndentWidth: 4`、`ContinuationIndentWidth: 8`、`AccessModifierOffset: -4`、`ColumnLimit: 120` 与 `IncludeBlocks: Preserve`，不覆盖 `IncludeCategories`；工程显式写 `ColumnLimit` 时按工程值执行。
+- `BasedOnStyle: Google`、`Standard` 按 `../cmake/standards/index.md` 的映射表：C++11–C++20 写 `c++NN`，C++23 写 `Latest`（clang-format 21/22 不认 `c++23`，直接写会报 `error: unknown enumerated scalar`）。列宽、缩进与包含分块以工程根 `.clang-format` 为准；模板资产固定 `UseTab: Never`、`TabWidth: 4`、`IndentWidth: 4`、`ContinuationIndentWidth: 8`、`AccessModifierOffset: -4`、`ColumnLimit: 120` 与 `IncludeBlocks: Preserve`，不覆盖 `IncludeCategories`；工程显式写 `ColumnLimit` 时按工程值执行。
 - 构造函数初始化列表写 `PackConstructorInitializers: BinPack`：放得下时并入一行，超出列宽再按成员换行。Google 预设逐项换行，成员一多就占五六行，与「列宽内保持一行」冲突；这条只在配置里定，不在条文里规定手写位置。
 - 格式化失败就是失败，不要用 `// clang-format off` 绕过；确需关闭时只包住无法排版的宏或表格，并写一句理由。
 
@@ -20,5 +21,4 @@ clang-format --dry-run --Werror src/*.cpp include/*.h app/*.cpp tests/*.cpp
 - [ClangFormat: Style Options](https://clang.llvm.org/docs/ClangFormatStyleOptions.html)：`BasedOnStyle`、`Standard`、`ColumnLimit` 等选项。
 - [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html)：`--dry-run`、`--Werror` 与 `-i` 的用法。
 - [Google C++ Style Guide: Formatting](https://google.github.io/styleguide/cppguide.html#Formatting)：Google 基线的排版约定。
-- [CLion: Code style settings for C and C++](https://www.jetbrains.com/help/clion/settings-code-style-c-cpp.html)：用 tabs 缩进时推荐 tabs 缩进、spaces 对齐。
 - [CLion: EditorConfig](https://www.jetbrains.com/help/clion/editorconfig.html)：`.editorconfig` 覆盖项目代码风格。

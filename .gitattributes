@@ -1,11 +1,23 @@
-# Auto detect text files and keep every checkout LF-only. The plugin ships
-# C++ sources and a shell gate that reject CRLF, so a Windows checkout must
-# not rewrite line endings.
+# 文本按内容自动识别，入库与检出一律 LF。插件带 C++ 源码和 shell 检查，
+# 两者都拒绝 CRLF，所以 Windows 检出不能改写行尾。
 * text=auto eol=lf
 
-# Keep shell scripts explicit for readers and for older Git versions.
+# shell 脚本单独写明，便于读者与旧版 Git 识别。
 *.sh text eol=lf
 
-# Batch files are the only exception: cmd.exe needs CRLF.
+# 批处理是唯一的文本例外：cmd.exe 要求 CRLF。
 *.bat text eol=crlf
 *.cmd text eol=crlf
+
+# 图片按二进制存放，不做行尾与文本转换。
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+
+# 字体按二进制存放。
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // cpp-workflow 项目技能的只读环境检查。
 //
-// 静态模式校验 `.agents/skills/cpp-workflow-project/environment.json`，不碰 PATH。
+// 静态模式校验 `.agents/skills/<项目技能目录>/environment.json`，不碰 PATH。
 // `--live` 另查当前构建主机、声明的工具角色与版本兼容性。
 //
 // 不安装、不下载、不改 PATH，也不向工程写入。
@@ -16,7 +16,9 @@ export const BUILD_HOSTS = ['native', 'wsl']
 export const COMPILERS = ['clang', 'gcc']
 export const STANDARDS = ['c++11', 'c++14', 'c++17', 'c++20', 'c++23']
 export const DEFAULT_STANDARD = 'c++23'
-const PROJECT_SKILL_DIR = path.join('.agents', 'skills', 'cpp-workflow-project')
+const SKILL_DIR_NAMES = ['cpp-workflow-project', 'cpp_workflow_project']
+const PROJECT_SKILL_DIRS = SKILL_DIR_NAMES.map((name) => path.join('.agents', 'skills', name))
+const PROJECT_SKILL_DIR = PROJECT_SKILL_DIRS[0]
 const MAX_ASCENT = 64
 
 export const EXIT = {
@@ -137,15 +139,17 @@ export async function findProjectEnvironment(startDir) {
     return undefined
   }
 
-  // 允许直接指向项目技能目录。
-  if (path.basename(cursor) === 'cpp-workflow-project') {
+  // 允许直接指向项目技能目录（下划线或连字符命名）。
+  if (SKILL_DIR_NAMES.includes(path.basename(cursor))) {
     const direct = path.join(cursor, 'environment.json')
     if (await exists(direct)) return direct
   }
 
   for (let depth = 0; depth < MAX_ASCENT; depth += 1) {
-    const candidate = path.join(cursor, PROJECT_SKILL_DIR, 'environment.json')
-    if (await exists(candidate)) return candidate
+    for (const dir of PROJECT_SKILL_DIRS) {
+      const candidate = path.join(cursor, dir, 'environment.json')
+      if (await exists(candidate)) return candidate
+    }
     if (await exists(path.join(cursor, '.git'))) return undefined
     const parent = path.dirname(cursor)
     if (parent === cursor) return undefined
@@ -203,6 +207,13 @@ function firstLines(text, count = 3) {
     .filter(Boolean)
     .slice(0, count)
     .join(' | ')
+}
+
+/** Clang 16 等旧主版本只认 c++2b 拼写；其余情况原样返回。 */
+export function standardFlag(compiler, major, standard) {
+  const level = Number.parseInt(String(standard).replace(/^c\+\+/, ''), 10)
+  if (compiler === 'clang' && Number.isFinite(major) && major < 17 && level === 23) return 'c++2b'
+  return standard
 }
 
 function parseVersion(text) {
@@ -324,6 +335,16 @@ export function checkLive(declaration, options = {}) {
   }
 
   const compilerVersion = versions.get('compiler')
+  const compilerExecutable = resolved.get('compiler')
+  if (compilerExecutable && !options.runVersion) {
+    const flag = `-std=${standardFlag(compiler, compilerVersion?.major, validation.axes.standard)}`
+    const probe = run(compilerExecutable, ['-x', 'c++', flag, '-fsyntax-only', '-'], {})
+    if (probe.status !== 0) {
+      issues.push(
+        `compiler 不接受 ${flag}；输出：${firstLines(`${probe.stdout}\n${probe.stderr}`) || '(空)'}。升级编译器或把 standard 降到实际可用的档位`,
+      )
+    }
+  }
   const formatVersion = versions.get('clang-format')
   const tidyVersion = versions.get('clang-tidy')
   const clangdVersion = versions.get('clangd')
@@ -370,7 +391,7 @@ export function checkLive(declaration, options = {}) {
 }
 
 function parseArgs(argv) {
-  const options = { project: process.cwd(), live: false, json: false, help: false }
+  const options = { project: process.cwd(), live: false, json: false, help: false, environment: undefined }
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index]
     if (arg === '--live') {
@@ -386,6 +407,14 @@ function parseArgs(argv) {
       index += 1
     } else if (arg.startsWith('--project=')) {
       options.project = arg.slice('--project='.length)
+    } else if (arg === '--environment') {
+      const value = argv[index + 1]
+      if (!value) throw new Error('--environment 需要一个文件路径')
+      options.environment = value
+      index += 1
+    } else if (arg.startsWith('--environment=')) {
+      options.environment = arg.slice('--environment='.length)
+      if (!options.environment) throw new Error('--environment 不能为空')
     } else {
       throw new Error(`未知参数：${arg}`)
     }
@@ -393,12 +422,13 @@ function parseArgs(argv) {
   return options
 }
 
-const USAGE = `用法: node checking-environment.mjs [--project <dir>] [--live] [--json]
+const USAGE = `用法: node checking-environment.mjs [--project <dir>] [--environment <file>] [--live] [--json]
 
-默认读取 <dir>/.agents/skills/cpp-workflow-project/environment.json，
-并向上走到 git 根（最多 64 层）。
+默认读取 <dir>/.agents/skills/cpp-workflow-project/environment.json
+（项目技能目录名也接受 cpp_workflow_project），
+并向上走到 git 根（最多 64 层）。--environment 直接指定声明文件。
 
-  --live   校验当前 build host、PATH 角色与版本
+  --live   校验当前 build host、PATH 角色、版本与 -std 支持
   --json   输出机器可读结果
   --help   显示本帮助`
 
@@ -416,10 +446,12 @@ async function main(argv) {
   }
 
   const start = path.resolve(options.project)
-  const file = await findProjectEnvironment(start)
+  const file = options.environment
+    ? path.resolve(options.environment)
+    : await findProjectEnvironment(start)
   if (!file) {
     process.stderr.write(
-      `找不到环境声明：${path.join(start, PROJECT_SKILL_DIR, 'environment.json')}（或它的任一上层目录）\n`,
+      `找不到环境声明：${path.join(start, PROJECT_SKILL_DIR, 'environment.json')}（或它的任一上层目录；项目技能目录名也接受 cpp_workflow_project）；也可用 --environment <file> 指定\n`,
     )
     return EXIT.declaration
   }
