@@ -22,9 +22,9 @@ Commands
   ``CMAKE_<TYPE>_OUTPUT_DIRECTORY`` 这类变量设为固定的输出目录；之后创建
   目标时，CMake 用这些变量初始化目标的输出目录属性：
 
-  - ``RUNTIME`` 目标的产物输出到 ``build/bin``。
-  - ``LIBRARY`` 目标的产物输出到 ``build/lib``。
-  - ``ARCHIVE`` 目标的产物输出到 ``build/lib``。
+  - ``RUNTIME`` 目标的产物输出到 ``<构建目录>/bin``。
+  - ``LIBRARY`` 目标的产物输出到 ``<构建目录>/lib``。
+  - ``ARCHIVE`` 目标的产物输出到 ``<构建目录>/lib``。
 #]=======================================================================]
 
 include_guard(GLOBAL)

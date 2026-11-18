@@ -33,7 +33,7 @@ app/
 ```
 
 - `main.cpp` 不写业务规则；它只解析参数、打开流、调用库、捕获边界异常。
-- 终端输入输出集中在 `app/`；库不包含 `<iostream>`，也不打印。
+- 终端输入输出集中在 `app/`；库的 I/O 边界见 `references/design/01-project-design.md`。
 - 只有一个程序时 `app/` 可以退化成根 `src/main.cpp`；一旦需要测试交互逻辑，再拆 `cli.h` / `cli.cpp`。
 - 程序可以依赖库；库不能反向依赖程序。
 
@@ -54,7 +54,7 @@ app/
 
 ## 头文件契约
 
-自包含、共享常量、`using namespace`、模板实现与包含顺序的规则见 `references/style/01-google-cpp-style.md`「头文件」；扩展名与槽位见 `references/layout/02-file-template.md`。库不包含 `<iostream>` 的边界见本文「程序」节。本文只强调一条：公共头只暴露稳定契约，测试只包含公共头。
+自包含、共享常量、`using namespace`、模板实现与包含顺序的规则见 `references/style/01-google-cpp-style.md`「头文件」；扩展名与槽位见 `references/layout/02-file-template.md`。库的 I/O 边界见 `references/design/01-project-design.md`。本文只强调一条：公共头只暴露稳定契约，测试只包含公共头。
 
 ## 测试
 

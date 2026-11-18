@@ -19,8 +19,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - name: Generated lib must be committed
-        run: git diff --exit-code -- lib
+      - name: Generated lib must match src
+        run: npm run check:lib
       - run: npm run test:matrix
       - run: npm run pack:check
   test-windows:

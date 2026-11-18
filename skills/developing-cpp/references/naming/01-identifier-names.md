@@ -43,7 +43,7 @@
 
 - 界面组件名先写职责，再写形态：`ListMenu` 是以列表呈现的菜单，`MenuList` 是多个菜单的列表；`MainMenu`、`DifficultyMenu` 用界面职责命名，不用 `MenuModel` 泛称多个菜单的模型。
 - 多个菜单共享同一套列表选择逻辑时，把状态模型命名为 `ListMenuModel`；只有一个菜单时不单独造模型名。字段保存下标时写 `selected_index_`，保存被选对象时写 `selected_`；注释写“当前选中标签在标签列表中的下标”。
-- 非拥有视图成员按内容命名（`labels_`、`history_`），不写 `labels_view_` 重复类型；成员注释写清它不拥有什么、生命周期由谁保证。
+- 非拥有视图成员按内容命名（`labels_`、`history_`），不写 `labels_view_` 重复类型；注释写法见 `references/comments/01-comment-rules.md` 与 `references/comments/02-style.md` 的非拥有视图条。
 
 ## 字符集与保留标识符
 
@@ -60,18 +60,18 @@
 | 查询 | `Get` 或访问器风格 | `GetCurrentOrder()`、`CurrentOrder()` | 只读、不改变状态；同一 API 选一种 |
 | 判断 | `Is` / `Has` / `Can` | `IsEmpty()`、`HasLine()`、`CanPlace()` | 返回 `bool`，不抛异常；`Is` / `Has` / `Can` 后面写概念名，不逐个念字段（写 `IsEmpty()`，不写 `IsAllFieldsEmpty()`） |
 | 查找 | `Find` | `FindTask()` | 找不到是正常结果，返回 `optional`、指针或迭代器，不抛 |
-| 计数 | `Count` | `CountMoves()` | 返回数量，不修改状态；`Count` 的对象是集合里的元素 |
+| 计数 | `Count` | `CountMoves()`、`CountOptions()` | 返回数量，不修改状态；`Count` 的对象是集合里的元素 |
 | 尝试 | `Try` / 领域动词 | `TryParse()`、`Place()` | 可能因多个前置条件失败但不抛异常，返回 `enum class` 结果；调用方按名区分失败原因。只有一个失败原因、调用方不需要区分时返回 `bool` |
 | 确定性动作 | 领域动词 | `CompleteTurn()`、`Reset()` | 前置条件满足时一定成功；无法完成任务时抛 |
 | 计算 | 动词开头 | `PreviewWin()` | 从输入算出结果，不修改外部状态 |
 | 映射 | `<来源>To<目标>` | `OrderToReceipt()` | 名字必须含两端角色 |
 | 读写 | `Read` / `Write` | `ReadEnvironment()`、`WriteLedger()` | 涉及 I/O 时用；不要在库核心用 |
-| 访问器 | `Get` + PascalCase，或 snake_case | `GetHistory()`、`history()` | Google 允许两种；同一 API 只选一种，不用成员名直接当函数名 |
+| 访问器 | `Get` + PascalCase，或 snake_case | `GetHistory()`、`history()` | Google 允许两种；同一 API 只选一种，不用成员名直接当函数名；计数不要写成 `GetXCount()` |
 
 - 界面提示用 `Prompt`：显示菜单或提示并等待用户选择时写 `PromptMatchMode()`；`Read` / `Write` 留给 I/O 读写与记录处理。提示负责显示与重试，实际读行由 `GetLine()` 完成；`std::optional` 表示输入结束，这是 `Get` 的界面例外，不承诺前置条件已满足。
 - 带编号选项的开局菜单用 `Display<Object>Options`：写 `DisplayMatchModeOptions()`、`DisplayDifficultyOptions()`；不写 `Show<Object>Menu`。`Prompt<Object>` 负责显示并读入，`Display*Options` 只负责显示。
 - 返回 `bool` 的 lambda 也用 `is_` / `has_` / `can_` 命名：`auto is_empty = [](const Order& order) { ... };`。
-- `Find` 不把“没找到”当异常；`Get` 在前置条件不满足时抛标准异常：坐标越界用 `std::out_of_range`，调用时不变量已破坏用 `std::logic_error`；只有调用方必须把这些类型区分开时，才新增派生自它们的类型。两种构建模式的抛出条件相同。两者不要互换。
+- `Find` 不把“没找到”当异常；`Get` 在前置条件不满足时抛标准异常：坐标越界用 `std::out_of_range`，调用时不变量已破坏用 `std::logic_error`；只有调用方必须把这些类型区分开时，才新增派生自它们的类型。Debug 与 Release 的合同见 `references/exceptions/01-exception-rules.md` 的「两种构建模式的三层合同」。两者不要互换。
 - 查询返回多个值时用 `struct`，不要用三个 `GetXxx()` 加输出参数。
 - 返回集合的查询给只读视图，不把内部容器类型写进接口：`std::span<const Move> GetHistory()`，不写 `const std::vector<Move>&`。视图能被区间的用法遍历，改内部存储不影响调用方；跨度只在对象存活期间有效，写进注释。
 
@@ -86,8 +86,8 @@
 - `Get` 只用于取值，`Set` 只用于设值；不要用 `CheckLine()` 当布尔 getter。
 - `Check` / `Validate` 留给会报告错误、产生诊断或可能失败的操作，例如 `CheckEnvironment()` 返回问题列表；返回结果类型的校验器也可以用这两个词，只要名字说明它返回结果。它们不做返回纯 `bool` 的查询，bool 查询写在 `Is` / `Has` / `Can` 里。
 - 动作可能因为多个前置条件失败、而调用方需要区分原因时，返回 `enum class`（`PlaceResult`、`GameResult`、`WinPreviewResult`），不要用 `bool` 加输出参数，也不要拆成一串 `IsXxx` 判断再重复检查。
-- 结果枚举的取值写结果类别，两个词以内：成功用 `kPlaced`；失败按发生原因分别取名（如 `kInvalidPlayer`、`kOccupiedSquare`），不合并成一个 `kInvalid`。行尾注释以类别开头，写成「成功：…」「失败：…」，冒号后写这次调用的结果与原因，各行按「对局状态 → 落子玩家 → 目标方格」的顺序写。完整案例见 `references/naming/examples/13-naming-state-change.md`。
-- 结果枚举的类型用「操作或对象 + Result」，读作「什么的 Result」：`Game::Place` 的结果是 `PlaceResult`，`GetResult` 的结果是 `GameResult`。结果跟随产生它的层：`Board` 只写入，没有结果枚举，也不把 `GameResult` 塞进 `Square` 或 `Board`。
+- 结果枚举的取值写结果类别，两个词以内：成功用 `kPlaced`；失败按发生原因分别取名（如 `kInvalidPlayer`、`kOccupiedSquare`），不合并成一个 `kInvalid`。行尾注释见 `references/comments/01-comment-rules.md` 的枚举项条。完整案例见 `references/naming/examples/13-naming-state-change.md`。
+- 结果枚举的类型用「操作或对象 + Result」，读作「什么的 Result」：`Game::Place` 的结果是 `PlaceResult`，`GetResult` 的结果是 `GameResult`。结果跟随产生它的层：`Board` 只写入并保留预览结果 `WinPreviewResult`，落子与整局结果留在对局层，不把 `GameResult` 塞进 `Square` 或 `Board`。
 - 同名操作在不同层返回不同结果时，按各自处理的对象取名：`Board::SetSquare` 只写入，没有返回值；`Game::Place` 处理的是一次落子，返回 `PlaceResult`；整局结果由 `Game::GetResult` 另外回答。不把两个答案压进同一个名字，读者才分得清拿到的是「这一手写成了没有」还是「这一局结束了没有」。
 - 枚举的取值写成短句，与类型名对齐：`GameResult` 用 `kInProgress`、`kXWin`、`kOWin`、`kDraw`；`SquareValue` 用 `kEmpty`、`kX`、`kO`，行尾写「空」「X」「O」；不写 `kXWins` 这类主谓句，也不掺动作名。
 - 词性跟着角色的位置走：前缀 `k` 后面先写角色再写状态，角色作主语、状态作谓语，用不带 `-s` 的动词原形，不用现在分词：`kXWin`、`kOWin`、`kDraw`。谓语读不通时改用名词或形容词，`kInProgress` 是固定说法，`kEmpty` 是形容词。不逐个用 `-ed` 造过去分词（`kXWon`、`kDrawn`），也不写成主谓句 `kXWins`。

@@ -85,3 +85,69 @@ test('非法 UTF-8 报错', () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+test('.gitattributes 的 eol=crlf 覆盖默认 LF', () => {
+  const root = workspace({
+    '.gitattributes': '*.md text eol=crlf\n',
+    'a.md': '中文\r\n',
+  })
+  try {
+    const result = run(root)
+    assert.equal(result.status, 0, result.stdout + result.stderr)
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('.gitattributes 声明的行尾仍然强制，LF 文件报错', () => {
+  const root = workspace({
+    '.gitattributes': '*.md text eol=crlf\n',
+    'a.md': '中文\n',
+  })
+  try {
+    const result = run(root)
+    assert.equal(result.status, 1)
+    assert.match(result.stdout, /a\.md.*\[eol\]/)
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('.gitattributes 的 binary 跳过文本检查', () => {
+  const root = workspace({
+    '.gitattributes': '*.dat binary\n',
+    'a.dat': Buffer.from('\uFEFF中文\r\n'),
+  })
+  try {
+    const result = run(root)
+    assert.equal(result.status, 0, result.stdout + result.stderr)
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('.editorconfig 的 end_of_line=crlf 覆盖默认 LF', () => {
+  const root = workspace({
+    '.editorconfig': 'root = true\n[*.txt]\nend_of_line = crlf\n',
+    'a.txt': '中文\r\n',
+  })
+  try {
+    const result = run(root)
+    assert.equal(result.status, 0, result.stdout + result.stderr)
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('.editorconfig 的 charset=utf-8-bom 允许 BOM', () => {
+  const root = workspace({
+    '.editorconfig': 'root = true\n[*.txt]\ncharset = utf-8-bom\n',
+    'a.txt': Buffer.from('\uFEFF中文\n'),
+  })
+  try {
+    const result = run(root)
+    assert.equal(result.status, 0, result.stdout + result.stderr)
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})

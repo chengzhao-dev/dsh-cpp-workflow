@@ -287,13 +287,27 @@ function declarationNames(text) {
   return names
 }
 
-/** 取定义行上的函数名、返回类型与参数名；不是单行定义时返回 undefined。 */
+/** 取定义行上的函数名、返回类型与参数名；签名可跨行，非定义返回 undefined。 */
 function definitionAt(lines, index) {
   const line = lines[index]
+  if (line.trim() === '' || /^\s*(\/\/|\/\*|\*)/.test(line) || /^\s*#/.test(line)) return undefined
   if (/^\s*(if|for|while|switch|catch|else|return|case|default|do)\b/.test(line)) return undefined
   if (/^\s*[A-Z][A-Z0-9_]*\s*\(/.test(line)) return undefined
   if (/^\s*~[A-Za-z_]\w*\s*\(/.test(line)) return undefined
-  const match = line.match(/^(\s*)(.*?)\b([A-Za-z_]\w*)\s*\(([^)]*)\)\s*(?:const\s*)?(?:noexcept\s*)?(?:->\s*[^{]+)?\{\s*.*$/)
+  // 定义的首行必须出现参数表左括号；类头、namespace、控制语句等不参与。
+  if (!line.includes('(')) return undefined
+  const pattern = /^(\s*)(.*?)\b([A-Za-z_]\w*)\s*\(((?:[^()]|\([^()]*\))*)\)\s*(?:const\s*)?(?:noexcept\s*)?(?:->\s*[^{;]+)?\{\s*.*$/
+  let match = line.match(pattern)
+  if (!match) {
+    // 签名被换行拆开时续拼，直到出现函数体左花括号、语句结束或超出上限。
+    let buffer = line
+    for (let next = index + 1; next < lines.length && next <= index + 12; next += 1) {
+      buffer = `${buffer} ${lines[next].trim()}`
+      match = buffer.match(pattern)
+      if (match) break
+      if (/[;}]/.test(lines[next])) break
+    }
+  }
   if (!match) return undefined
   const prefix = match[2].trim()
   if (/^(if|for|while|switch|catch|else|return|case|default|do)$/.test(match[3])) return undefined

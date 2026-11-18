@@ -14,7 +14,7 @@
 | `.inc` | 稀有文本包含 | 否；本工作流不用 |
 
 - 一个工程只选一种头扩展名和一种实现扩展名；新工程与示例一律 `.cpp` / `.h`，已有工程跟随既有后缀，不批量改名。
-- 头文件用一行 `#pragma once` 去重，不写 `#ifndef` / `#define` / `#endif` 包含守卫。这是本工作流对 Google 的明确偏离：路径式守卫要把项目名、目录名和文件名拼进宏，组件改名或头文件跨工程复用时宏名会跟着失效；`#pragma once` 由编译器按文件身份判断，不需要宏名，GCC、Clang、MSVC 都支持。
+- 头文件用一行 `#pragma once` 去重；为什么不用 `#ifndef` / `#define` 宏守卫、以及这条对 Google 的偏离理由，都写在 `references/style/01-google-cpp-style.md` 的头文件节，本文件只定槽位。
 - 新文件先按本模板起骨架，再填内容；不因「先跑起来」省略 `#pragma once`。
 
 ## `#pragma once`
@@ -69,7 +69,7 @@ class ThingTable {
 }  // namespace project
 ```
 
-- 文件头不写版权、作者或变更日志；文件头之后紧跟 `#pragma once`，再进入包含。
+- 文件头格式与作者口径见 `references/comments/02-style.md`；默认不写版权与变更日志；文件头之后紧跟 `#pragma once`，再进入包含。
 - 头文件自包含：自己用到的类型、宏和标准库头都直接包含，不依赖调用方先包含什么。
 - 不把 `using namespace`、非 inline 普通全局变量、匿名命名空间或 `static` 定义放进头文件。
 - 模板、`constexpr` 和类内短动作函数可以留在头文件；只读访问器与查询（`Get*`、`Is*` 等）即使只有一行，头文件只留声明，定义放 `.cpp`；其他普通函数体放实现文件。

@@ -28,7 +28,7 @@
 3. **输出辅助**：`header()` 打印阶段名，`err()` 打印到 stderr；`trap ERR` 打印失败命令。
 4. **configure**：每次运行都重新 configure，不复用缓存；传 `-G Ninja`、`-DCMAKE_BUILD_TYPE=Debug`、`-DCMAKE_C_COMPILER`、`-DCMAKE_CXX_COMPILER`、`-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`。C 与 C++ 使用同一套编译器；没有 C 语言的工程会忽略 C 编译器设置。
 5. **build**：`cmake --build "$BUILD_DIR"`。
-6. **编译数据库链接**：`BUILD_DIR` 与 `BUILD_ROOT` 相同时数据库就在该目录，不建链接；否则先 `rm -f "${BUILD_ROOT}/compile_commands.json"`，再用 `realpath --relative-to="${BUILD_ROOT}" "${BUILD_DIR}/compile_commands.json"` 求相对路径后 `ln -s` 到 `${BUILD_ROOT}/compile_commands.json`；不用 `ln -n`，它在 BSD/macOS 上不可移植。
+6. **编译数据库链接**：`BUILD_DIR` 与 `BUILD_ROOT` 相同时数据库就在该目录，不建链接；否则先 `rm -f "${BUILD_ROOT}/compile_commands.json"`，再用 shell 参数展开去掉 `${BUILD_ROOT}/` 前缀求相对路径（`case` 配 `"${target#"${BUILD_ROOT}/"}"`），然后 `ln -s` 到 `${BUILD_ROOT}/compile_commands.json`。不用 `realpath --relative-to`，它是 GNU coreutils 选项，macOS 自带命令没有；也不用 `ln -n`，它在 BSD/macOS 上不可移植。
 7. **test**：有 `tests/` 目录时 `ctest --test-dir "$BUILD_DIR" --output-on-failure --no-tests=error`，防止测试 discovery 失败后 0 条也算通过；没有测试目录时 `ctest --test-dir "$BUILD_DIR" --output-on-failure --no-tests=ignore`，0 条不算失败；不写 `--no-tests=ignore` 时 ctest 会把 0 条当失败（退出码 8）。
 8. **run**：`(cd "$BUILD_DIR/bin" && "./$APP_NAME")`；共享库的运行时路径由定构建的 CMake RPATH 负责，不在脚本里设全局 `LD_LIBRARY_PATH`。
 
@@ -61,7 +61,7 @@ Debug 与 Release 的返回值、异常与 `Check` / `DebugCheck` 合同见 `../
 
 - `bash -n running-build.sh` 通过。
 - 在声明的 build host 上，`./running-build.sh clang` 与 `./running-build.sh gcc` 都能从 configure 走到 run。
-- 从工程根直接 `./build/clang/bin/<入口 target>` 能启动（模板默认 `app`，本书是 `terminal`；共享库场景由 RPATH 保证）。
+- 从工程根直接 `./build/clang/bin/<入口 target>` 能启动（模板默认 `app`；共享库场景由 RPATH 保证）。
 - 切换编译器后 `build/compile_commands.json` 指向新数据库。
 - 调用者的 `LD_LIBRARY_PATH` 在脚本结束后不变。
 - Windows 原生：声明校验已拒绝该组合；不要伪造 PowerShell 脚本，也不要绕过声明。

@@ -64,7 +64,7 @@ metadata:
 
 加载预算见 [budget.md](../shared/budget.md)；engineering 的步骤固定 3 份。
 
-项目技能列出了检查命令时先跑那一条；没有时按 `steps/03-check.md` 的 configure 与构建命令跑。项目命令只覆盖构建，target 图、标准、全局污染、模块导入、排版与产物位置仍按 `steps/03-check.md` 的核对项确认，全部满足再停在这一步。五档标准的语言设施、工具映射与降档由 `references/cmake/standards/` 维护；本技能只负责这些标准在 CMake 里怎么写，以及三份工具配置各自的最低版本。
+工程自己的构建命令写在项目技能的入口命令时先跑那一条；没有时按 `building-cpp` 的 `steps/01-build.md`「命令」跑。项目命令只覆盖构建，target 图、标准、全局污染、模块导入、排版与产物位置仍按 `steps/03-check.md` 的核对项确认，全部满足再停在这一步。五档标准的语言设施、工具映射与降档由 `references/cmake/standards/` 维护；本技能只负责这些标准在 CMake 里怎么写，以及三份工具配置各自的最低版本。
 
 ## 四类改动
 
@@ -79,7 +79,7 @@ metadata:
 
 ## 完成判据
 
-- [ ] target 图显式：程序 target 用项目技能点名的名字（模板默认 `app`，本书 `terminal`），库 target 用组件名，程序链接库，库的公共 include 用 `PUBLIC`；没有全局 include、全局编译选项或 GLOB。
+- [ ] target 图显式：程序 target 用项目技能点名的名字（模板默认 `app`），库 target 用组件名，程序链接库，库的公共 include 用 `PUBLIC`；没有全局 include、全局编译选项或 GLOB。
 - [ ] 每个 target 的标准来自 `environment.json`；`target_compile_features` 与 `CXX_STANDARD`、`CXX_STANDARD_REQUIRED ON`、`CXX_EXTENSIONS OFF` 同时存在，live 的 `compile_commands.json` 中每个 target 的 `-std=` 都与声明一致，且每个 target 只有一条、不同值即失败，不是 `gnu++NN`。
 - [ ] 复用的 CMake 函数放在工程根的 `cmake/` 模块里（模板源在 `references/cmake/assets/`），文件名用 UpperCamelCase，函数名用 snake_case，有目标与参数校验，根 `CMakeLists.txt` 通过 `CMAKE_MODULE_PATH` 导入；没有重复片段和未使用的旧模块。
 - [ ] 公开函数上方写官方文档块（`#[=======================================================================[.rst:` 加 `.. command::` 与 `.. code-block:: cmake`，块内散文写中文），完整写法见 `references/cmake/targets/01-target-rules.md`；模块文件不画 `#---` 与 `#===...===#` 分隔线。

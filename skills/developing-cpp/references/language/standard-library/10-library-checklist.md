@@ -6,5 +6,5 @@
 - [ ] 没有保存 `string_view` / `span` 指向的临时对象。
 - [ ] 修改容器大小前处理了迭代器失效。
 - [ ] 能用算法表达时没有手写下标循环。
-- [ ] 写到已有的 `std::ostream` 用 `<<`；没有流对象时，默认用 `std::print` 与 `std::println`，它们只在 C++23 且标准库支持时可用；见 `references/language/standard-library/06-format.md`。
+- [ ] 输出方式见 `references/language/standard-library/06-format.md`。
 - [ ] 自定义类型的 formatter 只接受默认格式，非法枚举有稳定回退，输出可直接用 `std::format` 断言。

@@ -1,6 +1,6 @@
 ---
 name: cpp-workflow-project
-description: 当前 C++ 工程的本地事实与通用工作流约定：工程与组件名、库和程序的边界、入口命令、阶段表、术语增补。开始任何 C++ 任务前先读；工程特有的值写在这里，通用条文由插件三个技能维护。
+description: 当前 C++ 工程的本地事实与通用工作流约定：工程与组件名、程序 target、构建目录、库和程序的边界、入口命令、阶段表、术语增补。开始任何 C++ 任务前先读；工程特有的值写在这里，通用条文由插件三个技能维护。
 metadata:
   short-description: 当前 C++ 工程事实与通用约定
 ---
@@ -18,6 +18,9 @@ metadata:
 | 工程名 | `<project-name>` |
 | 一句话职责 | `<程序用一句话说明做什么>` |
 | 组件名 | `<component-name>` |
+| 程序 target | `<程序 target 名；没有程序时写“无”，默认 app>` |
+| 构建目录 | `<构建目录；单一目录时写实际路径，如 games/<game>/build，多编译器时写 build/<compiler>>` |
+| 文档检查命令 | `<书稿或文档的检查命令；没有时写“无”>` |
 | 源码根 | `<src-root>` |
 
 同目录的 `environment.json` 三个环境轴必须填本工程的真实组合；`standard` 默认 `c++23`，可改成 `c++11`–`c++23`。环境轴留空时技能仍可能出现，但定构建会停。
@@ -40,7 +43,7 @@ metadata:
 - CTest 在工程内注册并运行；仓库根不构建、不注册测试。
 - 头文件用 `#pragma once`，不写路径式包含守卫。
 - 命名按 Google C++ 风格与工程白名单执行；谓词用 `Is/Has/Can/Completes` 等肯定式。
-- 标准由 `cmake/CompileSettings.cmake` 的 `set_target_cxx_standard` 统一施加；工程需要警告时再调用 `set_target_warnings`，不默认给所有 target 加 `-Werror`。`environment.json` 的 `standard` 与 `.clang-format` 同步。
+- 标准由 `cmake/CompileSettings.cmake` 的 `set_target_cxx_standard` 统一施加；该模块不在模板内，需要时从插件资产 `references/cmake/assets/CompileSettings.cmake` 复制到工程根 `cmake/` 并导入。工程需要警告时再调用 `set_target_warnings`，不默认给所有 target 加 `-Werror`。`environment.json` 的 `standard` 与 `.clang-format` 同步。
 - 每个可独立构建、运行的程序一个工程；共享库等第二个真实使用方出现、语义稳定后再抽。
 - 阶段表、代码目录与文档章节保持对齐；没有阶段表时只写用户点名的行为。
 
@@ -65,7 +68,7 @@ metadata:
 
 - clangd 提供补全、跳转和诊断；`.clangd` 指向 `build/<compiler>` 的编译数据库，不写 `-std`。
 - `--query-driver` 放在 `.vscode/settings.json` 的 `clangd.arguments`，不要写成 `.clangd` 的 YAML 键。
-- CMake Tools 是唯一的配置、构建、运行和调试入口；C/C++ 扩展只做 `CMake: Debug` 的后端，IntelliSense 关闭。
+- 编辑器内的配置、构建与调试从 CMake Tools 进入，命令行与 CI 一律走入口命令；两者共用同一构建目录；C/C++ 扩展只做 `CMake: Debug` 的后端，IntelliSense 关闭。
 
 ## 完成判据
 

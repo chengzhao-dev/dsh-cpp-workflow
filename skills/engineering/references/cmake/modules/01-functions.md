@@ -1,4 +1,4 @@
-<!-- 读取时机：配 CMake 或工具链时；读完能回答：CMake 模块与函数；预算：一次只开这一份（118 行），不自动串联。 -->
+<!-- 读取时机：配 CMake 或工具链时；读完能回答：CMake 模块与函数；预算：一次只开这一份（119 行），不自动串联。 -->
 # CMake 模块与函数
 
 目标：同一段构建逻辑只有一份权威，函数可导入、可校验、可测试，目标目录只表达差异。
@@ -47,6 +47,7 @@ include(CompileSettings)
 ```
 
 - `CMAKE_MODULE_PATH` 只在根追加一次。
+- 复制 `OutputSettings.cmake` 时在同一位置 `include(OutputSettings)`，并在首个 `add_subdirectory()` 之前调用 `set_output_directories()`；不建这个模块时，把三条输出目录 `set(CMAKE_*_OUTPUT_DIRECTORY ...)` 直接写在根 `CMakeLists.txt` 的同一位置。
 - 子目录只调用函数，不重复 `include()`；重复导入靠模块里的 `include_guard(GLOBAL)` 兜底。
 - 模块名与文件名一致；改名时全仓搜索旧 `include()` 与旧函数名。
 - 不使用 `include()` 执行有副作用的脚本；模块只定义函数。

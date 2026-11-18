@@ -73,6 +73,16 @@ test('没有 Set 配对时谓词在读取接口之后通过', () => {
   assert.deepEqual(checkHeaderOrder(header), [])
 })
 
+test('非 Get 的 const 读取接口也算读取接口', () => {
+  const header = `class Selector {
+ public:
+  std::string_view OptionAt(int index) const noexcept;
+  bool IsSelected(int index) const noexcept;
+  void Select(int index) noexcept;
+};`
+  assert.deepEqual(checkHeaderOrder(header), [])
+})
+
 test('没有 Set 配对时谓词排在修改接口之后报错', () => {
   const header = `class Selector {
  public:

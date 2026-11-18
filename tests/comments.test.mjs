@@ -682,6 +682,50 @@ test('只在 .cpp 出现的函数需要完整契约', () => {
   }
 })
 
+test('跨行签名的 .cpp 定义同样要求完整契约', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
+  try {
+    writeFileSync(
+      path.join(dir, 'helper.cpp'),
+      [
+        '/// @file helper.cpp',
+        '/// @brief 辅助实现。',
+        '',
+        'int Helper(int value,',
+        '           const std::string& label) {',
+        '  return value + static_cast<int>(label.size());',
+        '}',
+        '',
+      ].join('\n'),
+    )
+    const missing = JSON.parse(runCli(['--root', dir, '--json']).stdout)
+    assert.ok(missing.issues.some((issue) => issue.rule === 'cpp-contract-missing'))
+    writeFileSync(
+      path.join(dir, 'helper.cpp'),
+      [
+        '/// @file helper.cpp',
+        '/// @brief 辅助实现。',
+        '',
+        '/// 返回数值与标签长度之和。',
+        '///',
+        '/// @param value 输入值。',
+        '/// @param label 标签。',
+        '///',
+        '/// @return 两者之和。',
+        'int Helper(int value,',
+        '           const std::string& label) {',
+        '  return value + static_cast<int>(label.size());',
+        '}',
+        '',
+      ].join('\n'),
+    )
+    const ok = JSON.parse(runCli(['--root', dir, '--json']).stdout)
+    assert.ok(!ok.issues.some((issue) => issue.rule === 'cpp-contract-missing'))
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
 test('类内析构函数不按普通函数要求 @return', () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
   try {

@@ -1,4 +1,4 @@
-<!-- 读取时机：排版或工具配置时；读完能回答：编码与行尾；预算：一次只开这一份（52 行），不自动串联。 -->
+<!-- 读取时机：排版或工具配置时；读完能回答：编码与行尾；预算：一次只开这一份（54 行），不自动串联。 -->
 # 编码与行尾
 
 默认组合是 UTF-8 无 BOM、LF。机器规则以仓库根 `.gitattributes` 与 `.editorconfig` 为准，本文件只记决定、MSVC 例外与检查方法。
@@ -26,8 +26,10 @@
 
 - `.gitattributes` 决定 Git 入库和检出；它覆盖贡献者自己的 `core.autocrlf`。
 - `.editorconfig` 决定编辑器保存；`charset` 与 `end_of_line` 必须和 `.gitattributes` 同一档。
-- `.editorconfig` 的边界：`[*]` 给 2 空格默认，C++、CMake、shell 覆盖成 4 个空格；`max_line_length`
-  不是核心键，VS Code 不读，C++ 的 120 由 `.clang-format` 的 `ColumnLimit` 强制，CMake 与 shell 只是参考线。
+- `.editorconfig` 的文件名由 EditorConfig 规范固定，不能改名：插件从目标文件所在目录逐级向上
+  查找全小写的 `.editorconfig`，改名后不会被识别；放进子目录只对该子树生效。
+- `.editorconfig` 的边界：`[*]` 给 2 空格默认，C++、CMake、shell 与 Python 覆盖成 4 个空格；`max_line_length`
+  不是核心键，VS Code 不读，C++ 的 120 由 `.clang-format` 的 `ColumnLimit` 强制，其余只是参考线。
 - `.clang-format` 写 `LineEnding: LF`，避免格式化把行尾改回 CRLF。
 
 ## 检查
@@ -38,8 +40,8 @@
 node "<skill-dir>/scripts/checking-encoding.mjs" --profile portable
 ```
 
-- `portable`（默认）要求所有文本文件 UTF-8 无 BOM、LF、末尾换行。
-- `msvc` 只放宽 MSVC 编译的 C/C++ 源文件：允许 UTF-8 BOM 与 CRLF；Markdown、配置与脚本仍按 `portable` 检查。
+- 脚本按文件路径读取逐级 `.gitattributes`（`text`、`binary`、`eol`、`working-tree-encoding`）与逐级向上的 `.editorconfig`（`charset`、`end_of_line`、`insert_final_newline`），以它们为准；两者都没有声明时才用默认。
+- `portable`（默认）的默认组合是 UTF-8 无 BOM、LF、末尾换行。`msvc` 只放宽 MSVC 编译的 C/C++ 源文件：允许 UTF-8 BOM 与 CRLF；Markdown、配置与脚本仍按 `portable` 检查。
 - 退出码：0 无问题，1 有问题，2 参数或 Git 错误。加 `--json` 输出机器可读结果。
 - 脚本只写 stdout，不生成报告文件；不要把输出重定向成仓库根下的日志。要留证据写 `temp/`，否则只引用终端输出。
 

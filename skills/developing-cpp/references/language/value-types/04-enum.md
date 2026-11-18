@@ -32,5 +32,5 @@
 
 - ISO C++ `[dcl.enum]`：`enum class` 的作用域、不隐式转换与底层类型规则。https://eel.is/c++draft/dcl.enum
 - Google C++ Style, Enumerator Names：枚举子按常量命名（`kEnumName`），不用宏风格。https://google.github.io/styleguide/cppguide.html#Enumerator_Names
-- C++ Core Guidelines `Enum.1`/`Enum.3` 建议用枚举代替宏、优先 `enum class`；`Enum.7`/`Enum.8` 建议底层类型与显式编号只在必要时写。本项目为稳定存储与输出固定 `uint8_t`，是有意偏离；枚举值不默认逐个写值，按 Enum.8 只在必要时指定。改动底层类型时要同步序列化与测试。https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#s-enum
+- C++ Core Guidelines `Enum.1`/`Enum.3` 建议用枚举代替宏、优先 `enum class`；`Enum.7`/`Enum.8` 建议底层类型与显式编号只在必要时写。本项目为稳定存储与输出默认 `uint8_t`，确需其他 ABI 宽度时写明理由，是有意偏离；枚举值不默认逐个写值，按 Enum.8 只在必要时指定。改动底层类型时要同步序列化与测试。https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#s-enum
 - cppreference `std::error_code`：`clear()` 把值置为 0，`operator bool` 只把非 0 当作错误；结果编号沿用 0 = 成功。https://en.cppreference.com/w/cpp/error/error_code

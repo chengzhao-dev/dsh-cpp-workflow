@@ -92,6 +92,6 @@ metadata:
 - [ ] 超出标准库的能力用维护中的三方库完成，库只出现在直接使用它的 target，规则库不依赖终端、GUI 或库类型。
 - [ ] 第 3 步的公共头文件自包含，命名、声明顺序和异常声明符合 `references/` 的条文；类型注释只写本类型，纯值容器一句，初始状态归默认构造函数。
 - [ ] 第 4 步的实现只兑现声明；`.cpp` 定义顺序与头文件声明同序，参数类型、限定符与返回类型同声明一致；同一文件里的函数按同一套分段约定，需要分阶段的都有阶段注释与空行；资源由 RAII 管理；失败是正常结果时用返回值，函数无法完成任务时抛异常，不拿异常做正常分支。
-- [ ] `.cpp` 定义顺序与签名检查通过：`node "<skill-dir>/scripts/checking-declaration-order.mjs" --root <项目根>` 退出码为 0；有乱序或签名不一致先修，不能跳过。
+- [ ] 配对头文件类的 `.cpp` 定义顺序与签名检查通过：`node "<skill-dir>/scripts/checking-declaration-order.mjs" --root <项目根>` 退出码为 0；有乱序或签名不一致先修，不能跳过。自由函数与没有配对头文件的 `.cpp` 不在覆盖内。
 - [ ] 源码注释符合 `references/comments/01-comment-rules.md` 与 `02-style.md` 的规范，`node "<skill-dir>/scripts/checking-comments.mjs" --root <项目根>` 退出码为 0，末行是「注释检查通过：N 个文件。」。
 - [ ] 没有改 `CMakeLists.txt`、`.clang-*`、构建脚本，也没有把外部资料路径或项目专属类名写进通用条文。

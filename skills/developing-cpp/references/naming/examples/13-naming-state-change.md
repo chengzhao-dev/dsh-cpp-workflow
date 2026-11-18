@@ -26,7 +26,7 @@ class Square {
  public:
   [[nodiscard]] bool IsEmpty() const;
   [[nodiscard]] SquareValue GetValue() const;
-  void SetValue(SquareValue value) noexcept;
+  void SetValue(SquareValue value);
 };
 
 class Board {

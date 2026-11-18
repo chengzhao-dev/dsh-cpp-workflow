@@ -424,7 +424,11 @@ export function checkHeaderOrder(headerText) {
       }
       const pair = findGetSetPairAround(members, index)
       if (!pair) {
-        const isConstMember = (member) => /\bconst\b\s*;/.test(member.text.trim())
+        const isConstMember = (member) => {
+          const declaration = member.text.split('{')[0].trim()
+          const close = declaration.lastIndexOf(')')
+          return close !== -1 && declaration.slice(close + 1).trimStart().startsWith('const')
+        }
         const hasAdjacentPair = members.some(
           (candidate, candidateIndex) =>
             isGet(candidate) &&

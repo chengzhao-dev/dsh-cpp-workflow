@@ -1,4 +1,4 @@
-<!-- 读取时机：配 CMake 或工具链时；读完能回答：target、标准与产物目录怎么配；预算：一次只开这一份（234 行），不自动串联。 -->
+<!-- 读取时机：配 CMake 或工具链时；读完能回答：target、标准与产物目录怎么配；预算：一次只开这一份（236 行），不自动串联。 -->
 # CMake
 
 目标：一个编译器、Ninja、target-based 规则、可用的编译数据库。下面是最小形状和常见边界；工程模板仍由 `building-cpp` 提供，在 `../../../../building-cpp/assets/templates/projects/`，可复用的 CMake 函数在本技能的 `assets/`：`CompileSettings.cmake` 收标准与警告，`LinkSettings.cmake` 收构建期 RPATH 与 GoogleTest 依赖。
@@ -62,8 +62,8 @@ set_target_warnings(greeting PRIVATE LEVEL standard)
 
 - 库的 `PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include` 让程序与链接它的测试写 `#include "greeting.h"` 就能找到公共头，不需要各自再写 include 路径。
 - 标准用 `set_target_cxx_standard`：库用 `PUBLIC` 传播“至少 C++NN”，程序用 `PRIVATE`；`CXX_STANDARD`/`CXX_EXTENSIONS` 是 target 属性，不是 INTERFACE 属性，不会跨 target 传播；每个会编译的 target 都要自己调用一次。
-- `CXX_STANDARD_REQUIRED ON` 防止 CMake 在编译器不支持时静默降级；`CXX_EXTENSIONS OFF` 把 `-std=gnu++NN` 收成 `-std=c++NN`。configure 后检查 `compile_commands.json` 的最后一条 `-std=`。
-- 程序 target 用项目技能点名的名字（模板默认 `app`，本书 `terminal`）；库 target 用组件名。
+- `CXX_STANDARD_REQUIRED ON` 防止 CMake 在编译器不支持时静默降级；`CXX_EXTENSIONS OFF` 把 `-std=gnu++NN` 收成 `-std=c++NN`。configure 后逐 target 检查 `compile_commands.json`：每个 target 只有一条 `-std=`，等于 `environment.json` 的档位，不能是 `gnu++NN`。
+- 程序 target 用项目技能点名的名字（模板默认 `app`）；库 target 用组件名。
 
 ## 标准与复用
 
@@ -118,8 +118,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 ```
 
 - 只对 Makefile 和 Ninja 生成器生效；本项目固定 Ninja。
-- 生成位置是构建目录根部：`build/<compiler>/compile_commands.json`。
-- 构建脚本把它链接到 `build/compile_commands.json`；clangd 默认读这个路径，clang-tidy 用 `-p build/<compiler>`。
+- 生成位置是构建目录根部：`<构建目录>/compile_commands.json`。
+- 构建脚本把它链接到 `build/compile_commands.json`；clangd 默认读这个路径，clang-tidy 用 `-p <构建目录>`。
 - 换编译器时，旧目录的数据库不能复用；清理或换目录。
 
 ## 输出目录
@@ -132,10 +132,12 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 ```
 
-- 可执行文件统一到 `build/<compiler>/bin`。
-- 库统一到 `build/<compiler>/lib`。
+- 可执行文件统一到 `<构建目录>/bin`。
+- 库统一到 `<构建目录>/lib`。
+
+`<构建目录>` 取项目技能声明的单一构建目录（如 `games/<game>/build`），没声明时用 `build/<compiler>`；两种情况下 bin 与 lib 都相对它定位。
 - 不要输出到源码目录；`git status` 不应出现构建产物。
-- 运行程序时从 `build/<compiler>/bin` 启动，或由脚本设置工作目录。
+- 运行程序时从 `<构建目录>/bin` 启动，或由脚本设置工作目录。
 
 ## 共享库运行时路径
 

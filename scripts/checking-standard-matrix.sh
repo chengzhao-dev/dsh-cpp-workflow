@@ -17,7 +17,7 @@ work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
 # 缺少依赖命令时直接报错退出。
-for command in "$cmake_bin" ninja perl "$cxx"; do
+for command in "$cmake_bin" ninja perl "$cxx" ctest node; do
     if ! command -v "$command" >/dev/null 2>&1; then
         echo "missing command: $command" >&2
         exit 1

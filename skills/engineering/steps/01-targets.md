@@ -18,7 +18,7 @@
 
 target 规则：
 
-- 程序 target 用项目技能点名的名字（模板默认 `app`，本书 `terminal`）；库 target 用组件名，程序链接库；不把 `main()` 编进库。
+- 程序 target 用项目技能点名的名字（模板默认 `app`）；库 target 用组件名，程序链接库；不把 `main()` 编进库。
 - 每个 target 自己声明 include、标准、编译选项和链接库；公共头用 `PUBLIC`，实现目录用 `PRIVATE`。
 - 用 `target_include_directories`、`target_compile_features`、`target_link_libraries`；禁止全局 `include_directories()`、`add_definitions()`、`CMAKE_CXX_FLAGS`。target 内的命令按 `../references/cmake/targets/01-target-rules.md` 的块顺序写，标准与警告放在链接之前。
 - 源文件显式列出；不写 `file(GLOB ...)`，新增文件时改 CMake。
@@ -29,15 +29,7 @@ target 规则：
 
 ## 命令形状
 
-```bash
-cmake -S . -B build/clang -G Ninja \
-  -DCMAKE_BUILD_TYPE=Debug \
-  -DCMAKE_C_COMPILER=clang \
-  -DCMAKE_CXX_COMPILER=clang++ \
-  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-```
-
-GCC 模式把目录和编译器换成 `build/gcc`、`g++`（C 驱动换成 `gcc`）。一个 configure 只用一个编译器，C 与 C++ 驱动同属一套。模板的 `cmake_minimum_required` 默认 3.20；目标标准要求更低时可以下调，但不能低于上表对该标准的下限，不要静默降标准。
+configure 的目录与编译器写法以 `building-cpp` 的 `steps/01-build.md`「命令」为唯一出处（`build/clang` 或 `build/gcc`、`clang`/`clang++` 或 `gcc`/`g++`、`CMAKE_EXPORT_COMPILE_COMMANDS=ON`）。一个 configure 只用一个编译器，C 与 C++ 驱动同属一套。模板的 `cmake_minimum_required` 默认 3.20；目标标准要求更低时可以下调，但不能低于上表对该标准的下限，不要静默降标准。
 
 ## 情况
 

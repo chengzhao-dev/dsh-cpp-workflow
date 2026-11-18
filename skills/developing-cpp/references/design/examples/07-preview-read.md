@@ -34,4 +34,4 @@ WinPreviewResult Board::PreviewWin(Position pos, SquareValue value) const {
 }
 ```
 
-先用 `IsInRange` 拒绝越界，再读取方格：越界在触碰数组之前被拒绝，`GetSquare` 实际不会抛，函数内没有抛出点，可以标 `noexcept`。`SetSquare` 不能拿来试落，因为它只管写入，不回答这一格能不能落。
+先用 `IsInRange` 拒绝越界，再读取方格：越界在触碰数组之前被拒绝，`GetSquare` 实际不会抛；它返回结果枚举，按 `references/exceptions/01-exception-rules.md` 的「不抛的边界」不因为函数体不抛就补 `noexcept`。`SetSquare` 不能拿来试落，因为它只管写入，不回答这一格能不能落。

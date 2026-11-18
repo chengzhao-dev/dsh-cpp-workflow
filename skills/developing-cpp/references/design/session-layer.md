@@ -1,4 +1,4 @@
-<!-- 读取时机：设计会话、选着、规则与构建边界时；读完能回答：会话层和程序边界；预算：一次只开这一份（93 行），不自动串联。 -->
+<!-- 读取时机：设计会话、选着、规则与构建边界时；读完能回答：会话层和程序边界；预算：一次只开这一份（87 行），不自动串联。 -->
 # 会话层与程序边界
 
 先定接口，再写实现；实现碰到下层缺口时，回头改接口，小步迭代。本文按会话、选着、规则、构建四层说明这条原则；领域值、结果类型与函数契约仍以 [01-project-design.md](01-project-design.md) 为准，本文只补充「谁持有流、谁做决定、谁不该知道终端」以及三者的构建边界。
@@ -47,14 +47,11 @@ tictactoe 的电脑选着目前写在 `BoardScreen` 内：`kEasy` 随机、`kNor
 
 构建边界让「规则库」「会话程序」「测试」各自独立编译，依赖方向与源码一致。
 
-- 规则编成动态库：`add_library(tictactoe SHARED src/board.cpp)`，公开头文件目录是 `tictactoe/include/`。
-- 终端程序单独编：`terminal/CMakeLists.txt` 把 `main.cpp`、`menu.cpp`、`screen.cpp`、`terminal.cpp`、`board_screen.cpp` 编成 `terminal`，再链接 `tictactoe` 与 FTXUI；不把终端源文件编进规则库。
-- 测试目标尚未重建；重建时链接同一个 `tictactoe` 动态库，不直接编终端源文件。
-- `target_link_libraries` 的硬性要求只有第一个参数已由 `add_executable` 或 `add_library` 创建；被链接的库目标可以在本次 configure 稍后出现，CMake 会自动补 ordering dependency。项目仍约定先定义库、再定义程序，这是可读性与顺序一致，不是 CMake 规范。
-- 构建树的 RPATH 与安装树分开：`BUILD_RPATH` 可用 `$ORIGIN/../lib` 指向构建产物；`INSTALL_RPATH` 为空时安装后的可执行文件不会沿用构建树路径。
+- 规则编成动态库 `tictactoe`，公开头文件目录是 `tictactoe/include/`；终端程序与测试目标各自独立编译，测试目标尚未重建。
+- 库、程序与测试的边界见 `steps/02-boundary.md`，target 与 RPATH 写法见 `engineering` 的 `steps/01-targets.md`。
 - 程序边界由 `main` 定义；库不定义 `main`。头文件自包含、每个符号由直接包含的头导出（SF.11 与 IWYU）是编译单元边界，不是链接边界，放在本节作为「库能独立编译」的旁证，不替代目标依赖规则。
 
-tictactoe 的两份 CMake 是这条边界的实物：`games/tictactoe/tictactoe/CMakeLists.txt` 把 `board.cpp` 编成 `tictactoe` 动态库；`games/tictactoe/terminal/CMakeLists.txt` 把五个终端源文件编成 `terminal`，根 `CMakeLists.txt` 依次 `add_subdirectory(tictactoe)` 与 `add_subdirectory(terminal)`。
+两份工程文件是这条边界的实物：`games/tictactoe/tictactoe/CMakeLists.txt` 只管 `board.cpp`，`games/tictactoe/terminal/CMakeLists.txt` 只管 `main.cpp`、`menu.cpp`、`screen.cpp`、`terminal.cpp`、`board_screen.cpp` 五个终端源文件。
 
 ## 迭代记录
 
@@ -87,8 +84,5 @@ tictactoe 的两份 CMake 是这条边界的实物：`games/tictactoe/tictactoe/
 规则与构建：
 
 - C++ Core Guidelines Enum.3（优先 `enum class`）、C.4（只在需要直接访问表示时做成员）。https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines
-- CMake `target_link_libraries`：第一个参数必须已创建；被链接目标可由项目稍后创建并自动补 ordering dependency。https://cmake.org/cmake/help/latest/command/target_link_libraries.html
-- CMake `BUILD_RPATH` 与 `INSTALL_RPATH`。https://cmake.org/cmake/help/latest/prop_tgt/BUILD_RPATH.html、https://cmake.org/cmake/help/latest/prop_tgt/INSTALL_RPATH.html
-- Craig Scott, “add_subdirectory() and target_link_libraries() ordering”, CMake Discourse, 2026-03-05：只有第一个参数必须已定义；先定义后引用是推荐写法。https://discourse.cmake.org/t/add-subdirectory-and-target-link-libraries-ordering/15539
 - C++ Core Guidelines SF.11（头文件自包含）与 include-what-you-use 的 “Why include what you use?”。https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rs-contained、https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/WhyIWYU.md
 - ISO C++ [basic.start.main]：程序只能有一个全局 `main`。https://eel.is/c++draft/basic.start.main
