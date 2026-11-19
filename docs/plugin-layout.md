@@ -8,15 +8,15 @@
 
 ```json
 [
-  "lib",
-  "skills",
-  "cordis.patch.yml",
-  "locale",
-  "icon.svg",
-  "README.md",
-  "README.en.md",
-  "LICENSE",
-  "templates"
+    "lib",
+    "skills",
+    "cordis.patch.yml",
+    "locale",
+    "icon.svg",
+    "README.md",
+    "README.en.md",
+    "LICENSE",
+    "templates"
 ]
 ```
 
@@ -38,7 +38,7 @@
 | 双语 README | `README.md` 与 `README.en.md` 都有 |
 | `locale/` | `locale/zh.json` 与 `locale/en.json` |
 | `docs/` 不进包 | 有 `docs/`，只留仓库 |
-| 质量门 | `npm test` 是唯一质量门 |
+| 质量门 | `npm run ci` 覆盖安装、`check:lib`、`npm test` 与打包检查；提交前至少跑 `npm test` |
 | 声明 `dsh.catalog.category` | 声明 `skill`；宿主不消费，只作元数据 |
 
 对照的结论是入口体量与同类技能包在同一数量级（样本只有 4 个，不足以证明一致），双语、locale 与文档覆盖都不低于前排；本轮只补共用入口、references 索引与首行导航，不扩入口。

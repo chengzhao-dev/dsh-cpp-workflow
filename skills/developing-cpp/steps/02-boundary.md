@@ -14,10 +14,9 @@ app           职责：参数、输入输出、装配   依赖：<component>
 - 库接收值、返回值，在无法完成任务时抛异常；终端、GUI、网络脚本与全局单例留在程序层。返回值与异常的取舍见 `references/exceptions/01-exception-rules.md`。
 - 程序链接库，负责读参数、读标准输入、打印结果，并把退出码翻译成进程退出码。
 - 依赖方向从程序指向库；组件之间只经由公共头互相依赖。
-- 公共头放在组件的 `include/` 下，包含时写裸文件名；搜索路径由 target 的 `target_include_directories(... PUBLIC .../include)` 提供，写法见 `engineering` 的 `references/cmake/targets/01-target-rules.md`。
+- 公共头的位置与包含写法以 `references/layout/01-source-layout.md` 为准；本步只决定哪些类型进公共头。
 - 测试放 `tests/`，链接被测库，从公共头进入；文件命名 `<被测>_test.cpp`，一个文件对应一个行为组，测试名描述行为，不复制实现、不依赖执行顺序、不读写固定绝对路径。
-- 只有一个可执行文件、没有复用需求时不分库；出现第二个真实调用方，或测试需要直接调用时再拆。
-- 抽共享抽象前先确认第二个真实使用方和相同语义；抽象理由写进项目技能或设计注释。
+- 是否抽共享库按下一条判据：只有一个可执行文件时不拆，出现第二个真实使用方且两边语义相同才拆，抽之前先复制观察；判据与理由见 `references/design/01-project-design.md` 的「什么时候抽共享库」。
 - 本步只决定边界：`CMakeLists.txt` 与 target 图由 `engineering` 的 `steps/01-targets.md` 写，构建与工具配置由 `building-cpp` 定。
 - 一个查询该成为成员还是同命名空间的函数，按 `references/design/01-project-design.md` 的「谁回答这个问题」判：掌握数据的一方回答。
 

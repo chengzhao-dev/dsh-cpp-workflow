@@ -6,15 +6,15 @@
 ```cpp
 // board.h：棋盘定义了对局结果
 enum class GameResult : std::uint8_t {
-  kInProgress = 0,
-  kXWin = 1,
-  kOWin = 2,
-  kDraw = 3,
+    kInProgress = 0,
+    kXWin = 1,
+    kOWin = 2,
+    kDraw = 3,
 };
 
 class Board {
- public:
-  [[nodiscard]] GameResult GetGameResult() const;
+public:
+    [[nodiscard]] GameResult GetGameResult() const;
 };
 ```
 
@@ -25,22 +25,22 @@ class Board {
 ```cpp
 // board.h：棋盘只检查坐标并写入，没有结果类型
 class Board {
- public:
-  void SetSquare(Position pos, SquareValue value);
+public:
+    void SetSquare(Position pos, SquareValue value);
 };
 
 // game.h：落子结果跟着对局这一个动作走
 enum class PlaceResult : std::uint8_t {
-  kPlaced = 0,
-  kInvalidPlayer = 1,
-  kFinishedGame = 2,
-  kOccupiedSquare = 3,
+    kPlaced = 0,
+    kInvalidPlayer = 1,
+    kFinishedGame = 2,
+    kOccupiedSquare = 3,
 };
 
 class Game {
- public:
-  [[nodiscard]] PlaceResult Place(Move move);
+public:
+    [[nodiscard]] PlaceResult Place(Move move);
 };
 ```
 
-`Board` 只写入，没有结果类型，也不出现 `Game` 的词汇；`PlaceResult` 与 `GameResult` 都留在 `Game` 层。下层一旦要回答「这一手成没成」，那已经是上层的问题，交给 `Game::Place`。反例里的 `Board::GetGameResult` 也按同样的方式处理：终局由 `Game::GetResult` 计算。
+`Board` 只写入，没有结果类型，也不出现 `Game` 的词汇；两个结果类型都留在 `Game` 层（分层判据见 `references/design/01-project-design.md` 的「取值的边界」）。下层一旦要回答「这一手成没成」，那已经是上层的问题。反例里的 `Board::GetGameResult` 也按同样的方式处理：终局由 `Game::GetResult` 计算。

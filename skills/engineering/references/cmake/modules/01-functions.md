@@ -17,15 +17,15 @@
 
 ```text
 project/
-  CMakeLists.txt
-  cmake/
-    CompileSettings.cmake
-    LinkSettings.cmake
-    OutputSettings.cmake
-  component/
     CMakeLists.txt
-  app/
-    CMakeLists.txt
+    cmake/
+        CompileSettings.cmake
+        LinkSettings.cmake
+        OutputSettings.cmake
+    component/
+        CMakeLists.txt
+    app/
+        CMakeLists.txt
 ```
 
 - 一个文件放一组语义相近的函数，不为每个函数建单独文件；文件过大或出现无关职责时再拆。
@@ -87,7 +87,7 @@ endfunction()
 
 ## 契约注释
 
-公开函数上方写官方文档块：文件开头一个 `#[=======================================================================[.rst:` 块，模块名下一行画标题线，命令用 `.. command::`、签名用 `.. code-block:: cmake`，块内散文写中文。同一文件不再画 `#---` 分隔线，函数体内不写行注释，说明都写进文档块，不画 `#===...===#` 方框。完整写法见 `../targets/01-target-rules.md`。
+公开函数上方写官方文档块，形态与排版只按 `../targets/01-target-rules.md` 的「排版」节；签名留在 `function()` 那一行，本文件不复制第二份。同一文件不再画 `#---` 函数分隔线或额外装饰框（RST 文档块的首尾分隔行按 `../targets/01-target-rules.md` 的「排版」节保留），函数体内不写行注释，说明都写进文档块。
 
 ## 测试
 

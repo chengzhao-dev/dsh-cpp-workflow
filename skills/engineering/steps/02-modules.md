@@ -23,8 +23,7 @@
 
 ## 契约
 
-- 公开函数上方写官方文档块：`#[=======================================================================[.rst:` 开头，模块名与 `---` 标题线，命令用 `.. command::`，签名用 `.. code-block:: cmake`，块内散文写中文。
-- 完整写法见 `../references/cmake/targets/01-target-rules.md`；签名留在 `function()` 那一行。
+- 公开函数上方写官方文档块，签名留在 `function()` 那一行；文档块形态与排版只按 `../references/cmake/targets/01-target-rules.md` 的「排版」节写，本步不复制第二份。
 - 签名、警告等级与错误消息以 `../references/cmake/assets/` 和 `../references/cmake/modules/01-functions.md` 为准；本步不复制第二份。
 - 普通函数只改传入 target 的属性，不写全局变量、不读环境变量、不下载依赖；唯一例外是 `fetch_googletest`，只在测试需要时调用。
 - 先校验 target、可见性与标准，再调用 `target_*` 或 `set_target_properties`；失败用 `FATAL_ERROR`，消息带函数名与非法值。

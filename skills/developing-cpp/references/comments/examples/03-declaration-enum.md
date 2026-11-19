@@ -5,8 +5,8 @@
 
 ```cpp
 enum class SquareValue : std::uint8_t {
-  kX,  // X
-  kO   // O
+    kX,  // X
+    kO   // O
 };
 ```
 
@@ -15,10 +15,10 @@ enum class SquareValue : std::uint8_t {
 ```cpp
 /// 对局结果。
 enum class GameResult : std::uint8_t {
-  kInProgress = 0,  ///< 对局进行中，还有空格可以落子
-  kXWin       = 1,  ///< 棋盘上 X 已连成一线，X 赢下这一局
-  kOWin       = 2,  ///< 棋盘上 O 已连成一线，O 赢下这一局
-  kDraw       = 3,  ///< 棋盘已满且无人连成一线，这一局平局
+    kInProgress = 0,  ///< 对局进行中，还有空格可以落子
+    kXWin       = 1,  ///< 棋盘上 X 已连成一线，X 赢下这一局
+    kOWin       = 2,  ///< 棋盘上 O 已连成一线，O 赢下这一局
+    kDraw       = 3,  ///< 棋盘已满且无人连成一线，这一局平局
 };
 ```
 
@@ -27,9 +27,9 @@ enum class GameResult : std::uint8_t {
 ```cpp
 /// 方格的值：棋盘上每个方格要么空着，要么写着 X 或 O。
 enum class SquareValue : std::uint8_t {
-  kEmpty = 0,  ///< 空
-  kX = 1,      ///< X
-  kO = 2,      ///< O
+    kEmpty = 0,  ///< 空
+    kX = 1,      ///< X
+    kO = 2,      ///< O
 };
 ```
 
@@ -38,10 +38,10 @@ enum class SquareValue : std::uint8_t {
 ```cpp
 /// 一次落子的结果。
 enum class PlaceResult : std::uint8_t {
-  kPlaced = 0,          ///< 成功：落子玩家是当前玩家，值已写入方格
-  kInvalidPlayer = 1,   ///< 失败：落子玩家不是当前玩家，没有写入
-  kFinishedGame = 2,    ///< 失败：对局已经结束，没有写入
-  kOccupiedSquare = 3,  ///< 失败：目标方格已有值，没有写入
+    kPlaced = 0,          ///< 成功：落子玩家是当前玩家，值已写入方格
+    kInvalidPlayer = 1,   ///< 失败：落子玩家不是当前玩家，没有写入
+    kFinishedGame = 2,    ///< 失败：对局已经结束，没有写入
+    kOccupiedSquare = 3,  ///< 失败：目标方格已有值，没有写入
 };
 ```
 

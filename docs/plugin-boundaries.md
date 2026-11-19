@@ -29,4 +29,4 @@
 
 ## get 与 abort
 
-`list()` 返回空列表时，没有 candidate，`get()` 也不会被调用。只有调用方传 `cwd` 时才重查门禁；不传时继续服务已经加载的 candidate。插件本身不抛错：调用方传 `AbortSignal` 时，已中止的 `list()` 返回 `{ candidates: [], complete: false }`，`get()` 返回 `undefined`；宿主在调用前后检查 abort 并抛出 `AbortError`，所以用户侧看到的仍是中止。
+`list()` 返回空列表时，没有 candidate，`get()` 也不会被调用。只有调用方传 `cwd` 时才重查门禁；不传时继续服务已经加载的 candidate。插件本身不抛错：调用方传 `AbortSignal` 时，循环开始前中止或门禁早退的 `list()` 返回 `{ candidates: [], complete: false }`，循环中中止返回已发现的候选并置 `complete: false`；`get()` 返回 `undefined`；宿主在调用前后检查 abort 并抛出 `AbortError`，所以用户侧看到的仍是中止。

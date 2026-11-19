@@ -5,7 +5,7 @@
 
 ```cpp
 ~Writer() {
-  if (file_) file_->Flush();  // 失败时抛？析构中抛会终止程序
+    if (file_) file_->Flush();  // 失败时抛？析构中抛会终止程序
 }
 ```
 
@@ -13,9 +13,9 @@
 
 ```cpp
 ~Writer() {
-  if (file_) {
-    file_->Flush();  // 忽略失败：析构不抛，错误由 Close() 报告
-  }
+    if (file_) {
+        file_->Flush();  // 忽略失败：析构不抛，错误由 Close() 报告
+    }
 }
 ```
 

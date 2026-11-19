@@ -5,9 +5,9 @@
 
 ```cpp
 try {
-  Load(path);
+    Load(path);
 } catch (...) {
-  return;
+    return;
 }
 ```
 
@@ -15,8 +15,8 @@ try {
 
 ```cpp
 try {
-  Load(path);
+    Load(path);
 } catch (const FileReadError& error) {
-  return LoadResult::kNotFound;
+    return LoadResult::kNotFound;
 }
 ```

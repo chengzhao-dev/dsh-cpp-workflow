@@ -8,9 +8,9 @@
 ```yaml
 # .clangd
 CompileFlags:
-  CompilationDatabase: build/clang
-  Add:
-    - --query-driver=/usr/bin/clang++
+    CompilationDatabase: build/clang
+    Add:
+        - --query-driver=/usr/bin/clang++
 ```
 
 `--query-driver` 是 clangd 的命令行参数，不是 `.clangd` 的 YAML 键；写在这里不会生效。
@@ -20,17 +20,17 @@ CompileFlags:
 ```yaml
 # .clangd
 CompileFlags:
-  CompilationDatabase: build/clang
+    CompilationDatabase: build/clang
 ```
 
 ```jsonc
 // .vscode/settings.json
 {
-  "clangd.arguments": [
-    "--query-driver=/usr/bin/clang++",
-    "--header-insertion=never",
-    "--background-index"
-  ]
+    "clangd.arguments": [
+        "--query-driver=/usr/bin/clang++",
+        "--header-insertion=never",
+        "--background-index"
+    ]
 }
 ```
 
@@ -41,16 +41,16 @@ CompileFlags:
 ```yaml
 # 工程已经在 CMake 里声明 C++23
 CompileFlags:
-  CompilationDatabase: build/clang
-  Add:
-    - -std=c++20   # 覆盖 compile_commands.json，C++23 补全/诊断全部降级
+    CompilationDatabase: build/clang
+    Add:
+        - -std=c++20   # 覆盖 compile_commands.json，C++23 补全/诊断全部降级
 ```
 
 **好**：
 
 ```yaml
 CompileFlags:
-  CompilationDatabase: build/clang
+    CompilationDatabase: build/clang
 ```
 
 标准只来自 `compile_commands.json`。没有数据库时先回到定构建生成，不要在 `.clangd` 里猜一个 `-std`。
@@ -61,17 +61,17 @@ CompileFlags:
 
 ```yaml
 CompileFlags:
-  CompilationDatabase: build/clang   # 项目已切到 GCC，这里仍读 clang 的数据库
+    CompilationDatabase: build/clang   # 项目已切到 GCC，这里仍读 clang 的数据库
 ```
 
 **好**：
 
 ```yaml
 CompileFlags:
-  CompilationDatabase: build/gcc
+    CompilationDatabase: build/gcc
 ```
 
-`.clangd` 的目录必须与 `environment.json` 的 `compiler` 一致；默认 clang 用 `build/clang`，切换 GCC 时改成 `build/gcc`，不要两套配置并存。
+目录与 `compiler` 的一致性要求见 `../04-clangd.md`；默认 clang 用 `build/clang`，切换 GCC 时改成 `build/gcc`，不要两套配置并存。
 
 ## 版本混装
 
@@ -89,7 +89,7 @@ clang++ 18, clang-format 17, clangd 16
 clang++ 18.1.8, clang-format 18.1.8, clang-tidy 18.1.8, clangd 18.1.8
 ```
 
-同主版本；`--live` 会核对。Apple Clang 与 Homebrew 工具不同版本时，仍按同一 LLVM 主版本要求处理，不要强行降级或改声明绕过。
+同主版本；`--live` 会核对。混装时的处理见 `../03-clang-tidy.md`「版本与一致性」。
 
 ## 把标准差异当成检查项
 

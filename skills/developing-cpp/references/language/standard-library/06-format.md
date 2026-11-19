@@ -1,4 +1,4 @@
-<!-- 读取时机：查语言细节时；读完能回答：`std::format` 与输出；预算：一次只开这一份（86 行），不自动串联。 -->
+<!-- 读取时机：查语言细节时；读完能回答：`std::format` 与输出；预算：一次只开这一份（87 行），不自动串联。 -->
 # `std::format` 与输出
 
 - 组合消息优先 `std::format`；它返回 `std::string`，不直接写流。
@@ -29,29 +29,30 @@
 - 空格式说明符有两种合法形态：`ctx.begin() == ctx.end()`，或 `*ctx.begin() == '}'`；两者都表示没有额外说明符。
 - `format` 的 `const` 与模板参数都是契约的一部分：`std::format` 与 `std::format_to` 传入不同的 `FormatContext`；写死 `std::format_context` 只能配合返回 `std::string` 的 `std::format`。
 - 输出只依赖值、`ctx.locale()`、`ctx.arg(n)` 和上次 `parse` 保存的说明符；不要在 `format` 里读全局状态或修改 formatter。
+- 标准不要求继承任何 formatter。只有输出本质是字符串、并且确实要支持 `{:>10}`、`{:.3}` 这类字符串语法时，才继承或组合 `std::formatter<std::string_view>`；枚举、坐标与记录不继承，自己拼文本。
 - `parse` 直接返回 `ctx.begin()` 只适用于「只接受默认格式」；要拒绝并给出消息时，先检查首字符是不是 `}`。
 - `format_to(ctx.out(), ...)` 直接写入调用方的输出迭代器，避免为每个字段构造临时 `std::string`；需要在函数边界得到完整字符串时才用 `std::format`。
 
 ```cpp
 template <>
 struct std::formatter<game::Player> {
-  constexpr auto parse(std::format_parse_context& ctx) {
-    if (ctx.begin() != ctx.end() && *ctx.begin() != '}') {
-      throw std::format_error("Player: format specifier is not supported, use {} instead");
+    constexpr auto parse(std::format_parse_context& ctx) {
+        if (ctx.begin() != ctx.end() && *ctx.begin() != '}') {
+            throw std::format_error("Player: format specifier is not supported, use {} instead");
+        }
+        return ctx.begin();
     }
-    return ctx.begin();
-  }
 
-  template <typename FormatContext>
-  auto format(game::Player player, FormatContext& ctx) const {
-    switch (player) {
-      case game::Player::kX:
-        return std::format_to(ctx.out(), "X");
-      case game::Player::kO:
-        return std::format_to(ctx.out(), "O");
+    template <typename FormatContext>
+    auto format(game::Player player, FormatContext& ctx) const {
+        switch (player) {
+            case game::Player::kX:
+                return std::format_to(ctx.out(), "X");
+            case game::Player::kO:
+                return std::format_to(ctx.out(), "O");
+        }
+        return std::format_to(ctx.out(), "Player({})", static_cast<int>(player));
     }
-    return std::format_to(ctx.out(), "Player({})", static_cast<int>(player));
-  }
 };
 ```
 
@@ -83,5 +84,5 @@ return std::format_to(ctx.out(), "Player({:d})", std::to_underlying(player));
 
 // C++20
 return std::format_to(ctx.out(), "Player({:d})",
-                      static_cast<std::underlying_type_t<game::Player>>(player));
+                                            static_cast<std::underlying_type_t<game::Player>>(player));
 ```

@@ -14,10 +14,10 @@
 
 ```json
 {
-  "host": "windows",
-  "build_host": "wsl",
-  "compiler": "clang",
-  "standard": "c++23"
+    "host": "windows",
+    "build_host": "wsl",
+    "compiler": "clang",
+    "standard": "c++23"
 }
 ```
 

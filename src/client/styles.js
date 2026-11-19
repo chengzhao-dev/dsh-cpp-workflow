@@ -64,10 +64,10 @@ const CSS = `
 `
 
 function ensureStyles() {
-  if (typeof document === 'undefined' || !document.createElement) return
-  if (document.querySelector && document.querySelector(`style[data-plugin-css="${STYLE_ID}"]`)) return
-  const style = document.createElement('style')
-  style.dataset.pluginCss = STYLE_ID
-  style.textContent = CSS
-  if (document.head && document.head.appendChild) document.head.appendChild(style)
+    if (typeof document === 'undefined' || !document.createElement) return
+    if (document.querySelector && document.querySelector(`style[data-plugin-css="${STYLE_ID}"]`)) return
+    const style = document.createElement('style')
+    style.dataset.pluginCss = STYLE_ID
+    style.textContent = CSS
+    if (document.head && document.head.appendChild) document.head.appendChild(style)
 }

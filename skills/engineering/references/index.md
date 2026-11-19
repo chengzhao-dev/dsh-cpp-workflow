@@ -8,14 +8,15 @@
 | 文件 | 读完能回答 | 预算 |
 | --- | --- | --- |
 | `cmake/linking/01-libraries.md` | 链接与库边界 | 一次只开这一份（62 行），不自动串联。 |
-| `cmake/linking/02-rpath.md` | 输出目录与 RPATH | 一次只开这一份（25 行），不自动串联。 |
+| `cmake/linking/02-rpath.md` | 输出目录与 RPATH | 一次只开这一份（24 行），不自动串联。 |
 | `cmake/linking/03-undefined-reference.md` | undefined reference 分诊 | 一次只开这一份（20 行），不自动串联。 |
 | `cmake/linking/04-inspect.md` | 验收：file 与 ldd | 一次只开这一份（20 行），不自动串联。 |
 | `cmake/modules/01-functions.md` | CMake 模块与函数 | 一次只开这一份（119 行），不自动串联。 |
 | `cmake/standards/01-cxx-standard.md` | C++ 标准与 CMake | 一次只开这一份（68 行），不自动串联。 |
 | `cmake/standards/versions.md` | C++11–C++23 各档差异 | 一次只开这一份（43 行），不自动串联。 |
+| `cmake/standards/index.md` | 标准选择表、工具共用矩阵与验证矩阵 | 一次只开这一份（144 行），不自动串联。 |
 | `cmake/standards/examples/01-standard.md` | 正反例：标准只写一半 | 一次只开这一份（19 行），不自动串联。 |
-| `cmake/targets/01-target-rules.md` | target、标准与产物目录 | 一次只开这一份（236 行），不自动串联。 |
+| `cmake/targets/01-target-rules.md` | target、标准与产物目录 | 一次只开这一份（237 行），不自动串联。 |
 | `cmake/targets/examples/01-rpath.md` | 正反例：共享库运行时路径 | 一次只开这一份（24 行），不自动串联。 |
 | `cmake/testing/01-ctest.md` | 测试与 CTest | 一次只开这一份（61 行），不自动串联。 |
 
@@ -26,8 +27,8 @@
 | `formatting/01-encoding.md` | 编码与行尾 | 一次只开这一份（54 行），不自动串联。 |
 | `formatting/02-clang-format.md` | clang-format | 一次只开这一份（23 行），不自动串联。 |
 | `formatting/03-clang-tidy.md` | clang-tidy 与静态检查门禁 | 一次只开这一份（58 行），不自动串联。 |
-| `formatting/04-clangd.md` | clangd 与编辑器 | 一次只开这一份（91 行），不自动串联。 |
+| `formatting/04-clangd.md` | clangd 与编辑器 | 一次只开这一份（84 行），不自动串联。 |
+| `formatting/05-config-comments.md` | 配置文件注释的句式与抬头 | 一次只开这一份（87 行），不自动串联。 |
 | `formatting/examples/01-clang-format.md` | 正反例：clang-format | 一次只开这一份（47 行），不自动串联。 |
 | `formatting/examples/02-clang-tidy.md` | 正反例：clang-tidy | 一次只开这一份（43 行），不自动串联。 |
 | `formatting/examples/03-clangd.md` | 正反例：clangd | 一次只开这一份（109 行），不自动串联。 |
-| `formatting/examples/04-config-comments.md` | 正反例：配置文件注释 | 一次只开这一份（69 行），不自动串联。 |

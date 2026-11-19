@@ -15,8 +15,8 @@ Task ParseTask(std::string_view line);  // 任何格式错误都抛
 enum class ParseStatus { kOk, kEmptyLine, kMissingPriority, kBadPriority };
 
 struct ParseResult {
-  std::optional<Task> task;
-  ParseStatus status = ParseStatus::kEmptyLine;
+    std::optional<Task> task;
+    ParseStatus status = ParseStatus::kEmptyLine;
 };
 
 [[nodiscard]] ParseResult TryParseTask(std::string_view line);

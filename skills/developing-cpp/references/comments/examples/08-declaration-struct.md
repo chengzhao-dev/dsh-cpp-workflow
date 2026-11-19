@@ -6,13 +6,13 @@
 ```cpp
 /// 棋盘。
 class Board {
- public:
-  /// 默认构造函数：初始化为空棋盘。
-  Board() = default;
+public:
+    /// 默认构造函数：初始化为空棋盘。
+    Board() = default;
 
- private:
-  /// 方格数组：按行优先排列。
-  std::array<Square, kSquareCount> squares_{};
+private:
+    /// 方格数组：按行优先排列。
+    std::array<Square, kSquares> squares_{};
 };
 ```
 

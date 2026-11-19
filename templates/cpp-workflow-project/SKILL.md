@@ -66,7 +66,7 @@ metadata:
 
 ## 编辑器补全
 
-- clangd 提供补全、跳转和诊断；`.clangd` 指向 `build/<compiler>` 的编译数据库，不写 `-std`。
+- clangd 提供补全、跳转和诊断；`.clangd` 指向项目技能声明的构建目录：单一目录写该目录，多编译器写 `build/<compiler>`；不写 `-std`。
 - `--query-driver` 放在 `.vscode/settings.json` 的 `clangd.arguments`，不要写成 `.clangd` 的 YAML 键。
 - 编辑器内的配置、构建与调试从 CMake Tools 进入，命令行与 CI 一律走入口命令；两者共用同一构建目录；C/C++ 扩展只做 `CMake: Debug` 的后端，IntelliSense 关闭。
 

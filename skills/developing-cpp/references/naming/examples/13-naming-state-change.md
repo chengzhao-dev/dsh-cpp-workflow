@@ -5,15 +5,15 @@
 
 ```cpp
 enum class PlaceResult : std::uint8_t {
-  kPlaced = 0,
-  kInvalidValue = 1,
-  kOccupiedSquare = 2,
+    kPlaced = 0,
+    kInvalidValue = 1,
+    kOccupiedSquare = 2,
 };
 
 class Square {
- public:
-  [[nodiscard]] PlaceResult Place(SquareValue value);
-  void Clear();
+public:
+    [[nodiscard]] PlaceResult Place(SquareValue value);
+    void Clear();
 };
 ```
 
@@ -23,35 +23,35 @@ class Square {
 
 ```cpp
 class Square {
- public:
-  [[nodiscard]] bool IsEmpty() const;
-  [[nodiscard]] SquareValue GetValue() const;
-  void SetValue(SquareValue value);
+public:
+    [[nodiscard]] bool IsEmpty() const;
+    [[nodiscard]] SquareValue GetValue() const;
+    void SetValue(SquareValue value);
 };
 
 class Board {
- public:
-  [[nodiscard]] Square GetSquare(Position pos) const;
-  void SetSquare(Position pos, SquareValue value);
-  void ClearSquare(Position pos);
-  void Clear();
+public:
+    [[nodiscard]] Square GetSquare(Position pos) const;
+    void SetSquare(Position pos, SquareValue value);
+    void ClearSquare(Position pos);
+    void Clear();
 };
 
 // game.h：一次落子的结果留在对局层
 enum class PlaceResult : std::uint8_t {
-  kPlaced = 0,
-  kInvalidPlayer = 1,
-  kFinishedGame = 2,
-  kOccupiedSquare = 3,
+    kPlaced = 0,
+    kInvalidPlayer = 1,
+    kFinishedGame = 2,
+    kOccupiedSquare = 3,
 };
 
 class Game {
- public:
-  [[nodiscard]] PlaceResult Place(Move move);
+public:
+    [[nodiscard]] PlaceResult Place(Move move);
 };
 ```
 
-`SetValue` 只改方格的值；`Board::SetSquare` 检查坐标后原样写入，落子成没成由 `Game::Place` 回答。`PlaceResult` 与 `Game::Place` 都留在对局层。`ClearSquare` 清一格，`Clear` 清整盘；单格不再有 `Clear`。
+`SetValue` 只改方格的值；`Board::SetSquare` 检查坐标后原样写入，落子成没成由 `Game::Place` 回答。`ClearSquare` 清一格，`Clear` 清整盘；单格不再有 `Clear`。
 
 改名按这个顺序做，每一步都能编译：
 

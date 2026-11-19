@@ -19,7 +19,7 @@
 npm 安装固定版本：
 
 ```bash
-dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.9
+dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.10
 ```
 
 本页版本号随发布更新；安装前可用 `npm view @chengzhao-dev/dsh-cpp-workflow version` 确认 registry 上的最新版本。
@@ -27,7 +27,7 @@ dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.9
 GitHub 标签安装使用同一版本号的标签，地址中的版本与标签同号：
 
 ```bash
-dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.9
+dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.10
 ```
 
 `--profile` 换成你实际运行的那个 profile。桌面应用固定跑 `desktop` profile，且该 profile 由应用独占管理；命令行 `add` 被拒绝时，在应用设置里添加插件，地址填同一个 npm 版本。Git 标签安装使用仓库内已构建的 `lib/`，不在目标机器上重新构建；包内也不含需要授权执行的安装脚本。
@@ -93,10 +93,11 @@ node "<skill-dir>/scripts/checking-environment.mjs" --project . --live
 
 ```bash
 npm ci
+npm run check:lib     # 比对提交的 lib/ 与 src/，必须在任何构建之前跑
 npm test              # 提交前主门：构建、结构/编码/工作流检查与单元测试
 npm run test:matrix   # 四套模板 × 五档标准的真实构建矩阵
 npm run pack:check    # 核对 npm 包内容
-npm run ci            # 本地复现：安装、测试、打包检查（不含标准矩阵；Ubuntu CI 另跑 test:matrix）
+npm run ci            # 本地复现：安装、比对 lib/、测试、打包检查（不含标准矩阵；Ubuntu CI 另跑 test:matrix）
 npm run ci:full       # 在 ci 之上再跑标准矩阵，需 POSIX 宿主
 ```
 

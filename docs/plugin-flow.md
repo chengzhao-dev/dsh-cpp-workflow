@@ -29,7 +29,7 @@
 | `skills/` 读不出来（权限、目录被删） | `{ candidates: [], complete: false }`；不缓存，下一轮重试 | — |
 | 某份 `SKILL.md` 读不出来 | 其余候选照常返回，`{ candidates, complete: false }`；不缓存 | 该名字给 `undefined` |
 | 某份 `SKILL.md` 的 frontmatter 不合规（`name` 与目录不同、`description` 为空、名字不在白名单、块标量不支持） | 该技能静默跳过，其余照常返回，complete 仍为 true | 该名字给 `undefined` |
-| 调用方 abort | 返回已发现候选与 `complete: false`；宿主在调用前后检查 abort 并抛出 `AbortError` | `undefined` |
+| 调用方 abort | 循环开始前中止或门禁早退：空数组；循环中中止：已发现的候选；两种情况都带 `complete: false`；宿主在调用前后检查 abort 并抛出 `AbortError` | `undefined` |
 | `locator` 越出 `skills/`，或末段与 `name` 不符 | — | `undefined` |
 
 静默跳过是有意的：一份写坏的文件不该拖垮另外两个技能。代价是没有诊断输出，排错时只能对照本表逐项复核。门禁按 `cwd` 现算，所以同一份候选在另一个工作区里可能立刻变成 `undefined`。
@@ -73,6 +73,6 @@ node "<skill-dir>/scripts/checking-environment.mjs" --project . --live
 
 预览用示例文件名 `<文件名>`，不扫工程、不写文件；底部的保存按钮写入 `cordis.patch.yml`，成功后状态行提示下一次读取技能时生效。
 
-保存走宿主表单，配置留在 profile 的 `cordis.patch.yml`；下次 `get()` 读取时把当前开关附在技能正文末尾，文件头标签开着但没填默认值的单列为「未填值」，这类标签不会写进文件。检查器按同一开关生成 `--comment-style block`、`--no-brief` 与 `--allow-tag` 参数。插件页、快照与检查器读同一份策略，改一处不会出现三种默认值。
+保存走宿主表单，配置留在 profile 的 `cordis.patch.yml`；下次 `get()` 读取时把当前开关附在技能正文末尾，文件头标签开着但没填默认值的单列为「未填值」，这类标签不会写进文件。检查器按同一开关生成 `--comment-style block`、`--no-brief`、`--no-param`、`--no-return` 与 `--allow-tag` 参数。插件页、快照与检查器读同一份策略，改一处不会出现三种默认值。
 
 浏览器半侧是手写 CJS，构建时把 `comment-policy` 内联进去，不引入打包器；它只依赖宿主的 `react`，以及由 `@deepseek-ai/dsh-client-ui-renderer` 提供的 `slots` 与 `@deepseek-ai/dsh-client-ui-settings` 提供的 `configForms` 两个服务，没有各自的版本副本。

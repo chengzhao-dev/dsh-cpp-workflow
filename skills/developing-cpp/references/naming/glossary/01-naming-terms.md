@@ -12,8 +12,8 @@
 | `position` / `pos` | 坐标值的参数与局部变量用 `pos`；公开数据成员用 `position`；迭代器式位置对象用 `position` | [02-position.md](02-position.md) |
 | `square` / `SquareValue` | 方格；方格的值；不用 `Mark`、`Cell`、`Token` | [04-square.md](04-square.md) |
 | `selection` | 从多个候选里选一个用 `Choose`，找不到合法候选返回 `optional`；查找已有元素用 `Find`；可能失败的动作与校验用 `Try` | [03-selection.md](03-selection.md) |
-| `score` | 终局评分用 `ScoreFinishedGame`，搜索分是 `int`；不把分数塞进 `GameResult` | [05-scoring.md](05-scoring.md) |
-| `difficulty` | 电脑难度用 `Difficulty` 两档 `kNormal`/`kHard`；与 `MatchMode` 分层 | [06-difficulty.md](06-difficulty.md) |
+| `score` | 终局评分若单独暴露，用 `ScoreFinishedGame`；搜索分是 `int`，不把分数塞进 `GameResult` | [05-scoring.md](05-scoring.md) |
+| `difficulty` | 电脑难度用 `Difficulty`，档位由项目定，示例 `kNormal`/`kHard`；与 `GameMode` 分层 | [06-difficulty.md](06-difficulty.md) |
 | `input` / `output` / `diagnostics` | 流的参数与成员写完整词，不用 `in` / `out` / `err` | [07-stream.md](07-stream.md) |
 
 ## 加词流程

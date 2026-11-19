@@ -24,4 +24,4 @@ task_list/src/detail.h           // 私有头，只被本组件包含
 #include "task_list.h"            // 公共头按裸文件名包含
 ```
 
-构建时把组件的 `include/` 目录加入 include 搜索路径，模板写法是 `target_include_directories(greeting PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)`；不要用 `#include "../task_list/include/task_list.h"` 这种随文件位置漂移的写法。
+搜索路径的 CMake 写法见 `engineering` 的 `references/cmake/targets/01-target-rules.md`；这里只示意目录与包含路径的关系。

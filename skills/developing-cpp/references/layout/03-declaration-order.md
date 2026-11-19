@@ -1,4 +1,4 @@
-<!-- 读取时机：排声明顺序时；读完能回答：声明顺序与定义签名；预算：一次只开这一份（157 行），不自动串联。 -->
+<!-- 读取时机：排声明顺序时；读完能回答：声明顺序与定义签名；预算：一次只开这一份（171 行），不自动串联。 -->
 # 声明顺序
 
 顺序的作用是让读者先看类型和契约，再看数据。`clang-format` 不管顺序，靠人工和 review 维持。
@@ -7,31 +7,31 @@
 
 ```cpp
 class TaskTable {
- public:
-  // 1. 类型与别名
-  using Tasks = std::array<TaskState, 16>;
+public:
+    // 1. 类型与别名
+    using Tasks = std::array<TaskState, 16>;
 
-  // 2. 静态常量
-  static constexpr int kTaskCount = 16;
+    // 2. 静态常量
+    static constexpr int kTaskCount = 16;
 
-  // 3. 工厂
-  static TaskTable CreateEmpty();
+    // 3. 工厂
+    static TaskTable CreateEmpty();
 
-  // 4. 构造、赋值、析构
-  TaskTable();
-  TaskTable(const TaskTable&) = default;
-  TaskTable& operator=(const TaskTable&) = default;
-  ~TaskTable();
+    // 4. 构造、赋值、析构
+    TaskTable();
+    TaskTable(const TaskTable&) = default;
+    TaskTable& operator=(const TaskTable&) = default;
+    ~TaskTable();
 
-  // 5. 其他成员函数
-  [[nodiscard]] TaskState GetTaskState(int id) const;
-  void SetTaskState(int id, TaskState state);
-  [[nodiscard]] bool HasTask(int id) const;
+    // 5. 其他成员函数
+    [[nodiscard]] TaskState GetTaskState(int id) const;
+    void SetTaskState(int id, TaskState state);
+    [[nodiscard]] bool HasTask(int id) const;
 
-  // 6. 数据成员
- private:
-  Tasks tasks_{};
-  bool is_open_{false};
+    // 6. 数据成员
+private:
+    Tasks tasks_{};
+    bool is_open_{false};
 };
 ```
 
@@ -59,11 +59,11 @@ Google、LLVM、OpenCV 都没有规定这一组内部的次序；本工作流补
 - `Count` / `Size` 是集合摘要查询，放在该概念组的直接 `Get` 之前；它不属于 `Is` / `Has` / `Can` 谓词组，也不属于 `Set` / 修改器组。
 - 不属于 `Is` / `Get` / `Set` 的流程函数按调用层次排：入口操作在前，它调用的显示 helper 紧随其后；`DisplayOptions`、`Note` 等共享 helper 放在调用它们的流程之后；终端进入、退出与清屏可集中在组首，按进入、退出、清屏排。
 - `CheckInRange` 是诊断函数，紧挨 `IsInRange` 写，不参与 `Get`/`Set` 的分组；它是诊断函数的相邻例外，见 `references/exceptions/01-exception-rules.md`。
-- 没有 `Set` 配对时，谓词放在读取接口之后、修改接口之前。例：`CountOptions`、`GetOptions`、`GetSelectedIndex` 之后是 `IsSelected`，再是 `Select` / `MovePrevious` / `MoveNext` / `Reset`。
+- 没有 `Set` 配对时，谓词放在读取接口之后、修改接口之前。例：`CountOptions`、`GetOptions`、`GetCursorIndex` 之后是 `HasCursor`，再是 `MoveTo` / `MovePrevious` / `MoveNext` / `Reset`。
 - 多个直接返回成员的 `Get` 按对应数据成员的声明顺序排列，不按调用频率或字母序：成员依次是 `current_player_`、`board_`、`history_`，getter 就依次是 `GetCurrentPlayer()`、`GetBoard()`、`GetHistory()`；成员顺序调整时 getter 一起改，一个类里只留一套顺序。例外：`Count` / `Size` 是集合摘要，优先于该集合的直接 `Get`；其他没有独立成员的派生查询排在直接 `Get` 之后，按「先局部元素、后整体状态」阅读，不插进直接 `Get` 之间。例：`Game` 的 `GetResult()` 扫描棋盘后才得到结果，排在直接返回成员的 `GetCurrentPlayer()`、`GetBoard()`、`GetHistory()` 之后。
 - 成对的局部/整体操作沿用同一方向：先 `ClearSquare(pos)` 清一格，再 `Clear()` 清整盘；局部操作在前，整体操作在后，不按调用频率互换。
 - `constexpr` / `consteval` 函数不单独提前：它们属于「其他函数」组，按上面的语义次序排。`constexpr` 与 `consteval` 隐含 `inline`，这才使头文件就地定义可行；它们不决定声明位置；就地定义的短函数也留在该组，不因为写在头文件里就挪到类的最前。
-- 比较运算符的签名与 `[[nodiscard]]` 规则见 `references/language/value-types/`，这里不另写一套。
+- 比较运算符的签名与 `[[nodiscard]]` 规则见 `references/language/value-types/08-comparison.md`，这里不另写一套。
 - 同一类型上的谓词留在类内，不因为实现只转调公开函数就拆成类外自由函数。
 - `friend` 类型仍跟其他类型放在一起，和 `friend` 函数不是同一组。
 
@@ -82,21 +82,21 @@ namespace taskflow {
 
 inline constexpr int kTaskCount = 16;
 
-enum class TaskState : std::uint8_t { kPending = 0, kActive = 1, kDone = 2 };
+enum class TaskState : std::uint8_t { kPending, kActive, kDone };
 
 struct TaskRecord {
-  int id{0};
-  TaskState state{TaskState::kPending};
+    int id{0};
+    TaskState state{TaskState::kPending};
 };
 
 [[nodiscard]] bool HasTask(int id);
 [[nodiscard]] std::string TaskStateToString(TaskState state);
 
 class TaskTable {
- public:
-  // 类内仍按上面的六组顺序
- private:
-  std::array<TaskState, kTaskCount> tasks_{};
+public:
+    // 类内仍按上面的六组顺序
+private:
+    std::array<TaskState, kTaskCount> tasks_{};
 };
 
 }  // namespace taskflow
@@ -118,6 +118,20 @@ class TaskTable {
 - 改签名、返回类型或限定符是破坏性变更：同一轮改声明、定义、初始化列表和所有调用点，不先让编译失败再追着修。
 - 类内没有声明的成员定义报 `definition-undeclared`；参数类型、限定符或返回类型不一致报 `definition-signature`。模板与无法解析的声明按保守规则跳过；`auto` 返回类型不比较具体类型。
 - 检查器检查配对头文件里的类：类成员的声明顺序与 `.cpp` 定义签名；自由函数、匿名命名空间与没有配对头文件的 `.cpp` 不在覆盖内，它们靠人工核对。
+
+### 检查器覆盖
+
+`checking-declaration-order.mjs` 对配对头文件里的类报告这些 rule：
+
+| rule | 报什么 |
+| --- | --- |
+| `definition-undeclared` | `.cpp` 里定义了类内没有声明的成员 |
+| `definition-signature` | 定义的参数类型、`const`/`volatile`/`noexcept`、引用限定符或返回类型与声明不一致 |
+| `definition-order` | 成员定义顺序与头文件声明顺序不同 |
+| `header-order` | 谓词排在读取接口之前、Get/Set 之间或修改接口之后 |
+| `header-ambiguous` | 同名头文件不唯一，无法配对 |
+
+其余顺序规则——六个分组的先后、空行、访问说明符位置、`= default` 的位置——没有 rule，靠人工核对。
 
 ## 空行
 

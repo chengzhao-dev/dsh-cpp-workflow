@@ -8,13 +8,13 @@
 ```cpp
 // 遍历所有空格
 for (const auto& pos : empty_squares) {
-  // 尝试落子
-  const bool wins = game.PreviewWin(pos, state) == WinPreviewResult::kWouldWin;
-  // 如果能赢
-  if (wins) {
-    // 返回这次落子的位置
-    return pos;
-  }
+    // 尝试落子
+    const bool wins = game.PreviewWin(pos, state) == WinPreviewResult::kWouldWin;
+    // 如果能赢
+    if (wins) {
+        // 返回这次落子的位置
+        return pos;
+    }
 }
 ```
 
@@ -24,25 +24,25 @@ for (const auto& pos : empty_squares) {
 
 ```cpp
 PlaceResult Game::Place(Move move) {
-  // 先判终局，再判玩家与方格：失败结果的优先级由此决定。
-  if (!IsInProgress()) {
-    return PlaceResult::kFinishedGame;
-  }
+    // 先判终局，再判玩家与方格：失败结果的优先级由此决定。
+    if (!IsInProgress()) {
+        return PlaceResult::kFinishedGame;
+    }
 
-  if (current_player_ != move.player) {
-    return PlaceResult::kInvalidPlayer;
-  }
+    if (current_player_ != move.player) {
+        return PlaceResult::kInvalidPlayer;
+    }
 
-  const SquareValue target_square_value = PlayerToSquareValue(move.player);
-  const Square target_square = board_.GetSquare(move.position);
-  if (!target_square.IsEmpty()) {
-    return PlaceResult::kOccupiedSquare;
-  }
+    const SquareValue target_value = board_.GetSquare(move.position).GetValue();
+    if (target_value != SquareValue::kEmpty) {
+        return PlaceResult::kOccupiedSquare;
+    }
 
-  current_player_ = PlayerToOpponent(current_player_);
-  board_.SetSquare(move.position, target_square_value);
-  history_.push_back(move);
-  return PlaceResult::kPlaced;
+    // 写入棋盘并记录这一步，然后轮到对方。
+    board_.SetSquare(move.position, target_value);
+    history_.push_back(move);
+    current_player_ = PlayerToOpponent(current_player_);
+    return PlaceResult::kPlaced;
 }
 ```
 
@@ -53,11 +53,11 @@ PlaceResult Game::Place(Move move) {
 ```cpp
 std::array<SquareValue, 3> values{};
 for (std::size_t i = 0; i < line.size(); ++i) {
-  values[i] = board_.GetSquare(line[i]).GetValue();
+    values[i] = board_.GetSquare(line[i]).GetValue();
 }
 // 先确认第一个方格有值，再核对三个方格的取值是否相同。
 if (values[0] != SquareValue::kEmpty && values[0] == values[1] && values[1] == values[2]) {
-  return values[0] == SquareValue::kX ? GameResult::kXWin : GameResult::kOWin;
+    return values[0] == SquareValue::kX ? GameResult::kXWin : GameResult::kOWin;
 }
 ```
 
@@ -66,10 +66,10 @@ if (values[0] != SquareValue::kEmpty && values[0] == values[1] && values[1] == v
 **好（成功路径）**：
 
 ```cpp
-// 写盘并记录这一步，然后轮到对方。
-current_player_ = PlayerToOpponent(current_player_);
+// 写入棋盘并记录这一步，然后轮到对方。
 board_.SetSquare(move.position, target_square_value);
 history_.push_back(move);
+current_player_ = PlayerToOpponent(current_player_);
 return PlaceResult::kPlaced;
 ```
 
@@ -79,16 +79,16 @@ return PlaceResult::kPlaced;
 
 ```cpp
 void Console::EnterAlternateScreen() {
-  output_ << "\033[?1049h";  // 进入备用屏幕。
-  output_ << "\033[?25l";    // 隐藏光标。
-  output_.flush();
+    output_ << "\033[?1049h";  // 进入备用屏幕。
+    output_ << "\033[?25l";    // 隐藏光标。
+    output_.flush();
 }
 
 void Console::ExitAlternateScreen() {
-  // 先恢复光标再退出，避免退出后短暂看不到光标。
-  output_ << "\033[?25h";    // 恢复光标。
-  output_ << "\033[?1049l";  // 退出备用屏幕。
-  output_.flush();
+    // 先恢复光标再退出，避免退出后短暂看不到光标。
+    output_ << "\033[?25h";    // 恢复光标。
+    output_ << "\033[?1049l";  // 退出备用屏幕。
+    output_.flush();
 }
 ```
 
@@ -106,8 +106,8 @@ void Console::ExitAlternateScreen() {
 /// @param input 输入流。
 /// @return 读到的行；输入结束为空。
 std::optional<std::string> GetLine(std::istream& input) {
-  std::string line;
-  return std::getline(input, line) ? std::optional{line} : std::nullopt;
+    std::string line;
+    return std::getline(input, line) ? std::optional{line} : std::nullopt;
 }
 ```
 

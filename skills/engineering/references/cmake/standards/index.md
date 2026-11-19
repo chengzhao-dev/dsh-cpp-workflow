@@ -1,4 +1,4 @@
-<!-- 读取时机：配 CMake 或工具链时；读完能回答：语言标准档案；预算：一次只开这一份（165 行），不自动串联。 -->
+<!-- 读取时机：配 CMake 或工具链时；读完能回答：语言标准档案；预算：一次只开这一份（144 行），不自动串联。 -->
 # 语言标准档案
 
 本工作流默认 **C++23**，但一个工程只选一个 `standard`，不为同一份源码承诺“同时兼容 C++11–C++23”。标准是项目级事实，写在项目的 `environment.json`（本书在 `.agents/skills/cpp-workflow-project/environment.json`；目录名也接受 `cpp_workflow_project`）。
@@ -63,16 +63,16 @@ Clang/GCC 的 “Partial” 状态意味着 C++23 不是全量实现。用到具
 ```cmake
 target_compile_features(app PRIVATE cxx_std_23)
 set_target_properties(app PROPERTIES
-  CXX_STANDARD 23
-  CXX_STANDARD_REQUIRED ON
-  CXX_EXTENSIONS OFF
+    CXX_STANDARD 23
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
 )
 ```
 
 - `cxx_std_23` 是“至少”，会向依赖它的 target 传播。
 - `CXX_STANDARD` 是请求值；`CXX_STANDARD_REQUIRED ON` 防止编译器不支持时静默降级。
 - `CXX_EXTENSIONS OFF` 把 `-std=gnu++23` 收成 `-std=c++23`。
-- configure 后读 `compile_commands.json` 中每个 target 的 `-std=`；每个 target 只能有一条，必须是 `-std=c++NN`，不能是 `gnu++NN`，不同值即失败。矩阵脚本按整份数据库断言期望值存在且没有 `gnu++NN`，逐 target 的唯一性靠这一条人工核对。
+- configure 后读 `compile_commands.json` 中每条 `-std=`；同一 target 的各条取值必须相同，且都是 `-std=c++NN`，不能是 `gnu++NN`，不同值即失败。矩阵脚本按整份数据库断言期望值存在且没有 `gnu++NN`，同一 target 内的一致性靠这一条人工核对。
 - CMake 最低 3.20（模板统一要求）；只单独使用低档片段时，C++11/14 的 `cxx_std_*` meta-feature 最低 3.1，C++17 为 3.8，C++20 为 3.12。C++23 的 `CXX_STANDARD 23` 自 3.20 才有。
 
 ### clang-format
@@ -82,35 +82,14 @@ set_target_properties(app PROPERTIES
 | 声明 | 配置 |
 | --- | --- |
 | `c++11`–`c++20` | 对应 `Standard: c++NN` |
-| `c++23` | `Standard: Latest`（由工具取支持的最高标准；工具接受时也可直接写 `c++23`） |
+| `c++23` | `Standard: Latest`（由工具取支持的最高标准；已验证 21/22 不接受 `c++23`，直接写会报 `unknown enumerated scalar`，更高版本确认接受后才可直接写） |
 | `c++26`（未来） | 工具支持时写 `c++26`，否则 `Latest` |
 
 写 `c++23` 前先确认工具接受该值；不确定时用 `Latest`。
 
-### clangd
+### clangd 与 clang-tidy
 
-`.clangd` **不写 `-std`**。clangd 从 `compile_commands.json` 读标准；写死 `-std=c++20` 会把 C++23 工程降级，表现为 `<print>` 不存在、`if consteval` 解析失败。
-
-只保留：
-
-```yaml
-CompileFlags:
-  CompilationDatabase: build/clang
-```
-
-切换编译器时改目录；没有数据库时先回到定构建生成。
-
-### clang-tidy
-
-`.clang-tidy` 不写标准，标准来自编译数据库。检查项保持 Google 基线：
-
-```yaml
-Checks: '-*, google-*, readability-identifier-naming'
-WarningsAsErrors: '*'
-FormatStyle: file
-```
-
-低标准工程不要为了通过检查去打开 `cppcoreguidelines-*` 整包；那会把 C++ Core Guidelines 的现代写法带进 C++11 代码。
+两份配置都不写 `-std`，标准只来自 `compile_commands.json`；`.clangd` 的 `CompilationDatabase` 指向当前构建目录，`.clang-tidy` 保持 Google 基线与 `WarningsAsErrors: '*'`。写法、`--query-driver`、门禁分级与低标准工程的处理分见两份权威：clangd 在 `../../formatting/04-clangd.md`、clang-tidy 在 `../../formatting/03-clang-tidy.md`，本节不复制。
 
 ### 标准库
 

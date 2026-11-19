@@ -11,8 +11,8 @@ bool Parse(std::string_view text, int* out_value);   // 出参 + 返回 bool
 
 ```cpp
 struct ParseResult {
-  bool ok{false};
-  int value{0};
+    bool ok{false};
+    int value{0};
 };
 
 [[nodiscard]] ParseResult TryParse(std::string_view text);

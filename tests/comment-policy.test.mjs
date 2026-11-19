@@ -7,116 +7,116 @@ import test from 'node:test'
 import { fileURLToPath } from 'node:url'
 
 import {
-  DEFAULT_CONFIG,
-  TAG_LABEL,
-  checkerArgs,
-  normalizeConfig,
-  previewText,
-  renderFileHeader,
-  snapshotText,
+    DEFAULT_CONFIG,
+    TAG_LABEL,
+    checkerArgs,
+    normalizeConfig,
+    previewText,
+    renderFileHeader,
+    snapshotText,
 } from '../lib/comment-policy.js'
 import { Config } from '../lib/index.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
 test('默认预览只有 @file 与 @brief', () => {
-  const text = previewText(DEFAULT_CONFIG, 'board.h')
-  assert.match(text, /^\/\/\/ @file board\.h$/m)
-  assert.match(text, /^\/\/\/ @brief\b/m)
-  assert.doesNotMatch(text, /@author|@date|@copyright|@version/)
+    const text = previewText(DEFAULT_CONFIG, 'board.h')
+    assert.match(text, /^\/\/\/ @file board\.h$/m)
+    assert.match(text, /^\/\/\/ @brief\b/m)
+    assert.doesNotMatch(text, /@author|@date|@copyright|@version/)
 })
 
 test('注释符号可切到块注释', () => {
-  const block = previewText({ ...DEFAULT_CONFIG, commentStyle: 'block' }, 'board.h')
-  assert.match(block, /^\/\*\*$/m)
-  assert.match(block, /^ \* @file board\.h$/m)
-  assert.match(block, /^ \*\/$/m)
-  assert.doesNotMatch(block, /^\/\/\//m)
+    const block = previewText({ ...DEFAULT_CONFIG, commentStyle: 'block' }, 'board.h')
+    assert.match(block, /^\/\*\*$/m)
+    assert.match(block, /^ \* @file board\.h$/m)
+    assert.match(block, /^ \*\/$/m)
+    assert.doesNotMatch(block, /^\/\/\//m)
 })
 
 test('隐私标签出厂开启，空值不写出，填了值才出现', () => {
-  assert.equal(DEFAULT_CONFIG.author.enabled, true)
-  const empty = previewText(DEFAULT_CONFIG, 'board.h')
-  assert.doesNotMatch(empty, /@author/)
-  const disabled = previewText(
-    { ...DEFAULT_CONFIG, author: { enabled: false, value: 'chengzhao-dev' } },
-    'board.h',
-  )
-  assert.doesNotMatch(disabled, /@author/)
-  const filled = previewText(
-    { ...DEFAULT_CONFIG, author: { enabled: true, value: 'chengzhao-dev' } },
-    'board.h',
-  )
-  assert.match(filled, /^\/\/\/ @author chengzhao-dev$/m)
+    assert.equal(DEFAULT_CONFIG.author.enabled, true)
+    const empty = previewText(DEFAULT_CONFIG, 'board.h')
+    assert.doesNotMatch(empty, /@author/)
+    const disabled = previewText(
+        { ...DEFAULT_CONFIG, author: { enabled: false, value: 'chengzhao-dev' } },
+        'board.h',
+    )
+    assert.doesNotMatch(disabled, /@author/)
+    const filled = previewText(
+        { ...DEFAULT_CONFIG, author: { enabled: true, value: 'chengzhao-dev' } },
+        'board.h',
+    )
+    assert.match(filled, /^\/\/\/ @author chengzhao-dev$/m)
 })
 
 test('@file 跟随示例文件名', () => {
-  assert.match(previewText(DEFAULT_CONFIG, 'game.h'), /^\/\/\/ @file game\.h$/m)
-  assert.match(renderFileHeader(DEFAULT_CONFIG, 'ai.cpp').join('\n'), /^\/\/\/ @file ai\.cpp$/m)
+    assert.match(previewText(DEFAULT_CONFIG, 'game.h'), /^\/\/\/ @file game\.h$/m)
+    assert.match(renderFileHeader(DEFAULT_CONFIG, 'ai.cpp').join('\n'), /^\/\/\/ @file ai\.cpp$/m)
 })
 
 test('函数契约段跟随开关', () => {
-  const text = previewText(DEFAULT_CONFIG, 'board.h')
-  assert.match(text, /@param /)
-  assert.match(text, /@return /)
-  const minimal = previewText({ ...DEFAULT_CONFIG, param: false, returns: false }, 'board.h')
-  assert.doesNotMatch(minimal, /@param |@return /)
+    const text = previewText(DEFAULT_CONFIG, 'board.h')
+    assert.match(text, /@param /)
+    assert.match(text, /@return /)
+    const minimal = previewText({ ...DEFAULT_CONFIG, param: false, returns: false }, 'board.h')
+    assert.doesNotMatch(minimal, /@param |@return /)
 })
 
 test('非法配置回落到出厂值', () => {
-  const config = normalizeConfig({ brief: 'yes', param: 1, author: null, commentStyle: 'star' })
-  assert.deepEqual(config.brief, DEFAULT_CONFIG.brief)
-  assert.equal(config.param, true)
-  assert.deepEqual(config.author, { enabled: true, value: '' })
-  assert.equal(config.commentStyle, 'slash')
-  assert.equal(normalizeConfig({ commentStyle: 'block' }).commentStyle, 'block')
+    const config = normalizeConfig({ brief: 'yes', param: 1, author: null, commentStyle: 'star' })
+    assert.deepEqual(config.brief, DEFAULT_CONFIG.brief)
+    assert.equal(config.param, true)
+    assert.deepEqual(config.author, { enabled: true, value: '' })
+    assert.equal(config.commentStyle, 'slash')
+    assert.equal(normalizeConfig({ commentStyle: 'block' }).commentStyle, 'block')
 })
 
 test('宿主 volatile 单元按实际值读取，设置保存后技能快照跟着变', () => {
-  const instance = Config({
-    param: false,
-    brief: { enabled: true, value: '棋盘状态' },
-    author: { enabled: true, value: 'chengzhao-dev' },
-  })
-  const config = normalizeConfig(instance)
-  assert.equal(config.param, false)
-  assert.deepEqual(config.brief, { enabled: true, value: '棋盘状态' })
-  assert.deepEqual(config.author, { enabled: true, value: 'chengzhao-dev' })
-  assert.doesNotMatch(snapshotText(config), /@param /)
+    const instance = Config({
+        param: false,
+        brief: { enabled: true, value: '棋盘状态' },
+        author: { enabled: true, value: 'chengzhao-dev' },
+    })
+    const config = normalizeConfig(instance)
+    assert.equal(config.param, false)
+    assert.deepEqual(config.brief, { enabled: true, value: '棋盘状态' })
+    assert.deepEqual(config.author, { enabled: true, value: 'chengzhao-dev' })
+    assert.doesNotMatch(snapshotText(config), /@param /)
 })
 
 test('检查器只放行填了非空值的隐私标签', () => {
-  assert.deepEqual(checkerArgs(DEFAULT_CONFIG), [])
-  const args = checkerArgs({
-    ...DEFAULT_CONFIG,
-    author: { enabled: true, value: 'chengzhao-dev' },
-    date: { enabled: true, value: '' },
-  })
-  assert.deepEqual(args, ['--allow-tag', 'author'])
-  assert.deepEqual(checkerArgs({ ...DEFAULT_CONFIG, commentStyle: 'block' }), ['--comment-style', 'block'])
+    assert.deepEqual(checkerArgs(DEFAULT_CONFIG), [])
+    const args = checkerArgs({
+        ...DEFAULT_CONFIG,
+        author: { enabled: true, value: 'chengzhao-dev' },
+        date: { enabled: true, value: '' },
+    })
+    assert.deepEqual(args, ['--allow-tag', 'author'])
+    assert.deepEqual(checkerArgs({ ...DEFAULT_CONFIG, commentStyle: 'block' }), ['--comment-style', 'block'])
 })
 
 test('技能快照写出符号、开关与放行项', () => {
-  const text = snapshotText({
-    ...DEFAULT_CONFIG,
-    commentStyle: 'block',
-    author: { enabled: true, value: 'chengzhao-dev' },
-    note: true,
-  })
-  assert.match(text, /## 当前注释配置/)
-  assert.match(text, /符号：\/\*\* \.\.\. \*\//)
-  assert.match(text, /@author chengzhao-dev/)
-  assert.match(text, /@note/)
-  const empty = snapshotText(DEFAULT_CONFIG)
-  assert.match(empty, /未填值 @author、@date、@copyright、@version/)
-  assert.match(empty, /开启 @file、@brief、@param/)
-  assert.doesNotMatch(empty, /未填值 @brief/)
+    const text = snapshotText({
+        ...DEFAULT_CONFIG,
+        commentStyle: 'block',
+        author: { enabled: true, value: 'chengzhao-dev' },
+        note: true,
+    })
+    assert.match(text, /## 当前注释配置/)
+    assert.match(text, /符号：\/\*\* \.\.\. \*\//)
+    assert.match(text, /@author chengzhao-dev/)
+    assert.match(text, /@note/)
+    const empty = snapshotText(DEFAULT_CONFIG)
+    assert.match(empty, /未填值 @author、@date、@copyright、@version/)
+    assert.match(empty, /开启 @file、@brief、@param/)
+    assert.doesNotMatch(empty, /未填值 @brief/)
 })
 
 test('客户端产物内联同一份策略', () => {
-  const client = readFileSync(path.join(ROOT, 'lib', 'client.js'), 'utf8')
-  assert.match(client, /^window\.__ModuleLoader__\.load\(\{/m)
-  assert.match(client, /function previewText/)
-  assert.match(client, /function checkerArgs/)
-  assert.doesNotMatch(client, /^export /m)
+    const client = readFileSync(path.join(ROOT, 'lib', 'client.js'), 'utf8')
+    assert.match(client, /^window\.__ModuleLoader__\.load\(\{/m)
+    assert.match(client, /function previewText/)
+    assert.match(client, /function checkerArgs/)
+    assert.doesNotMatch(client, /^export /m)
 })

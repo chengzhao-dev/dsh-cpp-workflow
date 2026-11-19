@@ -1,7 +1,7 @@
 <!-- 读取时机：排版或工具配置时；读完能回答：clang-format；预算：一次只开这一份（23 行），不自动串联。 -->
 # clang-format
 
-三件语言工具各管一段：`clang-format` 排版、`clang-tidy` 诊断、`clangd` 提供补全/跳转/诊断。它们都读同一份编译数据库，但职责不重叠。编辑器侧只保留 CMake Tools 作为配置、构建、运行和调试入口；C/C++ 扩展只做 `CMake: Debug` 的调试后端，不参与语言服务。
+三件语言工具各管一段：`clang-format` 排版、`clang-tidy` 诊断、`clangd` 提供补全/跳转/诊断。它们都读同一份编译数据库，但职责不重叠。编辑器里的扩展分工见 `building-cpp` 的 `steps/04-vscode.md`，`.vscode/` 键值的作用与取值规则见 `04-clangd.md` 的键表；本文件只管命令行排版。
 
 ```bash
 # 只列工程实际存在的源码根；目录不存在就删掉对应参数，不把 glob 原样留给工具。

@@ -22,57 +22,57 @@ const PACKAGE_NAME = '@chengzhao-dev/dsh-cpp-workflow'
 
 /** 去掉策略文件的导出语法，只保留声明与函数，供工厂内联。 */
 function policyBody(source) {
-  const cut = source.lastIndexOf('module.exports')
-  const body = cut === -1 ? source : source.slice(0, cut)
-  return body
-    .replace(/^export\s+/gm, '')
-    .replace(/^['"]use strict['"];?\s*$/m, '')
-    .trimEnd()
+    const cut = source.lastIndexOf('module.exports')
+    const body = cut === -1 ? source : source.slice(0, cut)
+    return body
+        .replace(/^export\s+/gm, '')
+        .replace(/^['"]use strict['"];?\s*$/m, '')
+        .trimEnd()
 }
 
 function appBody(source) {
-  return source
-    .replace(/^['"]use strict['"];?\s*$/m, '')
-    .trimEnd()
+    return source
+        .replace(/^['"]use strict['"];?\s*$/m, '')
+        .trimEnd()
 }
 
 function build() {
-  const policy = policyBody(readFileSync(POLICY, 'utf8'))
-  const app = PARTS.map((part) => appBody(readFileSync(path.join(CLIENT, part), 'utf8'))).join('\n\n')
-  return [
-    '// 由 scripts/building-client.mjs 生成，请改 src/comment-policy.ts 与 src/client/*.js。',
-    'window.__ModuleLoader__.load({',
-    `  id: ${JSON.stringify(PACKAGE_NAME)},`,
-    '  factory: (require) => {',
-    '    var module = { exports: {} }',
-    '    var exports = module.exports',
-    '',
-    policy,
-    '',
-    app,
-    '',
-    '    return module.exports',
-    '  },',
-    '})',
-    '',
-  ].join('\n')
+    const policy = policyBody(readFileSync(POLICY, 'utf8'))
+    const app = PARTS.map((part) => appBody(readFileSync(path.join(CLIENT, part), 'utf8'))).join('\n\n')
+    return [
+        '// 由 scripts/building-client.mjs 生成，请改 src/comment-policy.ts 与 src/client/*.js。',
+        'window.__ModuleLoader__.load({',
+        `  id: ${JSON.stringify(PACKAGE_NAME)},`,
+        '  factory: (require) => {',
+        '    var module = { exports: {} }',
+        '    var exports = module.exports',
+        '',
+        policy,
+        '',
+        app,
+        '',
+        '    return module.exports',
+        '  },',
+        '})',
+        '',
+    ].join('\n')
 }
 
 const check = process.argv.includes('--check')
 const output = build()
 if (check) {
-  let current = ''
-  try {
-    current = readFileSync(OUT, 'utf8')
-  } catch {
-    current = ''
-  }
-  if (current !== output) {
-    process.stderr.write('lib/client.js 已过期：运行 npm run build 重新生成\n')
-    process.exit(1)
-  }
-  process.stdout.write('lib/client.js 与源一致\n')
+    let current = ''
+    try {
+        current = readFileSync(OUT, 'utf8')
+    } catch {
+        current = ''
+    }
+    if (current !== output) {
+        process.stderr.write('lib/client.js 已过期：运行 npm run build 重新生成\n')
+        process.exit(1)
+    }
+    process.stdout.write('lib/client.js 与源一致\n')
 } else {
-  writeFileSync(OUT, output)
-  process.stdout.write(`已写出 ${path.relative(ROOT, OUT)}（${output.length} 字节）\n`)
+    writeFileSync(OUT, output)
+    process.stdout.write(`已写出 ${path.relative(ROOT, OUT)}（${output.length} 字节）\n`)
 }

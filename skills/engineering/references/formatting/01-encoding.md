@@ -5,7 +5,7 @@
 
 ## 规则
 
-- 文本文件用 UTF-8，不带 BOM。JSON 按 RFC 8259；YAML 按 YAML 1.2.2；不要 GBK、UTF-16 或 Latin-1。
+- 文本文件用 UTF-8，不带 BOM。JSON 按 RFC 8259；YAML 按 YAML 1.2.2；不要 GBK、UTF-16 或 Latin-1。`.vscode/` 下的 `settings.json` 与 `extensions.json` 例外，按 JSONC 带 `//` 注释，VS Code 直接读取；其他 `.json` 不加注释。
 - 除 `.bat` / `.cmd` 外，所有文本文件用 LF，包括 `.sh`、Python、C++、Markdown、YAML、CMake 和配置文件。
 - `.sh` 必须 LF：内核会把 shebang 末尾的 CR 当作解释器路径的一部分，导致 `bad interpreter`。
 - `.bat` / `.cmd` 必须 CRLF：`cmd.exe` 对纯 LF 批处理不稳定。
@@ -28,7 +28,7 @@
 - `.editorconfig` 决定编辑器保存；`charset` 与 `end_of_line` 必须和 `.gitattributes` 同一档。
 - `.editorconfig` 的文件名由 EditorConfig 规范固定，不能改名：插件从目标文件所在目录逐级向上
   查找全小写的 `.editorconfig`，改名后不会被识别；放进子目录只对该子树生效。
-- `.editorconfig` 的边界：`[*]` 给 2 空格默认，C++、CMake、shell 与 Python 覆盖成 4 个空格；`max_line_length`
+- `.editorconfig` 的边界：`[*]` 给 4 个空格与 120 列默认，Markdown 关掉列宽，`.bat` / `.cmd` 覆盖成 CRLF；`max_line_length`
   不是核心键，VS Code 不读，C++ 的 120 由 `.clang-format` 的 `ColumnLimit` 强制，其余只是参考线。
 - `.clang-format` 写 `LineEnding: LF`，避免格式化把行尾改回 CRLF。
 

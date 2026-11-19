@@ -5,11 +5,11 @@
 
 ```cpp
 void DrawMenu(std::ostream& out, std::string_view title,
-              std::span<const std::string_view> options,
-              std::size_t selected) {
-  constexpr std::size_t kCardInnerWidth = 48;  // 卡片内宽
-  out << "╔" << std::string(kCardInnerWidth, '═') << "╗\n";
-  // 标题居中、编号、`> ` 指针与整行反显都要在这里再生一遍。
+                            std::span<const std::string_view> options,
+                            std::size_t option_index) {
+    constexpr std::size_t kCardInnerWidth = 48;  // 卡片内宽
+    out << "╔" << std::string(kCardInnerWidth, '═') << "╗\n";
+    // 标题居中、编号、`> ` 指针与整行反显都要在这里再生一遍。
 }
 ```
 
@@ -28,7 +28,7 @@ constexpr std::string_view kMenuHumanSelected = R"(
 ╚════════════════════════════════╝
 )";
 constexpr std::array<std::string_view, 2> kMainMenuScreens{kMenuHumanSelected,
-                                                           kMenuComputerSelected};
+                                                                                                                      kMenuComputerSelected};
 ```
 
 画面显示宽 34、内宽 32；键位、帮助行与空行都排在框内，不另分配置。注入流不是 tty 时仍按整行协议读一个字节，`Q` 或输入结束退出，测试与管道不需要伪终端。

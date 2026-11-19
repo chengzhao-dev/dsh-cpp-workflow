@@ -7,11 +7,11 @@ metadata:
 
 # engineering
 
-本技能管两件事：CMake 文件与 target 契约，以及编码与排版工具配置。函数体、类型、命名、异常与源码注释只开 `developing-cpp`；构建目录、编译器、入口脚本与运行检查开 `building-cpp`。加载顺序与层表见 [budget.md](../shared/budget.md)。
+本技能管两件事：CMake 文件与 target 契约，以及编码与排版工具配置。函数体、类型、命名、异常与源码注释只开 `developing-cpp`；构建目录、编译器、入口脚本与运行检查开 `building-cpp`。
 
 ## 适用场景
 
-- **负责**：`CMakeLists.txt`、`references/cmake/` 模块、`target_*` 命令、目标属性、include 与链接边界、输出目录、共享库运行时路径、`FetchContent`、preset 与安装导出；UTF-8/LF、clang-format、clang-tidy、clangd 的配置条文。只写规则条文与选型，不把文件复制进项目、不跑工具检查；落地与检查归 `building-cpp`。
+- **负责**：`CMakeLists.txt`、`references/cmake/` 模块、`target_*` 命令、目标属性、include 与链接边界、输出目录、共享库运行时路径、`FetchContent`、preset 与安装导出；UTF-8/LF、clang-format、clang-tidy、clangd 的配置条文。只写规则条文与选型，不复制三份 clang 工具配置、不跑 clang-format/clang-tidy/clangd 检查；复制 CMake 模块与 configure/构建核对留在本技能第 1、3 步，CTest 与运行归 `building-cpp`。
 - **不负责**：源码语义与注释开 `developing-cpp`；`environment.json`、`running-build.sh`、构建目录、编译器与 CTest 运行开 `building-cpp`。
 - **交接**：一次改动同时碰到源码和 CMake 时先开 `developing-cpp` 定行为与边界，再用本技能把源文件、库和程序写进 target，最后到 `building-cpp` 跑检查。只改一个 target 的 include、链接或标准时走单点修正；新工程、新组件、换语言标准或抽公共函数时走整段重构。
 - **前置**：存在项目技能 `cpp-workflow-project` 时先读它的 `SKILL.md`、`environment.json` 和 `stages/stage-table.md`。`environment.json` 的 `standard` 是 target 标准的唯一来源；缺失或为空时按默认 `c++23` 继续并提示声明升级，取值非法或与现有 target 不一致时停在定 target，不猜标准。
@@ -27,9 +27,9 @@ metadata:
 | 改写 | target 图与标准不变，模块、函数或目录结构不对 | 从第 2 步重走，可到第 3 步 |
 | 润色 | 只改函数名、注释措辞或错误消息 | 第 2 步 |
 
-- 不发明项目没有声明的 target、标准、编译器或目录；不覆盖已有 `CMakeLists.txt`。
+- 不发明项目没有声明的 target、标准、编译器或目录；不整份重写已有 `CMakeLists.txt`，只做与本任务相关的最小改动。
 - 不用全局 `include_directories()`、`add_definitions()`、`CMAKE_CXX_FLAGS` 给所有 target 加料；不写 `file(GLOB ...)`；不把 `main()` 编进库。
-- 库与程序不隐式下载依赖：标准库不够用的能力用系统包与 `find_package` 接入三方库，安装前提写进项目技能；不在 CMake 配置阶段下载或构建三方源码。测试仍用 `fetch_googletest`。排版工具配置只改本技能点名的三份文件，不顺手改项目其他文件。
+- 库与程序不隐式下载依赖：标准库不够用的能力用系统包与 `find_package` 接入三方库，安装前提写进项目技能；不在 CMake 配置阶段下载或构建三方源码；唯一例外是测试用的 `fetch_googletest`。排版工具配置只改本技能点名的三份文件。
 - 后一步发现前一步没做完，退回那一步；拿不准先单点修正，target 图或标准要改则整段退回。
 
 ## 步骤
@@ -48,7 +48,7 @@ metadata:
 | --- | --- |
 | 不知道开哪一份条文 | `references/index.md` |
 | 定 target、include、链接、输出目录与警告 | `references/cmake/targets/01-target-rules.md`；案例在 `references/cmake/targets/examples/` |
-| 定语言标准与档位 | `references/cmake/standards/01-cxx-standard.md`；五档细节在 `references/cmake/standards/versions.md` |
+| 定语言标准与档位 | `references/cmake/standards/01-cxx-standard.md`；五档细节在 `references/cmake/standards/versions.md`；选择表与工具矩阵在 `references/cmake/standards/index.md` |
 | 抽 CMake 函数与模块 | `references/cmake/modules/01-functions.md` |
 | 链接方式、rpath、undefined reference、产物核对 | 按问题只开一份：`references/cmake/linking/01-libraries.md`、`02-rpath.md`、`03-undefined-reference.md`、`04-inspect.md` |
 | CTest 注册、断言与用例拆分 | `references/cmake/testing/01-ctest.md` |
@@ -56,7 +56,7 @@ metadata:
 | clang-format | `references/formatting/02-clang-format.md`；案例 `references/formatting/examples/01-clang-format.md` |
 | clang-tidy 与检查分级 | `references/formatting/03-clang-tidy.md`；案例 `references/formatting/examples/02-clang-tidy.md` |
 | clangd 与编辑器补全 | `references/formatting/04-clangd.md`；案例 `references/formatting/examples/03-clangd.md` |
-| 配置文件里的注释 | `references/formatting/examples/04-config-comments.md` |
+| 配置文件里的注释 | `references/formatting/05-config-comments.md` |
 | 可复制的 CMake 函数 | `references/cmake/assets/CompileSettings.cmake`、`references/cmake/assets/LinkSettings.cmake`、`references/cmake/assets/OutputSettings.cmake` |
 | 操作判不准、规则冲突 | `../shared/operations.md`、`../shared/rule-priority.md` |
 
@@ -64,7 +64,7 @@ metadata:
 
 加载预算见 [budget.md](../shared/budget.md)；engineering 的步骤固定 3 份。
 
-工程自己的构建命令写在项目技能的入口命令时先跑那一条；没有时按 `building-cpp` 的 `steps/01-build.md`「命令」跑。项目命令只覆盖构建，target 图、标准、全局污染、模块导入、排版与产物位置仍按 `steps/03-check.md` 的核对项确认，全部满足再停在这一步。五档标准的语言设施、工具映射与降档由 `references/cmake/standards/` 维护；本技能只负责这些标准在 CMake 里怎么写，以及三份工具配置各自的最低版本。
+工程入口命令先跑；没有时按 `building-cpp` 的 `steps/01-build.md`「命令」跑。项目命令只覆盖构建，target 图、标准、全局污染、模块导入、排版与产物位置仍按 `steps/03-check.md` 的核对项确认，全部满足再停在这一步。五档标准的语言设施、工具映射与降档由 `references/cmake/standards/` 维护；本技能只负责这些标准在 CMake 里怎么写，以及三份工具配置各自的最低版本。
 
 ## 四类改动
 
@@ -80,9 +80,8 @@ metadata:
 ## 完成判据
 
 - [ ] target 图显式：程序 target 用项目技能点名的名字（模板默认 `app`），库 target 用组件名，程序链接库，库的公共 include 用 `PUBLIC`；没有全局 include、全局编译选项或 GLOB。
-- [ ] 每个 target 的标准来自 `environment.json`；`target_compile_features` 与 `CXX_STANDARD`、`CXX_STANDARD_REQUIRED ON`、`CXX_EXTENSIONS OFF` 同时存在，live 的 `compile_commands.json` 中每个 target 的 `-std=` 都与声明一致，且每个 target 只有一条、不同值即失败，不是 `gnu++NN`。
+- [ ] 每个 target 的标准来自 `environment.json`；`target_compile_features` 与 `CXX_STANDARD`、`CXX_STANDARD_REQUIRED ON`、`CXX_EXTENSIONS OFF` 同时存在；live 的 `compile_commands.json` 中每条 `-std=` 的取值都等于声明，同一 target 的各条取值相同（不同值即失败），不是 `gnu++NN`。
 - [ ] 复用的 CMake 函数放在工程根的 `cmake/` 模块里（模板源在 `references/cmake/assets/`），文件名用 UpperCamelCase，函数名用 snake_case，有目标与参数校验，根 `CMakeLists.txt` 通过 `CMAKE_MODULE_PATH` 导入；没有重复片段和未使用的旧模块。
-- [ ] 公开函数上方写官方文档块（`#[=======================================================================[.rst:` 加 `.. command::` 与 `.. code-block:: cmake`，块内散文写中文），完整写法见 `references/cmake/targets/01-target-rules.md`；模块文件不画 `#---` 与 `#===...===#` 分隔线。
-- [ ] `CMakeLists.txt` 与 `*.cmake` 用 UTF-8 无 BOM、LF；缩进用 4 个空格，行内对齐也用空格；行宽上限 120 列，中文字符按 2 列计。
+- [ ] 公开函数上方有官方文档块，`CMakeLists.txt` 与 `*.cmake` 的编码、缩进与行宽合规；写法与数值只以 `references/cmake/targets/01-target-rules.md` 的「排版」节为准。
 - [ ] 编码与排版工具各管一段：`.clang-format` 管空白与包含顺序，`.clang-tidy` 管检查分级，`.clangd` 管编辑器补全；三份都不把标准写死成与 `environment.json` 冲突的值，也不把 clang-format 塞进构建脚本。
 - [ ] configure 与构建通过，构建产物不落在源码目录；没有改源码语义，也没有覆盖已有工程文件。

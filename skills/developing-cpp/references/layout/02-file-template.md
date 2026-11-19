@@ -29,17 +29,17 @@
 
 槽位顺序固定：
 
-1. 文件头注释（格式见 `references/comments/01-comment-rules.md`，留在 `#pragma once` 外）
+1. 文件头注释（格式与作者口径见 `references/comments/02-style.md`，写哪些事实见 `01-comment-rules.md`；留在 `#pragma once` 外）
 2. `#pragma once`
 3. 分组包含（组间空行，组内字母序）
-4. 命名空间内：常量 → 枚举 → 结构体 → 自由函数 → 类
+4. 命名空间内：常量 → 枚举 → 结构体 → 自由函数 → 类（次序与依赖冲突见 `references/layout/03-declaration-order.md`）
 
 ```cpp
 /// @file thing_table.h
 ///
-/// @brief `ThingTable` 相关类型定义。
+/// @brief `ThingTable` 类型定义。
 ///
-/// 封装了状态 `ThingState`、表项 `Thing` 与表 `ThingTable`。
+/// 状态 `ThingState`、表项 `Thing` 与表 `ThingTable`。
 
 #pragma once
 
@@ -55,15 +55,15 @@ inline constexpr int kThingCount = 3;
 enum class ThingState : std::uint8_t { kIdle, kBusy };
 
 struct Thing {
-  int id{};
+    int id{};
 };
 
 class ThingTable {
- public:
-  void Add(const Thing& thing);
+public:
+    void Add(const Thing& thing);
 
- private:
-  std::vector<Thing> things_;
+private:
+    std::vector<Thing> things_;
 };
 
 }  // namespace project

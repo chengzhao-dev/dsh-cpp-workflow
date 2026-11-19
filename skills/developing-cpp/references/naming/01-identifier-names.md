@@ -1,4 +1,4 @@
-<!-- 读取时机：命名或统一术语时；读完能回答：命名；预算：一次只开这一份（136 行），不自动串联。 -->
+<!-- 读取时机：命名或统一术语时；读完能回答：命名；预算：一次只开这一份（137 行），不自动串联。 -->
 # 命名
 
 命名先回答「它是什么角色」，再选词。规则表是底线，语义角色表决定用哪个动词。
@@ -12,7 +12,7 @@
 | 变量 / 参数 | snake_case | `task_count`, `order` | `TaskCount`, `o` |
 | 类成员 | snake_case + `_` | `tasks_`, `orders_` | `m_tasks`, `tasks` |
 | 结构体成员 | snake_case，无尾随 `_` | `name`, `priority` | `name_`, `priority_` |
-| 常量 / 枚举子 | `k` + PascalCase | `kTaskCount`, `Order::kDraft` | `TASK_COUNT`, `Draft` |
+| 常量 / 枚举子 | `k` + PascalCase | `kRows`, `kSquares`, `Order::kDraft` | `TASK_COUNT`, `Draft` |
 | 命名空间 | snake_case | `taskflow`, `warehouse` | `Taskflow`, `Warehouse` |
 | 宏 | 全大写 + 项目前缀，尽量不用 | `CPP_WORKFLOW_ASSERT` | `ASSERT` |
 | 模板类型参数 | PascalCase | `T`, `Item` | `t`, `item_t` |
@@ -35,6 +35,7 @@
 - 函数名用「动词 + 对象」：`ChooseRandomPosition`、`PlaceAt`、`GetCurrentPlayer`；不要只写动词（`Choose`）或只写对象（`RandomPosition`）。算法、数学或协议的既有专名保留原词，不拆成动词 + 对象，例如 `Minimax`。
 - 容器用复数，并把元素写进名字：`empty_positions`、`moves`；不要写 `empties` 这类省略元素的缩写。
 - 计数带对象：`empty_count`、`move_count`；不要只写 `count`。
+- 常量按同一套词根成组：行数、列数与方格数写 `kRows`、`kColumns`、`kSquares`，三个名字并排就能读出 3 × 3 = 9。
 - 不删字母缩写：`distribution` 不写 `dist`；`position` 在需要完整名词时写全，`pos` 只作局部坐标缩写。
 - 可能选不中时返回 `std::optional`：`ChoosePosition`、`ChooseRandomPosition`、`ChooseBestPosition` 没有合法选择时返回 `std::nullopt`，不返回哨兵位置。
 - 共享资源访问器用名词短语（`RandomEngine`），不写 `GetRandomEngine`；`Get` 留给类里直接返回成员的查询。
@@ -42,7 +43,7 @@
 ### 界面与索引
 
 - 界面组件名先写职责，再写形态：`ListMenu` 是以列表呈现的菜单，`MenuList` 是多个菜单的列表；`MainMenu`、`DifficultyMenu` 用界面职责命名，不用 `MenuModel` 泛称多个菜单的模型。
-- 多个菜单共享同一套列表选择逻辑时，把状态模型命名为 `ListMenuModel`；只有一个菜单时不单独造模型名。字段保存下标时写 `selected_index_`，保存被选对象时写 `selected_`；注释写“当前选中标签在标签列表中的下标”。
+- 多个菜单共享同一套列表选择逻辑时，把状态模型命名为 `ListMenuModel`；只有一个菜单时不单独造模型名。字段保存下标时写 `selected_index_`，保存被选对象时写 `selected_`；注释写“当前选中标签在标签列表中的下标”。下标只是跟着按键移动、还没确认时写 `cursor_index_`，判断用 `HasCursor(index)`，动作用 `MoveTo` / `MovePrevious` / `MoveNext`，见 [glossary/03-selection.md](glossary/03-selection.md) 的「光标」。
 - 非拥有视图成员按内容命名（`labels_`、`history_`），不写 `labels_view_` 重复类型；注释写法见 `references/comments/01-comment-rules.md` 与 `references/comments/02-style.md` 的非拥有视图条。
 
 ## 字符集与保留标识符
@@ -66,31 +67,32 @@
 | 计算 | 动词开头 | `PreviewWin()` | 从输入算出结果，不修改外部状态 |
 | 映射 | `<来源>To<目标>` | `OrderToReceipt()` | 名字必须含两端角色 |
 | 读写 | `Read` / `Write` | `ReadEnvironment()`、`WriteLedger()` | 涉及 I/O 时用；不要在库核心用 |
-| 访问器 | `Get` + PascalCase，或 snake_case | `GetHistory()`、`history()` | Google 允许两种；同一 API 只选一种，不用成员名直接当函数名；计数不要写成 `GetXCount()` |
+| 访问器 | `Get` + PascalCase | `GetHistory()` | 本项目统一 `Get` + PascalCase；Google 也允许 snake_case，本项目不采用。同一 API 只选一种，不用成员名直接当函数名；计数不要写成 `GetXCount()` |
 
-- 界面提示用 `Prompt`：显示菜单或提示并等待用户选择时写 `PromptMatchMode()`；`Read` / `Write` 留给 I/O 读写与记录处理。提示负责显示与重试，实际读行由 `GetLine()` 完成；`std::optional` 表示输入结束，这是 `Get` 的界面例外，不承诺前置条件已满足。
-- 带编号选项的开局菜单用 `Display<Object>Options`：写 `DisplayMatchModeOptions()`、`DisplayDifficultyOptions()`；不写 `Show<Object>Menu`。`Prompt<Object>` 负责显示并读入，`Display*Options` 只负责显示。
+- 界面提示用 `Prompt`：显示菜单或提示并等待用户选择时写 `PromptGameMode()`；`Read` / `Write` 留给 I/O 读写与记录处理。提示负责显示与重试，实际读行由 `GetLine()` 完成；`std::optional` 表示输入结束，这是 `Get` 的界面例外，不承诺前置条件已满足。
+- 带编号选项的开局菜单用 `Display<Object>Options`：写 `DisplayGameModeOptions()`、`DisplayDifficultyOptions()`；不写 `Show<Object>Menu`。`Prompt<Object>` 负责显示并读入，`Display*Options` 只负责显示。
 - 返回 `bool` 的 lambda 也用 `is_` / `has_` / `can_` 命名：`auto is_empty = [](const Order& order) { ... };`。
-- `Find` 不把“没找到”当异常；`Get` 在前置条件不满足时抛标准异常：坐标越界用 `std::out_of_range`，调用时不变量已破坏用 `std::logic_error`；只有调用方必须把这些类型区分开时，才新增派生自它们的类型。Debug 与 Release 的合同见 `references/exceptions/01-exception-rules.md` 的「两种构建模式的三层合同」。两者不要互换。
+- `Find` 不把“没找到”当异常；`Get` 在前置条件不满足时抛异常。用哪个标准类型、何时才新增派生类型，见 `references/exceptions/01-exception-rules.md` 的「异常类型」；Debug 与 Release 的合同见同文件的「两种构建模式的三层合同」。两者不要互换。
 - 查询返回多个值时用 `struct`，不要用三个 `GetXxx()` 加输出参数。
 - 返回集合的查询给只读视图，不把内部容器类型写进接口：`std::span<const Move> GetHistory()`，不写 `const std::vector<Move>&`。视图能被区间的用法遍历，改内部存储不影响调用方；跨度只在对象存活期间有效，写进注释。
 
 - 禁止裸 `To()` / `Of()`：调用点看不出方向。
-- 修改器用 `Set` + 属性名（`SetCount()` / `set_count()`）或领域动作（`CompleteTask()`）；同一 API 只选一种，不要用 `SetItem` 这类暴露存储细节的名字。
+- 修改器用 `Set` + 属性名（`SetCount()`）或领域动作（`CompleteTask()`）；同一 API 只选一种，不要用 `SetItem` 这类暴露存储细节的名字。
 - `current_` 前缀只在有多个候选、且「当前」可能混淆时使用：`current_order_`。只有一个当前对象时不要加。
 
 ## 谓词与查询命名
 
 - 返回 `bool` 的查询用肯定式，读起来像一句断言：`IsEmpty()`、`CanPlace()`、`HasLine()`。
 - 前缀集以 `Is` / `Has` / `Can` 为主，外加与成对规则一一对应的 `Completes`、`Would` 这类限定式；`Contains` 只保留给容器成员（`std::vector::empty` 一类已有标准名），不拿它当一般谓词。
+- 返回 `bool` 的谓词，前缀后面直接接概念名，索引用参数给出，不接位置介词：写 `IsSquareEmpty(position)`、`HasCursor(option_index)`，不写 `IsCursorAt(index)`、`IsItemOnScreen()`；一个名字里只留一个虚词。`at` 留给取元素或取字段的成员（`std::vector::at`）和动作短语（`PlaceAt`）；`IsInRange()`、`IsInProgress()` 这类固定说法保留。
 - `Get` 只用于取值，`Set` 只用于设值；不要用 `CheckLine()` 当布尔 getter。
 - `Check` / `Validate` 留给会报告错误、产生诊断或可能失败的操作，例如 `CheckEnvironment()` 返回问题列表；返回结果类型的校验器也可以用这两个词，只要名字说明它返回结果。它们不做返回纯 `bool` 的查询，bool 查询写在 `Is` / `Has` / `Can` 里。
 - 动作可能因为多个前置条件失败、而调用方需要区分原因时，返回 `enum class`（`PlaceResult`、`GameResult`、`WinPreviewResult`），不要用 `bool` 加输出参数，也不要拆成一串 `IsXxx` 判断再重复检查。
 - 结果枚举的取值写结果类别，两个词以内：成功用 `kPlaced`；失败按发生原因分别取名（如 `kInvalidPlayer`、`kOccupiedSquare`），不合并成一个 `kInvalid`。行尾注释见 `references/comments/01-comment-rules.md` 的枚举项条。完整案例见 `references/naming/examples/13-naming-state-change.md`。
-- 结果枚举的类型用「操作或对象 + Result」，读作「什么的 Result」：`Game::Place` 的结果是 `PlaceResult`，`GetResult` 的结果是 `GameResult`。结果跟随产生它的层：`Board` 只写入并保留预览结果 `WinPreviewResult`，落子与整局结果留在对局层，不把 `GameResult` 塞进 `Square` 或 `Board`。
+- 结果枚举的类型用「操作或对象 + Result」，读作「什么的 Result」：`Game::Place` 的结果是 `PlaceResult`，`GetResult` 的结果是 `GameResult`。哪个层持有哪个结果，按 `references/design/01-project-design.md` 的「取值的边界」判。
 - 同名操作在不同层返回不同结果时，按各自处理的对象取名：`Board::SetSquare` 只写入，没有返回值；`Game::Place` 处理的是一次落子，返回 `PlaceResult`；整局结果由 `Game::GetResult` 另外回答。不把两个答案压进同一个名字，读者才分得清拿到的是「这一手写成了没有」还是「这一局结束了没有」。
 - 枚举的取值写成短句，与类型名对齐：`GameResult` 用 `kInProgress`、`kXWin`、`kOWin`、`kDraw`；`SquareValue` 用 `kEmpty`、`kX`、`kO`，行尾写「空」「X」「O」；不写 `kXWins` 这类主谓句，也不掺动作名。
-- 词性跟着角色的位置走：前缀 `k` 后面先写角色再写状态，角色作主语、状态作谓语，用不带 `-s` 的动词原形，不用现在分词：`kXWin`、`kOWin`、`kDraw`。谓语读不通时改用名词或形容词，`kInProgress` 是固定说法，`kEmpty` 是形容词。不逐个用 `-ed` 造过去分词（`kXWon`、`kDrawn`），也不写成主谓句 `kXWins`。
+- 词性跟着角色的位置走：前缀 `k` 后面先写角色再写状态，角色作主语、状态作谓语，用不带 `-s` 的动词原形，不用现在分词：`kXWin`、`kOWin`、`kDraw`。谓语读不通时改用名词或形容词，`kInProgress` 是固定说法，`kEmpty` 是形容词。不临时用 `-ed` 造状态谓语（`kXWon`、`kDrawn`），也不写成主谓句 `kXWins`；`kPlaced` 是已经固定的成功值，不属此类。
 - 假设性查询在名字里写明条件：`PreviewWin(pos, square)` 读作「这一次落子会成线吗」，返回 `WinPreviewResult` 区分「不能落子」与「能落但不赢」；只有成功与不报错的纯判断才用 `bool`。同一 API 只选一种，改名时同步声明、定义、调用点、测试和注释。
 - 私有谓词同样用肯定式；不要用 `flag`、`status` 或 `check` 这类不说明判据的名字。
 
@@ -118,17 +120,16 @@
 ## 依据
 
 - [Google C++ Style Guide: Naming](https://google.github.io/styleguide/cppguide.html#Naming)：类型与函数 PascalCase、变量 snake_case、常量与枚举子 `k` 前缀。
-- [Google Python Style: Naming](https://google.github.io/styleguide/pyguide.html#316-naming)：模块、类、函数、常量与私有名的用词与大小写。
-- [PEP 8: Naming Conventions](https://peps.python.org/pep-0008/#naming-conventions)：小写、下划线、类名与异常名的惯例。
 - [C++ Core Guidelines: NL](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#s-naming)：NL.5 名字不编码类型、NL.7 长度与作用域成比例、NL.8 风格一致、NL.9 全大写只给宏、NL.19 避免易误读。
-- [LLVM: Naming](https://llvm.org/docs/CodingStandards.html#name-types-functions-variables-and-enumerators-properly)：类型、函数、变量与枚举的命名与缩写规则。
-- [Rust API Guidelines: Naming](https://rust-lang.github.io/api-guidelines/naming.html)：类型、函数、变量与 feature 名的可读性。
-- [Rust RFC 430](https://rust-lang.github.io/rfcs/0430-finalizing-naming-conventions.html)：Rust 命名约定与大小写。
 - [clang-tidy: readability-identifier-naming](https://clang.llvm.org/extra/clang-tidy/checks/readability/identifier-naming.html)：按类别配置命名风格与大小写。
 - [clang-tidy: readability-identifier-length](https://clang.llvm.org/extra/clang-tidy/checks/readability/identifier-length.html)：过短或过长标识符的阈值。
-- [Ruff N801](https://docs.astral.sh/ruff/rules/invalid-class-name/)：类名不符合 CapWords 时的诊断。
-- [Pylint C0103](https://pylint.readthedocs.io/en/stable/user_guide/messages/convention/invalid-name.html)：不符合命名风格的诊断与命名组。
-- [Microsoft .NET identifier names](https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/coding-style/identifier-names)：类型、成员、参数与局部变量的用词与大小写。
+
+其他语言的命名约定只作结构旁证，对 C++ 没有约束力：
+
+- [LLVM: Naming](https://llvm.org/docs/CodingStandards.html#name-types-functions-variables-and-enumerators-properly)：类型、函数、变量与枚举的命名与缩写规则。
+- [Rust API Guidelines: Naming](https://rust-lang.github.io/api-guidelines/naming.html) 与 [Rust RFC 430](https://rust-lang.github.io/rfcs/0430-finalizing-naming-conventions.html)：可读性与大小写。
+- [Google Python Style: Naming](https://google.github.io/styleguide/pyguide.html#316-naming)、[PEP 8: Naming Conventions](https://peps.python.org/pep-0008/#naming-conventions)、[Ruff N801](https://docs.astral.sh/ruff/rules/invalid-class-name/)、[Pylint C0103](https://pylint.readthedocs.io/en/stable/user_guide/messages/convention/invalid-name.html)：诊断项与命名组的划分方式。
+- [Microsoft .NET identifier names](https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/coding-style/identifier-names)：成员、参数与局部变量的用词层级。
 
 `square` / `SquareValue` 的取舍与词义来源见 [04-square.md](glossary/04-square.md)。
 

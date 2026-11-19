@@ -7,16 +7,16 @@
 
 ```text
 <component>/
-  include/
-    <name>.h         公共接口，包含时写裸文件名
-  src/
-    <name>.cpp       实现，可以包含私有头
-    <detail>.h       私有头，只被本组件 src 包含
-  tests/
-    <name>_test.cpp  通过公共接口测试
+    include/
+        <name>.h         公共接口，包含时写裸文件名
+    src/
+        <name>.cpp       实现，可以包含私有头
+        <detail>.h       私有头，只被本组件 src 包含
+    tests/
+        <name>_test.cpp  通过公共接口测试
 ```
 
-- 公共头直接放 `include/` 下，包含时写裸文件名，例如 `#include "task_list.h"`；不要写 `"task_list/include/task_list.h"` 这种从仓库根起的长路径，也不要写 `../` 相对路径。
+- 公共头直接放 `include/` 下，包含时写裸文件名，例如 `#include "task_list.h"`；不要写 `"task_list/include/task_list.h"` 这种从仓库根起的长路径，也不要写 `../` 相对路径。搜索路径由 target 的 `target_include_directories(... PUBLIC .../include)` 提供，写法见 `engineering` 的 `references/cmake/targets/01-target-rules.md`。
 - 私有头放 `src/`，不进入公共 include 根；测试不得包含私有头。
 - 一个组件一个职责；组件名用 snake_case，和命名空间一致。
 - 组件之间通过公共头依赖；不要用 `../other/src/private.h` 跨组件包含私有实现。
@@ -25,11 +25,11 @@
 
 ```text
 app/
-  include/
-    cli.h            输入输出与参数解析的私有接口
-  src/
-    cli.cpp          终端交互
-    main.cpp         只做装配：构造依赖、调用 RunGame、翻译退出码
+    include/
+        cli.h            输入输出与参数解析的私有接口
+    src/
+        cli.cpp          终端交互
+        main.cpp         只做装配：构造依赖、调用 RunGame、翻译退出码
 ```
 
 - `main.cpp` 不写业务规则；它只解析参数、打开流、调用库、捕获边界异常。

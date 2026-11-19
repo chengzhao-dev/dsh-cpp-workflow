@@ -1,4 +1,4 @@
-<!-- 读取时机：判不准选择类函数用 Choose、Find 还是 Try 时；读完能回答：选择与查找的命名；预算：一次只开这一份（22 行），不自动串联。 -->
+<!-- 读取时机：判不准选择类函数用 Choose、Find 还是 Try 时；读完能回答：选择与查找的命名；预算：一次只开这一份（26 行），不自动串联。 -->
 # selection：选择、查找与尝试
 
 从多个候选里选一个，用 `Choose`；名字写清选的对象，如 `ChooseRandomPosition`、`ChooseBestPosition`；对外只暴露 `ChoosePosition`。没有合法候选时返回 `std::optional` 的空值，不返回哨兵位置，也不抛异常。
@@ -19,5 +19,9 @@
 ## 取舍
 
 `Choose` 不暗示候选一定存在，所以返回 `optional`；`Find` 的失败是正常结果，不抛；`Try` 的失败原因需要调用方分支，所以返回结果类型。`Get` 不用于可能找不到的查询。
+
+## 光标
+
+列表界面里「跟着按键移动、还没确认」的位置写 `cursor_index_`，不写 `selected_`；`selected_` 保存已确认的对象，下标写 `selected_index_`。判断用 `HasCursor(index)`，动作用 `MoveTo`、`MovePrevious`、`MoveNext`，不写 `IsCursorAt(index)`。光标是选择过程的中间量，确认后才转成 `selected_`。
 
 依据见 [01-identifier-names.md](../01-identifier-names.md) 的「语义角色」与末尾 12 条来源。

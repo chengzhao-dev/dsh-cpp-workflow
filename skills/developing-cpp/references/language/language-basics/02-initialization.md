@@ -16,7 +16,7 @@ auto total = 0.0;                  // 本工作流统一用 = 推导
 - `T obj();` 是函数声明，不是对象；要值初始化写 `T obj{};`。
 - `T value{}` 做值初始化：内置类型得 0，类类型调用默认构造函数。
 - 花括号禁止窄化转换：`int x{3.5}` 编译失败，`int x = 3.5` 静默截断。需要截断时显式 `static_cast<int>(3.5)`。
-- 类成员在声明处写默认成员初始化（NSDMI），默认用花括号：标量 `count_{0}`、`selected_index_{0}`，数组 `items_{}`，容器与类类型成员写空 `{}`（如 `std::vector<int> values_{};`、`Board board_{};`）。
+- 类成员在声明处写默认成员初始化（NSDMI），默认用花括号：标量 `count_{0}`、`cursor_{0}`，数组 `items_{}`，容器与类类型成员写空 `{}`（如 `std::vector<int> values_{};`、`Board board_{};`）。
 - 构造函数初始化列表只初始化依赖构造参数或工厂调用的值，仍用花括号：`input_{input}`、`screen_{MakeScreen()}`，不写 `member_(expr)`；常量默认值已在声明处用 NSDMI，不在初始化列表里重复（如 `count_{0}` 只在声明处写）。引用成员不写 NSDMI，在构造函数初始化列表绑定；容器需要容量构造时写 `values_(n)`，或在声明处写 `= std::vector<int>(n)`，这两处的 `()` 用来选容量构造，不属于普通对象的写法。
 - `std::initializer_list` 成员避免使用，确实需要时写 `= {..}` 并保证底层数组的生命周期不短于对象；花括号无法构造的类型才回退到 `= value`。`=` 仍然是初始化，不是赋值。
 - `static` 与 `static constexpr` 数据成员不是对象成员，继续写 `= 3`；`auto` 不能做非静态数据成员。

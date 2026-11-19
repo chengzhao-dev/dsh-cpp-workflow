@@ -5,13 +5,13 @@
 
 ```cpp
 GameResult Game::Place(Move move) {
-  if (!board_.GetSquare(move.position).IsEmpty()) {
-    throw std::logic_error{"Game::Place: board rejected an occupied square"};
-  }
-  board_.SetSquare(move.position, PlayerToSquareValue(move.player));
-  history_.push_back(move);
-  current_player_ = PlayerToOpponent(current_player_);
-  return GetResult();
+    if (!board_.GetSquare(move.position).IsEmpty()) {
+        throw std::logic_error{"Game::Place: board rejected an occupied square"};
+    }
+    board_.SetSquare(move.position, PlayerToSquareValue(move.player));
+    history_.push_back(move);
+    current_player_ = PlayerToOpponent(current_player_);
+    return GetResult();
 }
 ```
 
@@ -19,24 +19,24 @@ GameResult Game::Place(Move move) {
 
 ```cpp
 PlaceResult Game::Place(Move move) {
-  // 先判终局，再判玩家与方格：失败结果的优先级由此决定。
-  if (!IsInProgress()) {
-    return PlaceResult::kFinishedGame;
-  }
+    // 先判终局，再判玩家与方格：失败结果的优先级由此决定。
+    if (!IsInProgress()) {
+        return PlaceResult::kFinishedGame;
+    }
 
-  if (current_player_ != move.player) {
-    return PlaceResult::kInvalidPlayer;
-  }
+    if (current_player_ != move.player) {
+        return PlaceResult::kInvalidPlayer;
+    }
 
-  const SquareValue target_square_value = PlayerToSquareValue(move.player);
-  const Square target_square = board_.GetSquare(move.position);
-  if (!target_square.IsEmpty()) {
-    return PlaceResult::kOccupiedSquare;
-  }
+    const SquareValue target_value = board_.GetSquare(move.position).GetValue();
+    if (target_value != SquareValue::kEmpty) {
+        return PlaceResult::kOccupiedSquare;
+    }
 
-  current_player_ = PlayerToOpponent(current_player_);
-  board_.SetSquare(move.position, target_square_value);
-  history_.push_back(move);
-  return PlaceResult::kPlaced;
+    // 写入棋盘并记录这一步，然后轮到对方。
+    board_.SetSquare(move.position, target_value);
+    history_.push_back(move);
+    current_player_ = PlayerToOpponent(current_player_);
+    return PlaceResult::kPlaced;
 }
 ```

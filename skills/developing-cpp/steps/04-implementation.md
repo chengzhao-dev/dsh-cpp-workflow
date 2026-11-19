@@ -17,7 +17,6 @@
 - 失败是调用方正常结果时返回结果类型、`bool` 或 `std::optional`；函数无法完成自己的任务时抛异常，不拿异常做正常分支。失败方式与 `Check`/`DebugCheck` 按 `references/exceptions/01-exception-rules.md` 的三层合同。捕获时按 `const` 引用，只处理能处理的类型，其余继续抛。
 - 参数校验、调用方状态检查与正常结果返回的次序见 `references/exceptions/01-exception-rules.md` 的「检查次序」：先整局状态，再进行中的玩家，最后交给下层检查坐标与占用，下层检查不重复。改完 `throw` 再走同文件的「检查清单」：异常类型、消息标签、跨行消息先存变量、不吞异常。
 - 声明 `noexcept` 前核对函数体：出现 `at()` 或其他可能抛出的调用就去掉。越界用 `at()` 抛 `std::out_of_range`，这个函数就不能标 `noexcept`。`noexcept` 不是默认标注项：没有明确收益（ABI、泛型/容器行为、接口契约）就不补；普通查询和返回结果枚举的函数，不因为当前函数体不抛就补 `noexcept`；它留给移动、交换、析构，以及已经标上的纯谓词。
-- 本步写函数体时，输出方式见 `references/language/standard-library/06-format.md`。
 - 转换用具名转换 `static_cast` / `std::bit_cast`，不用 C 风格强制转换。
 - 所有权用 `std::unique_ptr`；禁止裸 `new` / `delete`，没有共享所有权的理由时不用 `std::shared_ptr`。
 - 只改注释时，不改可观察行为；只改实现时，不改公共声明。改签名、返回类型或限定符时，同一轮同步头文件声明、`.cpp` 定义、构造函数初始化列表与所有调用点；两者同时需要时，先改声明，再改实现。
@@ -36,14 +35,14 @@
 
 ## 交回构建
 
-实现改完，先对照配对头文件自检：每个声明都有定义，定义顺序、参数类型、限定符与返回类型和声明一致；新增或改动的函数按同一套分段约定，需要分阶段的都有阶段注释与空行；只改过语言细节时再过对应目录的完成清单（`references/language/value-types/11-checklist.md`、`references/language/language-basics/10-language-checklist.md`、`references/language/standard-library/10-library-checklist.md`、`references/language/performance/07-checklist.md`）；行宽与缩进以文件最近的 `.clang-format` 为准，注释版式见 `references/comments/02-style.md`。再跑 `node <skill-dir>/scripts/checking-declaration-order.mjs --root .`（`<skill-dir>` 换成插件 `developing-cpp` 的实际目录；它检查配对头文件类的成员定义顺序与签名，自由函数与没有配对头文件的 `.cpp` 不在覆盖内），有乱序或签名不一致先修再交回下游：需要新增或移动源文件时，先由 `engineering` 的 `steps/01-targets.md` 把文件显式写进 target；target 齐了再由 `building-cpp` 的 `steps/01-build.md` configure、构建，最后走 `steps/03-check.md`。不要只改完函数体就宣称完成。
+实现改完，先对照配对头文件自检：每个声明都有定义，定义顺序、参数类型、限定符与返回类型和声明一致；新增或改动的函数按同一套分段约定，需要分阶段的都有阶段注释与空行；只改过语言细节时再过对应目录的完成清单（`references/language/value-types/11-checklist.md`、`references/language/language-basics/10-language-checklist.md`、`references/language/standard-library/11-library-checklist.md`、`references/language/performance/07-checklist.md`）；行宽与缩进以文件最近的 `.clang-format` 为准，注释版式见 `references/comments/02-style.md`。再跑 `node <skill-dir>/scripts/checking-declaration-order.mjs --root .`（`<skill-dir>` 换成插件 `developing-cpp` 的实际目录；它检查配对头文件类的成员定义顺序与签名，自由函数与没有配对头文件的 `.cpp` 不在覆盖内），有乱序或签名不一致先修再交回下游：需要新增或移动源文件时，先由 `engineering` 的 `steps/01-targets.md` 把文件显式写进 target；target 齐了再由 `building-cpp` 的 `steps/01-build.md` configure、构建，最后走 `steps/03-check.md`。不要只改完函数体就宣称完成。
 
 ## 正反例指针
 
 - 实现注释复述代码、分组混乱：`references/comments/examples/09-implementation-body.md`。
 - 已经证明非负的坐标把下标收成 `std::size_t` 再 `[]`，不转成 `int`：`references/language/value-types/09-subscript.md`。
 - 越界消息的函数名、文件与行列都取自调用点：`references/exceptions/01-exception-rules.md`「消息」的 `std::source_location` 用法。
-- 多个入口重复同一范围检查：抽私有函数，`source_location` 默认参数取调用点，见 `references/exceptions/01-exception-rules.md`「重复的入口检查」。
+- 多个入口重复同一范围检查：抽成同一层的检查函数；对局层要调用时放 public，`source_location` 默认参数取调用点，见 `references/exceptions/01-exception-rules.md`「重复的入口检查」。
 - 为了保住 `noexcept` 再包一层只转发下标的私有函数：`references/exceptions/01-exception-rules.md`「不抛的边界」。
 - 用 `static_cast<void>` 丢弃 `[[nodiscard]]` 的落子结果，或丢掉调用方给的一手、在 `Game` 内重新拼装：`references/design/examples/06-move-result.md`。
 - 异常类型与结果类型混用：`references/exceptions/examples/07-throw-when.md`。

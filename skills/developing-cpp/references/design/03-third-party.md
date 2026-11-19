@@ -13,8 +13,8 @@
 ## 选型
 
 - 许可证与项目兼容；有发布版本与近期提交；C++ 标准不高于工程档位；依赖面小。
-- 能在目标环境用系统包安装的优先，例如 Debian/Ubuntu 的 `libftxui-dev`；用 `find_package` 与 imported target 链接，不在配置阶段下载源码。
-- 版本写进项目技能的安装前提与 README；`running-build.sh` 不安装依赖，缺包时让配置失败并给出包名。
+- 能在目标环境用系统包安装的优先（例如发行版给 FTXUI 提供的开发包，具体包名以项目技能为准）；用 `find_package` 与 imported target 链接，不在配置阶段下载源码。
+- 版本与包名写进项目技能的安装前提；`running-build.sh` 不安装依赖，缺包时让配置失败并给出包名。
 
 ## 接入边界
 

@@ -6,16 +6,16 @@
 ```cpp
 // run_game.cpp
 void GameSession::RunGame() {
-  class ConsoleSession {
-   public:
-    explicit ConsoleSession(Console& console) : console_{console} {
-      console_.EnterAlternateScreen();
-    }
-    ~ConsoleSession() { console_.ExitAlternateScreen(); }
-   private:
-    Console& console_;
-  } session{console_};
-  // ...
+    class ConsoleSession {
+    public:
+        explicit ConsoleSession(Console& console) : console_{console} {
+            console_.EnterAlternateScreen();
+        }
+        ~ConsoleSession() { console_.ExitAlternateScreen(); }
+    private:
+        Console& console_;
+    } session{console_};
+    // ...
 }
 ```
 
@@ -26,14 +26,14 @@ void GameSession::RunGame() {
 ```cpp
 // run_game.cpp
 void GameSession::RunGame() {
-  console_.EnterAlternateScreen();
-  const std::optional<MatchMode> mode = console_.PromptMatchMode();
-  if (!mode) {
+    console_.EnterAlternateScreen();
+    const std::optional<GameMode> mode = console_.PromptGameMode();
+    if (!mode) {
+        console_.ExitAlternateScreen();
+        return;
+    }
+    // ...
     console_.ExitAlternateScreen();
-    return;
-  }
-  // ...
-  console_.ExitAlternateScreen();
 }
 ```
 

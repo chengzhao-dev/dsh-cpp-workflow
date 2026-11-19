@@ -15,7 +15,7 @@ include(LinkSettings)
 
 add_library(greeting SHARED greeting/src/greeting.cpp)
 set_target_properties(greeting PROPERTIES
-  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
 add_executable(app src/main.cpp)
 target_link_libraries(app PRIVATE greeting)

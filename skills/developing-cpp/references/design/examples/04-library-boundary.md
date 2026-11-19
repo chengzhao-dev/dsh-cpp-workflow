@@ -6,9 +6,9 @@
 ```cpp
 // task_list.cpp（库）
 void TaskList::Print() const {
-  for (const auto& task : tasks_) {
-    std::cout << task.priority << " " << task.name << "\n";
-  }
+    for (const auto& task : tasks_) {
+        std::cout << task.priority << " " << task.name << "\n";
+    }
 }
 ```
 
@@ -22,9 +22,9 @@ void TaskList::Print() const {
 
 // app/cli.cpp（程序）
 void PrintTasks(const std::vector<Task>& tasks, std::ostream& output) {
-  for (const auto& task : tasks) {
-    output << std::format("{} {}\n", task.priority, task.name);
-  }
+    for (const auto& task : tasks) {
+        output << std::format("{} {}\n", task.priority, task.name);
+    }
 }
 ```
 

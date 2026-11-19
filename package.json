@@ -1,107 +1,107 @@
 {
-  "name": "@chengzhao-dev/dsh-cpp-workflow",
-  "version": "0.7.9",
-  "description": "写 C++ 源码、配 CMake、用 Clang 构建；头文件用 /// Doxygen 文档注释，函数体用 // 分段说明，文件头标签可在设置里改。",
-  "type": "module",
-  "main": "./lib/index.js",
-  "exports": {
-    ".": "./lib/index.js",
-    "./client": "./lib/client.js",
-    "./package.json": "./package.json",
-    "./cordis.patch.yml": "./cordis.patch.yml"
-  },
-  "files": [
-    "lib",
-    "skills",
-    "cordis.patch.yml",
-    "locale",
-    "icon.svg",
-    "README.md",
-    "README.en.md",
-    "LICENSE",
-    "templates"
-  ],
-  "engines": {
-    "node": ">=22",
-    "dsh": ">=0.2.1-rc.1 <0.3.0-0"
-  },
-  "dsh": {
-    "bundle": {
-      "patch": "./cordis.patch.yml"
+    "name": "@chengzhao-dev/dsh-cpp-workflow",
+    "version": "0.7.10",
+    "description": "写 C++ 源码、配 CMake、用 Clang 构建；头文件用 /// Doxygen 文档注释，函数体用 // 分段说明，文件头标签可在设置里改。",
+    "type": "module",
+    "main": "./lib/index.js",
+    "exports": {
+        ".": "./lib/index.js",
+        "./client": "./lib/client.js",
+        "./package.json": "./package.json",
+        "./cordis.patch.yml": "./cordis.patch.yml"
     },
-    "client": {
-      "platform": "web",
-      "inject": [
-        "@deepseek-ai/dsh-client-ui-renderer",
-        "@deepseek-ai/dsh-client-ui-settings",
-        "@deepseek-ai/dsh-client-ui-plugin-manager"
-      ]
+    "files": [
+        "lib",
+        "skills",
+        "cordis.patch.yml",
+        "locale",
+        "icon.svg",
+        "README.md",
+        "README.en.md",
+        "LICENSE",
+        "templates"
+    ],
+    "engines": {
+        "node": ">=22",
+        "dsh": ">=0.2.1-rc.1 <0.3.0-0"
     },
-    "compatibility": {
-      "dshReleases": {
-        "0.2.1-rc.1": "compatible",
-        "0.2.1-rc.5": "compatible"
-      }
+    "dsh": {
+        "bundle": {
+            "patch": "./cordis.patch.yml"
+        },
+        "client": {
+            "platform": "web",
+            "inject": [
+                "@deepseek-ai/dsh-client-ui-renderer",
+                "@deepseek-ai/dsh-client-ui-settings",
+                "@deepseek-ai/dsh-client-ui-plugin-manager"
+            ]
+        },
+        "compatibility": {
+            "dshReleases": {
+                "0.2.1-rc.1": "compatible",
+                "0.2.1-rc.5": "compatible"
+            }
+        },
+        "catalog": {
+            "category": "skill",
+            "summary": {
+                "zh": "写 C++ 源码、配 CMake、用 Clang 构建；头文件用 /// Doxygen 文档注释，函数体用 // 分段说明，文件头标签可在设置里改。",
+                "en": "Write C++ sources, configure CMake, and build with Clang; /// Doxygen on declarations, // section notes in bodies, and configurable file-header tags."
+            },
+            "capabilities": [
+                "skills"
+            ]
+        }
     },
-    "catalog": {
-      "category": "skill",
-      "summary": {
-        "zh": "写 C++ 源码、配 CMake、用 Clang 构建；头文件用 /// Doxygen 文档注释，函数体用 // 分段说明，文件头标签可在设置里改。",
-        "en": "Write C++ sources, configure CMake, and build with Clang; /// Doxygen on declarations, // section notes in bodies, and configurable file-header tags."
-      },
-      "capabilities": [
+    "icon": "./icon.svg",
+    "scripts": {
+        "build": "tsc -p tsconfig.json && node scripts/building-client.mjs",
+        "test": "node scripts/building-client.mjs --check && npm run build && node scripts/checking-skill-links.mjs && node skills/engineering/scripts/checking-encoding.mjs --quiet && node scripts/checking-github-workflows.mjs && node --test tests/*.test.mjs",
+        "ci": "npm ci && npm run check:lib && npm test && npm run pack:check",
+        "ci:full": "npm run ci && npm run test:matrix",
+        "check:encoding": "node skills/engineering/scripts/checking-encoding.mjs",
+        "check:workflows": "node scripts/checking-github-workflows.mjs",
+        "test:matrix": "bash scripts/checking-standard-matrix.sh",
+        "pack:check": "npm pack --dry-run",
+        "check:lib": "node scripts/checking-lib.mjs"
+    },
+    "keywords": [
+        "dsh",
+        "dsh-plugin",
+        "deepseek-harness",
+        "cpp",
+        "c++",
+        "cplusplus",
+        "cmake",
+        "ninja",
+        "clang",
+        "gcc",
         "skills"
-      ]
+    ],
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/chengzhao-dev/dsh-cpp-workflow.git"
+    },
+    "homepage": "https://github.com/chengzhao-dev/dsh-cpp-workflow#readme",
+    "bugs": {
+        "url": "https://github.com/chengzhao-dev/dsh-cpp-workflow/issues"
+    },
+    "publishConfig": {
+        "access": "public",
+        "provenance": true
+    },
+    "peerDependencies": {
+        "@deepseek-ai/dsh-skill": ">=0.2.1-rc.1 <0.3.0-0"
+    },
+    "dependencies": {
+        "@deepseek-ai/schemastery": "^3.18.5"
+    },
+    "devDependencies": {
+        "@deepseek-ai/dsh-skill": ">=0.2.1-rc.1 <0.3.0-0",
+        "@types/node": "^22.20.5",
+        "typescript": "^5.9.3",
+        "yaml": "^2.9.1"
     }
-  },
-  "icon": "./icon.svg",
-  "scripts": {
-    "build": "tsc -p tsconfig.json && node scripts/building-client.mjs",
-    "test": "node scripts/building-client.mjs --check && npm run build && node scripts/checking-skill-links.mjs && node skills/engineering/scripts/checking-encoding.mjs --quiet && node scripts/checking-github-workflows.mjs && node --test tests/*.test.mjs",
-    "ci": "npm ci && npm test && npm run check:lib && npm run pack:check",
-    "ci:full": "npm run ci && npm run test:matrix",
-    "check:encoding": "node skills/engineering/scripts/checking-encoding.mjs",
-    "check:workflows": "node scripts/checking-github-workflows.mjs",
-    "test:matrix": "bash scripts/checking-standard-matrix.sh",
-    "pack:check": "npm pack --dry-run",
-    "check:lib": "node scripts/checking-lib.mjs"
-  },
-  "keywords": [
-    "dsh",
-    "dsh-plugin",
-    "deepseek-harness",
-    "cpp",
-    "c++",
-    "cplusplus",
-    "cmake",
-    "ninja",
-    "clang",
-    "gcc",
-    "skills"
-  ],
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/chengzhao-dev/dsh-cpp-workflow.git"
-  },
-  "homepage": "https://github.com/chengzhao-dev/dsh-cpp-workflow#readme",
-  "bugs": {
-    "url": "https://github.com/chengzhao-dev/dsh-cpp-workflow/issues"
-  },
-  "publishConfig": {
-    "access": "public",
-    "provenance": true
-  },
-  "peerDependencies": {
-    "@deepseek-ai/dsh-skill": ">=0.2.1-rc.1 <0.3.0-0"
-  },
-  "dependencies": {
-    "@deepseek-ai/schemastery": "^3.18.5"
-  },
-  "devDependencies": {
-    "@deepseek-ai/dsh-skill": ">=0.2.1-rc.1 <0.3.0-0",
-    "@types/node": "^22.20.5",
-    "typescript": "^5.9.3",
-    "yaml": "^2.9.1"
-  }
 }

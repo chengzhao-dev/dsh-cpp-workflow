@@ -5,9 +5,9 @@
 
 ```bash
 clang-tidy -p build/clang \
-  --header-filter="^$(pwd -P)/(include|src|app|tests)/" \
-  --warnings-as-errors='*' \
-  src/*.cpp app/*.cpp tests/*.cpp
+    --header-filter="^$(pwd -P)/(include|src|app|tests)/" \
+    --warnings-as-errors='*' \
+    src/*.cpp app/*.cpp tests/*.cpp
 ```
 
 - `-p` 指向当前编译器的构建目录，读取 `compile_commands.json`。
@@ -36,7 +36,7 @@ clang-tidy -p build/clang \
 
 ## 版本与一致性
 
-- `clang-format` / `clang-tidy` ≥ 16；clang 模式下与 `clang++`、`clangd` 同主版本。
+- `clang-format` / `clang-tidy` ≥ 16；clang 模式下与 `clang++`、`clangd` 同主版本。Apple Clang 与 Homebrew LLVM 混装时，仍按同一 LLVM 主版本要求处理：工具版本不一致就统一到同一套工具链，不改检查项来迁就。
 - 混版本常见症状：格式化结果与 CI 不同、clangd 诊断与 tidy 不一致、选项被静默忽略。
 - 检查器在 `--live` 时核对版本；不要用「能跑就行」绕过。
 

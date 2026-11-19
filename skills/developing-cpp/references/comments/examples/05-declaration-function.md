@@ -1,4 +1,4 @@
-<!-- 读取时机：写或改注释的示例时；读完能回答：正反例：函数声明注释；预算：一次只开这一份（115 行），不自动串联。 -->
+<!-- 读取时机：写或改注释的示例时；读完能回答：正反例：函数声明注释；预算：一次只开这一份（121 行），不自动串联。 -->
 # 正反例：函数声明注释
 
 ## 第一句：结果、保证或成立条件
@@ -16,9 +16,11 @@ Square GetSquare(Position pos) const;
 **好**：
 
 ```cpp
-/// 坐标越界时抛出 std::out_of_range；合法坐标返回该格。
+/// 坐标越界时抛出 `std::out_of_range`；合法坐标返回该格的副本。
 ///
 /// @param pos 行列坐标。
+///
+/// @return 该坐标的方格副本。
 ///
 /// @throws std::out_of_range 坐标不在棋盘范围内。
 Square GetSquare(Position pos) const;
@@ -30,7 +32,7 @@ Square GetSquare(Position pos) const;
 
 ```cpp
 /// 比较两个坐标。
-friend bool operator==(const Position&, const Position&) = default;
+bool operator==(const Position& other) const = default;
 ```
 
 **好**：
@@ -39,7 +41,11 @@ friend bool operator==(const Position&, const Position&) = default;
 /// 相等运算符。
 ///
 /// 当两个坐标的行与列都相同时返回 true。
-friend bool operator==(const Position&, const Position&) = default;
+///
+/// @param other 另一个坐标。
+///
+/// @return 成立时返回 true；不成立时返回 false。
+bool operator==(const Position& other) const = default;
 ```
 
 布尔查询的第一句写「主体是否状态」，句中有「是否」，句首不用「检查」「判断」「校验」「验证」，让读者先看到被检查的条件；`operator==` 写「相等运算符。」，第二句说明成立条件。

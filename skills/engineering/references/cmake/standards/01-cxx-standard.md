@@ -60,7 +60,7 @@ configure 后读 `build/<compiler>/compile_commands.json`，逐条核对每个 t
 grep -o -- '-std=[^ ]*' build/clang/compile_commands.json | sort -u
 ```
 
-每个编译 target 的输出都应只有一条，且等于 `-std=c++NN`；出现 `gnu++NN`、两条不同值或没有 `-std=` 都回第 1 步。`CXX_STANDARD_REQUIRED ON` 与 `CXX_EXTENSIONS OFF` 同时存在时，该 target 会得到精确的 `-std=c++NN`；只链接了 `PUBLIC` / `INTERFACE` 库的消费者不继承这两项，要自己调用函数。仍以数据库为准，不靠猜。
+整份数据库的输出应只有一条，且等于 `-std=c++NN`；等价于同一 target 的各条取值相同。出现 `gnu++NN`、两条不同值或没有 `-std=` 都回第 1 步。`CXX_STANDARD_REQUIRED ON` 与 `CXX_EXTENSIONS OFF` 同时存在时，该 target 会得到精确的 `-std=c++NN`；只链接了 `PUBLIC` / `INTERFACE` 库的消费者不继承这两项，要自己调用函数。仍以数据库为准，不靠猜。
 
 ## 官方依据
 

@@ -5,7 +5,7 @@
 
 ```cpp
 Board board_;  // 对局棋盘。
-std::array<Square, kSquareCount> squares_{};  // 存储棋盘方格。
+std::array<Square, kSquares> squares_{};  // 存储棋盘方格。
 ```
 
 前一句把名字翻译了一遍；后一句只复述声明，没有说清下标怎样换算成行列。
@@ -14,7 +14,7 @@ std::array<Square, kSquareCount> squares_{};  // 存储棋盘方格。
 
 ```cpp
 /// 方格数组：按行优先排列。
-std::array<Square, kSquareCount> squares_{};
+std::array<Square, kSquares> squares_{};
 /// 当前玩家：开局由 X 玩家落子。
 Player current_player_{Player::kX};
 /// 落子历史：按落子先后保存。

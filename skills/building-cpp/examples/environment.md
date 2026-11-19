@@ -1,109 +1,32 @@
 # 正反例：环境组合
 
-## 合法声明
+声明规则、合法组合、各轴取值与校验命令见 `../references/02-environment.md`。本文件只保留三处判不准的期望输出。
+
+## 轴为空
 
 ```json
 {
-  "host": "windows",
-  "build_host": "wsl",
-  "compiler": "clang",
-  "standard": "c++23"
+    "host": "linux",
+    "build_host": "",
+    "compiler": "gcc"
 }
 ```
 
-在 WSL 内执行 `running-build.sh clang`；构建目录 `build/clang`。
+不带 `--live` 时以退出码 2 失败，`issues` 指名 `build_host` 为空；此时不查找 `g++`，先让用户把轴填上。
+
+## compiler 写成数组
 
 ```json
 {
-  "host": "linux",
-  "build_host": "native",
-  "compiler": "gcc"
+    "host": "linux",
+    "build_host": "native",
+    "compiler": ["clang", "gcc"]
 }
 ```
 
-在 Linux 上执行 `running-build.sh gcc`；构建目录 `build/gcc`。
+同样退出码 2，说明一个 configure 只允许一个编译器；拆成两次声明或两个工程，不要指望检查器替你选。
 
-## 非法声明
-
-**轴为空**：
-
-```json
-{
-  "host": "linux",
-  "build_host": "",
-  "compiler": "gcc"
-}
-```
-
-声明校验以退出码 2 失败，不查找 `g++`。先让用户填 `build_host`。
-
-**组合非法**：
-
-```json
-{
-  "host": "linux",
-  "build_host": "wsl",
-  "compiler": "clang"
-}
-```
-
-WSL 只对 `host=windows` 合法；不要通过改 `host` 来绕过，先确认工程到底跑在哪。
-
-**同时写两个编译器**：
-
-```json
-{
-  "host": "linux",
-  "build_host": "native",
-  "compiler": ["clang", "gcc"]
-}
-```
-
-一个 configure 只允许一个编译器；拆成两次声明或两个工程。
-
-## Windows 原生
-
-```json
-{
-  "host": "windows",
-  "build_host": "native",
-  "compiler": "clang"
-}
-```
-
-这不是「合法但暂时不能构建」，而是本版本直接拒绝的组合。声明校验返回：
-
-```text
-ok: false
-issues: ["本版本不能在 Windows 原生壳里构建"]
-```
-
-停在这里。不要建议改 `build_host` 为 `wsl` 来绕过，也不要补 PowerShell 脚本。
-
-## GCC 模式不比较 GCC 主版本
-
-```text
-g++ 14.1.0
-clang-format 18.1.8
-clang-tidy 18.1.8
-clangd 18.1.8
-```
-
-通过：检查器只要求 `g++` 是真的 GCC，`clang-format` / `clang-tidy` ≥ 16，`clangd` 可用。不要拿 GCC 的主版本去要求 Clang 工具，也不要因为版本号不同就换成一套不存在的 `gcc-format`。若 GCC 的标准库太旧、`<format>` 不可用，升级工具链，而不是改检查器。
-
-## macOS 的 `g++` 别名
-
-```json
-{
-  "host": "macos",
-  "build_host": "native",
-  "compiler": "gcc"
-}
-```
-
-`/usr/bin/g++` 实际是 Apple clang 的别名；`--live` 应报告「声明的 g++ 实际是 Apple clang」。安装真正的 GCC（如 Homebrew `gcc`）并把 `g++` 指向它，或把声明改成 `compiler=clang`。
-
-## 版本不一致
+## 四工具版本不一致
 
 ```text
 clang++ 18.1.8
@@ -112,16 +35,4 @@ clang-tidy 16.0.6
 clangd 16.0.6
 ```
 
-clang 模式要求四者同主版本；这里 18 与 16 不一致，`--live` 失败。统一到同一 LLVM 发行版，不要只升级编译器。
-
-## 声明校验与活动校验
-
-```bash
-# CI / Windows 开发机：只读声明，不需要工具链
-node "<skill-dir>/scripts/checking-environment.mjs" --project .
-
-# build host 上：核对构建宿主、PATH 和版本
-node "<skill-dir>/scripts/checking-environment.mjs" --project . --live
-```
-
-不带 `--live` 时永远不探测 PATH；不要把活动校验塞进每次构建，构建脚本已经隐含了工具存在性。
+`--live` 以退出码 3 失败，`issues` 报四者不在同一 LLVM 主版本；统一到同一发行版，不要只升级编译器。不带 `--live` 时只读声明、不探测 PATH，这条不报。

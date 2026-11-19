@@ -1,7 +1,7 @@
 <!-- 读取时机：统一命名术语时；读完能回答：终局评分与搜索分的命名；预算：一次只开这一份（26 行），不自动串联。 -->
 # scoring：终局评分与搜索分
 
-终局评分是规则查询：`ScoreFinishedGame(const Game&)` 读 `GameResult` 与 `move_count`，返回 `int`；X 胜为正、O 胜为负、进行中或平局为 0。分数只在搜索内部用于比较，不写进 `GameResult`，也不交给会话层决定胜负。
+终局评分若作为规则查询单独提供，写成 `ScoreFinishedGame(const Game&)`，读 `GameResult` 与 `move_count`，返回 `int`；一方胜为正、另一方胜为负、进行中或平局为 0，正负对应哪一方由项目约定。分数只在搜索内部用于比较，不写进 `GameResult`，也不交给会话层决定胜负。独立评分查询是否提供、放在哪一层，由项目决定；不提供时就在搜索里按终局分支就地评分。
 
 ## 语义对照
 
@@ -22,6 +22,6 @@
 
 ## 依据
 
-- 本项目 `games/tictactoe/tictactoe/include/computer.h` 与 `src/computer.cpp` 的 `ScoreFinishedGame`、`Minimax`。
+- 搜索内的评分是项目实现事实，写在项目技能里；本文件只约定名字与签名形状。
 - 领域结果与查询的命名规则见 [01-identifier-names.md](../01-identifier-names.md)。
 - 终局结果类型与落子结果的约定见 [06-move-result.md](../../design/examples/06-move-result.md)。

@@ -4,7 +4,7 @@
 - 文件用 `std::ifstream` / `std::ofstream`；构造后检查 `is_open()`，读写后检查流状态（`fail` / `bad`），不要假设成功。
 - 文本按行读用 `std::getline`；二进制在 Windows 用 `std::ios::binary`，避免换行转换。
 - 需要异常时先 `exceptions()` 设置掩码；默认 iostream 不抛异常。
-- 路径用 `std::filesystem::path`，拼接用 `./`；遍历/查询用 `std::filesystem`，失败用 `error_code` 重载或捕获 `filesystem_error`。
+- 路径用 `std::filesystem::path`，拼接用 `operator/`，例如 `path{dir} / "name"`；不要用字符串相加，也不要带 `./` 前缀。遍历/查询用 `std::filesystem`，失败用 `error_code` 重载或捕获 `filesystem_error`。
 - 写文件先写临时文件再改名，避免半写状态；需要原子替换时用 `rename`。
 
 ## 依据

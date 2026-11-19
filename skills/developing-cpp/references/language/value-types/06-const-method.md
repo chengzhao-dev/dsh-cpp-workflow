@@ -3,12 +3,12 @@
 
 ```cpp
 class TaskBoard {
- public:
-  [[nodiscard]] TaskState GetTaskState(TaskId id) const;
-  void SetTaskState(TaskId id, TaskState state);
+public:
+    [[nodiscard]] TaskState GetTaskState(TaskId id) const;
+    void SetTaskState(TaskId id, TaskState state);
 
- private:
-  std::array<TaskState, kTaskCount> tasks_{};
+private:
+    std::array<TaskState, kTaskCount> tasks_{};
 };
 ```
 

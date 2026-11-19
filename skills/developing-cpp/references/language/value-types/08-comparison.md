@@ -2,7 +2,7 @@
 # 比较运算符
 
 - 默认比较只给调用方真的会比较的值类型：`Position`、`Move` 这类坐标与记录可以默认比较；`Board` 这类实体在正常流程里不比较，不因为成员可比较就提供 `operator==`。测试要比较实体时，逐格或逐字段比较它的可观察状态，不把比较运算符加进生产接口。
-- 签名与 `[[nodiscard]]` 规则见上一节。
+- 默认比较优先写成员形式：`bool operator==(const Position& other) const = default;`，另一个对象统一叫 `other`，注释补一条 `@param other`；`friend` 形式只在必须非成员时使用，写 `friend bool operator==(const T&, const T&) = default;`，两个参数都不具名，注释也不写 `@param`。运算符本身不加 `[[nodiscard]]`，见 `07-nodiscard.md`。
 
 ## 标准与推荐
 

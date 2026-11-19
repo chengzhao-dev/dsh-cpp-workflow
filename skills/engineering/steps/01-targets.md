@@ -24,7 +24,7 @@ target 规则：
 - 源文件显式列出；不写 `file(GLOB ...)`，新增文件时改 CMake。
 - `set(CMAKE_EXPORT_COMPILE_COMMANDS ON)`；可执行文件输出到 `build/<compiler>/bin`，库到 `build/<compiler>/lib`。
 - 需要直接运行构建产物的共享库程序，调用 `set_target_build_rpath(app)`；函数在 Linux 写 `$ORIGIN/../lib`，Apple 写 `@loader_path/../lib`。
-- 标准用工程根 `cmake/` 里的 `set_target_cxx_standard(target visibility c++NN)`；模板为了脱离插件可直接复制而内联三属性，复制进工程后应改回函数。没有这个函数时先从 `../references/cmake/assets/CompileSettings.cmake` 复制到工程根 `cmake/` 并导入，不要在每个 target 重复三属性。需要 `set_target_build_rpath` 或 `fetch_googletest` 时，把同目录的 `LinkSettings.cmake` 一并复制并 `include(LinkSettings)`。
+- 标准用工程根 `cmake/` 里的 `set_target_cxx_standard(target visibility c++NN)`；模板为了脱离插件可直接复制而内联三属性与 RPATH 分支，复制进工程后应改回函数。没有这个函数时先从 `../references/cmake/assets/CompileSettings.cmake` 复制到工程根 `cmake/` 并导入，不要在每个 target 重复三属性。需要 `set_target_build_rpath` 或 `fetch_googletest` 时，把同目录的 `LinkSettings.cmake` 一并复制并 `include(LinkSettings)`。
 - 警告用同一份 `CompileSettings.cmake` 里的 `set_target_warnings(target visibility LEVEL basic|standard|strict)`；`visibility` 用 `PRIVATE` 或 `INTERFACE`，不要在每个 target 重复 `-Wall` 列表。
 
 ## 命令形状
@@ -33,7 +33,7 @@ configure 的目录与编译器写法以 `building-cpp` 的 `steps/01-build.md`�
 
 ## 情况
 
-**新工程**：工程模板仍由 `building-cpp` 提供，从 `../../building-cpp/assets/templates/projects/` 选形态，只复制目标工程缺的文件；模板里的三属性只是可运行的最小形状，接管时按本节换成 `set_target_cxx_standard`；警告与 `-Werror` 由 `set_target_warnings` 按需打开，模板不默认加；模板里的 `{{PROJECT_NAME}}` 换成真实工程名，再按本节改 target 与标准。
+**新工程**：工程模板仍由 `building-cpp` 提供，从 `../../building-cpp/assets/templates/projects/` 选形态，只复制目标工程缺的文件；模板里的三属性只是可运行的最小形状，接管时按本节换成 `set_target_cxx_standard`；RPATH 分支同时换成 `set_target_build_rpath(app)`；警告与 `-Werror` 由 `set_target_warnings` 按需打开，模板不默认加；模板里的 `{{PROJECT_NAME}}` 换成真实工程名，再按本节改 target 与标准。
 
 **已有工程**：先读现有 `CMakeLists.txt`，找出全局设置、GLOB、输出目录和 target 命名；只改与当前任务相关的一处。大改前先让现有构建跑通，保留可回退点。
 

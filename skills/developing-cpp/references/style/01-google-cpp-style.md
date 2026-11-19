@@ -1,4 +1,4 @@
-<!-- 读取时机：查格式与写法时；读完能回答：Google C++ 风格：本技能采用的版本；预算：一次只开这一份（93 行），不自动串联。 -->
+<!-- 读取时机：查格式与写法时；读完能回答：Google C++ 风格：本技能采用的版本；预算：一次只开这一份（83 行），不自动串联。 -->
 # Google C++ 风格：本技能采用的版本
 
 以 [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html) 为基线。除「异常政策」「新工程默认 C++23」「枚举底层类型 `std::uint8_t`」「注释格式」「头文件去重方式」和「排版（4 空格、120 列、`IncludeBlocks: Preserve`）」六处明确偏离外，排版、命名、头文件、包含顺序和类型都按 Google 原文执行；普通对象默认花括号属于 Google 允许的本地选择，不单列为偏离；本地习惯不能悄悄覆盖它。
@@ -34,15 +34,11 @@
 
 ## 类型与声明
 
-- 纯数据聚合用 `struct`；有不变量的类型用 `class`，不变量在构造函数和公共成员函数里维持。
-- 单参数构造函数默认写 `explicit`，例外见 `references/language/language-basics/06-functions.md`；零参数构造函数不写。
-- 默认成员初始化写在声明处（NSDMI），不要在构造函数初始化列表里重复；初始值来自构造参数或工厂调用时，改在构造函数初始化列表用花括号写一次，如 `screen_{MakeScreen()}`。
-- 普通对象默认用花括号初始化：`int count{};`、`std::vector<int> values{1, 2, 3};`。成员声明处也默认写 `{}`；拷贝初始化或 `auto` 推导用 `=`；`name = {{` 只用于多行聚合常量表，单个对象和空初始化仍写 `count{}`；容量构造等 `()` 例外见 `references/language/language-basics/02-initialization.md`。
-- 类内声明顺序（public → protected → private，类型、常量、工厂、构造、函数、数据成员）以 `references/layout/03-declaration-order.md` 为准，本文不复述。
-- 用户声明的拷贝/移动/析构函数在头文件声明、在 `.cpp` 定义；`= default` / `= delete` 可留在类内（见 `references/layout/02-file-template.md`）；默认实现足够时写 `= default`（默认构造无参数，拷贝/移动构造与赋值按各自的签名）。
-- 查询成员函数标尾部 `const`；返回结果对象的 API 加 `[[nodiscard]]`，不要给所有非 `void` 函数机械添加。标注位置与 `friend` 的例外见 `references/language/value-types/07-nodiscard.md`。
-- 所有权优先 `std::unique_ptr`；没有共享所有权的理由时不用 `std::shared_ptr`。禁止裸 `new` / `delete`。
-- 禁止 C 风格强制转换；用 `static_cast`、`const_cast`、`reinterpret_cast`，C++20 起可用 `std::bit_cast`，低标准用 `std::memcpy`；并让 `clang-tidy` 的 `google-readability-casting` 兜底。
+- 聚合与不变量的选型见 `references/language/language-basics/07-classes.md`；单参数 `explicit` 与零参数的例外见 `references/language/language-basics/06-functions.md`。
+- 默认成员初始化、花括号初始化与拷贝初始化的选择见 `references/language/language-basics/02-initialization.md`。
+- 类内声明顺序见 `references/layout/03-declaration-order.md`；特殊成员 `= default` / `= delete` 的位置见 `references/layout/02-file-template.md`。
+- 查询成员的尾部 `const` 与结果对象的 `[[nodiscard]]` 见 `references/language/value-types/06-const-method.md`、`07-nodiscard.md`。
+- 所有权与裸 `new` / `delete` 见 `references/language/language-basics/08-raii.md`；四种 `*_cast` 与禁止 C 风格转换见 `references/language/value-types/02-signed.md`。
 - `.cpp` 里不需要外部引用的 `constexpr` 直接放具名命名空间；仅一个函数使用时才用函数内 `static constexpr`；函数和类型仍放匿名命名空间。
 - 一个 `.cpp` 只写一个匿名命名空间，公开函数的定义放在它后面。
 - 只给本翻译单元用的函数和类型放唯一的匿名命名空间，不用文件作用域 `static` 隐藏函数：LLVM 与 Mozilla 的规范偏好 `static`，Chromium、C++ Core Guidelines SF.22、MISRA C++:2023 6.5.2 与 Abseil Tip 186 用匿名命名空间，本工作流跟后面这一组。
@@ -52,13 +48,11 @@
 
 ## 函数
 
-- 优先返回值，不用输出参数：返回 `std::string`、`std::vector<T>`、结果结构体。
-- 已有成员按 `const` 引用返回，例如 `GetHistory()`；不要返回内部容器的可变引用。
+- 返回值与输出参数、`const` 引用返回、虚函数默认参数见 `references/language/language-basics/06-functions.md`；`if` / `for` / `while` 的花括号见 `05-expressions.md`。
 - 函数保持短小；没有硬上限，超过约 40 行时先拆出有名字的步骤，而不是加注释分节。
 - 头文件与实现文件的槽位见 `references/layout/02-file-template.md`，不在条文里重复内联阈值。
 - 虚函数不用默认参数；默认参数只用于非虚的便利接口。
 - 尾置返回类型只在普通语法不可行或明显更难读时使用，例如返回类型依赖参数；不要为了风格统一全面改写。
-- `if` / `for` / `while` / `do` 总是写花括号；`case` 的取舍见 `references/language/language-basics/05-expressions.md`。
 - 只对自己的类型重载运算符；不重载 `&&`、`||`、`,`、一元 `&`；不定义用户字面量。
 
 ## 表达式与整数
@@ -80,15 +74,11 @@ Google 原文不使用 C++ 异常；本工作流只在开发阶段的源码指�
 
 ## 输出与格式化
 
-- 组合消息以 `std::format` 为主：`std::format("任务 {} 进入状态 {}", task, state)`。
-- 输出方式见 `references/language/standard-library/06-format.md`。
-- 简单字面量输出可以直接用 `std::cout << "..."`；需要拼接变量、对齐、数值格式时用 `std::format`。
+- `std::format` 与流的组合消息、简单字面量输出、浮点与整数格式见 `references/language/standard-library/06-format.md`。
 - 列宽跟文件最近的 `.clang-format` 的 `ColumnLimit` 走（从文件目录向上查到工程根）；工程未声明时按 120 列，模板资产固定 `ColumnLimit: 120`。每级缩进用 4 个空格，续行与行内对齐也用空格；缩进与对齐由 `.clang-format` 统一，不在条文里另定一套。
-- 浮点输出固定精度，整数不依赖隐式格式；`std::format` 的格式串写全。
 
 ## 注释
 
-- 注释写意图、契约、取舍，不复述代码。
+- 注释写意图、契约、取舍，不复述代码；写什么见 `references/comments/01-comment-rules.md`，怎么写见 `02-style.md`。
 - 注释格式是本项目的第四处偏离：用 Doxygen 的 `///` 加 `@file`、`@brief`、`@param` 组织，Google 原文用 `//` 散文、文件头放 license boilerplate；本项目源码不带 license 头，分发或开源前补上。
-- 文件头、声明注释、实现注释与配置注释的格式见 `references/comments/02-style.md`，写什么见 `01-comment-rules.md`。
-- TODO 统一写 `// TODO: <阶段或 issue> - <要做什么>`；不要写 `@todo`、`FIXME` 或只有「参考」没有动作的占位。
+- TODO 句式见 `references/comments/02-style.md` 的「TODO」条；不要写 `@todo`、`FIXME` 或只有「参考」没有动作的占位。

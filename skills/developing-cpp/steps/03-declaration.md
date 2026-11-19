@@ -9,15 +9,14 @@
 - 语言标准由项目声明决定：项目技能写明档位时以其为准，未写才读 `environment.json` 的 `standard`，两者都没有时用新工程默认 C++23（C++11–C++23）。
 - 文件槽位、`#pragma once` 与扩展名以 `references/layout/02-file-template.md` 为准；本步只决定声明写什么。
 - 命名以 `references/naming/01-identifier-names.md` 为准：规则表、语义角色、谓词与查询命名都在那里；字符集、保留标识符与不向 `std` 添加声明见同文件的「字符集与保留标识符」。
-- 声明顺序以 `references/layout/03-declaration-order.md` 为准：类型 → 静态常量 → 工厂 → 构造/赋值/析构 → 其他函数 → 数据成员。组内次序也按同一份的「其他函数的组内次序」：`operator==` 开头、`Get` 按数据成员顺序、先 `ClearSquare` 后 `Clear`；声明区空行按「空行」表，组间 1 行、数据成员间 0 行、`private:` 前 1 行、连续两空行是缺陷。数据成员按初始化依赖、逻辑分组和阅读顺序排列，不按字母序；先声明先初始化，初始化器只能安全使用已经完成初始化的成员。
+- 声明顺序、组内次序与空行以 `references/layout/03-declaration-order.md` 为准。数据成员按初始化依赖、逻辑分组和阅读顺序排列，不按字母序；先声明先初始化，初始化器只能安全使用已经完成初始化的成员。
 - 公共头自包含：自己用到的类型、宏和标准库头都直接包含。验证方式：建一个只包含该头的空 `.cpp` 编译一次，不通过就补 include；五条自检见 `references/layout/02-file-template.md` 的「自检」。
-- 单参数构造函数默认写 `explicit`，例外与转换规则见 `references/language/language-basics/06-functions.md`；查询成员函数尾部写 `const`；返回结果对象的 API 加 `[[nodiscard]]`，标注位置与 `friend` 的例外见 `references/language/value-types/07-nodiscard.md`；默认成员初始化写在声明处。初始化默认用花括号，详见 `references/language/language-basics/02-initialization.md`；该页说明 `std::vector<int>(n)` 这类容量构造为什么保留 `()`。特殊成员（含 `= default`）按声明顺序放在成员组最前，定义位置见 `references/layout/03-declaration-order.md`。
+- 单参数构造函数默认写 `explicit`，例外见 `references/language/language-basics/06-functions.md`；查询成员函数尾部写 `const`；返回结果对象的 API 加 `[[nodiscard]]`，位置与 `friend` 例外见 `references/language/value-types/07-nodiscard.md`。默认成员初始化写在声明处；初始化默认用花括号，为什么保留 `std::vector<int>(n)` 这类容量构造的 `()` 见 `references/language/language-basics/02-initialization.md`。特殊成员（含 `= default`）放在成员组最前，定义位置见 `references/layout/03-declaration-order.md`。
 - 头文件与实现文件的槽位见 `references/layout/02-file-template.md`；本步只守一条：不要一部分内联、一部分外移。头文件里不写 `using namespace`、非 `inline` 普通全局变量、匿名命名空间或 `static` 定义。
-- 失败是调用方的正常结果时，用结果类型或 `std::optional` 表达；输出参数只留给热循环里复用 `std::string` 或 `std::vector` 容量的例外，终端读入不使用。函数无法完成自己的任务、或构造函数无法建立不变量时才抛，异常类型的选择与消息见 `references/exceptions/01-exception-rules.md`。析构与 `swap` 标 `noexcept`，异常类型的拷贝/移动不抛；「拒绝」与「抛」并存时在公共头各写一行。
-- 一次操作有多种必须区分的正常结果时用 `enum class` 返回（如落子：成功、玩家不对、终局、占用），不用 `bool` 把原因压掉；成功还要附带数据时再考虑 `std::expected` 或结果结构。纯查询谓词仍用 `bool`。枚举项只在必要时显式写值；默认的连续值有利于 `switch` 的实现，也能避免因手写数值出错（C++ Core Guidelines Enum.8）。需要显式编号时，状态与结果枚举把 0 留给正常态（空、进行中或成功），失败态按固定顺序随后；身份枚举按领域编号（如 X=1、O=2），不套用 0 = 正常态；封闭状态码的枚举默认写 `: std::uint8_t`，普通枚举用默认底层类型；确需其他 ABI 宽度时写明理由（见 `references/language/value-types/04-enum.md`）；不要用 `bool` 开关参数承载两种以上行为（见 `references/language/value-types/10-float-bool.md`）。
-- 声明注释按 `references/comments/01-comment-rules.md`（内容）与 `references/comments/02-style.md`（结构、版式、措辞）写：类型注释、特殊成员、函数注释、数据成员。本步只决定「写哪些事实」：结果、失败方式、检查项、参数与返回值契约；句式、标签、宽度和示例由后两份定，行宽跟 `.clang-format` 的 `ColumnLimit`（默认 120，中文按两列、tab 按 4 列），枚举项与 `struct` 短字段的行尾注释用 `///<` 并与声明对齐。判不准用词时再开 `references/comments/glossary/01-comment-terms.md`，它只列词表，不重复句式。私有函数同样写声明契约，不能默认调用者知道前置条件；确有 out 参数时标 `[out]`，既读又写标 `[in,out]`。
-- 自定义类型的 `std::formatter` 特化放在类型头文件；`parse` 的默认格式限制、`format` 的复用与非法值回退见 `references/language/standard-library/06-format.md` 的「自定义类型的格式化」。
-- 本步定声明、写 `std::formatter` 特化时，输出方式见 `references/language/standard-library/06-format.md`。
+- 失败是调用方的正常结果时，用结果类型或 `std::optional` 表达；输出参数只留给热循环里复用容器容量的例外，终端读入不使用。函数无法完成自己的任务、或构造函数无法建立不变量时才抛；异常类型与消息见 `references/exceptions/01-exception-rules.md`。析构与 `swap` 标 `noexcept`；「拒绝」与「抛」并存时在公共头各写一行。
+- 一次操作有多种必须区分的正常结果时用 `enum class` 返回（如落子：成功、玩家不对、终局、占用），不用 `bool` 把原因压掉；成功还要附带数据时再考虑 `std::expected` 或结果结构；纯查询谓词仍用 `bool`。枚举项默认不显式写值；确需编号时状态与结果枚举把 0 留给正常态、失败态按固定顺序随后，身份枚举按领域编号。封闭状态码默认 `: std::uint8_t`，普通枚举用默认底层；不要用 `bool` 开关参数承载两种以上行为（见 `references/language/value-types/04-enum.md` 与 `10-float-bool.md`）。
+- 注释内容按 `references/comments/01-comment-rules.md`、结构版式按 `02-style.md`。本步只决定「写哪些事实」：结果、失败方式、检查项、参数与返回值契约。行宽跟 `.clang-format` 的 `ColumnLimit`（默认 120，中文按两列、tab 按 4 列）；枚举项与 `struct` 短字段的 `///<` 与声明对齐；私有函数同样写声明契约；out 参数标 `[out]`，既读又写标 `[in,out]`。
+- 自定义类型的 `std::formatter` 特化放在类型头文件；占位符解析与非法值回退见 `references/language/standard-library/06-format.md` 的「自定义类型的格式化」。
 
 ## 情况
 
@@ -35,7 +34,7 @@
 node "<skill-dir>/scripts/checking-comments.mjs" --root <项目根>
 ```
 
-`--no-brief`、`--allow-tag <标签>` 等参数由技能快照的「检查器参数」行列出，按该行加到命令末尾。
+需要关掉简报时加 `--no-brief`；关掉参数或返回值文档时加 `--no-param` 或 `--no-return`；项目确实要写作者、日期等隐私标签时加 `--allow-tag <标签>`。完整参数用 `node <skill-dir>/scripts/checking-comments.mjs --help` 查看。
 
 ## 正反例指针
 

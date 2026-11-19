@@ -1,6 +1,7 @@
 // 注释检查器锁定 references/comments/01-comment-rules.md 的硬规则：文件头、标签、标签间空行、注释与声明的贴合、
 // 列表缩进、成员清单、设计论证、跨类分工、类型系统复述、否定式边界、领域尺寸、谓词首句、
-// 控制序列常量首句、@param 完整性、摘要裸参数名与枚举行尾注释。规则改动时必须同步这里的用例。
+// 控制序列常量首句、@param/@return 完整性、@retval 顺序、特殊成员首句、函数体内 ///、摘要裸参数名
+// 与枚举行尾注释。规则改动时必须同步这里的用例。
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
 import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs'
@@ -14,751 +15,926 @@ import { checkText, displayWidth, functionParams, EXIT } from '../skills/develop
 const SCRIPT = fileURLToPath(new URL('../skills/developing-cpp/scripts/checking-comments.mjs', import.meta.url))
 
 function rules(text, options = {}) {
-  return checkText(text, options).map((issue) => issue.rule)
+    return checkText(text, options).map((issue) => issue.rule)
 }
 
 function file(...lines) {
-  return ['/// @file board.h', '/// @brief 定义棋盘。', '', ...lines, ''].join('\n')
+    return ['/// @file board.h', '/// @brief 定义棋盘。', '', ...lines, ''].join('\n')
 }
 
 test('注释行超过 80 列时报错', () => {
-  assert.deepEqual(rules(file()), [])
-  const wide = `/// ${'中'.repeat(40)}
+    assert.deepEqual(rules(file()), [])
+    const wide = `/// ${'中'.repeat(40)}
+///
+/// @return 读取的值。
 int f();
 `
-  assert.deepEqual(rules(file(wide), { width: 80 }), ['comment-width'])
+    assert.deepEqual(rules(file(wide), { width: 80 }), ['comment-width'])
 })
 
 test('列表项在注释符号后空三格', () => {
-  const flat = file('/// 三档共用入口：', '/// - 简单：随机。', 'int F();')
-  assert.deepEqual(rules(flat), ['list-indent'])
-  const indented = file('/// 三档共用入口：', '///   - 简单：随机。', 'int F();')
-  assert.deepEqual(rules(indented), [])
-  const block = ['/**', ' * @file board.h', ' * @brief 定义棋盘。', ' */', '', '/**', ' * 分派：', ' * - 简单：随机。', ' */', 'int F();', ''].join('\n')
-  assert.ok(rules(block, { commentStyle: 'block' }).includes('list-indent'))
-  const blockIndented = block.replace(' * - 简单', ' *   - 简单')
-  assert.ok(!rules(blockIndented, { commentStyle: 'block' }).includes('list-indent'))
+    const flat = file('/// 三档共用入口：', '/// - 简单：随机。', '///', '/// @return 选中的档位。', 'int F();')
+    assert.deepEqual(rules(flat), ['list-indent'])
+    const indented = file('/// 三档共用入口：', '///   - 简单：随机。', '///', '/// @return 选中的档位。', 'int F();')
+    assert.deepEqual(rules(indented), [])
+    const block = ['/**', ' * @file board.h', ' * @brief 定义棋盘。', ' */', '', '/**', ' * 分派：', ' * - 简单：随机。', ' *', ' * @return 选中的档位。', ' */', 'int F();', ''].join('\n')
+    assert.ok(rules(block, { commentStyle: 'block' }).includes('list-indent'))
+    const blockIndented = block.replace(' * - 简单', ' *   - 简单')
+    assert.ok(!rules(blockIndented, { commentStyle: 'block' }).includes('list-indent'))
 })
 
 test('缺少文件头时报错', () => {
-  assert.deepEqual(rules('class Board {};\n'), ['header-missing'])
-  assert.deepEqual(rules('class Board {};\n', { requireHeader: false }), [])
+    assert.deepEqual(rules('class Board {};\n'), ['header-missing'])
+    assert.deepEqual(rules('class Board {};\n', { requireHeader: false }), [])
 })
 
 test('文件头用 /// @file 与 @brief 收口', () => {
-  const doxy = ['/// @file board.h', '/// @brief 定义棋盘。', '', 'class Board {};', ''].join('\n')
-  assert.deepEqual(rules(doxy), [])
-  const doxyGap = ['/// @file board.h', '///', '/// @brief 定义棋盘。', '', 'class Board {};', ''].join('\n')
-  assert.deepEqual(rules(doxyGap), [])
-  const tooManyGaps = ['/// @file board.h', '///', '///', '/// @brief 定义棋盘。', '', 'class Board {};', ''].join('\n')
-  assert.deepEqual(rules(tooManyGaps), ['header-brief'])
-  assert.deepEqual(rules('/// @file board.h\n\nclass Board {};\n'), ['header-brief'])
-  assert.ok(rules('/// @brief 定义棋盘。\n\nclass Board {};\n').includes('header-missing'))
-  const cross = ['/// @file board.h', '/// @brief 定义棋盘。', '///', '/// 对局在 game.h。', '', 'class Board {};', ''].join('\n')
-  assert.ok(rules(cross, { fileName: 'board.h' }).includes('header-cross-file'))
+    const doxy = ['/// @file board.h', '/// @brief 定义棋盘。', '', 'class Board {};', ''].join('\n')
+    assert.deepEqual(rules(doxy), [])
+    const doxyGap = ['/// @file board.h', '///', '/// @brief 定义棋盘。', '', 'class Board {};', ''].join('\n')
+    assert.deepEqual(rules(doxyGap), [])
+    const tooManyGaps = ['/// @file board.h', '///', '///', '/// @brief 定义棋盘。', '', 'class Board {};', ''].join('\n')
+    assert.deepEqual(rules(tooManyGaps), ['header-brief'])
+    assert.deepEqual(rules('/// @file board.h\n\nclass Board {};\n'), ['header-brief'])
+    assert.ok(rules('/// @brief 定义棋盘。\n\nclass Board {};\n').includes('header-missing'))
+    const cross = ['/// @file board.h', '/// @brief 定义棋盘。', '///', '/// 对局在 game.h。', '', 'class Board {};', ''].join('\n')
+    assert.ok(rules(cross, { fileName: 'board.h' }).includes('header-cross-file'))
 })
 
 test('块注释在 --comment-style block 下收口', () => {
-  const block = [
-    '/**',
-    ' * @file board.h',
-    ' * @brief 定义棋盘。',
-    ' *',
-    ' * 棋盘状态。',
-    ' */',
-    '',
-    '/**',
-    ' * 棋盘。',
-    ' */',
-    'class Board {};',
-    '',
-  ].join('\n')
-  assert.deepEqual(rules(block, { commentStyle: 'block', fileName: 'board.h' }), [])
-  const blockGap = [
-    '/**',
-    ' * @file board.h',
-    ' *',
-    ' * @brief 定义棋盘。',
-    ' */',
-    '',
-    '/**',
-    ' * 棋盘。',
-    ' */',
-    'class Board {};',
-    '',
-  ].join('\n')
-  assert.deepEqual(rules(blockGap, { commentStyle: 'block', fileName: 'board.h' }), [])
-  assert.ok(rules(block, { fileName: 'board.h' }).includes('header-missing'))
-  const wrong = block.replace('@file board.h', '@file game.h')
-  assert.ok(rules(wrong, { commentStyle: 'block', fileName: 'board.h' }).includes('header-file-name'))
-  const missingBrief = block.replace(' * @brief 定义棋盘。\n', '')
-  assert.ok(rules(missingBrief, { commentStyle: 'block' }).includes('header-brief'))
+    const block = [
+        '/**',
+        ' * @file board.h',
+        ' * @brief 定义棋盘。',
+        ' *',
+        ' * 棋盘状态。',
+        ' */',
+        '',
+        '/**',
+        ' * 棋盘。',
+        ' */',
+        'class Board {};',
+        '',
+    ].join('\n')
+    assert.deepEqual(rules(block, { commentStyle: 'block', fileName: 'board.h' }), [])
+    const blockGap = [
+        '/**',
+        ' * @file board.h',
+        ' *',
+        ' * @brief 定义棋盘。',
+        ' */',
+        '',
+        '/**',
+        ' * 棋盘。',
+        ' */',
+        'class Board {};',
+        '',
+    ].join('\n')
+    assert.deepEqual(rules(blockGap, { commentStyle: 'block', fileName: 'board.h' }), [])
+    assert.ok(rules(block, { fileName: 'board.h' }).includes('header-missing'))
+    const wrong = block.replace('@file board.h', '@file game.h')
+    assert.ok(rules(wrong, { commentStyle: 'block', fileName: 'board.h' }).includes('header-file-name'))
+    const missingBrief = block.replace(' * @brief 定义棋盘。\n', '')
+    assert.ok(rules(missingBrief, { commentStyle: 'block' }).includes('header-brief'))
 })
 
 test('tab 缩进按 4 列计宽', () => {
-  assert.equal(displayWidth('\tab'), 6)
-  assert.equal(displayWidth('\t\t中'), 10)
+    assert.equal(displayWidth('\tab'), 6)
+    assert.equal(displayWidth('\t\t中'), 10)
 })
 
 test('块注释同样检查禁止标签与行宽', () => {
-  const block = ['/**', ' * @file board.h', ' * @brief 定义棋盘。', ' */', '', '/**', ' * 函数。', ' * @returns 结果', ' */', 'int F();', ''].join('\n')
-  assert.ok(rules(block, { commentStyle: 'block' }).includes('forbidden-tag'))
-  const wide = ['/**', ` * @file board.h`, ` * @brief ${'中'.repeat(45)}`, ' */', ''].join('\n')
-  assert.ok(rules(wide, { commentStyle: 'block', width: 80 }).includes('comment-width'))
+    const block = ['/**', ' * @file board.h', ' * @brief 定义棋盘。', ' */', '', '/**', ' * 函数。', ' * @returns 结果', ' */', 'int F();', ''].join('\n')
+    assert.ok(rules(block, { commentStyle: 'block' }).includes('forbidden-tag'))
+    const wide = ['/**', ` * @file board.h`, ` * @brief ${'中'.repeat(45)}`, ' */', ''].join('\n')
+    assert.ok(rules(wide, { commentStyle: 'block', width: 80 }).includes('comment-width'))
 })
 
 test('文件头提到别的源文件或目录时报错', () => {
-  const cross = ['/// @file board.h', '/// @brief 定义棋盘。', '///', '/// 对局流程在 game.h。', '', 'class Board {};', ''].join('\n')
-  assert.ok(rules(cross, { fileName: 'board.h' }).includes('header-cross-file'))
-  const own = ['/// @file board.h', '/// @brief 定义棋盘。', '///', '/// 棋盘状态。', '', 'class Board {};', ''].join('\n')
-  assert.ok(!rules(own, { fileName: 'board.h' }).includes('header-cross-file'))
-  const other = ['/// @file board.h', '/// @brief 定义棋盘。', '///', '/// 输入输出在 tests/。', '', 'class Board {};', ''].join('\n')
-  assert.ok(rules(other, { fileName: 'board.h' }).includes('header-cross-file'))
+    const cross = ['/// @file board.h', '/// @brief 定义棋盘。', '///', '/// 对局流程在 game.h。', '', 'class Board {};', ''].join('\n')
+    assert.ok(rules(cross, { fileName: 'board.h' }).includes('header-cross-file'))
+    const own = ['/// @file board.h', '/// @brief 定义棋盘。', '///', '/// 棋盘状态。', '', 'class Board {};', ''].join('\n')
+    assert.ok(!rules(own, { fileName: 'board.h' }).includes('header-cross-file'))
+    const other = ['/// @file board.h', '/// @brief 定义棋盘。', '///', '/// 输入输出在 tests/。', '', 'class Board {};', ''].join('\n')
+    assert.ok(rules(other, { fileName: 'board.h' }).includes('header-cross-file'))
 })
 
 test('禁止的 Doxygen 标签', () => {
-  for (const tag of ['@returns 结果', '@author 某人', '@details 细节']) {
-    assert.deepEqual(rules(file(`/// 函数。`, `///`, `/// ${tag}`, `int F();`)), ['forbidden-tag'], tag)
-  }
+    for (const tag of ['@returns 结果', '@author 某人', '@details 细节']) {
+        assert.deepEqual(rules(file(`/// 函数。`, `///`, `/// ${tag}`, `void F();`)), ['forbidden-tag'], tag)
+    }
 })
 
 test('注释与声明之间不能有空行', () => {
-  assert.deepEqual(rules(file('/// 函数。', '', 'int F();')), ['doc-gap'])
+    assert.deepEqual(rules(file('/// 函数。', '', 'void F();')), ['doc-gap'])
 })
 
 test('类型注释不许罗列成员功能', () => {
-  const text = file(
-    '/// 棋盘。',
-    '///',
-    '/// 提供检查坐标、放置棋子和判定终局的功能。',
-    'class Board {};',
-  )
-  assert.deepEqual(rules(text), ['member-list'])
+    const text = file(
+        '/// 棋盘。',
+        '///',
+        '/// 提供检查坐标、放置棋子和判定终局的功能。',
+        'class Board {};',
+    )
+    assert.deepEqual(rules(text), ['member-list'])
 })
 
 test('接口注释不许写方案对比', () => {
-  const text = file(
-    '/// 棋盘。',
-    '///',
-    '/// 用大括号按名字初始化，比位置参数更难写反。',
-    'class Board {};',
-  )
-  assert.deepEqual(rules(text), ['rationale'])
-  const contract = file('/// 棋盘。', '///', '/// 越界、已占或要写空格子都返回 false，不抛异常。', 'class Board {};')
-  assert.deepEqual(rules(contract), [])
+    const text = file(
+        '/// 棋盘。',
+        '///',
+        '/// 用大括号按名字初始化，比位置参数更难写反。',
+        'class Board {};',
+    )
+    assert.deepEqual(rules(text), ['rationale'])
+    const contract = file('/// 棋盘。', '///', '/// 越界、已占或要写空格子都返回 false，不抛异常。', 'class Board {};')
+    assert.deepEqual(rules(contract), [])
 })
 
 test('类型注释不许交代别的类型负责什么', () => {
-  const text = file(
-    '/// 井字棋棋盘。',
-    '///',
-    '/// 不含回合推进：谁该落子留在 Game。',
-    'class Board {};',
-  )
-  assert.deepEqual(rules(text), ['forward-ref', 'negated-boundary'])
-  const contract = file('/// 井字棋棋盘。', '///', '/// 每格取空、X 或 O；越界坐标不会写入棋盘。', 'class Board {};')
-  assert.deepEqual(rules(contract), [])
+    const text = file(
+        '/// 井字棋棋盘。',
+        '///',
+        '/// 不含回合推进：谁该落子留在 Game。',
+        'class Board {};',
+    )
+    assert.deepEqual(rules(text), ['forward-ref', 'negated-boundary'])
+    const contract = file('/// 井字棋棋盘。', '///', '/// 每格取空、X 或 O；越界坐标不会写入棋盘。', 'class Board {};')
+    assert.deepEqual(rules(contract), [])
 })
 
 test('纯值容器类型注释只写一句，跨类分工与否定能力边界都报错', () => {
-  const verbose = file(
-    '/// 格子：保存一个 `SquareValue` 的值容器。',
-    '///',
-    '/// 初始为空。`SetValue` 只更新存储的值，不检查当前值；',
-    '/// 空值、占用与终局由 `Board` 与 `Game` 决定。`Square` 不依赖棋盘或对局类型。',
-    'class Square {};',
-  )
-  const issues = rules(verbose)
-  assert.ok(issues.includes('forward-ref'))
-  assert.ok(issues.includes('negative-scope'))
-  const concise = file('/// 格子：保存一个 `SquareValue` 的值容器。', 'class Square {};')
-  assert.deepEqual(rules(concise), [])
+    const verbose = file(
+        '/// 格子：保存一个 `SquareValue` 的值容器。',
+        '///',
+        '/// 初始为空。`SetValue` 只更新存储的值，不检查当前值；',
+        '/// 空值、占用与终局由 `Board` 与 `Game` 决定。`Square` 不依赖棋盘或对局类型。',
+        'class Square {};',
+    )
+    const issues = rules(verbose)
+    assert.ok(issues.includes('forward-ref'))
+    assert.ok(issues.includes('negative-scope'))
+    const concise = file('/// 格子：保存一个 `SquareValue` 的值容器。', 'class Square {};')
+    assert.deepEqual(rules(concise), [])
 })
 
 test('类型注释不写否定式边界', () => {
-  const text = file('/// 棋盘坐标。', '///', '/// 只保存位置，不拥有棋盘区间。', 'struct CellPosition {};')
-  assert.deepEqual(rules(text), ['negated-boundary'])
-  const ok = file('/// 棋盘坐标。', 'struct CellPosition {};')
-  assert.deepEqual(rules(ok), [])
+    const text = file('/// 棋盘坐标。', '///', '/// 只保存位置，不拥有棋盘区间。', 'struct CellPosition {};')
+    assert.deepEqual(rules(text), ['negated-boundary'])
+    const ok = file('/// 棋盘坐标。', 'struct CellPosition {};')
+    assert.deepEqual(rules(ok), [])
 })
 
 test('注释不写否定式能力边界', () => {
-  const text = file('/// 清空棋盘。', '///', '/// 不检查棋盘是否为空。', 'void Clear();')
-  assert.deepEqual(rules(text), ['negative-scope'])
-  const state = file('/// 清空棋盘。', '///', '/// 未变更时保持原值，不做修改。', 'void Clear();')
-  assert.deepEqual(rules(state), [])
+    const text = file('/// 清空棋盘。', '///', '/// 不检查棋盘是否为空。', 'void Clear();')
+    assert.deepEqual(rules(text), ['negative-scope'])
+    const state = file('/// 清空棋盘。', '///', '/// 未变更时保持原值，不做修改。', 'void Clear();')
+    assert.deepEqual(rules(state), [])
 })
 
 test('控制序列常量写名词短语并补出额外效果', () => {
-  const action = file(
-    '/// 进入备用屏幕，保存光标并切到备用缓冲区。',
-    'inline constexpr std::string_view kEnterAlternateScreen = "\\033[?1049h";',
-  )
-  assert.deepEqual(rules(action), ['constant-sequence-first'])
-  const missing = file('inline constexpr std::string_view kHideCursor = "\\033[?25l";')
-  assert.deepEqual(rules(missing), ['constant-comment-missing'])
-  const good = file(
-    '/// 进入备用屏幕的控制序列：保存光标后切换到备用缓冲区。',
-    'inline constexpr std::string_view kEnterAlternateScreen = "\\033[?1049h";',
-    '/// 隐藏光标的控制序列。',
-    'inline constexpr std::string_view kHideCursor = "\\033[?25l";',
-  )
-  assert.deepEqual(rules(good), [])
-  const blockBad = [
-    '/**',
-    ' * @file terminal.h',
-    ' * @brief 终端控制序列。',
-    ' */',
-    '',
-    '/**',
-    ' * 清屏。',
-    ' */',
-    'inline constexpr std::string_view kClearDisplay = "\\033[2J";',
-    '',
-  ].join('\n')
-  assert.ok(rules(blockBad, { commentStyle: 'block' }).includes('constant-sequence-first'))
+    const action = file(
+        '/// 进入备用屏幕，保存光标并切到备用缓冲区。',
+        'inline constexpr std::string_view kEnterAlternateScreen = "\\033[?1049h";',
+    )
+    assert.deepEqual(rules(action), ['constant-sequence-first'])
+    const missing = file('inline constexpr std::string_view kHideCursor = "\\033[?25l";')
+    assert.deepEqual(rules(missing), ['constant-comment-missing'])
+    const good = file(
+        '/// 进入备用屏幕的控制序列：保存光标后切换到备用缓冲区。',
+        'inline constexpr std::string_view kEnterAlternateScreen = "\\033[?1049h";',
+        '/// 隐藏光标的控制序列。',
+        'inline constexpr std::string_view kHideCursor = "\\033[?25l";',
+    )
+    assert.deepEqual(rules(good), [])
+    const blockBad = [
+        '/**',
+        ' * @file terminal.h',
+        ' * @brief 终端控制序列。',
+        ' */',
+        '',
+        '/**',
+        ' * 清屏。',
+        ' */',
+        'inline constexpr std::string_view kClearDisplay = "\\033[2J";',
+        '',
+    ].join('\n')
+    assert.ok(rules(blockBad, { commentStyle: 'block' }).includes('constant-sequence-first'))
 })
 
 test('同一分组内的 Doxygen 标签之间不空行', () => {
-  const bad = file(
-    '/// 检查标志。',
-    '///',
-    '/// @param flag 待检查的标志。',
-    '///',
-    '/// @param other 另一个标志。',
-    'bool Check(bool flag, bool other);',
-  )
-  assert.deepEqual(rules(bad), ['tag-gap'])
-  const ok = file(
-    '/// 检查标志。',
-    '///',
-    '/// @param flag 待检查的标志。',
-    '///',
-    '/// @return 标志有效时返回 true。',
-    'bool Check(bool flag);',
-  )
-  assert.deepEqual(rules(ok), [])
+    const bad = file(
+        '/// 检查标志。',
+        '///',
+        '/// @param flag 待检查的标志。',
+        '///',
+        '/// @param other 另一个标志。',
+        '///',
+        '/// @return 两个标志都有效时返回 true；至少一个标志无效时返回 false。',
+        'bool Check(bool flag, bool other);',
+    )
+    assert.deepEqual(rules(bad), ['tag-gap'])
+    const ok = file(
+        '/// 检查标志。',
+        '///',
+        '/// @param flag 待检查的标志。',
+        '///',
+        '/// @return 标志有效时返回 true；标志无效时返回 false。',
+        'bool Check(bool flag);',
+    )
+    assert.deepEqual(rules(ok), [])
 })
 
 test('摘要与标签块之间必须空行', () => {
-  const bad = file(
-    '/// 检查标志。',
-    '/// @param flag 待检查的标志。',
-    'bool Check(bool flag);',
-  )
-  assert.deepEqual(rules(bad), ['brief-tag-gap'])
-  const ok = file(
-    '/// 检查标志。',
-    '///',
-    '/// @param flag 待检查的标志。',
-    'bool Check(bool flag);',
-  )
-  assert.deepEqual(rules(ok), [])
+    const bad = file(
+        '/// 检查标志。',
+        '/// @param flag 待检查的标志。',
+        '///',
+        '/// @return 标志有效时返回 true；标志无效时返回 false。',
+        'bool Check(bool flag);',
+    )
+    assert.deepEqual(rules(bad), ['brief-tag-gap'])
+    const ok = file(
+        '/// 检查标志。',
+        '///',
+        '/// @param flag 待检查的标志。',
+        '///',
+        '/// @return 标志有效时返回 true；标志无效时返回 false。',
+        'bool Check(bool flag);',
+    )
+    assert.deepEqual(rules(ok), [])
 })
 
 test('类型注释不写领域尺寸', () => {
-  const text = file('/// 井字棋棋盘。', '///', '/// 3×3 个格子。', 'class Board {};')
-  assert.deepEqual(rules(text), ['domain-size'])
-  const ok = file('/// 井字棋棋盘。', 'class Board {};')
-  assert.deepEqual(rules(ok), [])
+    for (const phrase of ['3×3 个格子。', '九个方格。', '九个格子。', '3 行 3 列。', '边长固定为 3。']) {
+        const sized = file('/// 井字棋棋盘。', '///', `/// ${phrase}`, 'class Board {};')
+        assert.deepEqual(rules(sized), ['domain-size'], phrase)
+    }
+    const ok = file('/// 井字棋棋盘。', 'class Board {};')
+    assert.deepEqual(rules(ok), [])
 })
 
 test('谓词首句写主体是否状态', () => {
-  const bad = file('/// 检查坐标是否在棋盘内。', '///', '/// @param position 目标坐标。', 'bool IsInRange(CellPosition position) const;')
-  assert.deepEqual(rules(bad), ['predicate-first'])
-  const opBad = file('/// 比较两个坐标。', '///', '/// @param other 另一个坐标。', 'bool operator==(const CellPosition& other) const;')
-  assert.deepEqual(rules(opBad), ['predicate-first'])
-  const ok = file('/// 坐标是否在棋盘内。', '///', '/// @param position 目标坐标。', 'bool IsInRange(CellPosition position) const;')
-  assert.deepEqual(rules(ok), [])
-  const opOk = file('/// 相等运算符。', '///', '/// @param other 另一个坐标。', 'bool operator==(const CellPosition& other) const;')
-  assert.deepEqual(rules(opOk), [])
+    const bad = file('/// 检查坐标是否在棋盘内。', '///', '/// @param position 目标坐标。', '///', '/// @return 坐标在棋盘内时返回 true；坐标在棋盘外时返回 false。', 'bool IsInRange(CellPosition position) const;')
+    assert.deepEqual(rules(bad), ['predicate-first'])
+    const opBad = file('/// 比较两个坐标。', '///', '/// @param other 另一个坐标。', 'bool operator==(const CellPosition& other) const;')
+    assert.deepEqual(rules(opBad), ['predicate-first'])
+    const ok = file('/// 坐标是否在棋盘内。', '///', '/// @param position 目标坐标。', '///', '/// @return 坐标在棋盘内时返回 true；坐标在棋盘外时返回 false。', 'bool IsInRange(CellPosition position) const;')
+    assert.deepEqual(rules(ok), [])
+    const opOk = file('/// 相等运算符。', '///', '/// @param other 另一个坐标。', 'bool operator==(const CellPosition& other) const;')
+    assert.deepEqual(rules(opOk), [])
 })
 
 test('函数注释不点名调用者', () => {
-  const caller = file(
-    '/// 读取指定坐标的方格。',
-    '///',
-    '/// 供需要先检查再读写的调用方直接使用；`GetSquare`、`SetSquare` 与 `ClearSquare` 内部也调用它。',
-    '///',
-    '///', '/// @param position 目标坐标。',
-    'Square GetSquare(Position position) const;',
-  )
-  assert.deepEqual(rules(caller, { width: 200 }), ['caller-list'])
-  const ok = file(
-    '/// 读取指定坐标的方格。',
-    '///',
-    '///', '/// @param position 目标坐标。',
-    'Square GetSquare(Position position) const;',
-  )
-  assert.deepEqual(rules(ok), [])
+    const caller = file(
+        '/// 读取指定坐标的方格。',
+        '///',
+        '/// 供需要先检查再读写的调用方直接使用；`GetSquare`、`SetSquare` 与 `ClearSquare` 内部也调用它。',
+        '///',
+        '///', '/// @param position 目标坐标。',
+        '///', '/// @return 指定坐标的方格副本。',
+        'Square GetSquare(Position position) const;',
+    )
+    assert.deepEqual(rules(caller, { width: 200 }), ['caller-list'])
+    const ok = file(
+        '/// 读取指定坐标的方格。',
+        '///',
+        '///', '/// @param position 目标坐标。',
+        '///', '/// @return 指定坐标的方格副本。',
+        'Square GetSquare(Position position) const;',
+    )
+    assert.deepEqual(rules(ok), [])
 })
 
 test('类型注释不许复述类型系统已表达的性质', () => {
-  const text = file(
-    '/// 井字棋棋盘。',
-    '///',
-    '/// 棋盘是值语义，可以自由拷贝。',
-    'class Board {};',
-  )
-  assert.deepEqual(rules(text), ['type-system'])
+    const text = file(
+        '/// 井字棋棋盘。',
+        '///',
+        '/// 棋盘是值语义，可以自由拷贝。',
+        'class Board {};',
+    )
+    assert.deepEqual(rules(text), ['type-system'])
+})
+
+test('关掉返回值开关后不再要求 @return', () => {
+    const missing = file('/// 读取格子数。', 'int Count() const;')
+    assert.deepEqual(rules(missing), ['return-missing'])
+    assert.deepEqual(rules(missing, { requireReturn: false }), [])
+})
+
+test('非 void 声明必须写 @return 或 @retval', () => {
+    const missing = file('/// 读取格子数。', 'int Count() const;')
+    assert.deepEqual(rules(missing), ['return-missing'])
+    const documented = file('/// 读取格子数。', '///', '/// @return 当前棋盘上的格子数。', 'int Count() const;')
+    assert.deepEqual(rules(documented), [])
+    const retval = file(
+        '/// 放置。',
+        '///',
+        '/// @param position 目标坐标。',
+        '///',
+        '/// @retval kPlaced 成功：落子成功。',
+        '/// @retval kOccupied 失败：目标方格已有值。',
+        'PlaceResult Place(CellPosition position);',
+    )
+    assert.deepEqual(rules(retval), [])
+    const ctor = file('/// 默认构造函数：初始化为空棋盘。', 'Board() = default;')
+    assert.deepEqual(rules(ctor), [])
+    const op = file('/// 相等运算符。', '///', '/// @param other 另一个棋盘。', 'bool operator==(const Board& other) const;')
+    assert.deepEqual(rules(op), [])
+    const voidFn = file('/// 清空棋盘。', 'void Clear();')
+    assert.deepEqual(rules(voidFn), [])
+})
+
+test('构造与析构首句必须用规定标签', () => {
+    const wrongLabel = file('/// 构造函数：创建一个空棋盘。', 'Board() = default;')
+    assert.deepEqual(rules(wrongLabel), ['special-member-first'])
+    const vague = file('/// 默认构造函数：初始化成员。', 'Board() = default;')
+    assert.deepEqual(rules(vague), ['special-member-vague'])
+    const copy = file('/// 拷贝构造函数：复制棋盘上的格子。', '///', '/// @param other 另一个棋盘。', 'Board(const Board& other);')
+    assert.deepEqual(rules(copy), [])
+    const move = file('/// 移动构造函数：接管对方棋盘。', '///', '/// @param other 另一个棋盘。', 'Board(Board&& other) noexcept;')
+    assert.deepEqual(rules(move), [])
+    const dtor = file('/// 析构函数：释放棋盘资源。', '~Board();')
+    assert.deepEqual(rules(dtor), [])
+    const regular = file('/// 构造函数：按指定名称初始化。', '///', '/// @param name 棋盘名称。', 'explicit Board(const std::string& name);')
+    assert.deepEqual(rules(regular), [])
+})
+
+test('@retval 成功项在最前且只出现一次', () => {
+    const wrongOrder = file(
+        '/// 放置。',
+        '///',
+        '/// @param position 目标坐标。',
+        '///',
+        '/// @retval kOccupied 失败：目标方格已有值。',
+        '/// @retval kPlaced 成功：落子成功。',
+        'PlaceResult Place(CellPosition position);',
+    )
+    assert.ok(rules(wrongOrder).includes('retval-order'))
+    const repeated = file(
+        '/// 放置。',
+        '///',
+        '/// @param position 目标坐标。',
+        '///',
+        '/// @retval kPlaced 成功：落子成功。',
+        '/// @retval kOther 成功：又一次成功。',
+        'PlaceResult Place(CellPosition position);',
+    )
+    assert.ok(rules(repeated).includes('retval-order'))
+    const ok = file(
+        '/// 放置。',
+        '///',
+        '/// @param position 目标坐标。',
+        '///',
+        '/// @retval kPlaced 成功：落子成功。',
+        '/// @retval kOccupied 失败：目标方格已有值。',
+        'PlaceResult Place(CellPosition position);',
+    )
+    assert.deepEqual(rules(ok), [])
+    const allFailure = file(
+        '/// 放置。',
+        '///',
+        '/// @param position 目标坐标。',
+        '///',
+        '/// @retval kOccupied 失败：目标方格已有值。',
+        'PlaceResult Place(CellPosition position);',
+    )
+    assert.deepEqual(rules(allFailure), [])
 })
 
 test('@param 必须与声明参数一一对应', () => {
-  const missing = file('/// 放置。', '///', '/// @param position 坐标。', 'bool Place(CellPosition position, CellType type);')
-  assert.deepEqual(rules(missing), ['param-missing'])
-  const extra = file('/// 放置。', '///', '/// @param position 坐标。', '/// @param type 类型。', '/// @param mode 模式。', 'bool Place(CellPosition position, CellType type);')
-  assert.deepEqual(rules(extra), ['param-extra'])
-  const ok = file('/// 放置。', '///', '/// @param position 坐标。', '/// @param type 类型。', 'bool Place(CellPosition position, CellType type);')
-  assert.deepEqual(rules(ok), [])
+    const missing = file('/// 放置。', '///', '/// @param position 坐标。', '///', '/// @return 落子成功时返回 true；目标方格已有值时返回 false。', 'bool Place(CellPosition position, CellType type);')
+    assert.deepEqual(rules(missing), ['param-missing'])
+    const extra = file('/// 放置。', '///', '/// @param position 坐标。', '/// @param type 类型。', '/// @param mode 模式。', '///', '/// @return 落子成功时返回 true；目标方格已有值时返回 false。', 'bool Place(CellPosition position, CellType type);')
+    assert.deepEqual(rules(extra), ['param-extra'])
+    const ok = file('/// 放置。', '///', '/// @param position 坐标。', '/// @param type 类型。', '///', '/// @return 落子成功时返回 true；目标方格已有值时返回 false。', 'bool Place(CellPosition position, CellType type);')
+    assert.deepEqual(rules(ok), [])
 })
 
 test('函数摘要不直接写参数名', () => {
-  const bad = file(
-    '/// 把 `value` 写到 `pos` 对应的格子上。',
-    '///',
-    '/// @param pos 目标坐标。',
-    '/// @param value 要写入的值。',
-    'void Place(int pos, int value);',
-  )
-  assert.deepEqual(rules(bad), ['param-in-summary'])
-  const good = file(
-    '/// 把指定值写到指定坐标的格子上。',
-    '///',
-    '/// @param pos 目标坐标。',
-    '/// @param value 要写入的值。',
-    'void Place(int pos, int value);',
-  )
-  assert.deepEqual(rules(good), [])
+    const bad = file(
+        '/// 把 `value` 写到 `pos` 对应的格子上。',
+        '///',
+        '/// @param pos 目标坐标。',
+        '/// @param value 要写入的值。',
+        'void Place(int pos, int value);',
+    )
+    assert.deepEqual(rules(bad), ['param-in-summary'])
+    const good = file(
+        '/// 把指定值写到指定坐标的格子上。',
+        '///',
+        '/// @param pos 目标坐标。',
+        '/// @param value 要写入的值。',
+        'void Place(int pos, int value);',
+    )
+    assert.deepEqual(rules(good), [])
 })
 
 test('块注释摘要也不直接写参数名', () => {
-  const block = [
-    '/**',
-    ' * 把 `value` 写到 `pos` 对应的格子上。',
-    ' *',
-    ' * @param pos 目标坐标。',
-    ' * @param value 要写入的值。',
-    ' */',
-    'void Place(int pos, int value);',
-    '',
-  ].join('\n')
-  assert.ok(rules(block, { commentStyle: 'block' }).includes('param-in-summary'))
+    const block = [
+        '/**',
+        ' * 把 `value` 写到 `pos` 对应的格子上。',
+        ' *',
+        ' * @param pos 目标坐标。',
+        ' * @param value 要写入的值。',
+        ' */',
+        'void Place(int pos, int value);',
+        '',
+    ].join('\n')
+    assert.ok(rules(block, { commentStyle: 'block' }).includes('param-in-summary'))
 })
 
 test('没有 @param 的短注释不触发完整性检查', () => {
-  assert.deepEqual(rules(file('/// 清空棋盘。', 'void Clear();')), [])
+    assert.deepEqual(rules(file('/// 清空棋盘。', 'void Clear();')), [])
 })
 
 test('@param 支持 [out] 说明', () => {
-  const text = file('/// 查询。', '///', '/// @param[out] result 写入结果。', '/// @param cells 格子。', 'void Query(std::vector<Cell>& result, int cells);')
-  assert.deepEqual(rules(text), [])
+    const text = file('/// 查询。', '///', '/// @param[out] result 写入结果。', '/// @param cells 格子。', 'void Query(std::vector<Cell>& result, int cells);')
+    assert.deepEqual(rules(text), [])
 })
 
 test('枚举成员注释全写或全不写', () => {
-  const partial = file('/// 玩家。', 'enum class Player : std::uint8_t {', '  kX = 1,  ///< 玩家为 X', '  kO = 2,', '};')
-  assert.deepEqual(rules(partial), ['enum-partial'])
-  const full = file('/// 玩家。', 'enum class Player : std::uint8_t {', '  kX = 1,  ///< 玩家为 X', '  kO = 2,  ///< 玩家为 O', '};')
-  assert.deepEqual(rules(full), [])
+    const partial = file('/// 玩家。', 'enum class Player : std::uint8_t {', '  kX = 1,  ///< 玩家为 X', '  kO = 2,', '};')
+    assert.deepEqual(rules(partial), ['enum-partial'])
+    const full = file('/// 玩家。', 'enum class Player : std::uint8_t {', '  kX = 1,  ///< 玩家为 X', '  kO = 2,  ///< 玩家为 O', '};')
+    assert.deepEqual(rules(full), [])
 })
 
 test('枚举行尾两种句式与冒号约束', () => {
-  const ok = file(
-    '/// 落子结果。',
-    'enum class PlaceResult {',
-    '  kSuccess = 0,  ///< 落子成功。',
-    '  kEmptyType = 2,  ///< 非法参数：传入空棋盘格子类型。',
-    '};',
-  )
-  assert.deepEqual(rules(ok), [])
-  const noColonComma = file(
-    '/// 落子结果。',
-    'enum class PlaceResult {',
-    '  kEmptyType = 2,  ///< 传入空棋盘格子类型，非法参数。',
-    '};',
-  )
-  assert.deepEqual(rules(noColonComma), [])
-  const empty = file(
-    '/// 落子结果。',
-    'enum class PlaceResult {',
-    '  kSuccess = 0,  ///< 落子成功：。',
-    '};',
-  )
-  assert.ok(rules(empty).includes('enum-trailing-empty'))
-  const field = file(
-    'struct CellPosition {',
-    '  std::int32_t row{};  ///< 行坐标，0 表示最上面一行。',
-    '};',
-  )
-  assert.deepEqual(rules(field), [])
-  const final = file(
-    '/// 格子的状态。',
-    'enum class CellMark : std::uint8_t {',
-    '  kEmpty = 0,  ///< 状态为空，尚未设置',
-    '  kX = 1,      ///< 状态为 X',
-    '  kO = 2,      ///< 状态为 O',
-    '};',
-    '',
-    '/// 格子。',
-    'class Cell {',
-    ' public:',
-    '  /// 表示格子状态的变更结果。',
-    '  enum class PlaceResult : std::uint8_t {',
-    '    kEmptyState = 0,  ///< 未变更：传入状态为 `kEmpty`，格子状态保持不变',
-    '    kOccupied = 1,    ///< 未变更：格子已有状态，格子状态保持不变',
-    '    kPlaced = 2,      ///< 已变更：状态成功更新空白格子',
-    '  };',
-    '};',
-  )
-  assert.deepEqual(rules(final), [])
+    const ok = file(
+        '/// 落子结果。',
+        'enum class PlaceResult {',
+        '  kSuccess = 0,  ///< 落子成功',
+        '  kEmptyType = 2,  ///< 非法参数：传入空棋盘格子类型',
+        '};',
+    )
+    assert.deepEqual(rules(ok), [])
+    const period = file(
+        '/// 落子结果。',
+        'enum class PlaceResult {',
+        '  kSuccess = 0,  ///< 落子成功。',
+        '};',
+    )
+    assert.deepEqual(rules(period), ['enum-trailing-period'])
+    const noColonComma = file(
+        '/// 落子结果。',
+        'enum class PlaceResult {',
+        '  kEmptyType = 2,  ///< 传入空棋盘格子类型，非法参数',
+        '};',
+    )
+    assert.deepEqual(rules(noColonComma), [])
+    const empty = file(
+        '/// 落子结果。',
+        'enum class PlaceResult {',
+        '  kSuccess = 0,  ///< 落子成功：',
+        '};',
+    )
+    assert.ok(rules(empty).includes('enum-trailing-empty'))
+    const field = file(
+        'struct CellPosition {',
+        '  std::int32_t row{};  ///< 行坐标，0 表示最上面一行',
+        '};',
+    )
+    assert.deepEqual(rules(field), [])
+    const fieldPeriod = file(
+        'struct CellPosition {',
+        '  std::int32_t row{};  ///< 行坐标，默认值为 0。',
+        '};',
+    )
+    assert.deepEqual(rules(fieldPeriod), ['enum-trailing-period'])
+    const final = file(
+        '/// 格子的状态。',
+        'enum class CellMark : std::uint8_t {',
+        '  kEmpty = 0,  ///< 状态为空，尚未设置',
+        '  kX = 1,      ///< 状态为 X',
+        '  kO = 2,      ///< 状态为 O',
+        '};',
+        '',
+        '/// 格子。',
+        'class Cell {',
+        ' public:',
+        '  /// 表示格子状态的变更结果。',
+        '  enum class PlaceResult : std::uint8_t {',
+        '    kEmptyState = 0,  ///< 未变更：传入状态为 `kEmpty`，格子状态保持不变',
+        '    kOccupied = 1,    ///< 未变更：格子已有状态，格子状态保持不变',
+        '    kPlaced = 2,      ///< 已变更：状态成功更新空白格子',
+        '  };',
+        '};',
+    )
+    assert.deepEqual(rules(final), [])
 })
 
 test('声明宽度与注释行宽按中文两列计算', () => {
-  assert.equal(displayWidth('/// 中文'), 8)
-  assert.equal(displayWidth('/// abc'), 7)
-  const long = `/// ${'中文'.repeat(30)}`
-  assert.ok(rules(file(long, 'int F();'), { width: 40 }).includes('comment-width'))
+    assert.equal(displayWidth('/// 中文'), 8)
+    assert.equal(displayWidth('/// abc'), 7)
+    const long = `/// ${'中文'.repeat(30)}`
+    assert.ok(rules(file(long, 'int F();'), { width: 40 }).includes('comment-width'))
+})
+
+test('注释行宽把行首缩进计入', () => {
+    const content = `/// ${'中'.repeat(30)}`
+    assert.deepEqual(rules(file(content, 'void F();'), { width: 64 }), [])
+    assert.deepEqual(rules(file(`  ${content}`, '  void F();'), { width: 64 }), ['comment-width'])
+    const block = ['/**', ' * @file board.h', ' * @brief 定义棋盘。', ' */', '', '/**', ` * ${'中'.repeat(30)}`, ' */', 'void F();', ''].join('\n')
+    assert.deepEqual(rules(block, { commentStyle: 'block', width: 64 }), [])
+    const indented = ['/**', ' * @file board.h', ' * @brief 定义棋盘。', ' */', '', '/**', `   * ${'中'.repeat(30)}`, ' */', 'void F();', ''].join('\n')
+    assert.deepEqual(rules(indented, { commentStyle: 'block', width: 64 }), ['comment-width'])
 })
 
 test('函数声明解析不把类型别名或类当成函数', () => {
-  assert.deepEqual(functionParams('using Handler = void (*)(int);'), undefined)
-  assert.deepEqual(functionParams('class Board;'), undefined)
-  assert.deepEqual(functionParams('int Compute(int a, int b);'), ['a', 'b'])
-  assert.deepEqual(functionParams('template <typename T> void Sort(std::vector<T>& items, bool stable);'), ['items', 'stable'])
-  assert.deepEqual(functionParams('void Run(int x = 3, const std::string& name = "a");'), ['x', 'name'])
-  assert.deepEqual(functionParams('void Run();'), [])
+    assert.deepEqual(functionParams('using Handler = void (*)(int);'), undefined)
+    assert.deepEqual(functionParams('class Board;'), undefined)
+    assert.deepEqual(functionParams('int Compute(int a, int b);'), ['a', 'b'])
+    assert.deepEqual(functionParams('template <typename T> void Sort(std::vector<T>& items, bool stable);'), ['items', 'stable'])
+    assert.deepEqual(functionParams('void Run(int x = 3, const std::string& name = "a");'), ['x', 'name'])
+    assert.deepEqual(functionParams('void Run();'), [])
+})
+
+test('不具名参数不算参数名', () => {
+    assert.deepEqual(functionParams('friend bool operator==(const Position&, const Position&) = default;'), [])
+    assert.deepEqual(functionParams('bool IsInRange(Position) const;'), [])
+    assert.deepEqual(functionParams('void Fill(int);'), [])
+    assert.deepEqual(functionParams('void Fill(const std::string&, std::size_t);'), [])
+    assert.deepEqual(functionParams('void Fill(int count, const Board& board);'), ['count', 'board'])
+    assert.deepEqual(functionParams('void Fill(const char* text, int* out);'), ['text', 'out'])
+})
+
+test('不具名比较参数不要求 @param', () => {
+    const unnamed = file(
+        '/// 相等运算符。',
+        '///',
+        '/// 当两个坐标的行与列都相同时返回 true。',
+        '///',
+        '/// @return 成立时返回 true；不成立时返回 false。',
+        'friend bool operator==(const CellPosition&, const CellPosition&) = default;',
+    )
+    assert.deepEqual(rules(unnamed), [])
+    const named = file(
+        '/// 相等运算符。',
+        '///',
+        '/// 当两个坐标的行与列都相同时返回 true。',
+        'friend bool operator==(const CellPosition& other) const = default;',
+    )
+    assert.deepEqual(rules(named), ['param-missing'])
 })
 
 test('CLI 在临时仓库上返回 1 并输出 JSON', () => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
-  try {
-    writeFileSync(path.join(dir, 'bad.h'), 'class Board {};\n')
-    const proc = runCli(['--root', dir, '--json'])
-    assert.equal(proc.status, 1)
-    const report = JSON.parse(proc.stdout)
-    assert.equal(report.files, 1)
-    assert.ok(report.issues.some((issue) => issue.rule === 'header-missing'))
-  } finally {
-    rmSync(dir, { recursive: true, force: true })
-  }
+    const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
+    try {
+        writeFileSync(path.join(dir, 'bad.h'), 'class Board {};\n')
+        const proc = runCli(['--root', dir, '--json'])
+        assert.equal(proc.status, 1)
+        const report = JSON.parse(proc.stdout)
+        assert.equal(report.files, 1)
+        assert.ok(report.issues.some((issue) => issue.rule === 'header-missing'))
+    } finally {
+        rmSync(dir, { recursive: true, force: true })
+    }
 })
 
 test('CLI 在干净目录上返回 0', () => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
-  try {
-    mkdirSync(path.join(dir, 'src'))
-    writeFileSync(path.join(dir, 'src', 'main.cpp'), '/// @file main.cpp\n/// @brief 入口。\n\n#include <iostream>\nint main() { return 0; }\n')
-    const proc = runCli(['--root', dir, '--quiet'])
-    assert.equal(proc.status, 0)
-    assert.equal(proc.stdout, '')
-  } finally {
-    rmSync(dir, { recursive: true, force: true })
-  }
+    const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
+    try {
+        mkdirSync(path.join(dir, 'src'))
+        writeFileSync(path.join(dir, 'src', 'main.cpp'), '/// @file main.cpp\n/// @brief 入口。\n\n#include <iostream>\nint main() { return 0; }\n')
+        const proc = runCli(['--root', dir, '--quiet'])
+        assert.equal(proc.status, 0)
+        assert.equal(proc.stdout, '')
+    } finally {
+        rmSync(dir, { recursive: true, force: true })
+    }
 })
 
 test('CLI 跳过构建目录', () => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
-  try {
-    mkdirSync(path.join(dir, 'build'))
-    writeFileSync(path.join(dir, 'build', 'generated.h'), 'class Generated {};\n')
-    const proc = runCli(['--root', dir, '--json'])
-    assert.equal(proc.status, 0)
-    assert.equal(JSON.parse(proc.stdout).files, 0)
-  } finally {
-    rmSync(dir, { recursive: true, force: true })
-  }
+    const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
+    try {
+        mkdirSync(path.join(dir, 'build'))
+        writeFileSync(path.join(dir, 'build', 'generated.h'), 'class Generated {};\n')
+        const proc = runCli(['--root', dir, '--json'])
+        assert.equal(proc.status, 0)
+        assert.equal(JSON.parse(proc.stdout).files, 0)
+    } finally {
+        rmSync(dir, { recursive: true, force: true })
+    }
 })
 
 test('紧贴声明的存储注释会复述下一行', () => {
-  const text = file(
-    'class Board {',
-    '  // cells_ 存储棋盘格子。',
-    '  std::array<std::array<Cell, 3>, 3> cells_{};',
-    '};',
-  )
-  assert.ok(rules(text).includes('restates-next'))
-  const axis = file(
-    'class Board {',
-    '  /// 井字棋棋盘格子数组，外层是行，内层是列。',
-    '  std::array<std::array<Cell, 3>, 3> cells_{};',
-    '};',
-  )
-  assert.ok(!rules(axis).includes('restates-next'))
-  const ok = file(
-    'class Board {',
-    '  /// 棋盘。',
-    '  std::array<std::array<Cell, 3>, 3> cells_{};',
-    '};',
-  )
-  assert.ok(!rules(ok).includes('restates-next'))
+    const text = file(
+        'class Board {',
+        '  // cells_ 存储棋盘格子。',
+        '  std::array<std::array<Cell, 3>, 3> cells_{};',
+        '};',
+    )
+    assert.ok(rules(text).includes('restates-next'))
+    const axis = file(
+        'class Board {',
+        '  /// 井字棋棋盘格子数组，外层是行，内层是列。',
+        '  std::array<std::array<Cell, 3>, 3> cells_{};',
+        '};',
+    )
+    assert.ok(!rules(axis).includes('restates-next'))
+    const ok = file(
+        'class Board {',
+        '  /// 棋盘。',
+        '  std::array<std::array<Cell, 3>, 3> cells_{};',
+        '};',
+    )
+    assert.ok(!rules(ok).includes('restates-next'))
 })
 
 test('数据成员只有行尾注释时报主注释缺失', () => {
-  const bad = file(
-    'class Board {',
-    ' private:',
-    '  std::array<std::array<Cell, 3>, 3> cells_{};  // 值初始化后每个棋盘格子都是空格子。',
-    '};',
-  )
-  assert.ok(rules(bad).includes('member-comment-missing'))
-  const good = file(
-    'class Board {',
-    ' private:',
-    '  /// 井字棋棋盘格子数组，外层是行，内层是列。',
-    '  std::array<std::array<Cell, 3>, 3> cells_{};',
-    '};',
-  )
-  assert.ok(!rules(good).includes('member-comment-missing'))
-  assert.ok(!rules(good).includes('member-comment-trailing'))
-  assert.ok(!rules(good).includes('member-comment-slash'))
-  const trailing = file(
-    'class Board {',
-    ' private:',
-    '  /// 井字棋棋盘格子数组，外层是行，内层是列。',
-    '  std::array<std::array<Cell, 3>, 3> cells_{};  // 值初始化后每个棋盘格子都是空格子。',
-    '};',
-  )
-  assert.ok(rules(trailing).includes('member-comment-trailing'))
-  const slash = file(
-    'class Board {',
-    ' private:',
-    '  // 井字棋棋盘格子数组，外层是行，内层是列。',
-    '  std::array<std::array<Cell, 3>, 3> cells_{};',
-    '};',
-  )
-  assert.ok(rules(slash).includes('member-comment-slash'))
-  const enumLine = file(
-    'enum class CellType {',
-    '  kEmpty,  ///< 空格子。',
-    '};',
-  )
-  assert.ok(!rules(enumLine).includes('member-comment-missing'))
-  const publicField = file(
-    'struct Stats {',
-    '  int count_{};  ///< 已落子数。',
-    '};',
-  )
-  assert.ok(!rules(publicField).includes('member-comment-missing'))
+    const bad = file(
+        'class Board {',
+        ' private:',
+        '  std::array<std::array<Cell, 3>, 3> cells_{};  // 值初始化后每个棋盘格子都是空格子。',
+        '};',
+    )
+    assert.ok(rules(bad).includes('member-comment-missing'))
+    const good = file(
+        'class Board {',
+        ' private:',
+        '  /// 井字棋棋盘格子数组，外层是行，内层是列。',
+        '  std::array<std::array<Cell, 3>, 3> cells_{};',
+        '};',
+    )
+    assert.ok(!rules(good).includes('member-comment-missing'))
+    assert.ok(!rules(good).includes('member-comment-trailing'))
+    assert.ok(!rules(good).includes('member-comment-slash'))
+    const trailing = file(
+        'class Board {',
+        ' private:',
+        '  /// 井字棋棋盘格子数组，外层是行，内层是列。',
+        '  std::array<std::array<Cell, 3>, 3> cells_{};  // 值初始化后每个棋盘格子都是空格子。',
+        '};',
+    )
+    assert.ok(rules(trailing).includes('member-comment-trailing'))
+    const slash = file(
+        'class Board {',
+        ' private:',
+        '  // 井字棋棋盘格子数组，外层是行，内层是列。',
+        '  std::array<std::array<Cell, 3>, 3> cells_{};',
+        '};',
+    )
+    assert.ok(rules(slash).includes('member-comment-slash'))
+    const enumLine = file(
+        'enum class CellType {',
+        '  kEmpty,  ///< 空格子',
+        '};',
+    )
+    assert.ok(!rules(enumLine).includes('member-comment-missing'))
+    const publicField = file(
+        'struct Stats {',
+        '  int count_{};  ///< 已落子数',
+        '};',
+    )
+    assert.ok(!rules(publicField).includes('member-comment-missing'))
 })
 
 test('CLI 从 .clang-format 读取 ColumnLimit', () => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
-  try {
-    writeFileSync(path.join(dir, '.clang-format'), 'ColumnLimit: 120\n')
-    writeFileSync(path.join(dir, 'note.h'), '// ' + 'a'.repeat(100) + '\nint f();\n')
-    const wide = runCli(['--root', dir, '--no-header', '--json'])
-    assert.equal(wide.status, 0, wide.stdout)
-    const strict = runCli(['--root', dir, '--no-header', '--json', '--width', '80'])
-    assert.equal(strict.status, 1)
-    assert.ok(JSON.parse(strict.stdout).issues.some((issue) => issue.rule === 'comment-width'))
-  } finally {
-    rmSync(dir, { recursive: true, force: true })
-  }
+    const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
+    try {
+        writeFileSync(path.join(dir, '.clang-format'), 'ColumnLimit: 120\n')
+        writeFileSync(path.join(dir, 'note.h'), '// ' + 'a'.repeat(100) + '\nint f();\n')
+        const wide = runCli(['--root', dir, '--no-header', '--json'])
+        assert.equal(wide.status, 0, wide.stdout)
+        const strict = runCli(['--root', dir, '--no-header', '--json', '--width', '80'])
+        assert.equal(strict.status, 1)
+        assert.ok(JSON.parse(strict.stdout).issues.some((issue) => issue.rule === 'comment-width'))
+    } finally {
+        rmSync(dir, { recursive: true, force: true })
+    }
 })
 
 test('CLI 从子目录 .clang-format 读取 ColumnLimit', () => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
-  try {
-    const nested = path.join(dir, 'game')
-    mkdirSync(nested)
-    writeFileSync(path.join(nested, '.clang-format'), 'ColumnLimit: 120\n')
-    writeFileSync(path.join(nested, 'note.h'), '// ' + 'a'.repeat(100) + '\nint f();\n')
-    const result = runCli(['--root', dir, '--no-header', '--json'])
-    assert.equal(result.status, 0, result.stdout)
-  } finally {
-    rmSync(dir, { recursive: true, force: true })
-  }
+    const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
+    try {
+        const nested = path.join(dir, 'game')
+        mkdirSync(nested)
+        writeFileSync(path.join(nested, '.clang-format'), 'ColumnLimit: 120\n')
+        writeFileSync(path.join(nested, 'note.h'), '// ' + 'a'.repeat(100) + '\nint f();\n')
+        const result = runCli(['--root', dir, '--no-header', '--json'])
+        assert.equal(result.status, 0, result.stdout)
+    } finally {
+        rmSync(dir, { recursive: true, force: true })
+    }
 })
 
 test('不存在的根目录返回用法错误而不是堆栈', () => {
-  const missing = path.join(tmpdir(), `comments-missing-${process.pid}-${Date.now()}`)
-  const result = runCli(['--root', missing])
-  assert.equal(result.status, EXIT.usage)
-  assert.match(result.stdout + result.stderr, /根目录不存在或无法读取/)
-  assert.doesNotMatch(result.stdout + result.stderr, /ENOENT|readColumnLimit/)
+    const missing = path.join(tmpdir(), `comments-missing-${process.pid}-${Date.now()}`)
+    const result = runCli(['--root', missing])
+    assert.equal(result.status, EXIT.usage)
+    assert.match(result.stdout + result.stderr, /根目录不存在或无法读取/)
+    assert.doesNotMatch(result.stdout + result.stderr, /ENOENT|readColumnLimit/)
 })
 
 test('@file 必须等于实际文件名', () => {
-  const text = ['/// @file board.h', '/// @brief 定义棋盘。', '', 'class Board {};', ''].join('\n')
-  assert.deepEqual(rules(text, { fileName: 'board.h' }), [])
-  assert.ok(rules(text, { fileName: 'game.h' }).includes('header-file-name'))
+    const text = ['/// @file board.h', '/// @brief 定义棋盘。', '', 'class Board {};', ''].join('\n')
+    assert.deepEqual(rules(text, { fileName: 'board.h' }), [])
+    assert.ok(rules(text, { fileName: 'game.h' }).includes('header-file-name'))
 })
 
 test('@brief 可以按配置关掉', () => {
-  const text = ['/// @file board.h', '', 'class Board {};', ''].join('\n')
-  assert.ok(rules(text, { fileName: 'board.h' }).includes('header-brief'))
-  assert.ok(!rules(text, { fileName: 'board.h', requireBrief: false }).includes('header-brief'))
+    const text = ['/// @file board.h', '', 'class Board {};', ''].join('\n')
+    assert.ok(rules(text, { fileName: 'board.h' }).includes('header-brief'))
+    assert.ok(!rules(text, { fileName: 'board.h', requireBrief: false }).includes('header-brief'))
 })
 
 test('隐私标签只有显式放行才通过', () => {
-  const text = ['/// @file board.h', '/// @brief 定义棋盘。', '/// @author chengzhao-dev', '', 'class Board {};', ''].join('\n')
-  assert.ok(rules(text, { fileName: 'board.h' }).includes('forbidden-tag'))
-  assert.ok(!rules(text, { fileName: 'board.h', allowTags: new Set(['author']) }).includes('forbidden-tag'))
-  const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
-  try {
-    writeFileSync(path.join(dir, 'board.h'), text)
-    assert.equal(runCli(['--root', dir]).status, 1)
-    assert.equal(runCli(['--root', dir, '--allow-tag', 'author']).status, 0)
-  } finally {
-    rmSync(dir, { recursive: true, force: true })
-  }
+    const text = ['/// @file board.h', '/// @brief 定义棋盘。', '/// @author chengzhao-dev', '', 'class Board {};', ''].join('\n')
+    assert.ok(rules(text, { fileName: 'board.h' }).includes('forbidden-tag'))
+    assert.ok(!rules(text, { fileName: 'board.h', allowTags: new Set(['author']) }).includes('forbidden-tag'))
+    const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
+    try {
+        writeFileSync(path.join(dir, 'board.h'), text)
+        assert.equal(runCli(['--root', dir]).status, 1)
+        assert.equal(runCli(['--root', dir, '--allow-tag', 'author']).status, 0)
+    } finally {
+        rmSync(dir, { recursive: true, force: true })
+    }
 })
 
 test('--allow-tag 缺值时返回用法错误', () => {
-  const result = runCli(['--root', '.', '--allow-tag'])
-  assert.equal(result.status, EXIT.usage)
-  assert.match(result.stderr, /--allow-tag 需要标签名/)
+    const result = runCli(['--root', '.', '--allow-tag'])
+    assert.equal(result.status, EXIT.usage)
+    assert.match(result.stderr, /--allow-tag 需要标签名/)
 })
 
 test('头文件已声明的定义处不再写 ///', () => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
-  try {
-    writeFileSync(
-      path.join(dir, 'pair.h'),
-      [
-        '/// @file pair.h',
-        '/// @brief 配对声明。',
-        '',
-        '/// 相加。',
-        '///',
-        '/// @param a 第一个加数。',
-        '/// @param b 第二个加数。',
-        '/// @return 两个数的和。',
-        'int Add(int a, int b);',
-        '',
-      ].join('\n'),
-    )
-    writeFileSync(
-      path.join(dir, 'pair.cpp'),
-      [
-        '/// @file pair.cpp',
-        '/// @brief 配对实现。',
-        '',
-        '/// 相加。',
-        'int Add(int a, int b) { return a + b; }',
-        '',
-      ].join('\n'),
-    )
-    const report = JSON.parse(runCli(['--root', dir, '--json']).stdout)
-    assert.ok(report.issues.some((issue) => issue.rule === 'doc-on-definition'))
-  } finally {
-    rmSync(dir, { recursive: true, force: true })
-  }
+    const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
+    try {
+        writeFileSync(
+            path.join(dir, 'pair.h'),
+            [
+                '/// @file pair.h',
+                '/// @brief 配对声明。',
+                '',
+                '/// 相加。',
+                '///',
+                '/// @param a 第一个加数。',
+                '/// @param b 第二个加数。',
+                '/// @return 两个数的和。',
+                'int Add(int a, int b);',
+                '',
+            ].join('\n'),
+        )
+        writeFileSync(
+            path.join(dir, 'pair.cpp'),
+            [
+                '/// @file pair.cpp',
+                '/// @brief 配对实现。',
+                '',
+                '/// 相加。',
+                'int Add(int a, int b) { return a + b; }',
+                '',
+            ].join('\n'),
+        )
+        const report = JSON.parse(runCli(['--root', dir, '--json']).stdout)
+        assert.ok(report.issues.some((issue) => issue.rule === 'doc-on-definition'))
+    } finally {
+        rmSync(dir, { recursive: true, force: true })
+    }
 })
 
 test('只在 .cpp 出现的函数需要完整契约', () => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
-  try {
-    writeFileSync(
-      path.join(dir, 'helper.cpp'),
-      [
-        '/// @file helper.cpp',
-        '/// @brief 辅助实现。',
-        '',
-        'int Helper(int value) { return value; }',
-        '',
-      ].join('\n'),
-    )
-    const missing = JSON.parse(runCli(['--root', dir, '--json']).stdout)
-    assert.ok(missing.issues.some((issue) => issue.rule === 'cpp-contract-missing'))
-    writeFileSync(
-      path.join(dir, 'helper.cpp'),
-      [
-        '/// @file helper.cpp',
-        '/// @brief 辅助实现。',
-        '',
-        '/// 返回传入的值。',
+    const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
+    try {
+        writeFileSync(
+            path.join(dir, 'helper.cpp'),
+            [
+                '/// @file helper.cpp',
+                '/// @brief 辅助实现。',
+                '',
+                'int Helper(int value) { return value; }',
+                '',
+            ].join('\n'),
+        )
+        const missing = JSON.parse(runCli(['--root', dir, '--json']).stdout)
+        assert.ok(missing.issues.some((issue) => issue.rule === 'cpp-contract-missing'))
+        writeFileSync(
+            path.join(dir, 'helper.cpp'),
+            [
+                '/// @file helper.cpp',
+                '/// @brief 辅助实现。',
+                '',
+                '/// 返回传入的值。',
+                '///',
+                '/// @param value 输入值。',
+                '///',
+                '/// @return 传入的值。',
+                'int Helper(int value) { return value; }',
+                '',
+            ].join('\n'),
+        )
+        const ok = JSON.parse(runCli(['--root', dir, '--json']).stdout)
+        assert.ok(!ok.issues.some((issue) => issue.rule === 'cpp-contract-missing'))
+    } finally {
+        rmSync(dir, { recursive: true, force: true })
+    }
+})
+
+test('跨行函数声明仍检查 @param', () => {
+    const text = file(
+        '/// 放置。',
         '///',
-        '/// @param value 输入值。',
-        '///',
-        '/// @return 传入的值。',
-        'int Helper(int value) { return value; }',
-        '',
-      ].join('\n'),
+        '/// @return 落子成功时返回 true。',
+        'bool Place(CellPosition position,',
+        '           CellType type);',
     )
-    const ok = JSON.parse(runCli(['--root', dir, '--json']).stdout)
-    assert.ok(!ok.issues.some((issue) => issue.rule === 'cpp-contract-missing'))
-  } finally {
-    rmSync(dir, { recursive: true, force: true })
-  }
+    assert.ok(rules(text).includes('param-missing'))
 })
 
 test('跨行签名的 .cpp 定义同样要求完整契约', () => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
-  try {
-    writeFileSync(
-      path.join(dir, 'helper.cpp'),
-      [
-        '/// @file helper.cpp',
-        '/// @brief 辅助实现。',
-        '',
-        'int Helper(int value,',
-        '           const std::string& label) {',
-        '  return value + static_cast<int>(label.size());',
-        '}',
-        '',
-      ].join('\n'),
-    )
-    const missing = JSON.parse(runCli(['--root', dir, '--json']).stdout)
-    assert.ok(missing.issues.some((issue) => issue.rule === 'cpp-contract-missing'))
-    writeFileSync(
-      path.join(dir, 'helper.cpp'),
-      [
-        '/// @file helper.cpp',
-        '/// @brief 辅助实现。',
-        '',
-        '/// 返回数值与标签长度之和。',
-        '///',
-        '/// @param value 输入值。',
-        '/// @param label 标签。',
-        '///',
-        '/// @return 两者之和。',
-        'int Helper(int value,',
-        '           const std::string& label) {',
-        '  return value + static_cast<int>(label.size());',
-        '}',
-        '',
-      ].join('\n'),
-    )
-    const ok = JSON.parse(runCli(['--root', dir, '--json']).stdout)
-    assert.ok(!ok.issues.some((issue) => issue.rule === 'cpp-contract-missing'))
-  } finally {
-    rmSync(dir, { recursive: true, force: true })
-  }
+    const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
+    try {
+        writeFileSync(
+            path.join(dir, 'helper.cpp'),
+            [
+                '/// @file helper.cpp',
+                '/// @brief 辅助实现。',
+                '',
+                'int Helper(int value,',
+                '           const std::string& label) {',
+                '  return value + static_cast<int>(label.size());',
+                '}',
+                '',
+            ].join('\n'),
+        )
+        const missing = JSON.parse(runCli(['--root', dir, '--json']).stdout)
+        assert.ok(missing.issues.some((issue) => issue.rule === 'cpp-contract-missing'))
+        writeFileSync(
+            path.join(dir, 'helper.cpp'),
+            [
+                '/// @file helper.cpp',
+                '/// @brief 辅助实现。',
+                '',
+                '/// 返回数值与标签长度之和。',
+                '///',
+                '/// @param value 输入值。',
+                '/// @param label 标签。',
+                '///',
+                '/// @return 两者之和。',
+                'int Helper(int value,',
+                '           const std::string& label) {',
+                '  return value + static_cast<int>(label.size());',
+                '}',
+                '',
+            ].join('\n'),
+        )
+        const ok = JSON.parse(runCli(['--root', dir, '--json']).stdout)
+        assert.ok(!ok.issues.some((issue) => issue.rule === 'cpp-contract-missing'))
+    } finally {
+        rmSync(dir, { recursive: true, force: true })
+    }
 })
 
 test('类内析构函数不按普通函数要求 @return', () => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
-  try {
-    writeFileSync(
-      path.join(dir, 'scope.cpp'),
-      [
-        '/// @file scope.cpp',
-        '/// @brief 作用域实现。',
-        '',
-        '/// 进入原始终端模式，析构时恢复。',
-        'class ScopedRawMode {',
-        ' public:',
-        '  /// 保存终端设置并切换到原始模式。',
-        '  ScopedRawMode() {}',
-        '',
-        '  /// 恢复保存的终端设置。',
-        '  ~ScopedRawMode() {}',
-        '};',
-        '',
-      ].join('\n'),
-    )
-    const report = JSON.parse(runCli(['--root', dir, '--json']).stdout)
-    assert.ok(!report.issues.some((issue) => issue.rule === 'cpp-contract-missing'))
-  } finally {
-    rmSync(dir, { recursive: true, force: true })
-  }
+    const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
+    try {
+        writeFileSync(
+            path.join(dir, 'scope.cpp'),
+            [
+                '/// @file scope.cpp',
+                '/// @brief 作用域实现。',
+                '',
+                '/// 进入原始终端模式，析构时恢复。',
+                'class ScopedRawMode {',
+                ' public:',
+                '  /// 构造函数：保存终端设置并切换到原始模式。',
+                '  ScopedRawMode() {}',
+                '',
+                '  /// 析构函数：恢复保存的终端设置。',
+                '  ~ScopedRawMode() {}',
+                '};',
+                '',
+            ].join('\n'),
+        )
+        const report = JSON.parse(runCli(['--root', dir, '--json']).stdout)
+        assert.ok(!report.issues.some((issue) => issue.rule === 'cpp-contract-missing'))
+    } finally {
+        rmSync(dir, { recursive: true, force: true })
+    }
+})
+
+test('.cpp 函数体内不写 ///', () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'comments-'))
+    try {
+        const source = path.join(dir, 'helper.cpp')
+        writeFileSync(source, ['/// @file helper.cpp', '/// @brief 辅助实现。', '', 'int Helper(int value) {', '  /// 循环返回。', '  return value;', '}', ''].join('\n'))
+        const bad = JSON.parse(runCli(['--root', dir, '--json']).stdout)
+        assert.ok(bad.issues.some((issue) => issue.rule === 'doc-in-body'))
+        writeFileSync(source, ['/// @file helper.cpp', '/// @brief 辅助实现。', '', 'int Helper(int value) {', '  // 返回值。', '  return value;', '}', ''].join('\n'))
+        const ok = JSON.parse(runCli(['--root', dir, '--json']).stdout)
+        assert.ok(!ok.issues.some((issue) => issue.rule === 'doc-in-body'))
+    } finally {
+        rmSync(dir, { recursive: true, force: true })
+    }
 })
 
 function runCli(args) {
-  try {
-    const stdout = execFileSync(process.execPath, [SCRIPT, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
-    return { status: 0, stdout }
-  } catch (error) {
-    return { status: error.status ?? EXIT.issues, stdout: error.stdout ?? '', stderr: error.stderr ?? '' }
-  }
+    try {
+        const stdout = execFileSync(process.execPath, [SCRIPT, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
+        return { status: 0, stdout }
+    } catch (error) {
+        return { status: error.status ?? EXIT.issues, stdout: error.stdout ?? '', stderr: error.stderr ?? '' }
+    }
 }

@@ -43,25 +43,25 @@ E.2：函数不能完成它被分配的任务时，就抛异常；构造函数�
 
 ```cpp
 PlaceResult Game::Place(Move move) {
-  // 先判终局，再判玩家与方格：失败结果的优先级由此决定。
-  if (!IsInProgress()) {
-    return PlaceResult::kFinishedGame;
-  }
+    // 先判终局，再判玩家与方格：失败结果的优先级由此决定。
+    if (!IsInProgress()) {
+        return PlaceResult::kFinishedGame;
+    }
 
-  if (current_player_ != move.player) {
-    return PlaceResult::kInvalidPlayer;
-  }
+    if (current_player_ != move.player) {
+        return PlaceResult::kInvalidPlayer;
+    }
 
-  const SquareValue target_square_value = PlayerToSquareValue(move.player);
-  const Square target_square = board_.GetSquare(move.position);
-  if (!target_square.IsEmpty()) {
-    return PlaceResult::kOccupiedSquare;
-  }
+    const SquareValue target_square_value = PlayerToSquareValue(move.player);
+    const Square target_square = board_.GetSquare(move.position);
+    if (!target_square.IsEmpty()) {
+        return PlaceResult::kOccupiedSquare;
+    }
 
-  current_player_ = PlayerToOpponent(current_player_);
-  board_.SetSquare(move.position, target_square_value);
-  history_.push_back(move);
-  return PlaceResult::kPlaced;
+    current_player_ = PlayerToOpponent(current_player_);
+    board_.SetSquare(move.position, target_square_value);
+    history_.push_back(move);
+    return PlaceResult::kPlaced;
 }
 ```
 
@@ -71,13 +71,13 @@ PlaceResult Game::Place(Move move) {
 
 ```cpp
 void Board::CheckInRange(Position pos, std::source_location location) {
-  if (!IsInRange(pos)) {
-    const std::string message = std::format(
-        "position {} out of range for {}x{} board, at {} ({}:{}:{})", pos, kRowCount,
-        kColumnCount, location.function_name(), location.file_name(), location.line(),
-        location.column());
-    throw std::out_of_range{message};
-  }
+    if (!IsInRange(pos)) {
+        const std::string message = std::format(
+                "position {} out of range for {}x{} board, at {} ({}:{}:{})", pos, kSide,
+                kSide, location.function_name(), location.file_name(), location.line(),
+                location.column());
+        throw std::out_of_range{message};
+    }
 }
 ```
 
@@ -94,12 +94,12 @@ E.14：用专门的用户定义类型表示异常，不要抛内建类型、`std
 ```cpp
 // 领域错误：类型即语义，调用方可以只捕获自己认识的那一支。
 class ParseError : public std::runtime_error {
- public:
-  explicit ParseError(const std::string& message) : std::runtime_error(message) {}
+public:
+    explicit ParseError(const std::string& message) : std::runtime_error(message) {}
 };
 ```
 
-标准库已经命名的失败直接用标准类型：坐标越界用 `std::out_of_range`，调用时不变量已破坏用 `std::logic_error`，正常输入里的解析失败可以用 `std::runtime_error`。只有调用方必须把这些失败和上述类型区分开时，才新增派生自它们的类型；不要为了「看起来规范」给每个参数错误都建一支。项目若定义自己的异常基类（如 `Error`），先定基类再按领域派生，调用方捕获基类就能接住整族异常。
+标准库已经命名的失败直接用标准类型：坐标越界用 `std::out_of_range`，调用时不变量已破坏用 `std::logic_error`；正常输入里的解析失败不抛，按上文用返回值表达，只有调用方无法继续的诊断失败才用 `std::runtime_error`。只有调用方必须把这些失败和上述类型区分开时，才新增派生自它们的类型；不要为了「看起来规范」给每个参数错误都建一支。项目若定义自己的异常基类（如 `Error`），先定基类再按领域派生，调用方捕获基类就能接住整族异常。
 
 ## 两种构建模式的三层合同
 
@@ -122,7 +122,7 @@ E.31：`catch` 子句从派生到基类、从具体到通用排序，`catch (...
 
 ## 不抛的边界
 
-E.12：在不可能或不可接受抛异常的地方用 `noexcept`。声明前先读实现：函数体里出现 `at()` 或其他可能抛出的调用，就去掉 `noexcept`；不要再包一层只转发下标的私有函数来维持 `noexcept`，直接写 `squares_.at(row).at(col)` 并去掉 `noexcept`。正例是只比较两个整数的 `IsInRange`；反例是用 `at()` 读取并会抛 `std::out_of_range` 的 `GetSquare`。普通查询和返回结果枚举的函数，不因为当前函数体不抛就补 `noexcept`；`noexcept` 留给移动、交换、析构，以及已经标上的纯谓词。E.13：直接拥有资源的函数不要抛，资源释放应交给 RAII。E.16：析构、`deallocate`、`swap` 以及异常类型的拷贝/移动构造不得失败；析构和 `swap` 应当是 `noexcept`。
+E.12：在不可能或不可接受抛异常的地方用 `noexcept`。声明前先读实现：函数体里出现 `at()` 或其他可能抛出的调用，就去掉 `noexcept`；不要再包一层只转发下标的私有函数来维持 `noexcept`，直接写 `squares_.at(row).at(col)` 并去掉 `noexcept`。正例是只比较两个整数的 `IsInRange`；反例是用 `at()` 读取并会抛 `std::out_of_range` 的 `GetSquare`。普通查询和返回结果枚举的函数，不因为当前函数体不抛就补 `noexcept`；`noexcept` 留给移动、交换、析构，以及已经标上的纯谓词。E.13：直接拥有资源的函数不要抛，资源释放应交给 RAII。预览查询要同时拒绝越界与占用时，把越界留给下层抛出、占用返回结果值，写法见 `references/design/examples/07-preview-read.md`。E.16：析构、`deallocate`、`swap` 以及异常类型的拷贝/移动构造不得失败；析构和 `swap` 应当是 `noexcept`。
 
 E.30：不要写异常规范（`throw(...)` 之类）；C++11 之后用 `noexcept` 表达「不抛」。需要无异常构建时，由项目单独决定，不要把这套异常指导改写成两面都对的模糊话。
 
@@ -132,22 +132,22 @@ E.30：不要写异常规范（`throw(...)` 之类）；C++11 之后用 `noexcep
 
 ```cpp
 int main() {
-  try {
-    return Run(std::cin, std::cout);
-  } catch (const std::exception& error) {
-    std::cerr << std::format("错误: {}\n", error.what());
-    return 1;
-  }
+    try {
+        return Run(std::cin, std::cout);
+    } catch (const std::exception& error) {
+        std::cerr << std::format("错误: {}\n", error.what());
+        return 1;
+    }
 }
 ```
 
-消息要能让调用者定位操作和关键值，句式见下节；`std::format` 只是构造 `what()` 或边界消息的方式。输出方式见 `references/language/standard-library/06-format.md`。
+消息要能让调用者定位操作和关键值，句式见下节；`std::format` 只是构造 `what()` 或边界消息的方式。
 
 ## 消息
 
 `what()` 是给程序员看的诊断文本，句式是「标签: 完整句」。标签写明来源，句子主语是失败的值或对象，谓语说明哪里不对，实际值直接插进句子，限度用 `for` 接在句末。标签是标识符，成员写 `Type::Function`，自由函数只写函数名，冒号后一个空格。私有检查函数用默认参数 `std::source_location::current()` 取调用点时不写标签，句子从失败的值开始，限度的对象用 `for` 接在句末，再写调用函数名与 `file_name():line():column()` 组成的括号 `at {} ({}:{}:{})`：`position {} out of range for {}x{} board, at {} ({}:{}:{})`，逐个填入失败值、尺寸与 `function_name()`、`file_name()`、`line()`、`column()`，`function_name()` 原样输出，不解析。先写哪个值失败，再写失败条件，最后写限度；语言由项目约定，下面的示例用英文。句子要完整：主语和谓语都在，不写 `board position is out of range` 这种重复标签类型的主语，也不把位置以外的值塞进括号，不写 Error / Failed 或空泛的「失败」。实际值用 `{}` 直接放进句子，不再写 `(name=value)`；没有实际值就不写值，没有限度就不写 `for`。需要原因时用 `because`，不要用分号堆叠。
 
-英文消息只用 `:`、`()`、`,`、`=` 四个 ASCII 符号：冒号紧贴标签、后接一个空格；括号只放次要值或补充说明；逗号前不空、后一个空格；等号两侧不空。不用第二个冒号、句号、问号、感叹号、破折号或 `×`；句子小写开头，句末不加句号；尺寸写 `3x3`，`out of range` 不加连字符。中文消息按中文标点，但句式与「值在前、限度在后」的顺序不变。
+英文消息只用 `:`、`()`、`,`、`=` 四个 ASCII 符号：冒号紧贴标签、后接一个空格；括号只放次要值或补充说明；逗号前不空、后一个空格；等号两侧不空。除 `file:line:column` 自带的分隔冒号外不用第二个冒号，也不用句号、问号、感叹号、破折号或 `×`；句子小写开头，句末不加句号；尺寸写 `3x3`，`out of range` 不加连字符。中文消息按中文标点，但句式与「值在前、限度在后」的顺序不变。
 
 值对象已有 `std::formatter` 时，格式串直接写 `{}`，不要拆成多个字段；例如 `position {}` 会输出 `position (-1, 0)`。没有格式化器的类型才拆字段。
 
@@ -172,7 +172,7 @@ Rust 把失败分成两类：`Result` 表示可预期的失败，用 `?` 传播�
 
 ```cpp
 const std::string message =
-    std::format("ReadConfig: {} has no header because the first line is empty", path);
+        std::format("ReadConfig: {} has no header because the first line is empty", path);
 throw ParseError{message};
 
 throw std::logic_error{"ReadConfig: the first line is empty"};

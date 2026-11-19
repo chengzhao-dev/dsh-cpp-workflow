@@ -1,4 +1,4 @@
-<!-- 读取时机：配 CMake 或工具链时；读完能回答：target、标准与产物目录怎么配；预算：一次只开这一份（236 行），不自动串联。 -->
+<!-- 读取时机：配 CMake 或工具链时；读完能回答：target、标准与产物目录怎么配；预算：一次只开这一份（237 行），不自动串联。 -->
 # CMake
 
 目标：一个编译器、Ninja、target-based 规则、可用的编译数据库。下面是最小形状和常见边界；工程模板仍由 `building-cpp` 提供，在 `../../../../building-cpp/assets/templates/projects/`，可复用的 CMake 函数在本技能的 `assets/`：`CompileSettings.cmake` 收标准与警告，`LinkSettings.cmake` 收构建期 RPATH 与 GoogleTest 依赖。
@@ -22,7 +22,7 @@ project({{PROJECT_NAME}} VERSION 0.1.0 LANGUAGES CXX)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-# 先把 assets/ 里的 CompileSettings.cmake 复制到工程的 cmake/。
+# 先把 references/cmake/assets/ 里的 CompileSettings.cmake 复制到工程的 cmake/。
 include(CompileSettings)
 
 add_executable(app src/main.cpp)
@@ -41,7 +41,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
-# 先把 assets/ 里的 CompileSettings.cmake 复制到工程的 cmake/。
+# 先把 references/cmake/assets/ 里的 CompileSettings.cmake 复制到工程的 cmake/。
 include(CompileSettings)
 
 add_subdirectory(greeting)
@@ -62,7 +62,7 @@ set_target_warnings(greeting PRIVATE LEVEL standard)
 
 - 库的 `PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include` 让程序与链接它的测试写 `#include "greeting.h"` 就能找到公共头，不需要各自再写 include 路径。
 - 标准用 `set_target_cxx_standard`：库用 `PUBLIC` 传播“至少 C++NN”，程序用 `PRIVATE`；`CXX_STANDARD`/`CXX_EXTENSIONS` 是 target 属性，不是 INTERFACE 属性，不会跨 target 传播；每个会编译的 target 都要自己调用一次。
-- `CXX_STANDARD_REQUIRED ON` 防止 CMake 在编译器不支持时静默降级；`CXX_EXTENSIONS OFF` 把 `-std=gnu++NN` 收成 `-std=c++NN`。configure 后逐 target 检查 `compile_commands.json`：每个 target 只有一条 `-std=`，等于 `environment.json` 的档位，不能是 `gnu++NN`。
+- `CXX_STANDARD_REQUIRED ON` 防止 CMake 在编译器不支持时静默降级；`CXX_EXTENSIONS OFF` 把 `-std=gnu++NN` 收成 `-std=c++NN`。configure 后逐 target 检查 `compile_commands.json`：同一 target 的各条 `-std=` 取值相同，且等于 `environment.json` 的档位，不能是 `gnu++NN`。
 - 程序 target 用项目技能点名的名字（模板默认 `app`）；库 target 用组件名。
 
 ## 标准与复用
@@ -71,10 +71,10 @@ C++11–C++23 的两层声明、可见性、常见错误与验证见 `../standar
 
 ```cmake
 set_target_cxx_standard(app PRIVATE c++23)
-set_target_cxx_standard(greeting PUBLIC c++20)
+set_target_cxx_standard(greeting PUBLIC c++23)
 ```
 
-函数名不绑定单一标准；新增档位只改函数里的支持列表。模块何时抽、文件怎么放、怎么导入与测试见 `../modules/01-functions.md`。
+函数名不绑定单一标准；新增档位只改函数里的支持列表。示例里库与程序同档：一个工程只有一个标准（见 `building-cpp/steps/01-build.md`），只有项目明确声明降档时才给单个 target 写更低的值，并同步 `environment.json`。模块何时抽、文件怎么放、怎么导入与测试见 `../modules/01-functions.md`。
 
 ## 警告等级
 
@@ -134,6 +134,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
 - 可执行文件统一到 `<构建目录>/bin`。
 - 库统一到 `<构建目录>/lib`。
+- 要复用而不是抄写时，复制 `../assets/OutputSettings.cmake`，按 `../modules/01-functions.md` 的位置调用 `set_output_directories()`；两条路只选一条。
 
 `<构建目录>` 取项目技能声明的单一构建目录（如 `games/<game>/build`），没声明时用 `build/<compiler>`；两种情况下 bin 与 lib 都相对它定位。
 - 不要输出到源码目录；`git status` 不应出现构建产物。
@@ -203,12 +204,12 @@ CompileSettings
 
 .. command:: set_target_cxx_standard
 
-  .. code-block:: cmake
+    .. code-block:: cmake
 
-    set_target_cxx_standard(<target> <visibility> <standard>)
+        set_target_cxx_standard(<target> <visibility> <standard>)
 
-  让已存在的 ``<target>`` 使用 ``<standard>`` 指定的语言标准。
-  本命令只改传入的目标，不设全局变量。
+    让已存在的 ``<target>`` 使用 ``<standard>`` 指定的语言标准。
+    本命令只改传入的目标，不设全局变量。
 #]=======================================================================]
 ```
 

@@ -22,8 +22,8 @@
 ```cmake
 include(GoogleTest)
 gtest_discover_tests(my_project_test
-  DISCOVERY_TIMEOUT 30
-  PROPERTIES LABELS unit TIMEOUT 10)
+    DISCOVERY_TIMEOUT 30
+    PROPERTIES LABELS unit TIMEOUT 10)
 ```
 
 - `gtest_discover_tests` 在构建后枚举用例，一条 `TEST` 对应一个 CTest 测试；不要再用 `add_test(NAME all COMMAND ...)` 包住整个可执行文件。
@@ -33,7 +33,7 @@ gtest_discover_tests(my_project_test
 
 ## 运行顺序（building-cpp 执行）
 
-1. 构建通过后跑 `ctest --test-dir build/<compiler> --output-on-failure --no-tests=error`。
+1. 构建通过后跑项目入口命令，不在这里另起 `ctest`；需要单独复跑时，`--no-tests` 的取值按 `building-cpp` 的 `steps/03-check.md` 第 4 步。
 2. 先跑失败用例的单条：`ctest -R <用例名> --output-on-failure`，确认失败可复现。
 3. 修完后跑全量；回归失败先判断是行为变了还是测试过期，不直接改断言迁就实现。
 4. Debug 一轮加 `-fsanitize=address,undefined -fno-omit-frame-pointer` 重跑测试；sanitizer 报告按第一条栈帧定位，不靠猜。

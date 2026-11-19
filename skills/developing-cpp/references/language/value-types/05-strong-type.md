@@ -5,11 +5,11 @@
 
 ```cpp
 struct Meters {
-  double value{0.0};
+    double value{0.0};
 };
 
 struct Seconds {
-  double value{0.0};
+    double value{0.0};
 };
 ```
 

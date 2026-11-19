@@ -12,98 +12,98 @@ export const PROJECT_SKILL_DIRS = ['cpp_workflow_project', 'cpp-workflow-project
 export const PROJECT_SKILL = path.join('.agents', 'skills', PROJECT_SKILL_DIRS[0], 'SKILL.md')
 /** 所有可接受的标记文件，顺序同 `PROJECT_SKILL_DIRS`。 */
 export const PROJECT_SKILL_MARKERS = PROJECT_SKILL_DIRS.map((name) =>
-  path.join('.agents', 'skills', name, 'SKILL.md'),
+    path.join('.agents', 'skills', name, 'SKILL.md'),
 )
 export const MAX_ASCENT = 64
 
 export interface ProjectSkillMarker {
-  /** `.agents/skills/<目录名>/SKILL.md` 的绝对路径。 */
-  file: string
-  /** 直接包含 `.agents` 的目录；不是仓库边界。 */
-  root: string
+    /** `.agents/skills/<目录名>/SKILL.md` 的绝对路径。 */
+    file: string
+    /** 直接包含 `.agents` 的目录；不是仓库边界。 */
+    root: string
 }
 
 async function exists(target: string): Promise<boolean> {
-  try {
-    await access(target)
-    return true
-  } catch {
-    return false
-  }
+    try {
+        await access(target)
+        return true
+    } catch {
+        return false
+    }
 }
 
 /** 在一层目录里按优先顺序找项目技能标记，返回第一个存在的。 */
 async function findMarker(root: string): Promise<string | undefined> {
-  for (const marker of PROJECT_SKILL_MARKERS) {
-    const file = path.join(root, marker)
-    if (await exists(file)) return file
-  }
-  return undefined
+    for (const marker of PROJECT_SKILL_MARKERS) {
+        const file = path.join(root, marker)
+        if (await exists(file)) return file
+    }
+    return undefined
 }
 
 /** 最近的上级 git 检出；worktree 的 `.git` 文件也算。 */
 export async function findGitRoot(cwd: string | undefined): Promise<string | undefined> {
-  if (typeof cwd !== 'string' || cwd.trim() === '') return undefined
-  let cursor: string
-  try {
-    cursor = path.resolve(cwd)
-  } catch {
-    return undefined
-  }
-  for (let depth = 0; depth < MAX_ASCENT; depth += 1) {
-    if (await exists(path.join(cursor, '.git'))) return cursor
-    const parent = path.dirname(cursor)
-    if (parent === cursor) return undefined
-    cursor = parent
-  }
-  return undefined
-}
-
-/**
- * 在 `cwd` 与 git 根之间（含两端）找最近的项目技能标记；根之上的标记不算。
- * 同时返回标记所在目录供诊断，它不是仓库边界。
- */
-export async function findProjectSkill(
-  cwd: string | undefined,
-  gitRoot?: string,
-): Promise<ProjectSkillMarker | undefined> {
-  if (typeof cwd !== 'string' || cwd.trim() === '') return undefined
-  let cursor: string
-  try {
-    cursor = path.resolve(cwd)
-  } catch {
-    return undefined
-  }
-  if (!gitRoot) {
-    gitRoot = await findGitRoot(cursor)
-    if (!gitRoot) return undefined
-  } else {
-    gitRoot = path.resolve(gitRoot)
-    const relative = path.relative(gitRoot, cursor)
-    if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
-      return undefined
+    if (typeof cwd !== 'string' || cwd.trim() === '') return undefined
+    let cursor: string
+    try {
+        cursor = path.resolve(cwd)
+    } catch {
+        return undefined
     }
-  }
-  for (let depth = 0; depth < MAX_ASCENT; depth += 1) {
-    const file = await findMarker(cursor)
-    if (file !== undefined) return { file, root: cursor }
-    if (cursor === gitRoot) return undefined
-    const parent = path.dirname(cursor)
-    if (parent === cursor) return undefined
-    cursor = parent
-  }
-  return undefined
+    for (let depth = 0; depth < MAX_ASCENT; depth += 1) {
+        if (await exists(path.join(cursor, '.git'))) return cursor
+        const parent = path.dirname(cursor)
+        if (parent === cursor) return undefined
+        cursor = parent
+    }
+    return undefined
 }
 
 /**
- * 会话门禁：项目技能必须位于 `cwd` 与 git 根之间（含两端）。不要求 C++ 或
- * CMake 证据：刚复制的模板仍需要工作流，空工程也可以合法地停在构建步骤。
- *
- * 没有 cwd、不在 git 检出内、标记只在 git 根之上或只在兄弟目录时返回 false。
- */
+  * 在 `cwd` 与 git 根之间（含两端）找最近的项目技能标记；根之上的标记不算。
+  * 同时返回标记所在目录供诊断，它不是仓库边界。
+  */
+export async function findProjectSkill(
+    cwd: string | undefined,
+    gitRoot?: string,
+): Promise<ProjectSkillMarker | undefined> {
+    if (typeof cwd !== 'string' || cwd.trim() === '') return undefined
+    let cursor: string
+    try {
+        cursor = path.resolve(cwd)
+    } catch {
+        return undefined
+    }
+    if (!gitRoot) {
+        gitRoot = await findGitRoot(cursor)
+        if (!gitRoot) return undefined
+    } else {
+        gitRoot = path.resolve(gitRoot)
+        const relative = path.relative(gitRoot, cursor)
+        if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+            return undefined
+        }
+    }
+    for (let depth = 0; depth < MAX_ASCENT; depth += 1) {
+        const file = await findMarker(cursor)
+        if (file !== undefined) return { file, root: cursor }
+        if (cursor === gitRoot) return undefined
+        const parent = path.dirname(cursor)
+        if (parent === cursor) return undefined
+        cursor = parent
+    }
+    return undefined
+}
+
+/**
+  * 会话门禁：项目技能必须位于 `cwd` 与 git 根之间（含两端）。不要求 C++ 或
+  * CMake 证据：刚复制的模板仍需要工作流，空工程也可以合法地停在构建步骤。
+  *
+  * 没有 cwd、不在 git 检出内、标记只在 git 根之上或只在兄弟目录时返回 false。
+  */
 export async function isCppWorkflowWorkspace(cwd: string | undefined): Promise<boolean> {
-  const gitRoot = await findGitRoot(cwd)
-  if (!gitRoot) return false
-  const project = await findProjectSkill(cwd, gitRoot)
-  return project !== undefined
+    const gitRoot = await findGitRoot(cwd)
+    if (!gitRoot) return false
+    const project = await findProjectSkill(cwd, gitRoot)
+    return project !== undefined
 }

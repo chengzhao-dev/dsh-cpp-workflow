@@ -13,11 +13,10 @@ configure 与构建的完整命令（Ninja、编译器、`CMAKE_EXPORT_COMPILE_C
 下文 `<构建目录>` 取项目技能声明的单一构建目录（如 `games/<game>/build`），没声明时用 `build/<compiler>`；`<程序 target>` 取项目技能「程序 target」字段，模板默认 `app`。
 
 - **target 图**：`<程序 target>` 链接库，库的公共 include 用 `PUBLIC`；没有把 `main()` 编进库。
-- **标准**：读 `<构建目录>/compile_commands.json` 中每个 target 的 `-std=`；每个 target 只能有一条，必须与 `environment.json` 的 `standard` 一致，不能是 `gnu++NN` 或更高默认标准，不同值即失败。
+- **标准**：读 `<构建目录>/compile_commands.json` 中每条 `-std=`；同一 target 的各条取值必须相同，且都等于 `environment.json` 的 `standard`，不能是 `gnu++NN` 或更高默认标准，出现不同值即失败。
 - **没有全局污染**：全仓搜索 `include_directories`、`add_definitions`、`CMAKE_CXX_FLAGS`、`file(GLOB`，命中就回第 1 步。
 - **模块导入**：根 `CMakeLists.txt` 只导入一次；函数名与文件名可追溯；删除旧模块后没有残留 `include()`。
-- **排版**：`CMakeLists.txt` 与 `*.cmake` 缩进用 4 个空格，行内对齐也用空格，UTF-8 无 BOM、LF；抽查 120 列（中文按 2 列计）以上的行是否有必要。
-- **文档块**：每个模块文件开头有 `#[=` 文档块与 `.. command::`，块内散文写中文，签名留在 `function()` 那一行。
+- **排版与文档块**：`CMakeLists.txt` 与 `*.cmake` 的缩进、编码、行宽按 `../references/cmake/targets/01-target-rules.md` 的「排版」节抽查；每个模块文件开头有文档块，签名留在 `function()` 那一行。
 - **产物位置**：可执行文件在 `<构建目录>/bin`，库在 `<构建目录>/lib`；源码目录没有新增构建产物。
 - **产物可加载**：对 `<构建目录>/bin/<程序 target>` 跑 `file` 与 `ldd`（macOS 用 `otool -L`），不得出现 `not found`；出现缺失按 RPATH 回第 1 步。启动检查由 `building-cpp` 的入口命令负责。见 `../references/cmake/linking/04-inspect.md`。
 

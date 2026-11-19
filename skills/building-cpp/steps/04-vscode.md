@@ -31,12 +31,10 @@
 
 ## 各键分工
 
-- `cmake.buildDirectory`：与定构建的 `build/<compiler>` 一致；不要在 CMake Tools 里再选第二个构建目录。项目技能声明单一构建目录时，这里与 `.clangd` 的 `CompilationDatabase` 都指向该目录（如 `games/tictactoe/build`），不再按编译器分子目录。
-- `cmake.generator: Ninja`、`cmake.configureOnOpen: false`、`cmake.buildBeforeRun: true`、`cmake.exportCompileCommandsFile: true`：构建仍由入口脚本和 CMake 决定，编辑器只消费同一份数据库。
-- `clangd.arguments`：`--query-driver` 写绝对路径且只列一个驱动，不用 `*`；`--header-insertion=never` 与 `--background-index` 沿用模板。
-- `cmake.debugConfig`：只改调试后端；`type` 仍是 `cppdbg`。
-- `C_Cpp.intelliSenseEngine: "disabled"`：把语言服务让给 clangd；不要把 C/C++ 扩展再配一套 include 路径。
-- `editor.formatOnSave` 与 `[cpp]` / `[c]` 的默认格式化器：都指向 clangd；是否开启保存即格式化由工程决定，不在构建脚本里跑 `clang-format -i`。
+键的作用与取值规则只有一份：`../../engineering/references/formatting/04-clangd.md` 的键表。本步只核对落地点：
+
+- `cmake.buildDirectory` 与 `.clangd` 的 `CompilationDatabase` 必须指向同一目录；项目技能声明单一构建目录时两处都写该目录（如 `games/tictactoe/build`），不按编译器分子目录。
+- 资产里 `files.exclude`、`search.exclude`、`files.encoding/eol`、`files.associations`、`editor.formatOnSave`、`[cpp]` / `[c]` 是隐藏与保存行为，按资产原样保留；只改与 `environment.json` 冲突的键。
 
 ## 不写什么
 

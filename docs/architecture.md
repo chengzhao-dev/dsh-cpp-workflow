@@ -114,4 +114,4 @@ flowchart TD
 
 ## 检查
 
-`npm test` 先跑客户端与源一致性检查，再构建 `lib/`；CI 另跑 `npm run check:lib`：把 `src/` 编译到临时目录，与已提交的 `lib/` 逐文件比对，不一致即说明产物过期；然后跑 `scripts/checking-skill-links.mjs`、编码检查、工作流检查与单元测试；结构检查要求本页存在、mermaid 数据流块存在且含 flowchart 关键字、三个技能名与三个检查器名（`checking-comments.mjs`、`checking-environment.mjs`、`checking-declaration-order.mjs`）齐全，并要求 `docs/module-layout.md` 的树按文件名覆盖每个技能 Markdown/脚本文件；目录层级与放置位置以该页为准。新增或移动文件时先改 module-layout 的树，再改结构检查，最后跑 `npm test`。
+`npm run check:lib` 把 `src/` 编译到临时目录，与已提交的 `lib/` 逐文件比对，不一致即说明产物过期；它必须排在任何构建之前（`npm run ci`、CI 与发布流程都是先 `check:lib` 再 `test`），否则比对的只是刚被覆盖的产物。`npm test` 先校验 `lib/client.js` 与源一致，再构建 `lib/`；然后跑 `scripts/checking-skill-links.mjs`、编码检查、工作流检查与单元测试；结构检查要求本页存在、mermaid 数据流块存在且含 flowchart 关键字、三个技能名与三个检查器名（`checking-comments.mjs`、`checking-environment.mjs`、`checking-declaration-order.mjs`）齐全，并要求 `docs/module-layout.md` 的树按文件名覆盖每个技能 Markdown/脚本文件；目录层级与放置位置以该页为准。新增或移动文件时先改 module-layout 的树，再改结构检查，最后跑 `npm test`。

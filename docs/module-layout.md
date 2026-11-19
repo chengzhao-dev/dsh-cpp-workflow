@@ -31,6 +31,7 @@ dsh-cpp-workflow/
 ├── scripts/
 │   ├── building-client.mjs
 │   ├── checking-github-workflows.mjs
+│   ├── checking-lib.mjs
 │   ├── checking-skill-links.mjs
 │   ├── checking-standard-matrix.sh
 │   └── skill-link-rules.mjs
@@ -125,7 +126,6 @@ developing-cpp/
 │   │   │   ├── 02-coordinate-table.md
 │   │   │   ├── 03-header-place.md
 │   │   │   ├── 04-library-boundary.md
-│   │   │   ├── 05-library-split.md
 │   │   │   ├── 06-move-result.md
 │   │   │   ├── 07-preview-read.md
 │   │   │   ├── 08-screen-enter-exit.md
@@ -173,11 +173,11 @@ developing-cpp/
 │   │   │   ├── 04-algorithms.md
 │   │   │   ├── 05-string.md
 │   │   │   ├── 06-format.md
-│   │   │   ├── 07-time.md
-│   │   │   ├── 08-random.md
-│   │   │   ├── 09-files.md
-│   │   │   ├── 10-library-checklist.md
-│   │   │   └── 11-format-ecosystem.md
+│   │   │   ├── 07-format-ecosystem.md
+│   │   │   ├── 08-time.md
+│   │   │   ├── 09-random.md
+│   │   │   ├── 10-files.md
+│   │   │   └── 11-library-checklist.md
 │   │   └── value-types/
 │   │       ├── 01-width.md
 │   │       ├── 02-signed.md
@@ -197,7 +197,6 @@ developing-cpp/
 │   ├── naming/
 │   │   ├── examples/
 │   │   │   ├── 01-naming-accessor.md
-│   │   │   ├── 02-naming-basic.md
 │   │   │   ├── 03-naming-current-prefix.md
 │   │   │   ├── 04-naming-local.md
 │   │   │   ├── 05-naming-lookup.md
@@ -205,7 +204,6 @@ developing-cpp/
 │   │   │   ├── 07-naming-multiple-return.md
 │   │   │   ├── 08-naming-player-value.md
 │   │   │   ├── 09-naming-predicate.md
-│   │   │   ├── 10-naming-rename.md
 │   │   │   ├── 11-naming-responsibility.md
 │   │   │   ├── 12-naming-role.md
 │   │   │   └── 13-naming-state-change.md
@@ -275,12 +273,12 @@ engineering/
 │       ├── examples/
 │       │   ├── 01-clang-format.md
 │       │   ├── 02-clang-tidy.md
-│       │   ├── 03-clangd.md
-│       │   └── 04-config-comments.md
+│       │   └── 03-clangd.md
 │       ├── 01-encoding.md
 │       ├── 02-clang-format.md
 │       ├── 03-clang-tidy.md
-│       └── 04-clangd.md
+│       ├── 04-clangd.md
+│       └── 05-config-comments.md
 ├── scripts/
 │   └── checking-encoding.mjs
 ├── steps/

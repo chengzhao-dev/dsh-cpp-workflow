@@ -14,10 +14,10 @@
 - `--query-driver` 是 clangd 的命令行参数，写在 `.vscode/settings.json` 的 `clangd.arguments` 里，不是 `.clangd` 的 YAML 键。它告诉 clangd 允许执行哪个编译器驱动来取系统头路径；路径写绝对路径，并与 `environment.json` 的编译器一致。
 - 首次复制后按 `04-vscode.md` 的「复制后改三处」表替换 `cmake.buildDirectory`、`clangd.arguments` 的 `--query-driver` 与 `cmake.debugConfig`，再把 `.clangd` 的 `CompilationDatabase` 指到同一构建目录，合计四个键；只复制模板而不改这些键，GCC 模式会指向错误的数据库、驱动或调试器。原工程已有的 `.clangd` 不覆盖；要改先征得同意。
 - `.clang-format` 保留 `Language: Cpp`、`BasedOnStyle: Google`、`Standard` 和 `LineEnding: LF`：模板资产写 `Latest`；工程按 `environment.json` 声明 C++11–C++20 时，把 `Standard` 改成 `c++NN`（映射见 `../../engineering/references/cmake/standards/index.md`）。`Standard` 不接受 `c++23` 的旧工具会报 `unknown enumerated scalar`；C++23 工程统一写 `Latest`，由工具取它支持的最高标准。缩进与列宽默认 4 个空格、120 列，模板资产显式写 `UseTab: Never`、`TabWidth: 4`、`IndentWidth: 4`、`ContinuationIndentWidth: 8`、`AccessModifierOffset: -4` 与 `ColumnLimit: 120`；工程有自己配置时按工程值执行。包含分块保持 include 现有空行分组，组内顺序交给 Google 预设。需要新规则时先改 `../../developing-cpp/references/style/01-google-cpp-style.md` 并说明理由。
-- `.clang-tidy` 用 `Checks: '-*, google-*, readability-identifier-naming'`，保留 `WarningsAsErrors: '*'` 和 `FormatStyle: file`。`google-*` 覆盖 Google 风格能静态检查的部分；`readability-identifier-naming` 只配项目确实统一的命名项：类型/枚举/别名/模板参数 PascalCase，变量/参数/成员 snake_case，私有成员尾随 `_`（对应 `PrivateMemberSuffix`）、公共与受保护成员不尾随，结构体成员不尾随，常量 `k` + PascalCase。不要设 `FunctionCase`，Google 允许 `count()` / `set_count()` 这类访问器；不要打开 `portability-avoid-pragma-once`，工程统一用 `#pragma once`，打开会把每个头文件报成问题；不要重新打开 `cppcoreguidelines-*` 整包。
+- `.clang-tidy` 用 `Checks: '-*, google-*, readability-identifier-naming'`，保留 `WarningsAsErrors: '*'` 和 `FormatStyle: file`。`google-*` 覆盖 Google 风格能静态检查的部分；`readability-identifier-naming` 的命名项与取值以 `assets/config/.clang-tidy` 的 `CheckOptions` 为唯一清单；常用约定：类型/枚举/别名/模板参数 CamelCase，变量/参数/成员与局部常量 lower_case，私有成员尾随 `_`（对应 `PrivateMemberSuffix`）、公共与受保护成员不尾随，结构体成员不尾随，静态存储期与 `constexpr` 常量 `k` + CamelCase，命名空间 lower_case，宏 UPPER_CASE。不要设 `FunctionCase`，Google 允许 `count()` / `set_count()` 这类访问器；不要打开 `portability-avoid-pragma-once`，工程统一用 `#pragma once`，打开会把每个头文件报成问题；不要重新打开 `cppcoreguidelines-*` 整包。
 - `.clang-tidy` 关闭项和例外必须写理由；不要借 `-*` 之后再打开 `cppcoreguidelines-*` 这类非 Google 整族检查。
-- `.vscode/extensions.json` 推荐 clangd、CMake Tools 与 C/C++ 扩展；`.vscode/settings.json` 固定 clangd 参数、CMake 构建目录和 `cmake.debugConfig`。编辑器内的配置、构建与调试从 CMake Tools 进入，命令行与 CI 一律走 `running-build.sh`，两者共用同一构建目录；不写 `tasks.json` 或 `launch.json`；C/C++ 扩展只作为 CMake 快速调试的后端，IntelliSense 关闭，避免和 clangd 并行。配置注释用 JSONC 的 `//`，贴在被解释的键上方。
-- 配置文件的键注释分两类：运行时配置（如 `runtime.config`）用「对象：条件时，后果」，写清比较对象与执行者，不写含糊代词、不复述键名，也不写 `sed`/CI 这类实现细节，正例见 `../../engineering/references/formatting/examples/04-config-comments.md`；固定值配置（`.clang-format`、`.clang-tidy`、`.clangd`、`.vscode/`）按 `../../developing-cpp/references/comments/02-style.md` 写。两类都不写策略说明段，也不指向文档路径；标题只在需要交代文件整体用途时写一行。
+- `.vscode/extensions.json` 与 `settings.json` 从 `assets/config/.vscode/` 复制；扩展分工与键语义按 `../../engineering/references/formatting/04-clangd.md`，工程内落地与三处替换见 `04-vscode.md`。编辑器从 CMake Tools 进入，命令行与 CI 走 `running-build.sh`，两者共用同一构建目录；不写 `tasks.json` 或 `launch.json`。配置注释用 JSONC 的 `//`，贴在被解释的键上方。
+- 配置文件的键注释分两类：运行时配置用「对象：条件时，后果」，写清比较对象与执行者，不写含糊代词、不复述键名，也不写 `sed`/CI 这类实现细节，句式与正反例见 `../../engineering/references/formatting/05-config-comments.md`；固定值配置（`.clang-format`、`.clang-tidy`、`.clangd`、`.vscode/`）写一句简短说明，不套后果句式，措辞按 `../../developing-cpp/references/comments/02-style.md`。两类都不写策略说明段，也不指向文档路径；标题只在需要交代文件整体用途时写一行。
 - 格式化与静态检查只扫描项目源码：`src/`、`include/`、`app/`、`tests/` 等实际存在的源码根；不扫描 `build/`、第三方目录、生成文件。
 - `clang-tidy` 用 `-p build/<compiler>` 读取编译数据库，`--header-filter` 只列项目根下的顶层目录，避免把第三方头纳入；不要加 `--system-headers`，也不要用 clang-tidy 19 才加入、16 没有的 `--exclude-header-filter`。
 - 格式化用 `--dry-run --Werror` 做检查；需要自动修复时单独运行 `-i`，不要让构建脚本悄悄改源码。`clang-format` 只排版，不会把行尾注释搬到上一行；数据成员注释位置按 `../../developing-cpp/references/comments/01-comment-rules.md` 检查。
@@ -38,7 +38,7 @@
 
 **换编译器**：改 `.clangd` 的 `CompilationDatabase`，改 `--query-driver` 指向的编译器，清理旧构建目录；不要同时保留两套 clangd 配置。
 
-**GCC 模式**：`clangd` 仍可工作，但系统头来自 GCC；`--query-driver` 指向 `g++`。`clang-format` / `clang-tidy` 仍是 Clang 工具，版本要求不因编译器是 GCC 而降低。
+**GCC 模式**：`clangd` 仍可工作，但系统头来自 GCC；`--query-driver` 指向真实 GCC 的绝对路径（Linux 通常 `g++`，macOS 用 Homebrew 的 `gcc-14` 等；`/usr/bin/g++` 在 macOS 是 Apple clang，不能用）。`clang-format` / `clang-tidy` 仍是 Clang 工具，版本要求不因编译器是 GCC 而降低。
 
 **共享库**：静态检查不因链接方式改变；运行时库路径由 `engineering` 的 target 设置负责，见 `../../engineering/references/cmake/targets/01-target-rules.md` 的「共享库运行时路径」，不写进 clang 配置。
 

@@ -29,7 +29,7 @@
 4. **configure**：每次运行都重新 configure，不复用缓存；传 `-G Ninja`、`-DCMAKE_BUILD_TYPE=Debug`、`-DCMAKE_C_COMPILER`、`-DCMAKE_CXX_COMPILER`、`-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`。C 与 C++ 使用同一套编译器；没有 C 语言的工程会忽略 C 编译器设置。
 5. **build**：`cmake --build "$BUILD_DIR"`。
 6. **编译数据库链接**：`BUILD_DIR` 与 `BUILD_ROOT` 相同时数据库就在该目录，不建链接；否则先 `rm -f "${BUILD_ROOT}/compile_commands.json"`，再用 shell 参数展开去掉 `${BUILD_ROOT}/` 前缀求相对路径（`case` 配 `"${target#"${BUILD_ROOT}/"}"`），然后 `ln -s` 到 `${BUILD_ROOT}/compile_commands.json`。不用 `realpath --relative-to`，它是 GNU coreutils 选项，macOS 自带命令没有；也不用 `ln -n`，它在 BSD/macOS 上不可移植。
-7. **test**：有 `tests/` 目录时 `ctest --test-dir "$BUILD_DIR" --output-on-failure --no-tests=error`，防止测试 discovery 失败后 0 条也算通过；没有测试目录时 `ctest --test-dir "$BUILD_DIR" --output-on-failure --no-tests=ignore`，0 条不算失败；不写 `--no-tests=ignore` 时 ctest 会把 0 条当失败（退出码 8）。
+7. **test**：命令为 `ctest --test-dir "$BUILD_DIR" --output-on-failure`，`--no-tests` 的取值按 `steps/03-check.md` 第 4 步的条件选；不写 `--no-tests=ignore` 时 ctest 会把 0 条当失败（退出码 8）。
 8. **run**：`(cd "$BUILD_DIR/bin" && "./$APP_NAME")`；共享库的运行时路径由定构建的 CMake RPATH 负责，不在脚本里设全局 `LD_LIBRARY_PATH`。
 
 最后一行是 `main "$@"`；函数定义在 `main()` 之前，`set` / `readonly` 在最前。
