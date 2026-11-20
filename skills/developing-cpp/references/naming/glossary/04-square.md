@@ -7,9 +7,9 @@
 
 | 语义 | 写法 | 依据 |
 | --- | --- | --- |
-| 棋盘上的一格 | `Square`；参数、局部变量 `square`；查询 `GetSquare` / `SetSquare` | CPW `Squares`、Stockfish `enum Square`、chess.hpp `Square`、python-chess `chess.Square`；有道 `square`「（棋盘上的）方格」；汉典、海词「方格=方形的格子」 |
+| 棋盘上的一格 | `Square`；参数、局部变量 `square`；查询/写入 `GetSquareValue` / `SetSquareValue` / `IsSquareEmpty` | CPW `Squares`、Stockfish `enum Square`、chess.hpp `Square`、python-chess `chess.Square`；有道 `square`「（棋盘上的）方格」；汉典、海词「方格=方形的格子」 |
 | 格中的内容 | `SquareValue`；查询/写入 `GetValue` / `SetValue`；取值 `kEmpty` / `kX` / `kO` | LucHermitte `enum class SquareValue` 与 `Square::value()`；tictacrustle `SquareValue` / `set_value`；React 井字棋 `value`；海词、必应、有道、汉典 `value=值/数值` |
-| 玩家→格中内容 | `PlayerToSquareValue` | 本项目 `move.h`；`01-identifier-names.md` 的「来源To结果」 |
+| 玩家→格中内容 | `PlayerToSquareValue` | 本项目 `move.h`；命名规则见 `01-identifier-names.md` 的自由函数条 |
 | 一条线的三个值 | `line_values` | 本项目 `game.cpp`；容器用复数 |
 | 目标方格的值 | `target_square_value` | 本项目 `game.cpp`；角色写进名字 |
 | 避免 | `Mark`、`Cell`、`Token` | 井字棋英文常用 `mark`（Exploratorium「marks in empty squares」），但 `Value` 在 Stockfish 是搜索分值、中文项目 `Value[3][3]` 是点位评估分；本项目按裁决统一 `SquareValue`。`cell` 是「单元格」「格网单元」；`token` 是词法单元/占用物 |
@@ -19,7 +19,7 @@
 - 英文棋类资料把 `Square` 当坐标或位置：CPW 的 `Squares`、Stockfish 的 `enum Square`、chess.hpp、python-chess、Chess.com 都这样用；`Square` 只表示「哪一格」，不表示「格中是什么」。
 - 井字棋英文资料更常用 `mark`：Exploratorium 写「putting their marks in empty squares」，SciMigo 的 `enum class Mark { Empty, X, O }` 也是直接先例。`Mark` 比 `SquareValue` 短，也不会把容器名重复进值类型。
 - `SquareValue` 也有先例：LucHermitte 的 C++ 井字棋用 `enum class SquareValue` 与 `Square::value()`；Rust 的 tictacrustle 用 `SquareValue` 与 `set_value`；React 井字棋用 `value`。它和 `Square` 配对，读作「方格的值」。
-- 风险在 `Value` 的歧义：Stockfish 的 `using Value = int` 是搜索分值；中文项目的 `Value[3][3]` 是点位评估分。`SquareValue` 有被读成「分值」的可能，所以类型注释以「方格的值。」起句，可用全角冒号在同一句补取值范围；取值也可由枚举行的 `///<` 表达，不另起枚举项清单；函数名跟类型走 `GetValue` / `SetValue`。
+- 风险在 `Value` 的歧义：Stockfish 的 `using Value = int` 是搜索分值；中文项目的 `Value[3][3]` 是点位评估分。`SquareValue` 有被读成「分值」的可能，所以类型注释以「方格的值。」起句，可用全角冒号在同一句补取值范围；取值也可由枚举行的 `///<` 表达，不另起枚举项清单；函数名见 [01-identifier-names.md](../01-identifier-names.md) 的「谓词与查询命名」。
 - 本项目按用户裁决使用 `SquareValue`，与插件规则、代码和书稿统一；`Mark` 只在英文资料的取舍说明里出现，不作为代码名。
 - 中文用词：`Square` 写「方格」，`SquareValue` 写「方格的值」；`格子` 更泛（汉典「方形的空栏或框子」），`棋格` 是「下棋的技艺水平」（汉典），都不能替代「方格」；`棋盘` 是整块盘面。`值` 用「方格的值」「空」「X」「O」；`标记` 不再用于这个类型。
 

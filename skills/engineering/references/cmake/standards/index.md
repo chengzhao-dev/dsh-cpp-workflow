@@ -72,7 +72,7 @@ set_target_properties(app PROPERTIES
 - `cxx_std_23` 是“至少”，会向依赖它的 target 传播。
 - `CXX_STANDARD` 是请求值；`CXX_STANDARD_REQUIRED ON` 防止编译器不支持时静默降级。
 - `CXX_EXTENSIONS OFF` 把 `-std=gnu++23` 收成 `-std=c++23`。
-- configure 后读 `compile_commands.json` 中每条 `-std=`；同一 target 的各条取值必须相同，且都是 `-std=c++NN`，不能是 `gnu++NN`，不同值即失败。矩阵脚本按整份数据库断言期望值存在且没有 `gnu++NN`，同一 target 内的一致性靠这一条人工核对。
+- configure 后读 `compile_commands.json` 中每条 `-std=`；同一 target 的各条取值必须相同，且都是 `-std=c++NN`，不能是 `gnu++NN`，不同值即失败。矩阵脚本逐条断言每条编译命令恰好一个 `-std=`，且等于本档期望值。
 - CMake 最低 3.20（模板统一要求）；只单独使用低档片段时，C++11/14 的 `cxx_std_*` meta-feature 最低 3.1，C++17 为 3.8，C++20 为 3.12。C++23 的 `CXX_STANDARD 23` 自 3.20 才有。
 
 ### clang-format

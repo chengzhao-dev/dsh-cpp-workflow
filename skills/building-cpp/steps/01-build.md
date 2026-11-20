@@ -56,7 +56,7 @@ GCC 模式把目录和编译器换成 `build/gcc`、`g++`（C 驱动换成 `gcc`
 
 ## 情况
 
-**新工程**：从 `../assets/templates/projects/` 选形态；把 `../assets/templates/projects/common/running-build.sh` 复制到工程根，`chmod +x` 并用 `bash -n` 验证语法；在 `.agents/skills/cpp-workflow-project/environment.json` 写出四个字段（`host`、`build_host`、`compiler`、`standard`），取值与组合见 `../references/02-environment.md`，不要替用户选。模板缺 target 时先转 `engineering`，target 齐了再 configure。
+**新工程**：从 `../assets/templates/projects/` 选形态；把 `../assets/templates/projects/common/running-build.sh` 复制到工程根，`chmod +x` 并用 `bash -n` 验证语法；在 `.agents/skills/cpp-workflow-project/environment.json` 写出四个字段（`host`、`build_host`、`compiler`、`standard`），取值与组合见 `../references/02-environment.md`，不要替用户选。模板源文件只是最小可构建形状，不带 `/// @file` 文件头；复制进工程后按 `../../developing-cpp/references/layout/02-file-template.md` 槽位 1 补齐再跑注释检查。模板缺 target 时先转 `engineering`，target 齐了再 configure。
 
 **已有工程**：先读现有 `CMakeLists.txt`，只核对 target、标准与输出目录；不改与当前任务无关的 target，大改前先让现有构建跑通。
 

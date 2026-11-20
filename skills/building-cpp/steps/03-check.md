@@ -11,7 +11,7 @@
 1. **校验编码与行尾**：在仓库根跑编码检查。默认 UTF-8 无 BOM、LF；不是本工作流构建的 MSVC 源码库加 `--profile msvc`（本工作流拒绝 `windows + native`）。有问题先按 `../../engineering/references/formatting/01-encoding.md` 修正，不带着 BOM 或混用行尾继续；脚本退出码为 0 后再跑 `git diff --check`，有空白错误同样停在这里。
 2. **校验环境声明（不带 `--live`）**：读 `environment.json`，按 `../references/02-environment.md`「合法组合」的规则判定；非法时停在这里，不找可执行文件。
 3. **活动校验**：在声明的 build host 上跑 `--live`，核对 PATH 中的角色和版本。`windows` + `native` 在声明校验阶段就返回失败，不会进入这一步。
-4. **跑项目入口命令**：项目技能里写的入口命令（如 `./running-build.sh clang`）。入口命令仍是 `<entry-command>` 或空白时，停在这里，不要猜命令；是真实命令才跑。入口内部依次 configure → build → ctest → run；每一步失败都保留原始输出。有 `tests/` 目录时，脚本里的 ctest 必须带 `--output-on-failure --no-tests=error`；缺参数时按 `ctest --test-dir <build-dir> --output-on-failure --no-tests=error` 补跑，并以补跑的退出码为准；没有测试目录时改用 `--no-tests=ignore`，0 条不算失败，也不补 `--no-tests=error`。入口通过后，再对项目源码跑 `clang-format --dry-run --Werror <源码根>/*.cpp <源码根>/*.h`（只列工程实际存在的源码根，目录不存在就不写这一项）与 `clang-tidy -p <build-dir> --header-filter="^$(pwd -P)/" --warnings-as-errors='*' <源码根>/*.cpp`（clang-tidy 必须显式列出源文件，否则报 no input files；过滤按工程根取，组件名不必逐个列，第三方头在根外自然排除）；任一非零即失败，命令细节见 `../../engineering/references/formatting/02-clang-format.md` 与 `03-clang-tidy.md`。
+4. **跑项目入口命令**：项目技能里写的入口命令（如 `./running-build.sh clang`）。入口命令仍是 `<entry-command>` 或空白时，停在这里，不要猜命令；是真实命令才跑。入口内部依次 configure → build → ctest → run；每一步失败都保留原始输出。有 `tests/` 目录时，脚本里的 ctest 必须带 `--output-on-failure --no-tests=error`；缺参数时按 `ctest --test-dir <build-dir> --output-on-failure --no-tests=error` 补跑，并以补跑的退出码为准；没有测试目录时改用 `--no-tests=ignore`，0 条不算失败，也不补 `--no-tests=error`。入口通过后，再对项目源码跑 `clang-format --dry-run --Werror <源码根>/*.cpp <源码根>/*.h`（只列工程实际存在的源码根，目录不存在就不写这一项）与 `clang-tidy -p <build-dir> --header-filter="^$(pwd -P)/" --warnings-as-errors='*' <源码根>/*.cpp`（clang-tidy 必须显式列出源文件，否则报 no input files；`--header-filter` 默认按工程根取，根里还放第三方头时再收窄成源码根白名单，见 `../../engineering/references/formatting/03-clang-tidy.md`）；任一非零即失败，命令细节见 `../../engineering/references/formatting/02-clang-format.md` 与 `03-clang-tidy.md`。
 5. **核对产物**：`<build-dir>/compile_commands.json` 存在（默认 `build/<compiler>`，项目声明单一目录时用该目录）；没有声明单一目录时，`build/compile_commands.json` 还要指向当前数据库；入口 target（模板默认 `app`）的可执行文件在 `<build-dir>/bin`。对它跑 `file` 与 `ldd`（macOS 用 `otool -L`），`ldd` 不得出现 `not found`，并做一次最小启动；见 `../../engineering/references/cmake/linking/04-inspect.md`。
 6. **记录结果**：通过时记录编译器版本、构建目录、测试数量；失败时记录命令、退出码、第一条根因诊断。
 
@@ -53,7 +53,7 @@ node "<skill-dir>/scripts/checking-environment.mjs" --project . --live   # 活�
 
 **没有测试**：项目确实还没有测试时，CTest 显示 0 条不算构建失败；不要为了「全绿」造空测试。已有公开行为却没有任何用例时，按 `../../engineering/references/cmake/testing/01-ctest.md` 的「先决定测什么」补成功与拒绝各一条，再跑 `--no-tests=error` 确认它真的被注册。
 
-**Windows 原生**：本版本不支持 `host=windows` + `build_host=native`。声明校验会返回 `ok: false`，`issues` 只有一句「本版本不能在 Windows 原生壳里构建」。停在这里，不要伪造 PowerShell 脚本，不要建议改 WSL 来绕过，也不要让代理改 `environment.json` 过关。
+**Windows 原生**：本版本不支持 `host=windows` + `build_host=native`，声明校验返回 `ok: false`；判定与错误文本见 `../references/02-environment.md`。停在这里，不要伪造 PowerShell 脚本，不要建议改 WSL 来绕过，也不要让代理改 `environment.json` 过关。
 
 **macOS**：`/usr/bin/clang++` 通常是 Apple Clang；`.clangd` 不写死 Homebrew 路径，clangd 要能经 xcrun 找到 SDK。`compiler=clang` 时 `--live` 按同一 LLVM 主版本核对 clang++、clang-format、clang-tidy、clangd；不要混用 Homebrew LLVM 与 Xcode 资源目录来凑版本，也不要为了通过而改 `environment.json` 的编译器。
 

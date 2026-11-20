@@ -39,7 +39,7 @@ configure 的目录与编译器写法以 `building-cpp` 的 `steps/01-build.md`�
 
 **库 + 程序**：库的公共 include 用 `PUBLIC` 传播；程序不直接包含库的 `src/`。静态库与动态库的 target 写法相同，动态库额外设运行时路径。
 
-**测试**：确有第二个消费者时再加 `enable_testing()` 与 `add_subdirectory(tests)`；测试 target 用 `fetch_googletest()` 取固定版本框架，并用 `gtest_discover_tests(<target> DISCOVERY_TIMEOUT 30 PROPERTIES LABELS unit TIMEOUT 10)` 注册；不得用 `add_test(NAME all ...)` 包整个可执行文件。测试 target 只链接被测库的公共接口，没有测试时不加空测试。
+**测试**：确有第二个消费者时再加 `enable_testing()` 与 `add_subdirectory(tests)`；测试 target 用 `fetch_googletest()` 取固定版本框架，用 `include(GoogleTest)` 加 `gtest_discover_tests` 注册，命令参数以 `../references/cmake/testing/01-ctest.md`「注册给 CTest」为唯一出处；不得用 `add_test(NAME all ...)` 包整个可执行文件。测试 target 只链接被测库的公共接口，没有测试时不加空测试。
 
 **预设**：使用 preset 时名称固定 `clang` / `gcc`，与构建目录一致；没有 preset 时直接用上面的命令，不要两套并存。
 

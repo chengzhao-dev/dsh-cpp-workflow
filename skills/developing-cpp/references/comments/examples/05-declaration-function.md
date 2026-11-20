@@ -1,4 +1,4 @@
-<!-- 读取时机：写或改注释的示例时；读完能回答：正反例：函数声明注释；预算：一次只开这一份（121 行），不自动串联。 -->
+<!-- 读取时机：写或改注释的示例时；读完能回答：正反例：函数声明注释；预算：一次只开这一份（125 行），不自动串联。 -->
 # 正反例：函数声明注释
 
 ## 第一句：结果、保证或成立条件
@@ -7,8 +7,8 @@
 
 ```cpp
 /// 检查坐标。
-/// 返回方格；越界会抛异常。
-Square GetSquare(Position pos) const;
+/// 返回方格的值；越界会抛异常。
+SquareValue GetSquareValue(const Position& position) const;
 ```
 
 前两句都没有直接回答“合法时拿到什么、越界时发生什么”，读者要读完三句才拼出合同。
@@ -16,14 +16,14 @@ Square GetSquare(Position pos) const;
 **好**：
 
 ```cpp
-/// 坐标越界时抛出 `std::out_of_range`；合法坐标返回该格的副本。
+/// 坐标越界时抛出 `std::out_of_range`；合法坐标返回该格当前的值。
 ///
-/// @param pos 行列坐标。
+/// @param position 行列坐标。
 ///
-/// @return 该坐标的方格副本。
+/// @return 该坐标方格当前的值。
 ///
 /// @throws std::out_of_range 坐标不在棋盘范围内。
-Square GetSquare(Position pos) const;
+SquareValue GetSquareValue(const Position& position) const;
 ```
 
 第一句就是结果、失败方式或成立条件；后面的标签只补参数与异常细节，不再重复这句话。
@@ -40,9 +40,9 @@ bool operator==(const Position& other) const = default;
 ```cpp
 /// 相等运算符。
 ///
-/// 当两个坐标的行与列都相同时返回 true。
+/// 当两个坐标的行号与列号都相同时返回 true。
 ///
-/// @param other 另一个坐标。
+/// @param other 另一个行列坐标。
 ///
 /// @return 成立时返回 true；不成立时返回 false。
 bool operator==(const Position& other) const = default;
@@ -101,7 +101,7 @@ bool operator==(const Position& other) const = default;
 
 第一句必须说清这个函数做什么；如果一句只覆盖其中一次检查，补上动作再作简要描述。`@return` 写返回值，不写「对局不变」这种后置条件本身；多种结果时按 `@retval` 写清每种结果何时返回，说法与枚举项的行尾注释一致即可。布尔查询把条件映射成 true/false；失败结果写清没有写入与原因，不重复类型注释已经交代的共同后果。
 
-第一段不写参数名，像「把 value 写到 pos 对应的方格上」这种句子把签名里的名字搬进摘要，离开签名就读不懂；改成「把指定值写到指定坐标的方格上」，名字留给 `@param`。`@param` 里的参数名是绑定声明，`kX`、`kO` 这类枚举值仍用反引号。
+第一段不写参数名，像「把 value 写到 position 对应的方格上」这种句子把签名里的名字搬进摘要，离开签名就读不懂；改成「把指定值写到指定坐标的方格上」，名字留给 `@param`。`@param` 里的参数名是绑定声明；枚举值只在 `@return` 里加反引号，`@param` 说明照常写 `kX`、`kO`。
 
 ## 用词：先找名词
 
@@ -116,6 +116,10 @@ bool operator==(const Position& other) const = default;
 
 ```cpp
 /// 获取落子历史。
+///
+/// 视图引用本对象；对象销毁或历史变化后，重新获取。
+///
+/// @return 历史的只读视图，按发生顺序排列。
 [[nodiscard]] std::span<const Move> GetHistory() const;
 ```
 

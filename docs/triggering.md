@@ -18,7 +18,7 @@
 
 | # | 用户请求 | 应出现 | 判定要点 |
 | --- | --- | --- | --- |
-| 1 | 「给 `Board::SetSquare` 加越界判断」 | `developing-cpp` | 函数体与异常，落定实现 |
+| 1 | 「给 `Board::SetSquareValue` 加越界判断」 | `developing-cpp` | 函数体与异常，落定实现 |
 | 2 | 「这几个类注释写得像目录，帮我改」 | `developing-cpp` | 源码注释，落定声明与定实现 |
 | 3 | 「新增一个 `Move` 类型，补到头文件」 | `developing-cpp` | 声明与头文件契约 |
 | 4 | 「`@throws` 该不该写，把异常说清楚」 | `developing-cpp` | 异常契约，落定声明 |

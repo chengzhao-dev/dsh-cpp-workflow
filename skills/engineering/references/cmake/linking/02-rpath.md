@@ -15,7 +15,7 @@ build/<compiler>/
   - Linux：`-Wl,-rpath,'$ORIGIN/../lib'`
   - macOS：`-Wl,-rpath,@loader_path/../lib`
 - CMake 用 `BUILD_RPATH` / `INSTALL_RPATH` 设置，不要手工拼链接命令；见 [`LinkSettings.cmake`](../assets/LinkSettings.cmake)。
-- `$ORIGIN` 的转义、`BUILD_RPATH_USE_ORIGIN` 与设置位置只有一份权威：`../targets/01-target-rules.md` 的「共享库运行时路径」节，本文件不重复。
+- `$ORIGIN` 的转义与设置位置只有一份权威：`../targets/01-target-rules.md` 的「共享库运行时路径」节，本文件不重复。
 
 ## 依据
 

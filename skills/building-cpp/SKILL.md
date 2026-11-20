@@ -16,7 +16,7 @@ metadata:
 - **交接**：一次改动同时碰到源码和构建文件时，先开 `developing-cpp` 定行为、边界与实现；需要新增或移动源文件、改库与程序的边界、补测试 target 时，转 `engineering` 把文件写进 CMake；最后回到本技能定工具配置并通过检查。只改函数体、命名、异常或注释且入口命令可运行时，定实现后只开本技能的通过检查。
 - **前置**：存在项目技能 `cpp-workflow-project` 时先读它的 `SKILL.md`、`environment.json` 和 `stages/stage-table.md`。声明非法时停在定构建，不猜 WSL、Clang 或构建目录；判定规则与取值见 `references/02-environment.md`「合法组合」。
 - **分因**：编译失败时先看诊断指向哪一层。函数体问题回 `developing-cpp` 的定实现；找不到头、链接失败、target 不存在或标准不对转 `engineering` 的对应步骤；没有编译数据库、format/tidy 不在 PATH 或配置不生效留在本技能的定工具配置。
-- **编码**：源码与构建文件用 UTF-8 无 BOM、检出 LF，`.bat` / `.cmd` 用 CRLF，`.clang-format` 写 `LineEnding: LF`；MSVC 不是受支持的环境轴；`/utf-8` 配方只留在资产注释里，当前构建仍用 clang/gcc。完整规则见 `../engineering/references/formatting/01-encoding.md`，机器规则以仓库根 `.gitattributes` 与 `.editorconfig` 为准。
+- **编码**：源码与构建文件用 UTF-8 无 BOM、检出 LF，`.bat` / `.cmd` 用 CRLF；机器规则以仓库根 `.gitattributes` 与 `.editorconfig` 为准。完整规则见 `../engineering/references/formatting/01-encoding.md`；MSVC 不是受支持的环境轴，`/utf-8` 只在 `engineering` 的编码一节写给外部工程看。
 - **编辑器**：工程根已有 `.vscode/` 时按 `steps/04-vscode.md` 接线；从当前目录向上到工程根（含 `CMakeLists.txt` 的目录）都没有 `.vscode/` 时不打开、也不新建，外层仓库根或书根的 `.vscode/` 不算工程配置。配置、构建、运行和调试都从 CMake Tools 进入，构建仍以 `running-build.sh` 为准。
 
 ## 三种操作
@@ -61,7 +61,7 @@ metadata:
 
 加载预算见 [budget.md](../shared/budget.md)；building-cpp 的步骤固定 4 份。
 
-环境检查跑本技能自己的 `scripts/checking-environment.mjs`，编码检查跑 `../engineering/scripts/checking-encoding.mjs`；编码检查脚本从目标文件所在目录向上找 `.gitattributes` 与 `.editorconfig`，工程另有声明时以声明为准；环境检查脚本向上找项目技能的 `environment.json`。这些命令只覆盖各自那一段，完成判据还要求入口命令、CTest 与格式化检查，按 `steps/03-check.md` 的顺序跑完再停在这一步。入口脚本只做配置、构建、CTest 与最小运行；`clang-format` 与 `clang-tidy` 的手动检查留在定工具配置，不塞进入口脚本。`environment.json` 的三个环境轴是唯一来源；取值与合法性见 `references/02-environment.md`「合法组合」，脚本行为见 `scripts/checking-environment.mjs`。
+环境检查跑本技能自己的 `scripts/checking-environment.mjs`，编码检查跑 `../engineering/scripts/checking-encoding.mjs`；编码检查脚本从目标文件所在目录向上找 `.gitattributes` 与 `.editorconfig`，工程另有声明时以声明为准；环境检查脚本向上找项目技能的 `environment.json`。这些命令只覆盖各自那一段，完成判据还要求入口命令、CTest 与格式化检查，按 `steps/03-check.md` 的顺序跑完再停在这一步。入口脚本只做配置、构建、CTest 与最小运行；`clang-format` 与 `clang-tidy` 不进入口脚本，入口通过后按 `steps/03-check.md` 第 4 步手动跑。`environment.json` 的三个环境轴是唯一来源；取值与合法性见 `references/02-environment.md`「合法组合」，脚本行为见 `scripts/checking-environment.mjs`。
 
 ## 四类改动
 

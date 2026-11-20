@@ -6,8 +6,7 @@
         "--header-insertion=never",
         "--background-index"
     ],
-    // VSCode 的配置、构建、运行和调试入口都留在 CMake Tools。
-    // 不另建 launch.json / tasks.json，避免出现第二套构建或启动路径。
+    // 构建、运行和调试入口统一交给 CMake Tools。
     "cmake.buildDirectory": "${workspaceFolder}/build/clang",
     // 构建固定用 Ninja，与工程入口脚本一致；换生成器要同步脚本。
     "cmake.generator": "Ninja",
@@ -27,8 +26,7 @@
         "stopAtEntry": false,
         "externalConsole": false
     },
-    // cpptools 只作为 CMake 的调试后端，不再提供 IntelliSense；
-    // 补全、跳转、诊断和格式化都由读取 compile_commands.json 的 clangd 负责。
+    // IntelliSense 由 clangd 提供。
     "C_Cpp.intelliSenseEngine": "disabled",
     // 保存即格式化；实际排版交给 clangd，不在构建脚本里跑 clang-format -i。
     "editor.formatOnSave": true,
@@ -43,9 +41,9 @@
     "files.associations": {
         "*.h": "cpp"
     },
-    // 文件统一按 UTF-8 保存，与 .editorconfig 的 charset 一致。
+    // 文件按 UTF-8 保存。
     "files.encoding": "utf8",
-    // 行尾统一 LF，与 .gitattributes 和 .clang-format 的 LineEnding 一致。
+    // 行尾用 LF。
     "files.eol": "\n",
     // 构建产物与本地缓存不显示在资源管理器里。
     "files.exclude": {

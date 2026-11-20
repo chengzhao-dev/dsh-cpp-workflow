@@ -26,7 +26,7 @@ public:
 // board.h：棋盘只检查坐标并写入，没有结果类型
 class Board {
 public:
-    void SetSquare(Position pos, SquareValue value);
+    void SetSquareValue(const Position& position, SquareValue value);
 };
 
 // game.h：落子结果跟着对局这一个动作走

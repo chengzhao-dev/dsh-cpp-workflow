@@ -14,7 +14,7 @@
 
 ## 取舍
 
-- 有几档就写几个枚举子，不用 `bool`、整数或字符串；新增一档时补一个枚举子，并让 `switch` 覆盖全部值，不写 `default`。
+- 有几档就写几个枚举子，不用 `bool`、整数或字符串；新增一档时补一个枚举子，`switch` 覆盖全部值的要求见 [session-layer.md](../../design/session-layer.md) 的难度条。
 - 不用把 `Computer` 与 `Strength` 拼起来的名字，也不用 `Level`、`Mode`：`Strength` 暗示连续强度，`Level` 暗示关卡，`Mode` 与 `GameMode` 撞词。
 - 难度在电脑对象里，不写进 `Game`；规则层不知道电脑怎样选，换难度只改 `difficulty_`，不重新构造对象。
 - 模式与难度分成两个枚举，不合并成 `Mode`；一个回答「谁走」，一个回答「电脑怎样走」，合并后调用点要猜。

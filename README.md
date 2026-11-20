@@ -19,7 +19,7 @@
 npm 安装固定版本：
 
 ```bash
-dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.10
+dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.11
 ```
 
 本页版本号随发布更新；安装前可用 `npm view @chengzhao-dev/dsh-cpp-workflow version` 确认 registry 上的最新版本。
@@ -27,7 +27,7 @@ dsh plugin --profile <profile> add npm:@chengzhao-dev/dsh-cpp-workflow@0.7.10
 GitHub 标签安装使用同一版本号的标签，地址中的版本与标签同号：
 
 ```bash
-dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.10
+dsh plugin --profile <profile> add github:chengzhao-dev/dsh-cpp-workflow#v0.7.11
 ```
 
 `--profile` 换成你实际运行的那个 profile。桌面应用固定跑 `desktop` profile，且该 profile 由应用独占管理；命令行 `add` 被拒绝时，在应用设置里添加插件，地址填同一个 npm 版本。Git 标签安装使用仓库内已构建的 `lib/`，不在目标机器上重新构建；包内也不含需要授权执行的安装脚本。
@@ -101,7 +101,7 @@ npm run ci            # 本地复现：安装、比对 lib/、测试、打包检
 npm run ci:full       # 在 ci 之上再跑标准矩阵，需 POSIX 宿主
 ```
 
-源码在 `src/`，`npm run build` 生成 `lib/`。结构检查在 `scripts/checking-skill-links.mjs`；测试不调用本机编译器，环境检查用固定版本字符串。标准矩阵需要 POSIX 宿主上的 `cmake`、`ninja`、`perl` 和 `clang++`（或 `CXX` 指定的编译器），在 WSL/Linux/macOS 上运行。Windows 上先跑 `npm run ci`，再从 WSL 进入仓库跑 `npm run ci:full`。
+源码在 `src/`，`npm run build` 生成 `lib/`。结构检查在 `scripts/checking-skill-links.mjs`；测试不调用本机编译器，环境检查用固定版本字符串。标准矩阵需要 POSIX 宿主上的 `cmake`、`ninja`、`perl`、`node` 和 `clang++`（或 `CXX` 指定的编译器），在 WSL/Linux/macOS 上运行。Windows 上先跑 `npm run ci`，再从 WSL 进入仓库跑 `npm run ci:full`。
 
 ## 许可
 

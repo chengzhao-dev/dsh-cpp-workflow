@@ -60,16 +60,17 @@ for shape in "${shapes[@]}"; do
             continue
         fi
 
-        # 逐条编译命令核对：每条恰好一个 -std，值等于本档期望，且不落 gnu++NN。
+        # 逐条编译命令核对：每条恰好一个 -std，值等于本档期望（C++23 也接受旧驱动的 c++2b 拼写），且不落 gnu++NN。
         if ! DB="$dest/build/compile_commands.json" STD="$std" node -e '
 const fs = require("fs");
 const db = JSON.parse(fs.readFileSync(process.env.DB, "utf8"));
-const expected = "-std=c++" + process.env.STD;
+const expected = ["-std=c++" + process.env.STD];
+if (process.env.STD === "23") expected.push("-std=c++2b");
 const bad = [];
 for (const entry of db) {
   const args = entry.arguments || String(entry.command || "").split(/\s+/);
   const stds = args.filter((arg) => arg.startsWith("-std="));
-  if (stds.length !== 1 || stds[0] !== expected) bad.push(`${entry.file || "?"}: ${stds.join(",") || "none"}`);
+  if (stds.length !== 1 || !expected.includes(stds[0])) bad.push(`${entry.file || "?"}: ${stds.join(",") || "none"}`);
 }
 if (db.length === 0) bad.push("compile_commands.json 为空");
 if (bad.length) { console.error(`std 不符: ${bad.slice(0, 3).join("; ")}`); process.exit(1); }

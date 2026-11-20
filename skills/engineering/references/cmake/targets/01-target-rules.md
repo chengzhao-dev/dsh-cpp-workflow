@@ -74,7 +74,7 @@ set_target_cxx_standard(app PRIVATE c++23)
 set_target_cxx_standard(greeting PUBLIC c++23)
 ```
 
-函数名不绑定单一标准；新增档位只改函数里的支持列表。示例里库与程序同档：一个工程只有一个标准（见 `building-cpp/steps/01-build.md`），只有项目明确声明降档时才给单个 target 写更低的值，并同步 `environment.json`。模块何时抽、文件怎么放、怎么导入与测试见 `../modules/01-functions.md`。
+函数名不绑定单一标准；新增档位只改函数里的支持列表。示例里库与程序同档：一个工程只有一个标准（见 `building-cpp/steps/01-build.md`）；工程整体降档时所有会编译的 target 一起改，并同步 `environment.json`。不要给单个 target 写更低的值：数据库里出现两条不同的 `-std=` 就回第 1 步。模块何时抽、文件怎么放、怎么导入与测试见 `../modules/01-functions.md`。
 
 ## 警告等级
 
@@ -119,7 +119,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 - 只对 Makefile 和 Ninja 生成器生效；本项目固定 Ninja。
 - 生成位置是构建目录根部：`<构建目录>/compile_commands.json`。
-- 构建脚本把它链接到 `build/compile_commands.json`；clangd 默认读这个路径，clang-tidy 用 `-p <构建目录>`。
+- 构建脚本只在多构建目录布局下把它链接到 `build/compile_commands.json`；clangd 由工程根 `.clangd` 的 `CompilationDatabase` 指向构建目录（见 `building-cpp` 的 `formatting/04-clangd.md`），clang-tidy 用 `-p <构建目录>`。
 - 换编译器时，旧目录的数据库不能复用；清理或换目录。
 
 ## 输出目录
@@ -176,7 +176,7 @@ include(LinkSettings)
 fetch_googletest()
 ```
 
-- 函数内部固定 GoogleTest v1.17.0 的 URL 与 SHA-256，避免供应链漂移；版本升级只改一处。
+- 函数内部固定 GoogleTest 的 URL 与 SHA-256，避免供应链漂移；版本号只在 `LinkSettings.cmake` 的 URL 里写一处，升级时同步哈希。
 - 只在 `tests/` 需要时调用；库和程序不依赖测试框架。
 - 没有网络时，项目可以自带 vendored 副本；不要构建时静默跳过测试。
 
@@ -189,7 +189,7 @@ fetch_googletest()
 | `static-library` | 库需要被测试或第二个程序链接 | 根 + `greeting/` 子目录 |
 | `shared-library` | 需要运行时加载/替换 | 同上，`SHARED` + RPATH |
 
-模板里的 `{{PROJECT_NAME}}` 必须替换；不要留下占位符。
+模板里的 `{{PROJECT_NAME}}` 必须替换；不要留下占位符。三份带 `greeting` 演示的模板各自保持可独立复制，内容相同，改演示时三处同步。
 
 ## 正反例
 

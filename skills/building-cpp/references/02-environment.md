@@ -1,7 +1,7 @@
 <!-- 读取时机：配环境或检查工具时；读完能回答：环境组合；预算：一次只开这一份（116 行），不自动串联。 -->
 # 环境组合
 
-环境是**声明**，不是探测结果。项目技能 `cpp-workflow-project`（目录名也接受 `cpp_workflow_project`）的 `environment.json` 写清楚三个环境轴和一个语言标准；构建规则、工具配置和检查都按这个声明执行。声明为空或组合非法时，先修声明，不要靠猜。
+环境是**声明**，不是探测结果。项目技能 `cpp-workflow-project`（目录名也接受 `cpp_workflow_project`）的 `environment.json` 写清楚三个环境轴和一个语言标准；构建规则、工具配置和检查都按这个声明执行。声明为空或组合非法时，先修声明，不要靠猜；只有 `standard` 缺失按默认 `c++23` 处理（见「非法组合」）。
 
 ## 四个轴
 
@@ -40,7 +40,7 @@
 - `host=windows` + `build_host=native`：本版本不支持，静态校验直接返回失败。
 - `compiler=msvc`、`compiler=clang-cl`、`compiler=c`。
 
-`windows` + `native` 不再作为「合法但不能构建」的声明保留；CMake 资产里的 MSVC 分支不是受支持的环境，不能据此写 `compiler=msvc`。声明校验直接返回 `ok: false`，`issues` 只有一句「本版本不能在 Windows 原生壳里构建」；不要建议改 WSL，也不要临时写 PowerShell 脚本伪装成已支持。
+`windows` + `native` 不再作为「合法但不能构建」的声明保留；CMake 资产里的 MSVC 分支不是受支持的环境，不能据此写 `compiler=msvc`。判定结果与错误文本见上一条；不要建议改 WSL，也不要临时写 PowerShell 脚本伪装成已支持。
 
 ## 工具角色
 
@@ -58,7 +58,7 @@
 
 ## 版本与能力
 
-- **标准**：新工程默认 C++23，可声明 `c++11`–`c++23`；编译器必须支持对应的 `-std=c++NN`。CMake ≥ 3.20；C++11/14 的 `cxx_std_*` 需要 CMake ≥ 3.1，但本工作流统一按 3.20 起步。`CXX_STANDARD_REQUIRED ON` 防止标准 decay；C++23 的库设施（如 `std::print`）以实际编译器/标准库为准。
+- **标准**：新工程默认 C++23，可声明 `c++11`–`c++23`；编译器必须支持对应的 `-std=c++NN`。CMake ≥ 3.20；`cxx_std_11`–`cxx_std_17` 需要 CMake ≥ 3.8（3.8 才引入 meta-feature），`cxx_std_20` 3.12、`cxx_std_23` 3.20；本工作流统一按 3.20 起步。`CXX_STANDARD_REQUIRED ON` 防止标准 decay；C++23 的库设施（如 `std::print`）以实际编译器/标准库为准。
 - **clang-format / clang-tidy**：≥ 16。这是本工作流的工具基线；低于该版本时检查器报告具体角色和版本。
 - **clang 模式同版本**：`clang++`、`clang-format`、`clang-tidy`、`clangd` 必须是同一 LLVM 主版本。混装 17 的 clangd 与 18 的 clang-format 会出现诊断与格式化不一致。Apple Clang 也按这条核对；若工具版本对不上，报告的是具体角色和版本，不要为了通过而改声明。
 - **gcc 模式**：检查器不拿 GCC 的主版本去比 Clang 工具；`clang-format` / `clang-tidy` 仍要 ≥ 16，`clangd` 只要求可用。`g++` 必须是真的 GCC，不能是 Apple clang 的别名。GCC 需要自带 C++23 `<print>` / `std::expected` 的标准库；版本过旧时先升级工具链，或把项目标准降到实际可用的档位，不要改检查器绕过。
@@ -93,7 +93,7 @@ node "<skill-dir>/scripts/checking-environment.mjs" --project . --live
 约束：
 
 - 只读：不安装、不下载、不改 PATH、不写项目文件。
-- `--live` 在 `host=windows` + `build_host=native` 下不会继续：声明校验已经失败，错误是「本版本不能在 Windows 原生壳里构建」。
+- `--live` 先做声明校验，声明失败即停。
 - WSL 模式要求当前进程在 WSL 内（`WSL_DISTRO_NAME` / `WSL_INTEROP` 或 `/proc/version` 含 Microsoft）；只在 Linux 上但不在 WSL 时失败。
 - macOS 上声明 `compiler=gcc` 时，`g++ --version` 若显示 Apple clang，按「不是真正的 GCC」失败。
 - 没有 `--live` 时不做任何 PATH 探测，CI 和 Windows 开发机都能做声明校验。

@@ -194,3 +194,13 @@ test('the runtime entry injects only skills and registers no tools', async () =>
     assert.equal(registered[0].name, 'dsh-cpp-workflow')
     assert.equal(toolCalled, false)
 })
+
+// Config 是 Schemastery schema（宿主按它的描述建模），不是 JSON Schema；这里锁住
+// 它只使用宿主支持的基础节点类型，并保持可序列化的描述。
+test('the exported Config schema stays inside the host primitives', async () => {
+    const entry = await import('../lib/index.js')
+    assert.equal(typeof entry.Config, 'function')
+    const descriptor = entry.Config.toJSON()
+    const types = new Set(Object.values(descriptor.refs).map((node) => node.type))
+    assert.deepEqual([...types].sort(), ['boolean', 'object', 'string'])
+})

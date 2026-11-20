@@ -17,14 +17,14 @@
 本工作流不在 MSVC 上构建，本节只用于阅读或校验外部 MSVC 工程。MSVC 默认按 BOM 判断源码编码。源码没有 BOM 时，它按当前用户代码页解释，除非显式传入 `/utf-8` 或 `/source-charset:utf-8`。因此 BOM 不是 MSVC 的硬要求。
 
 - 首选做法是加编译选项：在目标上写 `target_compile_options(<target> PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)`，源码继续 UTF-8 无 BOM、LF。
-- 只有在无法改编译选项时，才把 MSVC 编译的 C/C++ 源文件保存为 UTF-8 BOM。BOM 只允许出现在这类源文件里。
+- 只有在无法改编译选项时，才把 MSVC 编译的 C/C++ 源文件保存为 UTF-8 BOM。BOM 只允许出现在这类源文件里；脚本按 `.editorconfig` 的 `charset = utf-8-bom` 声明放行该文件，所以配置写 `utf-8-bom` 时要收窄到这类源文件。
 - `.sh`、`.bat`、`.cmd`、`.json`、`.yml`、`.gitattributes`、`.editorconfig` 和 CMake 文件不要加 BOM。
 - MSVC 接受 LF 源码；CRLF 不是必需项。只有 `.bat` / `.cmd` 固定 CRLF。
 - WSL 与 Linux 构建按默认组合，不要把源码转成 CRLF 来迁就 Windows。
 
 ## 工具
 
-- `.gitattributes` 决定 Git 入库和检出；它覆盖贡献者自己的 `core.autocrlf`。
+- `.gitattributes` 决定 Git 入库和检出；它覆盖贡献者自己的 `core.autocrlf`。`.bat` / `.cmd` 的 CRLF 与 `.sh` 的 LF 也要在这里写同一档（`*.bat text eol=crlf`、`*.sh text eol=lf`）；脚本按声明判定。
 - `.editorconfig` 决定编辑器保存；`charset` 与 `end_of_line` 必须和 `.gitattributes` 同一档。
 - `.editorconfig` 的文件名由 EditorConfig 规范固定，不能改名：插件从目标文件所在目录逐级向上
   查找全小写的 `.editorconfig`，改名后不会被识别；放进子目录只对该子树生效。
@@ -40,7 +40,7 @@
 node "<skill-dir>/scripts/checking-encoding.mjs" --profile portable
 ```
 
-- 脚本按文件路径读取逐级 `.gitattributes`（`text`、`binary`、`eol`、`working-tree-encoding`）与逐级向上的 `.editorconfig`（`charset`、`end_of_line`、`insert_final_newline`），以它们为准；两者都没有声明时才用默认。
+- 脚本按文件路径读取逐级 `.gitattributes`（`text`、`binary`、`eol`、`working-tree-encoding`）与逐级向上的 `.editorconfig`（`charset`、`end_of_line`、`insert_final_newline`），以它们为准；两者都没有声明时才用默认。`charset` 或 `working-tree-encoding` 声明为非 UTF-8 的文件由转码工具负责，脚本跳过不判。
 - `portable`（默认）的默认组合是 UTF-8 无 BOM、LF、末尾换行。`msvc` 只放宽 MSVC 编译的 C/C++ 源文件：允许 UTF-8 BOM 与 CRLF；Markdown、配置与脚本仍按 `portable` 检查。
 - 退出码：0 无问题，1 有问题，2 参数或 Git 错误。加 `--json` 输出机器可读结果。
 - 脚本只写 stdout，不生成报告文件；不要把输出重定向成仓库根下的日志。要留证据写 `temp/`，否则只引用终端输出。

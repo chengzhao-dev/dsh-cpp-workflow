@@ -24,13 +24,13 @@
 - 封闭取值一次列全。方格的取值是空、X、O；不要把 X 和 O 做成不含空的棋子，再用空表示空方格。
 - 位置是行和列，不是方格的另一种取值。胜负、轮到谁、已下过的序列属于对局，不要塞进位置类型。坐标类型单独一个头文件；持有尺寸的类型包含它，不把坐标塞回尺寸类型里。
 - 方格只是值容器：默认是空，写入任意取值，后写覆盖前值；是否允许覆盖、何时清空由容器决定。不要给方格加落子、清空或终局判断。
-- 一次落子能区分的失败放进结果枚举：玩家不对、对局已结束、值非法、方格已有值。棋盘只做坐标检查与写入，不回答这一手成没成；预览也要拒绝占用，判断留在对局层。
+- 一次落子能区分的失败放进结果枚举：玩家不对、对局已结束、方格已有值。棋盘只做坐标检查与写入，不回答这一手成没成；预览查询自己先拒绝占用并返回原因，整手的成败仍由对局层的落子入口回答。
 - 结果枚举跟随产生它的那一层：棋盘层只保留棋盘自己的预览结果（若提供预览查询）；落子结果 `PlaceResult` 与整局结果 `GameResult` 都留在对局层。
 - 对局层的落子入口返回这一手的 `PlaceResult`，整局结果由 `GetResult()` 另外回答；不要用 `GameResult` 兼答两件事，也不要再包一层只带成败与终局的类型。结果类型按调用方要区分的东西选：无载荷、要区分每种原因时用 `enum class`（如 `PlaceResult`）；缺失不需要第二种原因时用 `std::optional`；成功带载荷或原因时用 `std::expected<T, E>` 或具名 struct；不用 out 参数。选型见 `references/language/value-types/04-enum.md`「什么时候不用枚举」。
 - 调用方已经把完整值对象交进来时，下层直接用它，不再用散参数或查询重新拼出同一对象。可以校验，并在不符时返回原因；不要静默替换成自己重算的值。
 - 构造值对象所需的只读查询留在拥有状态的一层；调用方用它组值对象，下层函数不重复推导。不要为了去掉查询，让每个调用方各自维护轮次副本。
-- 范围检查由接收位置的那一层直接做，越界直接抛出；不要为了统一诊断把 `std::source_location` 穿过每个公共接口，只有检查函数按 `references/exceptions/01-exception-rules.md` 的「范围检查」用默认参数取调用点。
-- 尺寸是某个类型的事实时，写成该类型的 `static constexpr`，例如 `Board::kSide`；不要再造一个只做 `static_cast<std::size_t>` 的别名常量。
+- 范围检查由接收位置的那一层直接做，越界直接抛出；消息带 `Type::Function:` 标签，不把调用点信息穿过签名，见 `references/exceptions/01-exception-rules.md` 的「重复的入口检查」。
+- 尺寸是某个类型的事实时，写成该类型的 `static constexpr`，例如 `Board::kRows` 与 `Board::kColumns`；不要再造一个只做 `static_cast<std::size_t>` 的别名常量。
 - 一个局面的结果只用一个枚举和一个查询。不要把满盘、终局和赢家拆成三个入口，再由调用方拼回去。
 
 ## 读取边界
@@ -114,7 +114,7 @@
 
 ## 函数接口设计
 
-- 一个函数只做一件事；语义不同的动作不要靠默认参数合并。清空整格与清空整盘是两个动作，分别写成 `void ClearSquare(Position pos);` 与 `void Clear();`；不要用 `Clear(std::optional<Position>)` 让调用点猜省略参数的含义。
+- 一个函数只做一件事；语义不同的动作不要靠默认参数合并。清空整格与清空整盘是两个动作，分别写成 `void ClearSquare(const Position& position);` 与 `void Clear();`；不要用 `Clear(std::optional<Position>)` 让调用点猜省略参数的含义。
 - 语义不同的动作不要共用名字，也不要靠重载区分（Google：调用点必须能直接看出在调用什么）；重载只用于语义相同的变体。
 - 不用 `bool` 参数切换行为；两个分支做不同的事时拆成两个函数，或把开关提成有名字的枚举。
 - 参数顺序：被操作的对象在前，控制量与选项在后；确有 out 参数时（只限容量复用这一唯一例外）放最后并标 `[out]`，例外条件与标注见 `references/language/language-basics/06-functions.md` 的参数段。
@@ -132,7 +132,7 @@
 ```cpp
 board_ = Board{};
 for (const Move& move : history_) {
-    board_.SetSquare(move.position, PlayerToSquareValue(move.player));
+    board_.SetSquareValue(move.position, PlayerToSquareValue(move.player));
 }
 ```
 

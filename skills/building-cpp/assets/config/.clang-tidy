@@ -1,5 +1,4 @@
-# Google C++ Style Guide 是唯一基线。这里只跑 google-* 检查族，再加一条
-# 命名规则；不再整包启用 cppcoreguidelines-*，也不靠本地关闭项维持风格。
+# 只启用 google-* 与命名检查。
 InheritParentConfig: false
 
 Checks: >
@@ -14,8 +13,8 @@ UseColor: true
 
 CheckOptions:
   # 命名按 Google：类型/函数 PascalCase，变量 snake_case，私有成员尾随 _，
-  # 常量 k 前缀。Google 允许访问器写成 count()/set_count()，因此不设
-  # FunctionCase，避免把 snake_case 访问器误报。
+  # 编译期常量 k 前缀。本项目函数与访问器统一 PascalCase，但 FunctionCase
+  # 不设：这一项由命名规则与评审守住，clang-tidy 不重复配置。
   - key: readability-identifier-naming.NamespaceCase
     value: lower_case
   - key: readability-identifier-naming.ClassCase
@@ -53,7 +52,7 @@ CheckOptions:
     value: CamelCase
   - key: readability-identifier-naming.GlobalConstantPrefix
     value: 'k'
-  # 局部常量按变量命名：Google 只给静态存储期的常量加 k 前缀。
+  # 局部 const 与局部 constexpr 按变量命名；k 前缀只给编译期常量。
   - key: readability-identifier-naming.LocalConstantCase
     value: lower_case
   - key: readability-identifier-naming.MacroDefinitionCase

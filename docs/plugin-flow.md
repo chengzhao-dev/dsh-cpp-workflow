@@ -16,7 +16,7 @@
 
 ## 开销（实测）
 
-在本仓库上实测（Node 26，重复测量）：门禁通过时 `list()` 约 1 ms（热缓存 50 次均值 0.999 ms），门禁不通过时 0.11 ms，`get()` 每份约 0.4–1.3 ms；宿主按 `cwd`、作用域与修订号缓存完成的目录，同一工作区不会每轮重扫。模型侧的三行目录共 590 个字符（按中文约 1.8 字符一个 token 估算约 328 tokens，下同）；三份技能文件（developing-cpp / engineering / building-cpp）正文合计约 1.58 万字符，约 8.7k tokens；`get()` 时 `developing-cpp` 另附注释配置快照，加载字符数随快照变化，不在此重复；正文不常驻，只有目录行常驻，加载时才进上下文，改正文也不产生目录消息；`references/` 在入口表或步骤点名时打开，判不准、规则冲突或排错时按需读取。运行时不写盘、不建缓存，见 [plugin-storage.md](plugin-storage.md)。
+在本仓库上实测（Node 26，重复测量）：门禁通过时 `list()` 约 1 ms（热缓存 50 次均值 0.999 ms），门禁不通过时 0.11 ms，`get()` 每份约 0.4–1.3 ms；宿主按 `cwd`、作用域与修订号缓存完成的目录，同一工作区不会每轮重扫。模型侧的三行目录共 595 个字符（按中文约 1.8 字符一个 token 估算约 331 tokens，下同）；三份技能文件（developing-cpp / engineering / building-cpp）文件合计约 1.57 万字符，约 8.7k tokens；`get()` 时 `developing-cpp` 另附注释配置快照，加载字符数随快照变化，不在此重复；正文不常驻，只有目录行常驻，加载时才进上下文，改正文也不产生目录消息；`references/` 在入口表或步骤点名时打开，判不准、规则冲突或排错时按需读取。预算是目录消息不超过 700 字符、单份技能正文不超过 5200 字符；超预算时先改本节的实测数字与预算，再决定要不要接受这次增长。运行时不写盘、不建缓存，见 [plugin-storage.md](plugin-storage.md)。
 
 ### 失败路径
 
@@ -29,7 +29,7 @@
 | `skills/` 读不出来（权限、目录被删） | `{ candidates: [], complete: false }`；不缓存，下一轮重试 | — |
 | 某份 `SKILL.md` 读不出来 | 其余候选照常返回，`{ candidates, complete: false }`；不缓存 | 该名字给 `undefined` |
 | 某份 `SKILL.md` 的 frontmatter 不合规（`name` 与目录不同、`description` 为空、名字不在白名单、块标量不支持） | 该技能静默跳过，其余照常返回，complete 仍为 true | 该名字给 `undefined` |
-| 调用方 abort | 循环开始前中止或门禁早退：空数组；循环中中止：已发现的候选；两种情况都带 `complete: false`；宿主在调用前后检查 abort 并抛出 `AbortError` | `undefined` |
+| 调用方 abort | 循环开始前中止：`{ candidates: [], complete: false }`；门禁早退：空数组 `[]`；循环中中止：已发现的候选并带 `complete: false`；宿主在调用前后检查 abort 并抛出 `AbortError` | `undefined` |
 | `locator` 越出 `skills/`，或末段与 `name` 不符 | — | `undefined` |
 
 静默跳过是有意的：一份写坏的文件不该拖垮另外两个技能。代价是没有诊断输出，排错时只能对照本表逐项复核。门禁按 `cwd` 现算，所以同一份候选在另一个工作区里可能立刻变成 `undefined`。
@@ -65,14 +65,14 @@ node "<skill-dir>/scripts/checking-environment.mjs" --project . --live
 
 ## 第五层：设置
 
-设置只有一个入口：「插件 → dsh-cpp-workflow → 配置」。它通过宿主 `configForms` 服务读取 `cpp-workflow` 命名空间（profile 条目 id），插件页不再替它转发表单；宿主没有提供这个命名空间时，表单进入不可用状态，仍以出厂值只读呈现；整份 `configForms` 服务都不存在时，设置卡片不挂载，技能本身不受影响（服务端注入只有 `skills`，`configForms` 属客户端）。
+设置只有一个入口：「插件 → dsh-cpp-workflow → 配置」。它通过宿主 `configForms` 服务读取 `cpp-workflow` 命名空间（profile 条目 id），插件页不再替它转发表单；宿主没有提供这个命名空间时，表单进入不可用状态，仍以出厂值只读呈现；整份 `configForms` 服务都不存在时，挂点照旧注册，页面显示未连接提示，技能本身不受影响（服务端注入只有 `skills`，`configForms` 属客户端）。
 
 表单订阅 `ConfigFormController` 的快照，写入用 `mutate(ops, baseRevision)`：基准是草稿开始时的 revision，草稿期间外部改过配置时宿主会拒绝这次写入，不会拿新 revision 把旧草稿盖上去；字段按叶子路径 `['brief','value']` 提交，因为宿主只把叶子上的 `volatile()` 字段当作可写项。
 
-页面分五个区块：注释符号（`///` 或 `/** ... */`）、文件头、类型、函数声明与只读预览；`@file` 固定为文件名，函数体固定用 `//`；除这两项外，文件头、类型与函数声明标签的开关出厂全开，空值仍不会写进文件。函数参数要求 `@param`，返回值要求 `@return`（成立条件由函数名与返回类型说清时可省），会抛才要求 `@throws`。
+页面分五个区块：注释符号（`///` 或 `/** ... */`）、文件头、类型、函数声明与只读预览；`@file` 固定为文件名，函数体固定用 `//`；除这两项外，文件头、类型与函数声明标签的开关出厂全开，空值仍不会写进文件。函数参数要求 `@param`，返回值要求 `@return`，会抛才要求 `@throws`。
 
 预览用示例文件名 `<文件名>`，不扫工程、不写文件；底部的保存按钮写入 `cordis.patch.yml`，成功后状态行提示下一次读取技能时生效。
 
-保存走宿主表单，配置留在 profile 的 `cordis.patch.yml`；下次 `get()` 读取时把当前开关附在技能正文末尾，文件头标签开着但没填默认值的单列为「未填值」，这类标签不会写进文件。检查器按同一开关生成 `--comment-style block`、`--no-brief`、`--no-param`、`--no-return` 与 `--allow-tag` 参数。插件页、快照与检查器读同一份策略，改一处不会出现三种默认值。
+保存走宿主表单，配置留在 profile 的 `cordis.patch.yml`；下次 `get()` 读取时把当前开关附在技能正文末尾，`@author`、`@date`、`@copyright`、`@version` 开着但没填默认值的单列为「未填值」，这类标签不会写进文件；`@brief` 没有默认值也列在开启项。检查器按同一开关生成 `--comment-style block`、`--no-brief`、`--no-param`、`--no-return` 与 `--allow-tag` 参数。插件页、快照与检查器读同一份策略，改一处不会出现三种默认值。
 
 浏览器半侧是手写 CJS，构建时把 `comment-policy` 内联进去，不引入打包器；它只依赖宿主的 `react`，以及由 `@deepseek-ai/dsh-client-ui-renderer` 提供的 `slots` 与 `@deepseek-ai/dsh-client-ui-settings` 提供的 `configForms` 两个服务，没有各自的版本副本。

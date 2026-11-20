@@ -138,9 +138,6 @@ if (packageJson) {
         ['lib', 'skills', 'cordis.patch.yml', 'locale', 'icon.svg', 'README.md', 'README.en.md', 'LICENSE', 'templates'],
         'files 白名单',
     )
-    for (const name of ['src', 'tests', 'scripts', 'docs', '.github']) {
-        ok(!packageJson.files.includes(name), `files 不应包含 ${name}`)
-    }
 
     const description = packageJson.description ?? ''
     ok(/[\u4e00-\u9fff]/.test(description), 'description 必须以中文为主')
@@ -712,7 +709,7 @@ for (const file of listFiles(ROOT).filter((item) => {
     return !SKIP_DIRS.some((prefix) => relativePath.startsWith(prefix))
 })) {
     try {
-        execFileSync('bash', ['-n', file], { stdio: 'pipe' })
+        execFileSync('bash', ['-n', rel(file)], { cwd: ROOT, stdio: 'pipe' })
         checks += 1
     } catch (error) {
         failures.push(`${rel(file)}: bash -n 失败（${error.stderr?.toString().trim() || error.message}）`)

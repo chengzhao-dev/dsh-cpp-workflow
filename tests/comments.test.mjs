@@ -413,19 +413,19 @@ test('@param 必须与声明参数一一对应', () => {
 
 test('函数摘要不直接写参数名', () => {
     const bad = file(
-        '/// 把 `value` 写到 `pos` 对应的格子上。',
+        '/// 把 `value` 写到 `position` 对应的格子上。',
         '///',
-        '/// @param pos 目标坐标。',
+        '/// @param position 目标坐标。',
         '/// @param value 要写入的值。',
-        'void Place(int pos, int value);',
+        'void Place(int position, int value);',
     )
     assert.deepEqual(rules(bad), ['param-in-summary'])
     const good = file(
         '/// 把指定值写到指定坐标的格子上。',
         '///',
-        '/// @param pos 目标坐标。',
+        '/// @param position 目标坐标。',
         '/// @param value 要写入的值。',
-        'void Place(int pos, int value);',
+        'void Place(int position, int value);',
     )
     assert.deepEqual(rules(good), [])
 })
@@ -433,12 +433,12 @@ test('函数摘要不直接写参数名', () => {
 test('块注释摘要也不直接写参数名', () => {
     const block = [
         '/**',
-        ' * 把 `value` 写到 `pos` 对应的格子上。',
+        ' * 把 `value` 写到 `position` 对应的格子上。',
         ' *',
-        ' * @param pos 目标坐标。',
+        ' * @param position 目标坐标。',
         ' * @param value 要写入的值。',
         ' */',
-        'void Place(int pos, int value);',
+        'void Place(int position, int value);',
         '',
     ].join('\n')
     assert.ok(rules(block, { commentStyle: 'block' }).includes('param-in-summary'))
@@ -573,7 +573,7 @@ test('不具名比较参数不要求 @param', () => {
         '/// 相等运算符。',
         '///',
         '/// 当两个坐标的行与列都相同时返回 true。',
-        'friend bool operator==(const CellPosition& other) const = default;',
+        'bool operator==(const CellPosition& other) const;',
     )
     assert.deepEqual(rules(named), ['param-missing'])
 })

@@ -1,4 +1,4 @@
-<!-- 读取时机：查语言细节时；读完能回答：整型角色的通用约定；预算：一次只开这一份（39 行），不自动串联。 -->
+<!-- 读取时机：查语言细节时；读完能回答：整型角色的通用约定；预算：一次只开这一份（51 行），不自动串联。 -->
 # 整型的角色与选型
 
 | 角色 | 类型 | 理由 |
@@ -37,4 +37,16 @@ return static_cast<std::size_t>(row) * static_cast<std::size_t>(column_count) +
 
 - 编译期常量走整体转换，运行期值逐个拓宽；尺寸很小时两者结果相同，规则约束的是尺寸或坐标来源变化后的行为。有符号 `int` 溢出是未定义行为，拓宽后整个表达式按无符号回绕，行为有定义。
 - `std::size_t{row}` 不能替代 `static_cast`：`row` 可能为负且不是常量表达式，花括号初始化会因窄化编译失败。先检查范围，再转换。
+- 判断坐标是否落在尺寸范围内时方向相反：把尺寸收成 `int` 再比，不要把坐标拓宽成 `std::size_t`。两个比较都留在 `int` 域，读者核对的是同一组整数；转成无符号后 `-1` 会变成极大的正数，只能靠前面的 `>= 0` 兜住，中间那次转换成了一个看不见的分支。
+
+```cpp
+// 要：上下界都在 int 域，坐标不转换
+return (position.row >= 0 && position.row < static_cast<int>(kRows)) &&
+       (position.column >= 0 && position.column < static_cast<int>(kColumns));
+
+// 不要：把坐标拓宽成无符号再比
+return position.row >= 0 && static_cast<std::size_t>(position.row) < kRows;
+```
+
+前提是尺寸放得进 `int`（棋盘边长这类个位到千位的维数都满足）。容器长度可能超过 `INT_MAX` 时不能用这条，改用 `std::cmp_less`。`[]` 前的下标仍要收成 `std::size_t`，那是「已经证明合法之后取值」，见 `09-subscript.md`。
 - 工程另开 `bugprone-implicit-widening-of-multiplication-result` 时，先算后转会被这条检查报出；项目模板默认不启用 `bugprone-*`，本规则仍要遵守。

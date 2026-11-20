@@ -36,7 +36,7 @@ build_tool_min_version = "1.11"
 
 ## 注释语法
 
-- TOML 配置只有 `#` 一种注释；`#` 后空一格，句末用句号。JSON 配置按 JSONC 用 `//`，`.clang-format` 等 YAML 用 `#`。
+- TOML 配置只有 `#` 一种注释；`#` 后空一格，句末用句号。JSON 只有 `.vscode/` 下的 `settings.json` 与 `extensions.json` 按 JSONC 写 `//`（见 `01-encoding.md`），其他 `.json`（如 `environment.json`）按 RFC 8259 不写注释；`.clang-format` 等 YAML 用 `#`。
 - 注释紧贴键的上一行，键与注释之间不空行；不写行尾注释。
 - 键块（注释 + 键）内部不空行，键块之间空一行。
 - 文件有两个及以上对象时，每区第一行写一行 80 列等号横幅，标题居中，前后各空一行；`.editorconfig` 的横幅紧贴其下的节头，节按文件后缀分组，不按本仓目录命名。

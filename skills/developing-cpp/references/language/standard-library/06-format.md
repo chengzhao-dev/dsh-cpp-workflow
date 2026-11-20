@@ -1,4 +1,4 @@
-<!-- 读取时机：查语言细节时；读完能回答：`std::format` 与输出；预算：一次只开这一份（87 行），不自动串联。 -->
+<!-- 读取时机：查语言细节时；读完能回答：`std::format` 与输出；预算：一次只开这一份（88 行），不自动串联。 -->
 # `std::format` 与输出
 
 - 组合消息优先 `std::format`；它返回 `std::string`，不直接写流。
@@ -6,7 +6,7 @@
 - 格式串里的 `{}` 按顺序取参数；需要位置时写 `{0}`、`{1}`。
 - 自定义类型要格式化时，特化 `std::formatter<T>`；写法与边界见下面的「自定义类型的格式化」。
 - 浮点默认格式可能与预期不同；需要固定精度时写 `{:.2f}`，需要科学计数时写 `{:e}`。
-- 异常消息、日志、用户界面文本都通过 `std::format` 组合，不手工拼接数字和字符串。异常消息的组织方式见 `references/exceptions/01-exception-rules.md` 的「消息」节；面向用户的中文只留在程序入口的前缀里。
+- 异常消息、日志、用户界面文本需要插值时才用 `std::format` 组合，没有插值就直接写字符串字面量，都不手工拼接数字和字符串。异常消息的组织方式见 `references/exceptions/01-exception-rules.md` 的「消息」节；面向用户的中文只留在程序入口的前缀里。
 
 ## 自定义类型的格式化
 
@@ -14,8 +14,8 @@
 - 特化必须在首次使用前可见。`std::formatter<T>` 默认是 disabled；没有特化时 `std::format("{}", value)` 不能编译，不是运行时回退。
 - `parse` 只接受默认格式：从 `ctx.begin()` 读到 `}` 或格式串结束；其他说明符抛 `std::format_error`，消息写清只支持默认格式。需要字段对齐、宽度等语法时再实现，不预埋。
 - `format` 用 `std::format_to(ctx.out(), ...)` 输出；内部复用已有类型的 formatter，不重复拼接坐标或枚举文本。`Move` 只组合 `Player` 与 `Position`，不重新拼 `(row, col)`。
-- 枚举的非法值要有稳定回退，例如 `Player(9)`；不要输出空串，也不要让调用方从越界里猜原因。
-- 输出形态短且稳定，例如 `X(1, 2)`；异常消息与测试都用 `std::format("{}", value)` 直接断言。
+- 枚举的非法值要有稳定回退，例如 `Player(9)`；不要输出空串，也不要让调用方从越界里猜原因。这一条只约束格式化；写入函数收到非法值仍抛 `std::invalid_argument`，见 `references/exceptions/01-exception-rules.md`。
+- 输出形态短且稳定，例如 `X(1, 2)`；多个值按输出顺序用逗号加一个空格分隔，二维写 `(1, 2)`、三维写 `(1, 2, 3)`，不写 `(1,2)`；异常消息与测试都用 `std::format("{}", value)` 直接断言。
 
 ### formatter 的四个部分
 
@@ -38,8 +38,9 @@ template <>
 struct std::formatter<game::Player> {
     constexpr auto parse(std::format_parse_context& ctx) {
         if (ctx.begin() != ctx.end() && *ctx.begin() != '}') {
-            throw std::format_error("Player: format specifier is not supported, use {} instead");
+            throw std::format_error{"Player: format specifier is not supported, use {} instead"};
         }
+
         return ctx.begin();
     }
 

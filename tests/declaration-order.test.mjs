@@ -94,6 +94,18 @@ test('没有 Set 配对时谓词排在修改接口之后报错', () => {
     assert.ok(issues.some((issue) => issue.rule === 'header-order' && /IsSelected/.test(issue.message)))
 })
 
+test('有 Get/Set 成对时谓词排在修改接口之后报错', () => {
+    const header = `class Board {
+ public:
+  SquareValue GetSquareValue(Position position) const;
+  void SetSquareValue(Position position, SquareValue value);
+  void Place(Position position);
+  bool IsFull() const;
+};`
+    const issues = checkHeaderOrder(header)
+    assert.ok(issues.some((issue) => issue.rule === 'header-order' && /IsFull/.test(issue.message)))
+})
+
 test('成员定义乱序时报出被跳过的成员', () => {
     const reversed = CPP.replace(
         'Square Board::GetSquare(Position position) const { return squares_[0]; }\nBoardStatus Board::GetStatus() const { return BoardStatus::kInProgress; }',
@@ -163,8 +175,8 @@ test('缺 const 与 noexcept 时报定义签名问题', () => {
 
 test('只改参数名或多行签名时通过', () => {
     const renamed = CPP
-        .replace('Square Board::GetSquare(Position position) const', 'Square Board::GetSquare(Position pos) const')
-        .replace('void Board::ClearSquare(Position position) {}', 'void Board::ClearSquare(Position pos) {}')
+        .replace('Square Board::GetSquare(Position position) const', 'Square Board::GetSquare(Position other) const')
+        .replace('void Board::ClearSquare(Position position) {}', 'void Board::ClearSquare(Position other) {}')
     assert.deepEqual(checkPair(HEADER, renamed), [])
 
     const multiline = CPP.replace(

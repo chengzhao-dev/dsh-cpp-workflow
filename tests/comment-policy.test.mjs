@@ -82,7 +82,7 @@ test('宿主 volatile 单元按实际值读取，设置保存后技能快照跟�
     assert.equal(config.param, false)
     assert.deepEqual(config.brief, { enabled: true, value: '棋盘状态' })
     assert.deepEqual(config.author, { enabled: true, value: 'chengzhao-dev' })
-    assert.doesNotMatch(snapshotText(config), /@param /)
+    assert.doesNotMatch(snapshotText(config), /开启 [^；]*@param(?:、|；)/)
 })
 
 test('检查器只放行填了非空值的隐私标签', () => {

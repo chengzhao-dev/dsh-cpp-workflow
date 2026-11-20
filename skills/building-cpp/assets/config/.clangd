@@ -1,9 +1,7 @@
-# 标准来自 build/clang/compile_commands.json，不要在这里写死 -std：
-# 否则 C++23 工程会被降成 .clangd 里的旧标准。
+# 编译数据库目录；切换编译器时同步改。
 CompileFlags:
-  CompilationDatabase: build/clang
+    CompilationDatabase: build/clang
 Diagnostics:
-  # 静态检查规则只在 .clang-tidy 里维护；这里不复制检查列表。
-  Suppress:
-    # 项目头由编译数据库提供；解析噪声不掩盖真实诊断。
-    - pp_file_not_found
+    Suppress:
+        # 项目头由编译数据库提供；解析噪声不掩盖真实诊断。
+        - pp_file_not_found

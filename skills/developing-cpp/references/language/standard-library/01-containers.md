@@ -13,7 +13,7 @@
 | 有序键值 | `std::map<K, V>` | 按 key 有序；查找 O(log n)；节点独立 |
 | 无序键值 | `std::unordered_map<K, V>` | 平均 O(1)，最坏 O(n)；迭代顺序不稳定 |
 | 去重集合 | `std::set` / `std::unordered_set` | 只存 key；不要用 `map<K, bool>` 代替 |
-| 连续只读视图 | `std::span<T>` | 不拥有元素；C++20 没有 `at` |
+| 连续只读视图 | `std::span<T>` | 不拥有元素；`at` 到 C++26 才有，见 `references/language/value-types/09-subscript.md` |
 
 选择顺序：
 

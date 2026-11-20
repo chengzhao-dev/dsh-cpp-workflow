@@ -3,8 +3,9 @@
 //
 // 规则见 references/layout/03-declaration-order.md「`.cpp` 的定义顺序」与
 // 「声明与定义的签名」：先类型常量、再自由函数、再成员函数；成员按类内声明顺序；
-// 构造函数、析构函数、拷贝与移动放在成员组最前；参数类型、限定符与返回类型必须
-// 与声明一致；不为先编译而重排。
+// 构造函数、析构函数、拷贝与移动通常放在成员组最前（校验对 `Is*` / `Check*` 前置时
+// 例外，见该文档「校验对的位置」）；参数类型、限定符与返回类型必须与声明一致；
+// 不为先编译而重排。
 //
 // 本脚本只比较配对头文件里存在的类；自由函数与匿名命名空间不参与。类内没有声明
 // 的成员定义报 definition-undeclared，签名不一致报 definition-signature。
@@ -28,10 +29,17 @@ const SKIP_DIR = new Set([
 ])
 const PREDICATE_NAME = /^(?:Is|Has|Can|Completes|Would)[A-Za-z0-9_]*$/
 
+const USAGE = '用法：node checking-declaration-order.mjs [--root DIR] [--json] [--quiet] [--help]\n'
+
 function usage(message) {
     if (message) process.stderr.write(`错误：${message}\n`)
-    process.stderr.write('用法：node checking-declaration-order.mjs [--root DIR] [--json] [--quiet]\n')
+    process.stderr.write(USAGE)
     return EXIT.usage
+}
+
+function help() {
+    process.stdout.write(USAGE)
+    return EXIT.ok
 }
 
 function parseArgs(argv) {
@@ -429,29 +437,17 @@ export function checkHeaderOrder(headerText) {
                     const close = declaration.lastIndexOf(')')
                     return close !== -1 && declaration.slice(close + 1).trimStart().startsWith('const')
                 }
-                const hasAdjacentPair = members.some(
-                    (candidate, candidateIndex) =>
-                        isGet(candidate) &&
-                        candidateIndex + 1 < members.length &&
-                        /^Set[A-Z0-9_]/.test(members[candidateIndex + 1].name) &&
-                        getSetSuffix(candidate.name) === getSetSuffix(members[candidateIndex + 1].name),
-                )
-                const modifier = hasAdjacentPair
-                    ? -1
-                    : members.findIndex(
-                            (candidate, candidateIndex) =>
-                                candidateIndex < index &&
-                                !isPredicate(candidate) &&
-                                !isGet(candidate) &&
-                                candidate.text.includes('(') &&
-                                !isConstMember(candidate) &&
-                                members.slice(0, candidateIndex).some(isGet),
-                        )
-                if (modifier !== -1) {
+                const isModifier = (member) =>
+                    !isGet(member) &&
+                    !/^Set[A-Z0-9_]/.test(member.name) &&
+                    !member.name.startsWith('operator') &&
+                    !isConstMember(member)
+                const previous = members.slice(0, index).reverse().find((candidate) => !isPredicate(candidate))
+                if (previous && isModifier(previous)) {
                     issues.push({
                         line,
                         rule: 'header-order',
-                        message: `${item.name}::${member.name} 是谓词，却排在修改接口 ${members[modifier].name} 之后；没有 Set 配对时，谓词应在读取接口之后、修改接口之前。`,
+                        message: `${item.name}::${member.name} 是谓词，却排在修改接口 ${previous.name} 之后；谓词应在读取接口或 Get/Set 成对之后、修改接口之前。`,
                     })
                 }
                 continue
@@ -526,7 +522,7 @@ function checkDefinitionSignatures(headerText, cppText) {
 }
 
 /** 比较一个头文件与一个实现文件；返回乱序与签名问题。 */
-export function checkPair(headerText, cppText, fileName = '') {
+export function checkPair(headerText, cppText, fileName = '', headerFile = fileName) {
     const classes = findClasses(headerText)
     const definitions = cppDefinitions(cppText)
     const issues = checkHeaderOrder(headerText)
@@ -553,7 +549,7 @@ export function checkPair(headerText, cppText, fileName = '') {
         }
     }
     issues.push(...checkDefinitionSignatures(headerText, cppText))
-    return issues.map((issue) => ({ file: fileName, ...issue }))
+    return issues.map((issue) => ({ file: issue.rule === 'header-order' ? headerFile : fileName, ...issue }))
 }
 
 function collectFiles(root) {
@@ -612,7 +608,8 @@ export function checkRoot(root) {
         const headerText = readFileSync(header, 'utf8')
         const cppText = readFileSync(file, 'utf8')
         const relative = path.relative(root, file) || file
-        const found = checkPair(headerText, cppText, relative)
+        const headerRelative = path.relative(root, header) || header
+        const found = checkPair(headerText, cppText, relative, headerRelative)
         pairs.push({ header, source: file, issues: found })
         issues.push(...found)
     }
@@ -626,7 +623,7 @@ function main(argv) {
     } catch (error) {
         return usage(error.message)
     }
-    if (options.help) return usage()
+    if (options.help) return help()
     const root = options.root ? path.resolve(options.root) : process.cwd()
     try {
         statSync(root)

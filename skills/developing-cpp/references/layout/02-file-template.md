@@ -87,7 +87,7 @@ private:
 
 ```cpp
 /// @file thing_table.cpp
-/// @brief 实现 ThingTable 的添加与查询。
+/// @brief `ThingTable` 成员函数实现。
 
 #include "thing.h"
 

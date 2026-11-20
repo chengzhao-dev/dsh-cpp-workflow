@@ -48,7 +48,7 @@
 | qualified name | 限定名 | 带命名空间或类前缀的名字，如 `inventory::Item` |
 | namespace | 命名空间 | 给名字分组、避免冲突的作用域 |
 | forward declaration | 前向声明 | 只声明名字不给出定义，减少头文件依赖 |
-| include guard | 包含守卫 | 防止头文件重复展开；写法规则见 `references/layout/02-file-template.md` |
+| include guard | 包含守卫 | 防止头文件重复展开；本项目统一用 `#pragma once`，见 `references/layout/02-file-template.md` |
 | ODR | 单一定义规则 | 一个实体在整个程序中至多一个定义，内联实体例外 |
 | overload | 重载 | 同名但参数不同的函数 |
 | template | 模板 | 按类型或值参数生成代码的机制 |

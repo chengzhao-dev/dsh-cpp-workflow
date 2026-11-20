@@ -4,11 +4,12 @@
 // 检查项：Doxygen 文件头、注释行宽度（含行首缩进）、列表缩进、标签、标签间空行、注释与声明的贴合、
 // 成员功能清单、设计论证（方案对比）、否定式边界、领域尺寸、谓词首句、@param 完整性、@return 完整性、
 // @retval 顺序、特殊成员首句、函数体内 ///、摘要裸参数名、枚举成员注释一致性、枚举行尾句式（不收句号）、
-// 数据成员主注释位置、控制序列常量注释、定义处重复声明注释、只在 .cpp 出现的函数契约。
+// 数据成员主注释位置、控制序列常量注释、定义处重复声明注释、只在 .cpp 出现的函数契约；
+// 另查实现注释复述下一行声明、指向别的头文件或目录、注释代替类型、能力边界、枚举行尾空冒号。
 // 不重写任何文件。
 //
 // 用法：
-//   node checking-comments.mjs [--root DIR] [--width N] [--comment-style slash|block] [--no-header] [--json] [--quiet]
+//   node checking-comments.mjs [--root DIR] [--width N] [--comment-style slash|block] [--no-header] [--no-brief] [--no-param] [--no-return] [--allow-tag TAG] [--json] [--quiet] [--help]
 //
 // 退出码：0 无问题，1 发现问题，2 用法或读取错误。
 import { readdirSync, readFileSync, statSync } from 'node:fs'
@@ -57,10 +58,17 @@ const isPredicateFirstOk = (declaration, firstDocLine) =>
         : firstDocLine.includes('是否') && !PREDICATE_BANNED_PREFIX.test(firstDocLine)
 const DECL_KEYWORDS = /^(class|struct|union|enum|namespace|using|typedef|template|#|if|else|for|while|switch|return|case|default)\b/
 
+const USAGE = '用法：node checking-comments.mjs [--root DIR] [--width N] [--comment-style slash|block] [--no-header] [--no-brief] [--no-param] [--no-return] [--allow-tag TAG] [--json] [--quiet] [--help]\n'
+
 function usage(message) {
     if (message) process.stderr.write(`错误：${message}\n`)
-    process.stderr.write('用法：node checking-comments.mjs [--root DIR] [--width N] [--comment-style slash|block] [--no-header] [--no-brief] [--no-param] [--no-return] [--allow-tag TAG] [--json] [--quiet]\n')
+    process.stderr.write(USAGE)
     return EXIT.usage
+}
+
+function help() {
+    process.stdout.write(USAGE)
+    return EXIT.ok
 }
 
 function parseArgs(argv) {
@@ -169,6 +177,7 @@ const TAG_GROUPS = {
     throw: 'throws',
     exception: 'throws',
     note: 'note',
+    see: 'note',
     pre: 'pre',
     post: 'pre',
 }
@@ -508,14 +517,14 @@ function mentionsParam(text, name) {
 }
 
 /** 标记每一行是否位于 class/struct 体内，供数据成员注释位置检查使用。 */
-function classMemberLines(lines) {
+function classMemberLines(lines, kinds = 'class|struct') {
     const flags = new Array(lines.length).fill(false)
     const starts = []
     let depth = 0
     let pending = false
     for (let index = 0; index < lines.length; index += 1) {
         const code = lines[index].replace(/\/\/.*$/, '').trim()
-        if (/^(?:template\s*<[^>]*>\s*)?(?:class|struct)\b/.test(code)) pending = true
+        if (new RegExp(`^(?:template\\s*<[^>]*>\\s*)?(?:${kinds})\\b`).test(code)) pending = true
         const opens = (code.match(/\{/g) ?? []).length
         const closes = (code.match(/\}/g) ?? []).length
         if (pending && opens > 0) {
@@ -657,6 +666,7 @@ export function checkText(text, options = {}) {
     const issues = []
     const add = (line, rule, message) => issues.push({ line, rule, message })
     const inClass = classMemberLines(lines)
+    const inStruct = classMemberLines(lines, 'struct')
 
     const style = options.commentStyle === 'block' ? 'block' : 'slash'
     const firstContent = lines.findIndex((line) => line.trim() !== '')
@@ -721,7 +731,7 @@ export function checkText(text, options = {}) {
                 add(index + 1, 'list-indent', '注释列表项要在 /// 后空三格再写 -：`///   - `，与总起句拉开层级')
             }
             for (const tag of FORBIDDEN_TAGS) {
-                if (options.allowTags?.has(tag.slice(1))) continue
+                if (PRIVACY_TAGS.includes(tag) && options.allowTags?.has(tag.slice(1))) continue
                 if (trimmed.includes(tag)) add(index + 1, 'forbidden-tag', `禁止使用 ${tag}，按 references/comments/01-comment-rules.md 的标签表改写`)
             }
         }
@@ -737,7 +747,7 @@ export function checkText(text, options = {}) {
             }
             for (const content of doc.contents) {
                 for (const tag of FORBIDDEN_TAGS) {
-                    if (options.allowTags?.has(tag.slice(1))) continue
+                    if (PRIVACY_TAGS.includes(tag) && options.allowTags?.has(tag.slice(1))) continue
                     if (content.includes(tag)) add(doc.start + 1, 'forbidden-tag', `禁止使用 ${tag}，按 references/comments/01-comment-rules.md 的标签表改写`)
                 }
             }
@@ -938,7 +948,11 @@ export function checkText(text, options = {}) {
         const member = names.at(-1)
         const previous = index > 0 ? lines[index - 1].trim() : ''
         if (commentAt !== -1) {
-            if (line.slice(commentAt).startsWith('///<')) continue
+            if (line.slice(commentAt).startsWith('///<')) {
+                if (inStruct[index]) continue
+                add(index + 1, 'member-comment-trailing', `数据成员 ${member} 只用行尾 ///< 注释：///< 只留给枚举项和 struct 的短字段，类数据成员的主注释写在声明上一行`)
+                continue
+            }
             if (!previous.startsWith('//')) {
                 add(index + 1, 'member-comment-missing', `数据成员 ${member} 只有行尾注释：主注释写在声明上一行，行尾不写补充`)
             } else {
@@ -1021,7 +1035,7 @@ function main(argv) {
     } catch (error) {
         return usage(error.message)
     }
-    if (options.help) return usage()
+    if (options.help) return help()
     const root = options.root ? path.resolve(options.root) : process.cwd()
     try {
         statSync(root)

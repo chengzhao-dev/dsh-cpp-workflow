@@ -7,13 +7,13 @@
 
 ```cpp
 // 遍历所有空格
-for (const auto& pos : empty_squares) {
+for (const auto& position : empty_squares) {
     // 尝试落子
-    const bool wins = game.PreviewWin(pos, state) == WinPreviewResult::kWouldWin;
+    const bool wins = game.PreviewWin(position, state) == WinPreviewResult::kWouldWin;
     // 如果能赢
     if (wins) {
         // 返回这次落子的位置
-        return pos;
+        return position;
     }
 }
 ```
@@ -33,13 +33,13 @@ PlaceResult Game::Place(Move move) {
         return PlaceResult::kInvalidPlayer;
     }
 
-    const SquareValue target_value = board_.GetSquare(move.position).GetValue();
+    const SquareValue target_value = board_.GetSquareValue(move.position);
     if (target_value != SquareValue::kEmpty) {
         return PlaceResult::kOccupiedSquare;
     }
 
     // 写入棋盘并记录这一步，然后轮到对方。
-    board_.SetSquare(move.position, target_value);
+    board_.SetSquareValue(move.position, PlayerToSquareValue(move.player));
     history_.push_back(move);
     current_player_ = PlayerToOpponent(current_player_);
     return PlaceResult::kPlaced;
@@ -53,7 +53,7 @@ PlaceResult Game::Place(Move move) {
 ```cpp
 std::array<SquareValue, 3> values{};
 for (std::size_t i = 0; i < line.size(); ++i) {
-    values[i] = board_.GetSquare(line[i]).GetValue();
+    values[i] = board_.GetSquareValue(line[i]);
 }
 // 先确认第一个方格有值，再核对三个方格的取值是否相同。
 if (values[0] != SquareValue::kEmpty && values[0] == values[1] && values[1] == values[2]) {
@@ -67,7 +67,7 @@ if (values[0] != SquareValue::kEmpty && values[0] == values[1] && values[1] == v
 
 ```cpp
 // 写入棋盘并记录这一步，然后轮到对方。
-board_.SetSquare(move.position, target_square_value);
+board_.SetSquareValue(move.position, target_square_value);
 history_.push_back(move);
 current_player_ = PlayerToOpponent(current_player_);
 return PlaceResult::kPlaced;

@@ -1,4 +1,4 @@
-<!-- 读取时机：命名示例时；读完能回答：正反例：状态变更：动作与结果枚举；预算：一次只开这一份（69 行），不自动串联。 -->
+<!-- 读取时机：命名示例时；读完能回答：正反例：状态变更：动作与结果枚举；预算：一次只开这一份（70 行），不自动串联。 -->
 # 正反例：状态变更：动作与结果枚举
 
 **差**：
@@ -31,9 +31,10 @@ public:
 
 class Board {
 public:
-    [[nodiscard]] Square GetSquare(Position pos) const;
-    void SetSquare(Position pos, SquareValue value);
-    void ClearSquare(Position pos);
+    [[nodiscard]] SquareValue GetSquareValue(const Position& position) const;
+    void SetSquareValue(const Position& position, SquareValue value);
+    [[nodiscard]] bool IsSquareEmpty(const Position& position) const;
+    void ClearSquare(const Position& position);
     void Clear();
 };
 
@@ -51,7 +52,7 @@ public:
 };
 ```
 
-`SetValue` 只改方格的值；`Board::SetSquare` 检查坐标后原样写入，落子成没成由 `Game::Place` 回答。`ClearSquare` 清一格，`Clear` 清整盘；单格不再有 `Clear`。
+`SetValue` 只改方格的值；`Board::SetSquareValue` 检查坐标后原样写入，落子成没成由 `Game::Place` 回答。`Board` 上读一格写 `GetSquareValue`，判空写 `IsSquareEmpty`，调用方不需要认识 `Square`。`ClearSquare` 清一格，`Clear` 清整盘；单格不再有 `Clear`。
 
 改名按这个顺序做，每一步都能编译：
 

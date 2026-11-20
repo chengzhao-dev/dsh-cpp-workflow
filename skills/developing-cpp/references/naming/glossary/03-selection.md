@@ -22,6 +22,6 @@
 
 ## 光标
 
-列表界面里「跟着按键移动、还没确认」的位置写 `cursor_index_`，不写 `selected_`；`selected_` 保存已确认的对象，下标写 `selected_index_`。判断用 `HasCursor(index)`，动作用 `MoveTo`、`MovePrevious`、`MoveNext`，不写 `IsCursorAt(index)`。光标是选择过程的中间量，确认后才转成 `selected_`。
+列表界面里「跟着按键移动、还没确认」的位置写 `cursor_index_`，不写 `selected_`；`selected_` 保存已确认的对象，下标写 `selected_index_`。判断用 `HasCursor(index)`，动作用 `MoveTo`、`MovePrevious`、`MoveNext`，不写 `IsCursorAt(index)`。光标是选择过程的中间量，确认后才转成 `selected_`；字段名见 [01-identifier-names.md](../01-identifier-names.md) 的「界面与索引」。
 
 依据见 [01-identifier-names.md](../01-identifier-names.md) 的「语义角色」与末尾 12 条来源。

@@ -1,7 +1,7 @@
 <!-- 读取时机：写构建脚本时；读完能回答：构建脚本；预算：一次只开这一份（73 行），不自动串联。 -->
 # 构建脚本
 
-`assets/templates/projects/common/running-build.sh` 是 POSIX build-host 脚本，适用于 Linux、macOS 和 Windows + WSL。`host=windows` + `build_host=native` 不是本版本支持的组合：声明校验会直接拒绝，脚本也不会在原生 Windows 壳里运行。脚本只做配置、构建、CTest 与运行；格式化与静态检查在编辑时手动跑，不混进构建入口。
+`assets/templates/projects/common/running-build.sh` 是 Bash 脚本，适用于 Linux、macOS 和 Windows + WSL 这几个 POSIX build host。`host=windows` + `build_host=native` 不是本版本支持的组合：声明校验会直接拒绝，脚本也不会在原生 Windows 壳里运行。脚本只做配置、构建、CTest 与运行；格式化与静态检查在编辑时手动跑，不混进构建入口。
 
 ## 格式化与静态检查
 
@@ -36,7 +36,7 @@
 
 ## 关键约束
 
-- 只用 POSIX shell + Bash 数组；不要依赖 `mapfile`（macOS 自带 Bash 3.2 没有）。
+- 只用 Bash 3.2 兼容语法；不要依赖 `mapfile`（macOS 自带 Bash 3.2 没有）。
 - 路径含空格时全部加引号；`find -print0` 配 `read -d ''`。
 - `set -u` 下空数组展开会报错；先判 `${#sources[@]}` 再传给工具。
 - 不在脚本里设全局 `LD_LIBRARY_PATH`；共享库的运行时路径由 CMake 的 RPATH 设置。

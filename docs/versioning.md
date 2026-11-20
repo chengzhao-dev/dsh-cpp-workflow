@@ -4,11 +4,11 @@
 
 ## 当前版本
 
-工作区 `dsh-cpp-workflow` 为 **0.7.10**；npm 与 GitHub 上的最新发布以 registry 与 Releases 为准，本页不固定发布号（固定号在下次发布后就会过期）。`dsh-quarto-book` 单独发布，版本以其 `package.json` 为准。两个插件各自发布，不再共用版本号。误发的 `0.0.1` 已从 npm 撤回，并删除 GitHub 标签与 Release；该号作废，不再复用。
+工作区 `dsh-cpp-workflow` 为 **0.7.11**；npm 与 GitHub 上的最新发布以 registry 与 Releases 为准，本页不固定发布号（固定号在下次发布后就会过期）。`dsh-quarto-book` 单独发布，版本以其 `package.json` 为准。两个插件各自发布，不再共用版本号。误发的 `0.0.1` 已从 npm 撤回，并删除 GitHub 标签与 Release；该号作废，不再复用。
 
 ## 修订号
 
-只改措辞、文档、示例、注释、测试、内部实现或检查词表时，补丁号加一：从 `0.7.10` 到 `0.7.11`，再到 `0.7.12`。新检查让旧工程报出新问题，也只加补丁号。
+只改措辞、文档、示例、注释、测试、内部实现或检查词表时，补丁号加一：从 `0.7.11` 到 `0.7.12`，再到 `0.7.13`。新检查让旧工程报出新问题，也只加补丁号。
 
 ## 次版本
 
@@ -33,8 +33,8 @@
 5. 读回两边的 commit，必须相同：
 
    ```bash
-   npm view @chengzhao-dev/dsh-cpp-workflow@0.7.10 version gitHead
-   git rev-parse v0.7.10^{commit}
+   npm view @chengzhao-dev/dsh-cpp-workflow@0.7.11 version gitHead
+   git rev-parse v0.7.11^{commit}
    ```
 
    `npm view ... dist.attestations` 应能看到 provenance 记录。

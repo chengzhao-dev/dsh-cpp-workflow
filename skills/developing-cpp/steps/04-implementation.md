@@ -8,10 +8,10 @@
 
 - 函数保持短小，一个函数只做一件事。长度以 `references/style/01-google-cpp-style.md` 的「函数」节为准：需要拆分时先找可以命名的中间步骤，不靠注释把长函数切成几段。
 - 按「准备 → 操作 → 收尾」排列语句，用空行分组；组与组之间的空行表达阶段，同一次检查的取值、判断与返回不插空行，守卫之间怎么空见 `references/layout/03-declaration-order.md`「函数体内的空行」。
-- `.cpp` 里的定义顺序跟配对头文件：先类型与常量，再自由函数，再成员函数；成员函数按类内声明顺序。头文件把构造函数、析构函数、拷贝/移动声明在成员组最前时，定义也放最前；如果头文件把它们声明在别的成员之后，仍按头文件顺序，不硬提。不为先编译重排，也不按调用频率重排。`.cpp` 里不需要外部引用的 `constexpr` 放具名命名空间，仅一个函数使用时才用函数内 `static constexpr`；函数与类型放唯一的匿名命名空间，公开函数定义放在其后；不另开具名子命名空间，也不用类的 `static` 成员来隐藏函数。见 `references/layout/03-declaration-order.md`「`.cpp` 的定义顺序」与 `references/style/01-google-cpp-style.md`。
-- 同一文件里的函数按同一套分段约定：需要分阶段的非单表达式函数按空行分段、每段上方一句；读入、单值转换、一行输出这类一条直路的短函数不加分段注释；不能结构相近的函数一半分段、一半完全不留注释。阶段怎么分见 `references/layout/03-declaration-order.md`「函数体内的空行」。
+- `.cpp` 里的定义顺序跟配对头文件，常量与匿名命名空间的归属同见 `references/layout/03-declaration-order.md`「`.cpp` 的定义顺序」与 `references/style/01-google-cpp-style.md`；不为先编译、也不按调用频率重排。
+- 同一文件里的函数按同一套分段约定，不一半分段、一半完全不留注释；一条直路的短函数不加分段注释，阶段怎么分见 `references/layout/03-declaration-order.md`「函数体内的空行」。
 - `.cpp` 的第一个 include 是自己的配对头，然后直接包含本文件用到的标准库头，不依赖公共头转发声明。包含顺序见 `references/style/01-google-cpp-style.md`，文件槽位见 `references/layout/02-file-template.md`。
-- 函数体注释用 `//`，不用 `///`：体内 `///` 会接到该函数的 Doxygen 详细说明后面。重要函数按空行分阶段，每个阶段上方写一句 `//`，写这一支在检查什么，可以点明处理了哪些枚举值，不逐词翻译下一行的条件；`//` 里的枚举值不加反引号。单表达式函数（如 `IsEmpty`）不配注释；关键局部表（查表、分派表）上方写一句，说明表的角色与分组。只写删掉会让下一次修改得到错误结果、而代码本身看不出的内容；变更史留给提交说明。`.cpp` 里只在 .cpp 出现的函数才写 `///`：有参数或返回值时写完整契约（`@param`、`@return`、`@pre`），与头文件声明同一套标签；头文件已声明的定义处不写 `///`；类方法定义不重复声明处已有的事实。
+- 函数体注释用 `//`，不用 `///`：体内 `///` 会接到该函数的 Doxygen 详细说明后面。写哪些句、阶段注释、单表达式函数与关键局部表的处理见 `references/comments/01-comment-rules.md`「实现：阶段边界与为什么」。`.cpp` 里只在 .cpp 出现的函数才写 `///` 完整契约；头文件已声明的定义处不写 `///`。
 - 什么时候在 `if` 上方加一句：多条独立拒绝（如 `Game::Place`）不逐条注释，只有失败结果的优先级需要说明时在第一条 `if` 上方写一句总起；成功写入前一句；只有次序依赖的一对 `if` 在第一个上方说明；循环上方已有阶段说明时，循环里的 `if` 不再加；单表达式谓词不加。
 - 枚举全覆盖不写 `default`，单条 `return` 不加花括号，`std::unreachable()` 紧跟 `switch` 右花括号；细节见 `references/language/language-basics/05-expressions.md`。
 - 失败是调用方正常结果时返回结果类型、`bool` 或 `std::optional`；函数无法完成自己的任务时抛异常，不拿异常做正常分支。失败方式与 `Check`/`DebugCheck` 按 `references/exceptions/01-exception-rules.md` 的三层合同。捕获时按 `const` 引用，只处理能处理的类型，其余继续抛。
@@ -31,7 +31,7 @@
 
 **重构**：一次只动一种东西（改名、抽函数、换容器），每步都让测试保持绿色，行为句不变。
 
-**异常边界**：库内部让异常向上传播；程序入口捕获 `std::exception`（或项目自己的异常基类），用 `std::format("错误: {}", error.what())` 打印，返回项目约定的非零退出码。`catch` 子句按派生到基类、具体到通用排序，`catch (...)` 只能放最后，且不要静默返回。不吞掉异常后继续使用无效状态。
+**异常边界**：库内部让异常向上传播；程序入口捕获 `std::exception`（或项目自己的异常基类），用 `std::format` 在 `error.what()` 前加项目约定的前缀打印（示例 `错误: {}`），返回项目约定的非零退出码。`catch` 子句按派生到基类、具体到通用排序，`catch (...)` 只能放最后，且不要静默返回。不吞掉异常后继续使用无效状态。
 
 ## 交回构建
 
@@ -41,8 +41,8 @@
 
 - 实现注释复述代码、分组混乱：`references/comments/examples/09-implementation-body.md`。
 - 已经证明非负的坐标把下标收成 `std::size_t` 再 `[]`，不转成 `int`：`references/language/value-types/09-subscript.md`。
-- 越界消息的函数名、文件与行列都取自调用点：`references/exceptions/01-exception-rules.md`「消息」的 `std::source_location` 用法。
-- 多个入口重复同一范围检查：抽成同一层的检查函数；对局层要调用时放 public，`source_location` 默认参数取调用点，见 `references/exceptions/01-exception-rules.md`「重复的入口检查」。
+- 越界消息带 `Type::Function:` 标签，句子从失败的值开始、限度用 `for` 接在句末：`references/exceptions/01-exception-rules.md`「消息」。
+- 多个入口重复同一范围检查：抽成同一层的检查函数，参数与 `IsInRange` 相同；对局层要调用时放 public，见 `references/exceptions/01-exception-rules.md`「重复的入口检查」。
 - 为了保住 `noexcept` 再包一层只转发下标的私有函数：`references/exceptions/01-exception-rules.md`「不抛的边界」。
 - 用 `static_cast<void>` 丢弃 `[[nodiscard]]` 的落子结果，或丢掉调用方给的一手、在 `Game` 内重新拼装：`references/design/examples/06-move-result.md`。
 - 异常类型与结果类型混用：`references/exceptions/examples/07-throw-when.md`。

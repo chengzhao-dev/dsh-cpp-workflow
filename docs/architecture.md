@@ -42,7 +42,7 @@ flowchart TD
 
 四类改动是入口，不是第二份规则：每个技能在 `SKILL.md` 里把内容、结构、版式、措辞四行落到具体步骤文件，正文只保留加载顺序。
 
-- `skills/developing-cpp/SKILL.md`：内容与结构先到 `steps/01-behavior.md`、`steps/02-boundary.md`，声明与实现再到 `steps/03-declaration.md`、`steps/04-implementation.md`；注释事实在 `references/comments/01-comment-rules.md`（写什么）与 `02-style.md`（结构、版式、措辞），异常事实在 `references/exceptions/01-exception-rules.md`，规则冲突在 `skills/shared/rule-priority.md`。
+- `skills/developing-cpp/SKILL.md`：内容先到 `steps/01-behavior.md`、`steps/02-boundary.md`；结构、版式与措辞到 `steps/03-declaration.md`；声明与实现再到 `steps/04-implementation.md`；注释事实在 `references/comments/01-comment-rules.md`（写什么）与 `02-style.md`（结构、版式、措辞），异常事实在 `references/exceptions/01-exception-rules.md`，规则冲突在 `skills/shared/rule-priority.md`。
 - `skills/engineering/SKILL.md`：target、模块与检查分别到 `steps/01-targets.md`、`steps/02-modules.md`、`steps/03-check.md`；排版工具从入口表直接开 `references/formatting/` 的一份。
 - `skills/building-cpp/SKILL.md`：构建、工具配置与通过检查分别到 `steps/01-build.md`、`steps/02-tooling.md`、`steps/03-check.md`；工程已有 `.vscode/` 时，第 4 步 `steps/04-vscode.md` 随第 2 步完成。
 

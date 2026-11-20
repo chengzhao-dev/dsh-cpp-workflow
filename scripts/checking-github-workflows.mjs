@@ -23,6 +23,34 @@ function isObject(value) {
     return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
+// 校验一处 uses 引用。job 级只接受 reusable workflow（owner/repo/path@ref），
+// step 级接受 action（owner/repo@ref）、本地路径与 docker action。
+function validateUses(uses, at, level) {
+    if (uses === '') {
+        fail(`${at}: uses 为空`)
+        return
+    }
+    if (uses.startsWith('./')) {
+        if (!existsSync(resolve(ROOT, uses.slice(2)))) fail(`${at}: 本地 action 不存在：${uses}`)
+        return
+    }
+    if (uses.startsWith('docker://')) {
+        if (level === 'job') fail(`${at}: job 级只能用 reusable workflow，不能引用 docker action：${uses}`)
+        else if (uses.endsWith(':latest')) fail(`${at}: docker action 不应使用 latest：${uses}`)
+        return
+    }
+    const pattern =
+        level === 'job'
+            ? /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/[^@\s]+@[^\s]+$/
+            : /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+@[^\s]+$/
+    if (!pattern.test(uses)) {
+        fail(`${at}: ${level === 'job' ? 'reusable workflow' : 'action'} 引用格式不合法：${uses}`)
+        return
+    }
+    const ref = uses.slice(uses.indexOf('@') + 1)
+    if (ref === 'main' || ref === 'master' || ref === 'latest') fail(`${at}: 引用不应跟随分支或 latest：${uses}`)
+}
+
 if (!existsSync(WORKFLOWS)) {
     console.error(`GitHub workflows 检查失败：${WORKFLOWS} 不存在`)
     process.exit(1)
@@ -64,19 +92,7 @@ for (const file of files) {
             continue
         }
         if (typeof job.uses === 'string') {
-            const uses = job.uses.trim()
-            if (uses === '') {
-                fail(`${rel}: jobs.${jobId}.uses 为空`)
-            } else if (uses.startsWith('./')) {
-                if (!existsSync(resolve(ROOT, uses.slice(2)))) fail(`${rel}: jobs.${jobId}: 本地 action 不存在：${uses}`)
-            } else if (uses.startsWith('docker://')) {
-                if (uses.endsWith(':latest')) fail(`${rel}: jobs.${jobId}: docker action 不应使用 latest：${uses}`)
-            } else {
-                const match = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+@[^\s]+$/.exec(uses)
-                const ref = match ? uses.slice(uses.indexOf('@') + 1) : ''
-                if (!match) fail(`${rel}: jobs.${jobId}: action 引用格式不合法：${uses}`)
-                else if (ref === 'main' || ref === 'master' || ref === 'latest') fail(`${rel}: jobs.${jobId}: action 引用不应跟随分支或 latest：${uses}`)
-            }
+            validateUses(job.uses.trim(), `${rel}: jobs.${jobId}`, 'job')
             continue
         }
         if (job['runs-on'] === undefined) {
@@ -100,25 +116,7 @@ for (const file of files) {
             }
             if (!hasUses) continue
 
-            const uses = step.uses.trim()
-            if (uses.startsWith('./')) {
-                const local = resolve(ROOT, uses.slice(2))
-                if (!existsSync(local)) fail(`${at}: 本地 action 不存在：${uses}`)
-                continue
-            }
-            if (uses.startsWith('docker://')) {
-                if (uses.endsWith(':latest')) fail(`${at}: docker action 不应使用 latest：${uses}`)
-                continue
-            }
-            const match = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+@[^\s]+$/.exec(uses)
-            if (!match) {
-                fail(`${at}: action 引用格式不合法：${uses}`)
-                continue
-            }
-            const ref = uses.slice(uses.indexOf('@') + 1)
-            if (ref === 'main' || ref === 'master' || ref === 'latest') {
-                fail(`${at}: action 引用不应跟随分支或 latest：${uses}`)
-            }
+            validateUses(step.uses.trim(), at, 'step')
         }
     }
 }

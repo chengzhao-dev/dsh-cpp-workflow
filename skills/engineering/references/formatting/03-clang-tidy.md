@@ -5,14 +5,14 @@
 
 ```bash
 clang-tidy -p build/clang \
-    --header-filter="^$(pwd -P)/(include|src|app|tests)/" \
+    --header-filter="^$(pwd -P)/" \
     --warnings-as-errors='*' \
     src/*.cpp app/*.cpp tests/*.cpp
 ```
 
 - `-p` 指向当前编译器的构建目录，读取 `compile_commands.json`。
 - `--header-filter` 控制哪些头文件的诊断被显示，不改变 clang-tidy 实际解析哪些头；模板实例化可能让一条根因产生多条警告，警告条数不等于缺陷条数。按根因修，不要按条数修。
-- `--header-filter` 用项目头目录的白名单，不要用 `.*` 把系统头和第三方头一并纳入。`--header-filter` 是对头文件名的正则；上面用 `$(pwd -P)` 前缀只是让正则匹配绝对路径的一种写法，不是文档强制。上面的目录是常见布局，工程用别的顶层目录时按实际替换。`--exclude-header-filter` 到 clang-tidy 19 才加入，16/17/18 都没有，不要依赖它。
+- `--header-filter` 默认用工程根前缀 `^$(pwd -P)/`，只显示工程内头文件的诊断；工程根里还放着第三方头时，收窄成源码根白名单，如 `(include|src|app|tests)`，不要用 `.*` 把系统头和第三方头一并纳入。它是对头文件名的正则；`$(pwd -P)` 只是拼出绝对路径前缀的写法，不是文档强制。`--exclude-header-filter` 到 clang-tidy 19 才加入，16/17/18 都没有，不要依赖它。
 - 系统头默认被排除，不要加 `--system-headers`。
 - 只扫描项目源文件；不要把 `build/` 或第三方源码传给 clang-tidy。
 - `--warnings-as-errors='*'` 把警告当失败；修代码，不要新增 `NOLINT`。确需抑制时写 `// NOLINT(检查名): 理由`，理由必须具体。
@@ -36,7 +36,7 @@ clang-tidy -p build/clang \
 
 ## 版本与一致性
 
-- `clang-format` / `clang-tidy` ≥ 16；clang 模式下与 `clang++`、`clangd` 同主版本。Apple Clang 与 Homebrew LLVM 混装时，仍按同一 LLVM 主版本要求处理：工具版本不一致就统一到同一套工具链，不改检查项来迁就。
+- 工具版本下限与 clang/gcc 模式的组合要求见 `building-cpp` 的 `02-environment.md`「版本与能力」，本文件不重复数值。Apple Clang 与 Homebrew LLVM 混装时，仍按同一 LLVM 主版本要求处理：工具版本不一致就统一到同一套工具链，不改检查项来迁就。
 - 混版本常见症状：格式化结果与 CI 不同、clangd 诊断与 tidy 不一致、选项被静默忽略。
 - 检查器在 `--live` 时核对版本；不要用「能跑就行」绕过。
 

@@ -8,8 +8,6 @@ import path from 'node:path'
 
 /** 项目技能目录名，按优先顺序排列；下划线与连字符两种写法等价，连字符是模板与文档的默认写法。 */
 export const PROJECT_SKILL_DIRS = ['cpp_workflow_project', 'cpp-workflow-project'] as const
-/** 首选标记文件；查找时按 `PROJECT_SKILL_MARKERS` 逐个尝试。 */
-export const PROJECT_SKILL = path.join('.agents', 'skills', PROJECT_SKILL_DIRS[0], 'SKILL.md')
 /** 所有可接受的标记文件，顺序同 `PROJECT_SKILL_DIRS`。 */
 export const PROJECT_SKILL_MARKERS = PROJECT_SKILL_DIRS.map((name) =>
     path.join('.agents', 'skills', name, 'SKILL.md'),

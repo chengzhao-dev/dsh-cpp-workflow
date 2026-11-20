@@ -57,7 +57,7 @@ Diagnostics:
 
 | 键 | 作用 | 取值规则 |
 | --- | --- | --- |
-| `clangd.arguments` | 传给 clangd 的参数 | `--query-driver=<绝对路径>` 只列一个真实驱动；`--header-insertion=never`；`--background-index` |
+| `clangd.arguments` | 传给 clangd 的参数 | `--query-driver=<绝对路径>` 与 `environment.json` 的编译器一致；只列当前构建用的一个驱动，确有多个时按上文用逗号分隔，不写 `*`；`--header-insertion=never`；`--background-index` |
 | `cmake.buildDirectory` | 构建目录与编译数据库位置 | 与 `.clangd` 的 `CompilationDatabase` 同一目录：默认 `build/<compiler>`，工程声明单一目录时写该目录 |
 | `cmake.generator` | 生成器 | `Ninja`，与入口脚本一致 |
 | `cmake.configureOnOpen` | 打开工程时自动配置 | `false`，配置时机由入口脚本决定 |

@@ -30,10 +30,10 @@
 
 ```cpp
 /// 坐标是否在范围内。函数名用 UpperCamel 而不是 snake_case，与标准库区分。
-[[nodiscard]] static bool IsInRange(Position pos) noexcept;
+[[nodiscard]] static bool IsInRange(const Position& position) noexcept;
 
 /// 方格是否为空。函数名用 UpperCamel 而不是 snake_case，与标准库区分。
-[[nodiscard]] bool IsSquareEmpty(Position pos) const;
+[[nodiscard]] bool IsSquareEmpty(const Position& position) const;
 ```
 
 **好**（只写契约）：
@@ -41,10 +41,10 @@
 ```cpp
 /// 坐标是否落在棋盘下标区间内。
 ///
-/// @param pos 棋盘上的行列坐标。
+/// @param position 棋盘上的行列坐标。
 ///
 /// @return 坐标在棋盘内时返回 true；越界时返回 false。
-[[nodiscard]] static bool IsInRange(Position pos) noexcept;
+[[nodiscard]] static bool IsInRange(const Position& position) noexcept;
 ```
 
 命名与风格约定写进项目文档和读者正文，注释里不解释「为什么用这种命名」。

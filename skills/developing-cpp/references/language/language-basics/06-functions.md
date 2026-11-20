@@ -2,7 +2,7 @@
 # 函数、参数与返回值
 
 - 命名规则以 `references/naming/01-identifier-names.md` 为准：函数 PascalCase、查询 `Is` / `Has` / `Can` / `Get` / `Find`、转换 `SourceToTarget`。
-- 输入参数默认按值传小对象、按 `const&` 传大对象；优先返回值，不用 out 参数表达结果，需要多个结果时用 `struct` 聚合。确有 out 参数时（只限热循环里复用容器容量这一类例外，见 `references/exceptions/01-exception-rules.md`），放在参数表末尾并在名字或注释里标 `[out]`。
+- 输入参数默认按值传小对象、按 `const&` 传大对象；例外是 `Position` 这类坐标值类型，全工程统一按 `const&` 传，同一类型只有一种签名：`IsInRange`、`CheckInRange`、访问器与消息里的 `{}` 读的都是同一个对象，混用按值与按引用会让读者每次核对拷贝语义，而 8 字节的复制代价在棋类接口上测不出来；优先返回值，不用 out 参数表达结果，需要多个结果时用 `struct` 聚合。确有 out 参数时（只限热循环里复用容器容量这一类例外，见 `references/exceptions/01-exception-rules.md`），放在参数表末尾并在名字或注释里标 `[out]`。
 - 返回容器或大对象时按值返回，依赖 RVO / 移动；不要返回局部对象的引用或指针。
 - 正常路径只返回同一个常量时用 `void`，退出码留给 `main`；`main` 返回 0 表示正常结束，返回非 0 表示异常结束，不写 `void main()`。
 - 单参数构造函数默认加 `explicit`；只有隐式转换本身就是公开 API 的一部分时才省略，并在声明注释里说明用途。`explicit` 不影响直接初始化，也不阻止数组到 `std::span` 再到类这样的两次用户定义转换；它只阻止参数类型已经能一步转换时的隐式拷贝初始化。

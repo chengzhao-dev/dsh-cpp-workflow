@@ -9,7 +9,7 @@
 
 | 词 | 结论 | 条目 |
 | --- | --- | --- |
-| `position` / `pos` | 坐标值的参数与局部变量用 `pos`；公开数据成员用 `position`；迭代器式位置对象用 `position` | [02-position.md](02-position.md) |
+| `position` | 坐标值的参数、局部变量与公开数据成员都用 `position`；不用缩写 `pos` | [02-position.md](02-position.md) |
 | `square` / `SquareValue` | 方格；方格的值；不用 `Mark`、`Cell`、`Token` | [04-square.md](04-square.md) |
 | `selection` | 从多个候选里选一个用 `Choose`，找不到合法候选返回 `optional`；查找已有元素用 `Find`；可能失败的动作与校验用 `Try` | [03-selection.md](03-selection.md) |
 | `score` | 终局评分若单独暴露，用 `ScoreFinishedGame`；搜索分是 `int`，不把分数塞进 `GameResult` | [05-scoring.md](05-scoring.md) |

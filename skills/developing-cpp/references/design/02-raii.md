@@ -21,9 +21,9 @@ RAII 把资源的取得放进构造函数，把释放放进析构函数：对象
 
 ## 备用屏幕
 
-`Terminal` 提供 `EnterAlternateScreen` / `ExitAlternateScreen`；`Console`、`Screen` 的生命周期长于一次对局，进入和退出属于一次 `RunGame` 的作用域。tictactoe 让入口显式调用、每条返回路径先退出，不把这两个动作放进 `Screen` 的构造或析构，也不在 `RunGame` 里声明只转调的局部类；案例见 [examples/08-screen-enter-exit.md](examples/08-screen-enter-exit.md)。
+`Console` 提供 `EnterAlternateScreen` / `ExitAlternateScreen`；`Console` 与 `Screen` 的生命周期长于一次对局，进入和退出属于一次 `RunGame` 的作用域。tictactoe 让入口显式调用、每条返回路径先退出，不把这两个动作放进 `Screen` 的构造或析构，也不在 `RunGame` 里声明只转调的局部类；案例见 [examples/08-screen-enter-exit.md](examples/08-screen-enter-exit.md)。
 
-只有在一次 `RunGame` 内确实存在独立作用域、退出必须在所有返回路径自动发生时，才考虑局部 `AlternateScreenGuard`：持有 `Terminal&`，构造进入、析构退出，删除复制与移动。当前项目只有一个场景，也没有异常路径设计，所以不先抽通用 `ScopeGuard`；出现第二个真实使用方再抽象。
+只有在一次 `RunGame` 内确实存在独立作用域、退出必须在所有返回路径自动发生时，才考虑局部 `AlternateScreenGuard`：持有 `Console&`，构造进入、析构退出，删除复制与移动。当前项目只有一个场景，也没有异常路径设计，所以不先抽通用 `ScopeGuard`；出现第二个真实使用方再抽象。
 
 ## 检查清单
 

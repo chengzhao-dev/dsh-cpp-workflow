@@ -25,7 +25,7 @@ enum class GameResult : std::uint8_t {
 **好（取值枚举）**：
 
 ```cpp
-/// 方格的值：棋盘上每个方格要么空着，要么写着 X 或 O。
+/// 方格的值：一个方格为空，或者已被 X 或 O 占用。
 enum class SquareValue : std::uint8_t {
     kEmpty = 0,  ///< 空
     kX = 1,      ///< X

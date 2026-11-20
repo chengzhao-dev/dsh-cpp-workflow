@@ -10,10 +10,10 @@ CMake 有两套相关机制，必须同时写：
 - `target_compile_features(target visibility cxx_std_NN)`：声明目标至少需要该标准。它是 meta-feature，编译器默认标准更高时可能不产生 `-std=`；只写这一项，不能保证实际使用哪个标准。
 - `CXX_STANDARD NN` + `CXX_STANDARD_REQUIRED ON` + `CXX_EXTENSIONS OFF`：把请求标准写死，禁止不可用时静默降级，并关闭 `gnu++NN` 扩展。
 
-| `standard` | meta-feature | `CXX_STANDARD` | `__cplusplus` | CMake 最低版本 |
+| `standard` | meta-feature | `CXX_STANDARD` | `__cplusplus` | `cxx_std_*` 最低版本 |
 | --- | --- | --- | --- | --- |
-| `c++11` | `cxx_std_11` | `11` | `201103L` | 3.1 |
-| `c++14` | `cxx_std_14` | `14` | `201402L` | 3.1 |
+| `c++11` | `cxx_std_11` | `11` | `201103L` | 3.8 |
+| `c++14` | `cxx_std_14` | `14` | `201402L` | 3.8 |
 | `c++17` | `cxx_std_17` | `17` | `201703L` | 3.8 |
 | `c++20` | `cxx_std_20` | `20` | `202002L` | 3.12 |
 | `c++23` | `cxx_std_23` | `23` | `202302L` | 3.20 |
@@ -26,7 +26,7 @@ CMake 有两套相关机制，必须同时写：
 
 ```cmake
 set_target_cxx_standard(app PRIVATE c++23)
-set_target_cxx_standard(greeting PUBLIC c++20)
+set_target_cxx_standard(greeting PUBLIC c++23)
 ```
 
 第一个参数是已由 `add_library` 或 `add_executable` 创建的目标，第二个是 `PUBLIC` / `PRIVATE` / `INTERFACE`，第三个是 `c++11`–`c++23`。函数内部做三步：校验目标与参数，调用 `target_compile_features`，再设置 `CXX_STANDARD` 三属性。
@@ -48,7 +48,7 @@ set_target_cxx_standard(greeting PUBLIC c++20)
 | 只写 `target_compile_features(... cxx_std_23)` | 编译器默认更高时可能不加 `-std`，实际标准不可见 |
 | 只写 `CXX_STANDARD 23`，不写 `CXX_STANDARD_REQUIRED` | 编译器不支持时静默降级 |
 | 不写 `CXX_EXTENSIONS OFF` | 得到 `-std=gnu++23`，用了非标准扩展 |
-| 用 `CMAKE_CXX_STANDARD` 全局设一次 | 所有 target 被同一个值绑住，无法按组件降档 |
+| 用 `CMAKE_CXX_STANDARD` 全局设一次 | 只改默认值，不产生精确的 `-std=c++NN`，也无法逐 target 核对数据库 |
 | 在 `CMAKE_CXX_FLAGS` 里手写 `-std=c++23` | 与 target 属性冲突，数据库不可信 |
 | 把 `cxx_std_23` 写成 `cxx_std_2023` | meta-feature 名字错误，configure 失败 |
 

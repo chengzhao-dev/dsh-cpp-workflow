@@ -12,7 +12,7 @@ clang-format --dry-run --Werror src/*.cpp include/*.h
 - 工程必须有根 `.clang-format`；缺失时先复制配置，不要回退到内置风格，回退会掩盖配置缺失。
 - 只扫描项目源码：`src/`、`include/`、`app/`、`tests/` 等实际存在的目录；不扫描 `build/`、第三方、生成文件。
 - 配置文件在工程根 `.clang-format`；不要依赖用户主目录或编辑器内置配置。
-- `BasedOnStyle: Google`、`Standard` 按 `../cmake/standards/index.md` 的映射表：C++11–C++20 写 `c++NN`，C++23 写 `Latest`（clang-format 21/22 不认 `c++23`，直接写会报 `error: unknown enumerated scalar`）。列宽、缩进与包含分块以工程根 `.clang-format` 为准；模板资产固定 `UseTab: Never`、`TabWidth: 4`、`IndentWidth: 4`、`ContinuationIndentWidth: 8`、`AccessModifierOffset: -4`、`ColumnLimit: 120` 与 `IncludeBlocks: Preserve`，不覆盖 `IncludeCategories`；工程显式写 `ColumnLimit` 时按工程值执行。
+- `BasedOnStyle: Google`、`Standard` 按 `../cmake/standards/index.md` 的映射表：C++11–C++20 写 `c++NN`，C++23 写 `Latest`（clang-format 21/22 不认 `c++23`，直接写会报 `error: unknown enumerated scalar`）。列宽、缩进与包含分块的键值以 `skills/building-cpp/assets/config/.clang-format` 为唯一清单，不在这里重抄；工程显式写 `ColumnLimit` 时按工程值执行。
 - 构造函数初始化列表写 `PackConstructorInitializers: BinPack`：放得下时并入一行，超出列宽再按成员换行。Google 预设逐项换行，成员一多就占五六行，与「列宽内保持一行」冲突；这条只在配置里定，不在条文里规定手写位置。
 - 格式化失败就是失败，不要用 `// clang-format off` 绕过；确需关闭时只包住无法排版的宏或表格，并写一句理由。
 
